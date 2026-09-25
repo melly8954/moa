@@ -12,10 +12,4 @@
 | FR-ADM-002 | 회원 제재 | must | `002-sanction-member.md` |
 | FR-ADM-003 | 제재 해제 | must | `003-lift-sanction.md` |
 | FR-ADM-004 | 게임 목록 관리 | must | `004-manage-games.md` |
-
-## 정책 후보
-
-<!-- 인터뷰에서 나온 규칙·수치 후보다. psw-req가 _policy.md로 옮기고 이 절을 지운다 -->
-
-- 제재는 기간 정지로 한다. 정지 기간 값은 psw-req에서 정한다
-- 숨긴 게시물·댓글은 작성자 외에 보이지 않는다
+| FR-ADM-005 | 탈퇴 계정 복구 | must | `005-restore-account.md` |

@@ -9,17 +9,6 @@
 | ID | 기능 | 우선순위 | 파일 |
 |---|---|---|---|
 | FR-MSG-001 | 1:1 대화 시작 | must | `001-start-direct.md` |
-| FR-MSG-002 | 그룹 대화방 만들기 | must | `002-create-group.md` |
 | FR-MSG-003 | 메시지 보내기 | must | `003-send-message.md` |
 | FR-MSG-004 | 대화 목록 보기 | must | `004-conversation-list.md` |
-| FR-MSG-005 | 그룹 대화방에 친구 초대 | must | `005-invite-group.md` |
-| FR-MSG-006 | 대화방 나가기 | must | `006-leave-conversation.md` |
-
-## 정책 후보
-
-<!-- 인터뷰에서 나온 규칙·수치 후보다. psw-req가 _policy.md로 옮기고 이 절을 지운다 -->
-
-- 1:1 대화와 일반 그룹 대화방은 친구(맞팔)끼리만 만들고 초대한다
-- 파티 채팅방은 파티가 만들어질 때 자동으로 열리고, 친구 여부와 상관없이 파티원끼리 쓴다
-- 메시지로 텍스트, 이미지, 동영상을 보낼 수 있다 〔2026-09-25〕 텍스트 + 이미지를 추천했으나 사용자가 동영상까지 포함으로 결정. 첨부 형식·용량 제한은 psw-req에서 정한다
-- 그룹 대화방 최대 인원은 psw-req에서 정한다
+| FR-MSG-006 | 1:1 대화방 나가기 | must | `006-leave-conversation.md` |
