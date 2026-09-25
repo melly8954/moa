@@ -18,3 +18,4 @@
 | FR-MEM-008 | 회원 탈퇴 | must | `008-withdraw.md` |
 | FR-MEM-009 | 비밀번호 재설정 | must | `009-reset-password.md` |
 | FR-MEM-010 | 비밀번호 변경 | must | `010-change-password.md` |
+| FR-MEM-011 | 로그인 수단 관리 | must | `011-login-methods.md` |
