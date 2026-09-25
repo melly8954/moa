@@ -1,0 +1,7 @@
+# harness-psw
+.env
+.env.*
+!.env.example
+
+# git worktree 작업 폴더를 쓸 때 (선택, harness-psw 5.1)
+.worktrees/

@@ -1,0 +1,3 @@
+# harness-psw: 셸 스크립트와 git hook은 CRLF면 실행되지 않는다
+*.sh text eol=lf
+.githooks/* text eol=lf
