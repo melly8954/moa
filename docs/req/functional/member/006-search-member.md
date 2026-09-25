@@ -1,6 +1,6 @@
 ---
 id: FR-MEM-006
-status: draft
+status: approved
 refs: []
 ---
 

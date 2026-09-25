@@ -1,6 +1,6 @@
 ---
 id: FR-MEM-008
-status: draft
+status: approved
 refs: [DAT-RET-001, SEC-AUTH-004]
 ---
 

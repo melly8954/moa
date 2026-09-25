@@ -1,6 +1,6 @@
 ---
 id: FR-REL-005
-status: draft
+status: approved
 refs: []
 ---
 

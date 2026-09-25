@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 평판 정책

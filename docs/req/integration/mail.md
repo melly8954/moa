@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 메일 발송

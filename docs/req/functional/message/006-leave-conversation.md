@@ -1,6 +1,6 @@
 ---
 id: FR-MSG-006
-status: draft
+status: approved
 refs: []
 ---
 

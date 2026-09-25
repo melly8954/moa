@@ -1,6 +1,6 @@
 ---
 id: FR-FEED-003
-status: draft
+status: approved
 refs: []
 ---
 

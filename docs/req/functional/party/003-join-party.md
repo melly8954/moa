@@ -1,6 +1,6 @@
 ---
 id: FR-PTY-003
-status: draft
+status: approved
 refs: []
 ---
 

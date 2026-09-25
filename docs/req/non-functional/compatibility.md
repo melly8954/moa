@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 지원 환경

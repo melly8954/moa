@@ -1,6 +1,6 @@
 ---
 id: FR-ADM-001
-status: draft
+status: approved
 refs: []
 ---
 

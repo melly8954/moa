@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 개인정보

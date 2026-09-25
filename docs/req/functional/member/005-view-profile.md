@@ -1,6 +1,6 @@
 ---
 id: FR-MEM-005
-status: draft
+status: approved
 refs: [SEC-PRIV-002]
 ---
 

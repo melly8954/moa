@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 매칭 정책

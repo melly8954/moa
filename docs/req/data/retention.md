@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 보존과 삭제

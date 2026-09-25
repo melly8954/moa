@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 역할과 권한

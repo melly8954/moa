@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 문자 발송

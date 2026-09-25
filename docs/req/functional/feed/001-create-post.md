@@ -1,6 +1,6 @@
 ---
 id: FR-FEED-001
-status: draft
+status: approved
 refs: [INT-STORAGE-001]
 ---
 

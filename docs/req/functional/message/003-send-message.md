@@ -1,6 +1,6 @@
 ---
 id: FR-MSG-003
-status: draft
+status: approved
 refs: [INT-STORAGE-001]
 ---
 

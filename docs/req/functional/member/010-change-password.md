@@ -1,6 +1,6 @@
 ---
 id: FR-MEM-010
-status: draft
+status: approved
 refs: [SEC-AUTH-002, SEC-AUTH-004]
 ---
 

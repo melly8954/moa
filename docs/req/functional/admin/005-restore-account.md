@@ -1,6 +1,6 @@
 ---
 id: FR-ADM-005
-status: draft
+status: approved
 refs: [DAT-RET-001]
 ---
 

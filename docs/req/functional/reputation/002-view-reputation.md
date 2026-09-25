@@ -1,6 +1,6 @@
 ---
 id: FR-REP-002
-status: draft
+status: approved
 refs: []
 ---
 

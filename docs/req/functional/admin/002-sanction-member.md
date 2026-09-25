@@ -1,6 +1,6 @@
 ---
 id: FR-ADM-002
-status: draft
+status: approved
 refs: [SEC-AUTH-004]
 ---
 

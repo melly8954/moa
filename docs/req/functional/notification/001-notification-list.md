@@ -1,6 +1,6 @@
 ---
 id: FR-NTF-001
-status: draft
+status: approved
 refs: []
 ---
 

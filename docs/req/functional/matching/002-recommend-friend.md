@@ -1,6 +1,6 @@
 ---
 id: FR-MAT-002
-status: draft
+status: approved
 refs: []
 ---
 
