@@ -31,7 +31,7 @@ UI는 디자인을 새로 만들지 않는다. 프론트 키트(`harness-psw-fro
 - 백엔드 키트
   - 저장소: `https://github.com/melly8954/harness-psw-backend.git` (비공개). 로컬 사본 `C:\psw\github\harness-psw-backend`가 있으면 그 경로를 써도 된다
   - 골격 구조, 라이브러리, 헬퍼, 적용 스크립트와 절차(`<프레임워크>/APPLY.md`)는 키트가 소유한다. 하네스에 복사해 두지 않는다
-  - 키트의 문서 조각 중 REQ 초안은 설계에서 REQ로 만들지 않는다. `psw-change`로 기획 루프를 호출한다
+  - 키트의 문서 조각 중 REQ 초안은 설계에서 REQ로 만들지 않는다. `psw-loop`로 기획 루프를 호출한다
 - 순서: 아키텍처 → UI 기초 · 백엔드 기초 → 코드 규칙 → 화면
 - 문서
   - 전역: `architecture.md`, `security.md`, `conventions.md`, `ui/ia/README.md`, `ui/ui-rules.md`, `ui/components.md`, `ui/kit/shell.js`
@@ -46,8 +46,8 @@ UI는 디자인을 새로 만들지 않는다. 프론트 키트(`harness-psw-fro
 - 교차 검증 스크립트가 읽는 형식을 지킨다 (각 템플릿의 주석 참고)
   - `ui/ia/<domain>.md` 화면 목록 행, 목업 첫 줄 메타 주석, 목업의 `data-component`와 `components.md` 첫 열
 - 화면 ID는 `.claude/scripts/psw/next-id.sh SCR-<도메인>`으로 발급한다
-- 요구사항에 결함이 있으면 설계에서 고치지 않는다. `psw-change`로 기획 루프를 호출한다
-- 모르는 것은 `psw-change`로 미결을 등록한다
+- 요구사항에 결함이 있으면 설계에서 고치지 않는다. `psw-loop`로 기획 루프를 호출한다
+- 모르는 것은 `psw-loop`로 미결을 등록한다
 - 프로젝트별 결정(도구, 경로)은 사용자가 정하고, 기록 위치에 `〔YYYY-MM-DD〕 <이유>`를 붙여 적는다 (harness-psw 8.1)
 - `approved`로는 바꾸지 않는다
 
@@ -89,7 +89,7 @@ UI는 디자인을 새로 만들지 않는다. 프론트 키트(`harness-psw-fro
 1. 백엔드 키트를 고른 태그로 임시 폴더에 가져온다: `git clone --depth 1 --branch <태그> <키트 저장소> <임시 폴더>`
 2. 키트의 `<프레임워크>/APPLY.md` 절차대로 `backend/`에 적용한다 (`apply.sh`, 헬퍼·패키지 지정)
 3. 문서 조각을 반영한다 (조각마다 `docs-fragments/<조각>/README.md`)
-   - REQ 초안: `psw-change`로 기획 루프를 호출해 넘긴다. 기획 루프가 범위를 확인하고 REQ로 만든다
+   - REQ 초안: `psw-loop`로 기획 루프를 호출해 넘긴다. 기획 루프가 범위를 확인하고 REQ로 만든다
    - 조각의 역할 이름(예: ADMIN)이 `docs/req/actors.md`와 다르면 코드를 actors.md에 맞춘다
    - 다 넣었으면 `docs-fragments/`를 지운다
 4. `architecture.md`를 채운다

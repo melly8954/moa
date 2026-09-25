@@ -14,9 +14,9 @@ description: harness-psw 기획 인터뷰를 진행한다. 프로젝트 주제�
 | 프로젝트 주제 (사용자) | `docs/req/README.md` (개요, 범위, 제약, 코드표, 해당 없음) |
 | 기존 REQ, `docs/open-question.md` (다시 묻는 경우) | `docs/req/actors.md` (역할 목록) |
 | | `docs/req/functional/<domain>/README.md` (기능 목록) |
-| | `docs/req/functional/<domain>/<feature>.md` (흐름 초안) |
+| | `docs/req/functional/<domain>/<NNN>-<feature>.md` (흐름 초안) |
 | | 영역 파일 (`non-functional/` 등, 항목 초안) |
-| | 미결 (`psw-change` 절차 A) |
+| | 미결 (`psw-loop` 절차 A) |
 
 ## 규칙
 
@@ -25,7 +25,7 @@ description: harness-psw 기획 인터뷰를 진행한다. 프로젝트 주제�
 - 한 번에 3~5개씩 묻는다
   → 한꺼번에 많이 물으면 답이 얕아진다
 - 질문마다 선택지와 추천안을 함께 제시한다
-- 모르는 답은 추측하지 않는다. `psw-change` 절차 A로 `docs/open-question.md`에 등록하고 다음 질문으로 넘어간다
+- 모르는 답은 추측하지 않는다. `psw-loop` 절차 A로 `docs/open-question.md`에 등록하고 다음 질문으로 넘어간다
   - 항목의 `체크리스트:` 줄에 체크리스트 ID를 적는다
 - 해당 없는 항목은 `req/README.md`의 해당 없음 표에 체크리스트 ID와 사유를 적는다
 - 답을 반영한 자리에는 체크리스트 ID를 주석으로 남긴다 (예: `<!-- ck-dir-1 -->`)
@@ -37,7 +37,7 @@ description: harness-psw 기획 인터뷰를 진행한다. 프로젝트 주제�
   - 기능 1개 = 사용자가 독립적으로 시작하고 끝내는 행위 1개
   - 규칙·수치나 여러 기능이 함께 쓰는 것은 기능으로 만들지 않고 정책 후보로 적어 둔다 (`psw-req`가 `_policy.md`에 쓴다)
 - 수용 기준, 정책 수치, 권한 매트릭스는 쓰지 않는다. `psw-req`가 쓴다
-- `approved` 문서는 고치지 않는다. 다시 묻는 경우 답이 승인된 내용을 바꾸면 `psw-change` 절차 D로 보낸다
+- `approved` 문서는 고치지 않는다. 다시 묻는 경우 답이 승인된 내용을 바꾸면 `psw-loop` 절차 D로 보낸다
 
 ## 절차
 
@@ -62,7 +62,7 @@ description: harness-psw 기획 인터뷰를 진행한다. 프로젝트 주제�
 1. 체크리스트 순서대로 묻는다: 방향성 → 행위자 → 기능 → 비기능·보안·연동·데이터 → 제약
    → 기능이 나와야 비기능의 적용 범위가 정해진다
 2. 기능(ck-fun-2, ck-fun-3)은 도메인마다 반복해서 묻는다
-   - 핵심 행위마다 기능 목록에 한 줄(ID, 한 줄 요구, 우선순위)을 넣고 FR 파일을 만든다
+   - 핵심 행위마다 기능 목록에 한 줄(ID, 한 줄 요구, 우선순위)을 넣고 FR 파일을 만든다. 파일 이름은 `<ID 번호>-<행위>.md` (예: `001-login-email.md`)
    - FR 파일에는 행위자, 주 흐름, 예외 흐름까지만 적는다
 3. 묶음마다 답을 해당 파일에 바로 적는다
 

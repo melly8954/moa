@@ -19,11 +19,11 @@ description: harness-psw 요구사항(REQ)의 상세를 채운다. 인터뷰가 
 ## 규칙
 
 - 템플릿: `references/*.md`
-- 기능 목록(도메인 `README.md`)과 영역 파일에 없는 요구를 만들지 않는다. 필요해 보이면 사용자에게 묻고, 답이 없으면 `psw-change`로 미결을 등록한다
+- 기능 목록(도메인 `README.md`)과 영역 파일에 없는 요구를 만들지 않는다. 필요해 보이면 사용자에게 묻고, 답이 없으면 `psw-loop`로 미결을 등록한다
   → 범위는 인터뷰에서 사용자가 정한다
-- 상세를 모르면 추측하지 않는다. 사용자에게 묻거나 `[OPEN-NNN]` 자리표시를 둔다 (`psw-change` 절차 A)
+- 상세를 모르면 추측하지 않는다. 사용자에게 묻거나 `[OPEN-NNN]` 자리표시를 둔다 (`psw-loop` 절차 A)
 - 파일 구성
-  - 기능 목록의 한 줄 = FR 파일 1개. 파일 이름은 행위를 나타내는 영어 kebab-case (예: `guest-checkout.md`)
+  - 기능 목록의 한 줄 = FR 파일 1개. 파일 이름은 `<ID 번호>-<행위>.md`다. 번호는 FR ID의 세 자리 번호, 행위는 영어 kebab-case (예: `FR-ORD-010` → `010-guest-checkout.md`)
   - FR 파일 제목은 기능 목록의 한 줄 요구와 같게 쓴다
   - 우선순위는 FR 파일에 적지 않는다 (도메인 `README.md`가 소유)
   - 둘 이상의 기능이 같이 쓰는 규칙·수치는 `_policy.md`에만 적고, FR은 항목 이름으로 참조한다
@@ -41,7 +41,7 @@ description: harness-psw 요구사항(REQ)의 상세를 채운다. 인터뷰가 
 - 역할별 권한은 `actors.md`에만 적는다. FR의 행위자에는 주 흐름을 수행하는 주체만 적는다
 - 사용자가 선택지 중에서 고른 값에는 결정 기록을 붙인다: `<값> 〔YYYY-MM-DD〕 <이유>` (harness-psw 8.1)
 - `approved`로는 바꾸지 않는다. 승인은 사용자가 한다
-- `approved` 문서의 내용을 바꿔야 하면 `psw-change` 절차 D를 따른다
+- `approved` 문서의 내용을 바꿔야 하면 `psw-loop` 절차 D를 따른다
 
 ## 절차
 
@@ -58,7 +58,7 @@ description: harness-psw 요구사항(REQ)의 상세를 채운다. 인터뷰가 
 
 ### 2. 갱신 (요구사항이 바뀐 뒤)
 
-1. `psw-change`나 `psw-interview`가 넘긴 바뀐 ID만 다룬다
+1. `psw-loop`나 `psw-interview`가 넘긴 바뀐 ID만 다룬다
 2. 추가된 ID: 1단계와 같이 만든다. 기능 목록에 행이 없으면 먼저 넣는다
 3. 바뀐 ID: 해당 파일을 고친다. `approved`였으면 `draft`로 되돌린다
 4. 삭제된 ID: 기능 목록의 행과 FR 파일(또는 영역 표의 행)을 지운다

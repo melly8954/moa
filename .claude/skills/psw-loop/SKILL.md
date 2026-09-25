@@ -1,9 +1,9 @@
 ---
-name: psw-change
+name: psw-loop
 description: harness-psw 피드백 루프를 처리한다. 미결(docs/open-question.md) 등록·해결·보류, 승인된 내용의 변경(사용자 수락 후 반영·재승인), 영향 분석, 루프 종료 조건 확인에 사용한다. 기획·설계·구현 어느 단계에서든 모르는 것이나 바꿔야 할 것을 발견하면 호출한다.
 ---
 
-# psw-change
+# psw-loop
 
 피드백 루프의 공통 절차다. 기획·설계·구현 스킬은 이 절차를 복사하지 않고 이 스킬을 호출한다.
 

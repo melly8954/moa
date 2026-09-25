@@ -6,4 +6,4 @@
 
 | ID | 기능 | 우선순위 | 파일 |
 |---|---|---|---|
-| <FR-ORD-001> | <한 줄 요구. FR 파일 제목과 같게 유지> | must / should / could / won't | `<checkout>.md` |
+| <FR-ORD-001> | <한 줄 요구. FR 파일 제목과 같게 유지> | must / should / could / won't | `<001-checkout>.md` |
