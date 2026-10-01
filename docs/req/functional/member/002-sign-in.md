@@ -1,6 +1,6 @@
 ---
 id: FR-MEM-002
-status: approved
+status: draft
 refs: [SEC-AUTH-001, SEC-AUTH-004, INT-GOOGLE-001, INT-KAKAO-001]
 ---
 
@@ -21,7 +21,7 @@ refs: [SEC-AUTH-001, SEC-AUTH-004, INT-GOOGLE-001, INT-KAKAO-001]
 <!-- ck-fun-3 -->
 
 1. 비회원이 이메일·비밀번호를 입력하거나 구글·카카오로 인증한다
-2. 시스템이 로그인 세션을 발급하고 직전에 보던 화면이나 홈으로 보낸다
+2. 시스템이 로그인 세션을 발급하고 직전에 보던 화면이나 홈으로 보낸다 (관리자: [OPEN-013])
 
 ## 예외 흐름
 

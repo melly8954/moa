@@ -1,6 +1,6 @@
 ---
 id: FR-MEM-001
-status: approved
+status: draft
 refs: [SEC-AUTH-001, SEC-AUTH-002, SEC-AUTH-003, SEC-PRIV-001, INT-GOOGLE-001, INT-GOOGLE-002, INT-KAKAO-001, INT-KAKAO-002, INT-MAIL-001, INT-MAIL-002, INT-SMS-001, INT-SMS-002, DAT-RET-002]
 ---
 
@@ -35,7 +35,7 @@ refs: [SEC-AUTH-001, SEC-AUTH-002, SEC-AUTH-003, SEC-PRIV-001, INT-GOOGLE-001, I
 - E4. 이메일 인증 링크가 만료됐으면 → 인증 메일을 다시 받게 한다
 - E5. 구글·카카오 인증에 실패하거나 취소하면 → 가입 화면으로 돌아간다
 - E6. 가입 나이에 미달하면 → 가입을 막는다
-- E7. 휴대폰 번호가 다른 계정에 이미 인증됐으면 → 휴대폰 번호 중복 안내 규칙대로 막고 안내한다
+- E7. 휴대폰 번호가 다른 계정에 이미 인증됐으면 → 휴대폰 번호 중복 안내 규칙대로 막고 안내한다. 탈퇴 유예 중 계정의 번호면: [OPEN-018]
 - E8. 휴대폰 번호가 재가입 제한 중이면 → 가입을 막는다
 - E9. 문자 인증 번호가 틀리거나 만료되면 → 다시 입력하거나 다시 받게 한다
 - E10. 닉네임 규칙에 맞지 않거나 이미 쓰이면 → 다른 닉네임을 입력하게 한다
