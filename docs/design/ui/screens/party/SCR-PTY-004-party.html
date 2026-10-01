@@ -1,0 +1,246 @@
+<!-- psw id: SCR-PTY-004 | refs: FR-PTY-005, FR-PTY-006, FR-PTY-008, FR-PTY-009 | status: draft -->
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SCR-PTY-004 파티</title>
+
+  <!-- 프로젝트 테마. 이 파일 기준 상대 경로로 바꾼다 (Next: frontend/app/theme.css) -->
+  <link rel="stylesheet" href="../../../../../frontend/app/theme.css">
+
+  <!-- Tailwind 브라우저 빌드. 인터넷 연결이 필요하다 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- 셸: 프로젝트의 docs/design/ui/kit/shell.js. 이 파일 기준 상대 경로로 바꾼다 (web/mockup/README.md)
+       셸을 쓰지 않는 화면(로그인 등)은 이 줄을 지운다 -->
+  <script src="../../kit/shell.js" defer></script>
+
+  <!--
+    shadcn/ui(base-nova)가 만드는 globals.css와 shadcn/tailwind.css 중 모양에 필요한 부분.
+    컴포넌트 조각이 이 정의를 쓴다. 고치지 않는다. 키트의 playground 검증 절차로 확인한 값이다.
+  -->
+  <style type="text/tailwindcss">
+    @custom-variant dark (&:is(.dark *));
+
+    @custom-variant data-open { &:where([data-state="open"]), &:where([data-open]:not([data-open="false"])) { @slot; } }
+    @custom-variant data-closed { &:where([data-state="closed"]), &:where([data-closed]:not([data-closed="false"])) { @slot; } }
+    @custom-variant data-checked { &:where([data-state="checked"]), &:where([data-checked]:not([data-checked="false"])) { @slot; } }
+    @custom-variant data-unchecked { &:where([data-state="unchecked"]), &:where([data-unchecked]:not([data-unchecked="false"])) { @slot; } }
+    @custom-variant data-selected { &:where([data-selected="true"]) { @slot; } }
+    @custom-variant data-disabled { &:where([data-disabled="true"]), &:where([data-disabled]:not([data-disabled="false"])) { @slot; } }
+    @custom-variant data-active { &:where([data-state="active"]), &:where([data-active]:not([data-active="false"])) { @slot; } }
+    @custom-variant data-horizontal { &:where([data-orientation="horizontal"]) { @slot; } }
+    @custom-variant data-vertical { &:where([data-orientation="vertical"]) { @slot; } }
+    @utility no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; &::-webkit-scrollbar { display: none; } }
+
+    @theme inline {
+      --font-heading: ui-sans-serif, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      --color-background: var(--background);
+      --color-foreground: var(--foreground);
+      --color-sidebar-ring: var(--sidebar-ring);
+      --color-sidebar-border: var(--sidebar-border);
+      --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+      --color-sidebar-accent: var(--sidebar-accent);
+      --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+      --color-sidebar-primary: var(--sidebar-primary);
+      --color-sidebar-foreground: var(--sidebar-foreground);
+      --color-sidebar: var(--sidebar);
+      --color-chart-5: var(--chart-5);
+      --color-chart-4: var(--chart-4);
+      --color-chart-3: var(--chart-3);
+      --color-chart-2: var(--chart-2);
+      --color-chart-1: var(--chart-1);
+      --color-ring: var(--ring);
+      --color-input: var(--input);
+      --color-border: var(--border);
+      --color-destructive: var(--destructive);
+      --color-accent-foreground: var(--accent-foreground);
+      --color-accent: var(--accent);
+      --color-muted-foreground: var(--muted-foreground);
+      --color-muted: var(--muted);
+      --color-secondary-foreground: var(--secondary-foreground);
+      --color-secondary: var(--secondary);
+      --color-primary-foreground: var(--primary-foreground);
+      --color-primary: var(--primary);
+      --color-popover-foreground: var(--popover-foreground);
+      --color-popover: var(--popover);
+      --color-card-foreground: var(--card-foreground);
+      --color-card: var(--card);
+      --radius-sm: calc(var(--radius) * 0.6);
+      --radius-md: calc(var(--radius) * 0.8);
+      --radius-lg: var(--radius);
+      --radius-xl: calc(var(--radius) * 1.4);
+      --radius-2xl: calc(var(--radius) * 1.8);
+      --radius-3xl: calc(var(--radius) * 2.2);
+      --radius-4xl: calc(var(--radius) * 2.6);
+    }
+
+    @layer base {
+      * { @apply border-border outline-ring/50; }
+      body { @apply bg-background text-foreground; }
+    }
+  </style>
+
+  <!-- 목업 전용: 상태·테마 전환 막대. 화면 디자인에는 쓰지 않는다. 셸을 가리지 않게 오른쪽 아래에 띄운다 -->
+  <style>
+    .mock-bar { position: fixed; right: 1rem; bottom: 1rem; z-index: 60; border-radius: 8px; display: flex; flex-wrap: wrap; gap: .5rem; padding: .5rem 1rem; background: #111; font: 13px system-ui, sans-serif; }
+    .mock-bar button { padding: .2rem .7rem; border: 0; border-radius: 4px; cursor: pointer; background: #e5e5e5; }
+    .mock-bar button[aria-pressed="true"] { background: #facc15; }
+    .mock-bar span { color: #999; margin-left: .5rem; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <nav class="mock-bar" aria-label="목업 상태">
+    <button type="button" data-show="default" aria-pressed="true">기본</button>
+    <button type="button" data-show="empty" aria-pressed="false">빈 상태</button>
+    <button type="button" data-show="loading" aria-pressed="false">로딩</button>
+    <button type="button" data-show="error" aria-pressed="false">오류</button>
+    <span>|</span>
+    <button type="button" data-dark aria-pressed="false">다크</button>
+  </nav>
+
+  <main class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
+    <section data-mock-state="default" class="flex flex-col gap-6">
+      <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">주말 칼바람 5인</div>
+          <div data-slot="card-description" class="text-sm text-muted-foreground">리그 오브 레전드 · 파티원 3/5</div>
+          <div data-slot="card-action" class="col-start-2 row-span-2 row-start-1 self-start justify-self-end"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">채팅방</button></div>
+        </div>
+        <div data-slot="card-content" class="px-(--card-spacing)"><div class="flex flex-col gap-2">
+        <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
+        <div data-slot="card-content" class="px-(--card-spacing)"><div class="flex flex-col gap-2">
+        <div class="flex flex-wrap items-center gap-2"><span data-component="Badge" data-slot="badge" data-variant="outline" class="group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-3! border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground">리그 오브 레전드</span><span data-component="Badge" data-slot="badge" data-variant="ghost" class="group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-3! hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50">칼바람 나락</span><span data-component="Badge" data-slot="badge" data-variant="default" class="group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-3! bg-primary text-primary-foreground [a]:hover:bg-primary/80">즉시 참여</span><span data-component="Badge" data-slot="badge" data-variant="secondary" class="group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-3! bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80">모집 중</span></div>
+        <a href="#" class="font-medium hover:underline">주말 칼바람 5인</a>
+        <span class="text-sm text-muted-foreground">골드 ~ 다이아몬드 · 2명 구함 · 3/5 · 10분 전</span>
+      </div></div>
+      </div>
+        <div class="flex flex-wrap gap-2"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">참여 신청 2</button><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">모집 마감</button><button type="button" data-component="Button" data-variant="ghost" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">모집 취소</button></div>
+      </div></div>
+      </div>
+      <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">파티원</div>
+          <div data-slot="card-action" class="col-start-2 row-span-2 row-start-1 self-start justify-self-end"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">친구 초대</button></div>
+        </div>
+        <div data-slot="card-content" class="px-(--card-spacing)"><div class="flex flex-col divide-y">
+      <div class="flex items-center gap-3 py-2">
+        <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">롤</span></span>
+        <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">롤하는곰</span><span class="truncate text-xs text-muted-foreground">방장 · Lv.12</span></div>
+        
+      </div>
+      <div class="flex items-center gap-3 py-2">
+        <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">곰</span></span>
+        <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">곰돌이탱커</span><span class="truncate text-xs text-muted-foreground">Lv.5</span></div>
+        <div class="flex shrink-0 gap-2"><button type="button" data-component="Button" data-variant="ghost" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">방장 넘기기</button><button type="button" data-component="Button" data-variant="ghost" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">내보내기</button></div>
+      </div>
+      <div class="flex items-center gap-3 py-2">
+        <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">미</span></span>
+        <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">미드차이</span><span class="truncate text-xs text-muted-foreground">Lv.21</span></div>
+        <div class="flex shrink-0 gap-2"><button type="button" data-component="Button" data-variant="ghost" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">방장 넘기기</button><button type="button" data-component="Button" data-variant="ghost" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">내보내기</button></div>
+      </div>
+      </div></div>
+        <div data-slot="card-footer" class="flex items-center rounded-b-xl border-t bg-muted/50 p-(--card-spacing)"><div class="flex w-full justify-end"><button type="button" data-component="Button" data-variant="destructive" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-3 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">파티 나가기</button></div></div>
+      </div>
+      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: 방장에게 보이는 모습. 파티원에게는 방장 전용 버튼(신청 목록, 마감·취소, 방장 넘기기, 내보내기, 모집 열기)이 없다</p>
+    </section>
+
+    <section data-mock-state="empty" hidden class="flex flex-col gap-6">
+      <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">주말 칼바람 5인</div>
+          <div data-slot="card-description" class="text-sm text-muted-foreground">파티원 1/5</div>
+        </div>
+        <div data-slot="card-content" class="px-(--card-spacing)"><div class="flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-12 text-center">
+        <p class="text-sm text-muted-foreground">열린 모집이 없습니다</p>
+        <button type="button" data-component="Button" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">모집 열기</button>
+      </div></div>
+      </div>
+      <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">파티원</div>
+          <div data-slot="card-action" class="col-start-2 row-span-2 row-start-1 self-start justify-self-end"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">친구 초대</button></div>
+        </div>
+        <div data-slot="card-content" class="px-(--card-spacing)"><div class="flex flex-col divide-y">
+      <div class="flex items-center gap-3 py-2">
+        <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">롤</span></span>
+        <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">롤하는곰</span><span class="truncate text-xs text-muted-foreground">방장 · Lv.12</span></div>
+        
+      </div>
+      </div></div>
+      </div>
+      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: 모집이 없고 혼자인 파티. 혼자 남은 방장이 나가면 파티가 없어진다</p>
+    </section>
+
+    <section data-mock-state="loading" hidden class="flex flex-col gap-3">
+      <div data-component="Skeleton" data-slot="skeleton" class="animate-pulse rounded-md bg-muted h-32 w-full"></div>
+      <div data-component="Skeleton" data-slot="skeleton" class="animate-pulse rounded-md bg-muted h-32 w-full"></div>
+    </section>
+
+    <section data-mock-state="error" hidden class="flex flex-col gap-6">
+      <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
+        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">파티를 나갈 수 없습니다</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">다른 파티원이 있으면 방장을 넘긴 뒤 나갈 수 있습니다.</div>
+      </div>
+      <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">주말 칼바람 5인</div>
+          <div data-slot="card-description" class="text-sm text-muted-foreground">리그 오브 레전드 · 파티원 3/5</div>
+          <div data-slot="card-action" class="col-start-2 row-span-2 row-start-1 self-start justify-self-end"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">채팅방</button></div>
+        </div>
+        <div data-slot="card-content" class="px-(--card-spacing)"><div class="flex flex-col gap-2">
+        <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
+        <div data-slot="card-content" class="px-(--card-spacing)"><div class="flex flex-col gap-2">
+        <div class="flex flex-wrap items-center gap-2"><span data-component="Badge" data-slot="badge" data-variant="outline" class="group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-3! border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground">리그 오브 레전드</span><span data-component="Badge" data-slot="badge" data-variant="ghost" class="group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-3! hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50">칼바람 나락</span><span data-component="Badge" data-slot="badge" data-variant="default" class="group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-3! bg-primary text-primary-foreground [a]:hover:bg-primary/80">즉시 참여</span><span data-component="Badge" data-slot="badge" data-variant="secondary" class="group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-3! bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80">모집 중</span></div>
+        <a href="#" class="font-medium hover:underline">주말 칼바람 5인</a>
+        <span class="text-sm text-muted-foreground">골드 ~ 다이아몬드 · 2명 구함 · 3/5 · 10분 전</span>
+      </div></div>
+      </div>
+        <div class="flex flex-wrap gap-2"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">참여 신청 2</button><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">모집 마감</button><button type="button" data-component="Button" data-variant="ghost" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">모집 취소</button></div>
+      </div></div>
+      </div>
+      <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">파티원</div>
+          <div data-slot="card-action" class="col-start-2 row-span-2 row-start-1 self-start justify-self-end"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">친구 초대</button></div>
+        </div>
+        <div data-slot="card-content" class="px-(--card-spacing)"><div class="flex flex-col divide-y">
+      <div class="flex items-center gap-3 py-2">
+        <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">롤</span></span>
+        <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">롤하는곰</span><span class="truncate text-xs text-muted-foreground">방장 · Lv.12</span></div>
+        
+      </div>
+      <div class="flex items-center gap-3 py-2">
+        <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">곰</span></span>
+        <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">곰돌이탱커</span><span class="truncate text-xs text-muted-foreground">Lv.5</span></div>
+        <div class="flex shrink-0 gap-2"><button type="button" data-component="Button" data-variant="ghost" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">방장 넘기기</button><button type="button" data-component="Button" data-variant="ghost" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">내보내기</button></div>
+      </div>
+      <div class="flex items-center gap-3 py-2">
+        <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">미</span></span>
+        <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">미드차이</span><span class="truncate text-xs text-muted-foreground">Lv.21</span></div>
+        <div class="flex shrink-0 gap-2"><button type="button" data-component="Button" data-variant="ghost" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">방장 넘기기</button><button type="button" data-component="Button" data-variant="ghost" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">내보내기</button></div>
+      </div>
+      </div></div>
+        <div data-slot="card-footer" class="flex items-center rounded-b-xl border-t bg-muted/50 p-(--card-spacing)"><div class="flex w-full justify-end"><button type="button" data-component="Button" data-variant="destructive" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-3 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">파티 나가기</button></div></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // 목업 전용: 네 가지 상태와 다크 테마를 전환한다
+    const bar = document.querySelector('.mock-bar');
+    bar.querySelectorAll('[data-show]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-mock-state]').forEach((s) => { s.hidden = s.dataset.mockState !== btn.dataset.show; });
+        bar.querySelectorAll('[data-show]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      });
+    });
+    const dark = bar.querySelector('[data-dark]');
+    dark.addEventListener('click', () => {
+      const on = document.documentElement.classList.toggle('dark');
+      dark.setAttribute('aria-pressed', String(on));
+    });
+  </script>
+</body>
+</html>

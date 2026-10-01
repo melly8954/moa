@@ -1,0 +1,246 @@
+<!-- psw id: SCR-FEED-004 | refs: FR-FEED-001, INT-STORAGE-001 | status: draft -->
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SCR-FEED-004 게시물 쓰기</title>
+
+  <!-- 프로젝트 테마. 이 파일 기준 상대 경로로 바꾼다 (Next: frontend/app/theme.css) -->
+  <link rel="stylesheet" href="../../../../../frontend/app/theme.css">
+
+  <!-- Tailwind 브라우저 빌드. 인터넷 연결이 필요하다 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- 셸: 프로젝트의 docs/design/ui/kit/shell.js. 이 파일 기준 상대 경로로 바꾼다 (web/mockup/README.md)
+       셸을 쓰지 않는 화면(로그인 등)은 이 줄을 지운다 -->
+  <script src="../../kit/shell.js" defer></script>
+
+  <!--
+    shadcn/ui(base-nova)가 만드는 globals.css와 shadcn/tailwind.css 중 모양에 필요한 부분.
+    컴포넌트 조각이 이 정의를 쓴다. 고치지 않는다. 키트의 playground 검증 절차로 확인한 값이다.
+  -->
+  <style type="text/tailwindcss">
+    @custom-variant dark (&:is(.dark *));
+
+    @custom-variant data-open { &:where([data-state="open"]), &:where([data-open]:not([data-open="false"])) { @slot; } }
+    @custom-variant data-closed { &:where([data-state="closed"]), &:where([data-closed]:not([data-closed="false"])) { @slot; } }
+    @custom-variant data-checked { &:where([data-state="checked"]), &:where([data-checked]:not([data-checked="false"])) { @slot; } }
+    @custom-variant data-unchecked { &:where([data-state="unchecked"]), &:where([data-unchecked]:not([data-unchecked="false"])) { @slot; } }
+    @custom-variant data-selected { &:where([data-selected="true"]) { @slot; } }
+    @custom-variant data-disabled { &:where([data-disabled="true"]), &:where([data-disabled]:not([data-disabled="false"])) { @slot; } }
+    @custom-variant data-active { &:where([data-state="active"]), &:where([data-active]:not([data-active="false"])) { @slot; } }
+    @custom-variant data-horizontal { &:where([data-orientation="horizontal"]) { @slot; } }
+    @custom-variant data-vertical { &:where([data-orientation="vertical"]) { @slot; } }
+    @utility no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; &::-webkit-scrollbar { display: none; } }
+
+    @theme inline {
+      --font-heading: ui-sans-serif, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      --color-background: var(--background);
+      --color-foreground: var(--foreground);
+      --color-sidebar-ring: var(--sidebar-ring);
+      --color-sidebar-border: var(--sidebar-border);
+      --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+      --color-sidebar-accent: var(--sidebar-accent);
+      --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+      --color-sidebar-primary: var(--sidebar-primary);
+      --color-sidebar-foreground: var(--sidebar-foreground);
+      --color-sidebar: var(--sidebar);
+      --color-chart-5: var(--chart-5);
+      --color-chart-4: var(--chart-4);
+      --color-chart-3: var(--chart-3);
+      --color-chart-2: var(--chart-2);
+      --color-chart-1: var(--chart-1);
+      --color-ring: var(--ring);
+      --color-input: var(--input);
+      --color-border: var(--border);
+      --color-destructive: var(--destructive);
+      --color-accent-foreground: var(--accent-foreground);
+      --color-accent: var(--accent);
+      --color-muted-foreground: var(--muted-foreground);
+      --color-muted: var(--muted);
+      --color-secondary-foreground: var(--secondary-foreground);
+      --color-secondary: var(--secondary);
+      --color-primary-foreground: var(--primary-foreground);
+      --color-primary: var(--primary);
+      --color-popover-foreground: var(--popover-foreground);
+      --color-popover: var(--popover);
+      --color-card-foreground: var(--card-foreground);
+      --color-card: var(--card);
+      --radius-sm: calc(var(--radius) * 0.6);
+      --radius-md: calc(var(--radius) * 0.8);
+      --radius-lg: var(--radius);
+      --radius-xl: calc(var(--radius) * 1.4);
+      --radius-2xl: calc(var(--radius) * 1.8);
+      --radius-3xl: calc(var(--radius) * 2.2);
+      --radius-4xl: calc(var(--radius) * 2.6);
+    }
+
+    @layer base {
+      * { @apply border-border outline-ring/50; }
+      body { @apply bg-background text-foreground; }
+    }
+  </style>
+
+  <!-- 목업 전용: 상태·테마 전환 막대. 화면 디자인에는 쓰지 않는다. 셸을 가리지 않게 오른쪽 아래에 띄운다 -->
+  <style>
+    .mock-bar { position: fixed; right: 1rem; bottom: 1rem; z-index: 60; border-radius: 8px; display: flex; flex-wrap: wrap; gap: .5rem; padding: .5rem 1rem; background: #111; font: 13px system-ui, sans-serif; }
+    .mock-bar button { padding: .2rem .7rem; border: 0; border-radius: 4px; cursor: pointer; background: #e5e5e5; }
+    .mock-bar button[aria-pressed="true"] { background: #facc15; }
+    .mock-bar span { color: #999; margin-left: .5rem; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <nav class="mock-bar" aria-label="목업 상태">
+    <button type="button" data-show="default" aria-pressed="true">기본</button>
+    <button type="button" data-show="empty" aria-pressed="false">빈 상태</button>
+    <button type="button" data-show="loading" aria-pressed="false">로딩</button>
+    <button type="button" data-show="error" aria-pressed="false">오류</button>
+    <span>|</span>
+    <button type="button" data-dark aria-pressed="false">다크</button>
+  </nav>
+
+  <main class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
+    <h1 class="font-heading text-2xl font-medium">게시물 쓰기</h1>
+
+    <section data-mock-state="default" class="flex flex-col gap-6">
+      <div class="grid gap-4">
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f1" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">게임</label>
+        <button type="button" role="combobox" data-component="Select" data-slot="select-trigger" data-size="default" class="flex items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent py-2 pr-2 pl-2.5 text-sm whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-8 data-[size=sm]:h-7 data-[size=sm]:rounded-[min(var(--radius-md),10px)] *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 w-full">
+        <span data-slot="select-value" class="flex flex-1 text-left">리그 오브 레전드</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none size-4 text-muted-foreground"><path d="m6 9 6 6 6-6"></path></svg>
+      </button>
+      </div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f2" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">본문</label>
+        <textarea data-component="Textarea" data-slot="textarea" placeholder="무슨 일이 있었나요?" class="flex field-sizing-content min-h-16 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">오늘 칼바람 5연승 🎉 서폿으로 캐리하는 법</textarea>
+        <p class="text-sm text-muted-foreground">28/2,000</p>
+      </div>
+        <div class="grid gap-2">
+          <span class="text-sm font-medium">첨부</span>
+          <div class="grid grid-cols-4 gap-1"><div class="aspect-square rounded-md bg-muted"></div><div class="aspect-square rounded-md bg-muted"></div></div>
+          <div class="flex flex-wrap gap-2"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">사진 올리기</button><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">동영상 올리기</button><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">영상 링크 붙이기</button></div>
+          <p class="text-xs text-muted-foreground">사진(JPG·PNG·GIF·WEBP, 10MB, 10장) 또는 동영상(MP4·WEBM, 60초·100MB, 1개) 중 한 종류. 영상 링크 1개</p>
+          
+        </div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f3" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">해시태그</label>
+        <input data-component="Input" data-slot="input" id="f3" type="text" placeholder="#태그 (10개까지)" value="#서폿 #칼바람" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+      </div>
+        <div class="flex justify-end gap-2"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">취소</button><button type="button" data-component="Button" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">올리기</button></div>
+      </div>
+      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: 사진·동영상은 고르는 즉시 저장소로 올라가고, 올리기를 누르면 서버가 형식·크기·길이를 확인한다</p>
+    </section>
+
+    <section data-mock-state="empty" hidden class="flex flex-col gap-6">
+      <div class="grid gap-4">
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f4" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">게임</label>
+        <button type="button" role="combobox" data-component="Select" data-slot="select-trigger" data-size="default" data-placeholder class="flex items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent py-2 pr-2 pl-2.5 text-sm whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-8 data-[size=sm]:h-7 data-[size=sm]:rounded-[min(var(--radius-md),10px)] *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 w-full">
+        <span data-slot="select-value" class="flex flex-1 text-left">리그 오브 레전드</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none size-4 text-muted-foreground"><path d="m6 9 6 6 6-6"></path></svg>
+      </button>
+      </div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f5" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">본문</label>
+        <textarea data-component="Textarea" data-slot="textarea" placeholder="무슨 일이 있었나요?" class="flex field-sizing-content min-h-16 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"></textarea>
+        <p class="text-sm text-muted-foreground">0/2,000</p>
+      </div>
+        <div class="grid gap-2">
+          <span class="text-sm font-medium">첨부</span>
+          
+          <div class="flex flex-wrap gap-2"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">사진 올리기</button><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">동영상 올리기</button><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">영상 링크 붙이기</button></div>
+          <p class="text-xs text-muted-foreground">사진(JPG·PNG·GIF·WEBP, 10MB, 10장) 또는 동영상(MP4·WEBM, 60초·100MB, 1개) 중 한 종류. 영상 링크 1개</p>
+          
+        </div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f6" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">해시태그</label>
+        <input data-component="Input" data-slot="input" id="f6" type="text" placeholder="#태그 (10개까지)" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+      </div>
+        <div class="flex justify-end gap-2"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">취소</button><button type="button" data-component="Button" data-slot="button" disabled class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">올리기</button></div>
+      </div>
+    </section>
+
+    <section data-mock-state="loading" hidden class="flex flex-col gap-3">
+      <div class="grid gap-4">
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f7" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">게임</label>
+        <button type="button" role="combobox" data-component="Select" data-slot="select-trigger" data-size="default" class="flex items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent py-2 pr-2 pl-2.5 text-sm whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-8 data-[size=sm]:h-7 data-[size=sm]:rounded-[min(var(--radius-md),10px)] *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 w-full">
+        <span data-slot="select-value" class="flex flex-1 text-left">리그 오브 레전드</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none size-4 text-muted-foreground"><path d="m6 9 6 6 6-6"></path></svg>
+      </button>
+      </div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f8" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">본문</label>
+        <textarea data-component="Textarea" data-slot="textarea" placeholder="무슨 일이 있었나요?" class="flex field-sizing-content min-h-16 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">오늘 칼바람 5연승</textarea>
+        <p class="text-sm text-muted-foreground">28/2,000</p>
+      </div>
+        <div class="grid gap-2">
+          <span class="text-sm font-medium">첨부</span>
+          <div class="grid grid-cols-4 gap-1"><div class="aspect-square rounded-md bg-muted"></div><div class="aspect-square rounded-md bg-muted"></div></div>
+          <div class="flex flex-wrap gap-2"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">사진 올리기</button><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">동영상 올리기</button><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">영상 링크 붙이기</button></div>
+          <p class="text-xs text-muted-foreground">사진(JPG·PNG·GIF·WEBP, 10MB, 10장) 또는 동영상(MP4·WEBM, 60초·100MB, 1개) 중 한 종류. 영상 링크 1개</p>
+          
+        </div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f9" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">해시태그</label>
+        <input data-component="Input" data-slot="input" id="f9" type="text" placeholder="#태그 (10개까지)" value="#서폿 #칼바람" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+      </div>
+        <div class="flex justify-end gap-2"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">취소</button><button type="button" data-component="Button" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">올리기</button></div>
+      </div>
+      <div class="flex items-center gap-2 text-sm text-muted-foreground"><div data-component="Skeleton" data-slot="skeleton" class="animate-pulse rounded-md bg-muted h-2 w-40"></div><span>동영상 올리는 중 64%</span></div>
+    </section>
+
+    <section data-mock-state="error" hidden class="flex flex-col gap-6">
+      <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
+        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">올리지 못했습니다</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">동영상은 60초 이하만 올릴 수 있습니다.</div>
+      </div>
+      <div class="grid gap-4">
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f10" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">게임</label>
+        <button type="button" role="combobox" data-component="Select" data-slot="select-trigger" data-size="default" class="flex items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent py-2 pr-2 pl-2.5 text-sm whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-8 data-[size=sm]:h-7 data-[size=sm]:rounded-[min(var(--radius-md),10px)] *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 w-full">
+        <span data-slot="select-value" class="flex flex-1 text-left">리그 오브 레전드</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none size-4 text-muted-foreground"><path d="m6 9 6 6 6-6"></path></svg>
+      </button>
+      </div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f11" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">본문</label>
+        <textarea data-component="Textarea" data-slot="textarea" placeholder="무슨 일이 있었나요?" aria-invalid="true" class="flex field-sizing-content min-h-16 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"></textarea>
+        <p class="text-sm text-muted-foreground">28/2,000</p>
+        <p class="text-sm text-destructive">본문이나 첨부 중 하나는 있어야 합니다.</p>
+      </div>
+        <div class="grid gap-2">
+          <span class="text-sm font-medium">첨부</span>
+          <div class="grid grid-cols-4 gap-1"><div class="aspect-square rounded-md bg-muted"></div><div class="aspect-square rounded-md bg-muted"></div></div>
+          <div class="flex flex-wrap gap-2"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">사진 올리기</button><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">동영상 올리기</button><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">영상 링크 붙이기</button></div>
+          <p class="text-xs text-muted-foreground">사진(JPG·PNG·GIF·WEBP, 10MB, 10장) 또는 동영상(MP4·WEBM, 60초·100MB, 1개) 중 한 종류. 영상 링크 1개</p>
+          <p class="text-sm text-destructive">사진과 동영상은 함께 올릴 수 없습니다.</p>
+        </div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f12" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">해시태그</label>
+        <input data-component="Input" data-slot="input" id="f12" type="text" placeholder="#태그 (10개까지)" value="#서폿 #칼바람" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+      </div>
+        <div class="flex justify-end gap-2"><button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">취소</button><button type="button" data-component="Button" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">올리기</button></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // 목업 전용: 네 가지 상태와 다크 테마를 전환한다
+    const bar = document.querySelector('.mock-bar');
+    bar.querySelectorAll('[data-show]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-mock-state]').forEach((s) => { s.hidden = s.dataset.mockState !== btn.dataset.show; });
+        bar.querySelectorAll('[data-show]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      });
+    });
+    const dark = bar.querySelector('[data-dark]');
+    dark.addEventListener('click', () => {
+      const on = document.documentElement.classList.toggle('dark');
+      dark.setAttribute('aria-pressed', String(on));
+    });
+  </script>
+</body>
+</html>
