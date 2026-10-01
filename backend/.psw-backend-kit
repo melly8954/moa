@@ -1,0 +1,7 @@
+# 백엔드 키트 적용 기록. 같은 내용을 design/architecture.md 백엔드 절에 적는다 (harness-psw 1.5, 4.7)
+kit: harness-psw-backend
+version: v0.2.0
+framework: springboot
+package: com.moa
+helpers: 없음
+applied: 2026-10-01

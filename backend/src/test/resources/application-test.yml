@@ -1,0 +1,9 @@
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/testmigration
+
+psw:
+  jwt:
+    secret: test-only-secret-0123456789abcdef0123456789
+  audit:
+    system-actor-id: 1

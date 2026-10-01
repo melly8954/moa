@@ -1,0 +1,37 @@
+# 백엔드 키트 기본 CI. 포맷(Spotless), lint(Checkstyle), 테스트(ArchUnit, AC 테스트)를 확인한다.
+# 커밋 검사는 psw-implement 준비 단계에서 이 워크플로에 더한다 (harness-psw 10.3).
+#
+# 백엔드가 저장소 하위 폴더(예: backend/)에 있으면 GitHub가 이 파일을 읽지 않는다.
+# 저장소 루트의 .github/workflows/backend-ci.yml로 옮기고 아래 "하위 폴더면" 주석 네 곳을 고친다.
+name: backend-ci
+
+on:
+  pull_request:
+    # 하위 폴더면: paths: ['backend/**', '.github/workflows/backend-ci.yml']
+  push:
+    branches: [main]
+    # 하위 폴더면: paths: ['backend/**', '.github/workflows/backend-ci.yml']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: . # 하위 폴더면: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v6
+      # Testcontainers는 러너의 Docker를 쓴다
+      - run: ./gradlew build --no-daemon
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports
+          # 하위 폴더면: backend/build/reports/... (upload-artifact는 working-directory를 따르지 않는다)
+          path: |
+            build/reports/tests
+            build/reports/checkstyle

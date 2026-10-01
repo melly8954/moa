@@ -1,0 +1,247 @@
+<!-- psw id: SCR-MEM-005 | refs: FR-MEM-001, SEC-AUTH-003, INT-SMS-001, INT-SMS-002, DAT-RET-002 | status: draft -->
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SCR-MEM-005 가입: 생년월일·휴대폰 인증</title>
+
+  <!-- 프로젝트 테마. 이 파일 기준 상대 경로로 바꾼다 (Next: frontend/app/theme.css) -->
+  <link rel="stylesheet" href="../../../../../frontend/app/theme.css">
+
+  <!-- Tailwind 브라우저 빌드. 인터넷 연결이 필요하다 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+
+  <!--
+    shadcn/ui(base-nova)가 만드는 globals.css와 shadcn/tailwind.css 중 모양에 필요한 부분.
+    컴포넌트 조각이 이 정의를 쓴다. 고치지 않는다. 키트의 playground 검증 절차로 확인한 값이다.
+  -->
+  <style type="text/tailwindcss">
+    @custom-variant dark (&:is(.dark *));
+
+    @custom-variant data-open { &:where([data-state="open"]), &:where([data-open]:not([data-open="false"])) { @slot; } }
+    @custom-variant data-closed { &:where([data-state="closed"]), &:where([data-closed]:not([data-closed="false"])) { @slot; } }
+    @custom-variant data-checked { &:where([data-state="checked"]), &:where([data-checked]:not([data-checked="false"])) { @slot; } }
+    @custom-variant data-unchecked { &:where([data-state="unchecked"]), &:where([data-unchecked]:not([data-unchecked="false"])) { @slot; } }
+    @custom-variant data-selected { &:where([data-selected="true"]) { @slot; } }
+    @custom-variant data-disabled { &:where([data-disabled="true"]), &:where([data-disabled]:not([data-disabled="false"])) { @slot; } }
+    @custom-variant data-active { &:where([data-state="active"]), &:where([data-active]:not([data-active="false"])) { @slot; } }
+    @custom-variant data-horizontal { &:where([data-orientation="horizontal"]) { @slot; } }
+    @custom-variant data-vertical { &:where([data-orientation="vertical"]) { @slot; } }
+    @utility no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; &::-webkit-scrollbar { display: none; } }
+
+    @theme inline {
+      --font-heading: ui-sans-serif, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      --color-background: var(--background);
+      --color-foreground: var(--foreground);
+      --color-sidebar-ring: var(--sidebar-ring);
+      --color-sidebar-border: var(--sidebar-border);
+      --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+      --color-sidebar-accent: var(--sidebar-accent);
+      --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+      --color-sidebar-primary: var(--sidebar-primary);
+      --color-sidebar-foreground: var(--sidebar-foreground);
+      --color-sidebar: var(--sidebar);
+      --color-chart-5: var(--chart-5);
+      --color-chart-4: var(--chart-4);
+      --color-chart-3: var(--chart-3);
+      --color-chart-2: var(--chart-2);
+      --color-chart-1: var(--chart-1);
+      --color-ring: var(--ring);
+      --color-input: var(--input);
+      --color-border: var(--border);
+      --color-destructive: var(--destructive);
+      --color-accent-foreground: var(--accent-foreground);
+      --color-accent: var(--accent);
+      --color-muted-foreground: var(--muted-foreground);
+      --color-muted: var(--muted);
+      --color-secondary-foreground: var(--secondary-foreground);
+      --color-secondary: var(--secondary);
+      --color-primary-foreground: var(--primary-foreground);
+      --color-primary: var(--primary);
+      --color-popover-foreground: var(--popover-foreground);
+      --color-popover: var(--popover);
+      --color-card-foreground: var(--card-foreground);
+      --color-card: var(--card);
+      --radius-sm: calc(var(--radius) * 0.6);
+      --radius-md: calc(var(--radius) * 0.8);
+      --radius-lg: var(--radius);
+      --radius-xl: calc(var(--radius) * 1.4);
+      --radius-2xl: calc(var(--radius) * 1.8);
+      --radius-3xl: calc(var(--radius) * 2.2);
+      --radius-4xl: calc(var(--radius) * 2.6);
+    }
+
+    @layer base {
+      * { @apply border-border outline-ring/50; }
+      body { @apply bg-background text-foreground; }
+    }
+  </style>
+
+  <!-- 목업 전용: 상태·테마 전환 막대. 화면 디자인에는 쓰지 않는다. 셸을 가리지 않게 오른쪽 아래에 띄운다 -->
+  <style>
+    .mock-bar { position: fixed; right: 1rem; bottom: 1rem; z-index: 60; border-radius: 8px; display: flex; flex-wrap: wrap; gap: .5rem; padding: .5rem 1rem; background: #111; font: 13px system-ui, sans-serif; }
+    .mock-bar button { padding: .2rem .7rem; border: 0; border-radius: 4px; cursor: pointer; background: #e5e5e5; }
+    .mock-bar button[aria-pressed="true"] { background: #facc15; }
+    .mock-bar span { color: #999; margin-left: .5rem; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <nav class="mock-bar" aria-label="목업 상태">
+    <button type="button" data-show="default" aria-pressed="true">기본</button>
+    <button type="button" data-show="empty" aria-pressed="false">빈 상태</button>
+    <button type="button" data-show="loading" aria-pressed="false">로딩</button>
+    <button type="button" data-show="error" aria-pressed="false">오류</button>
+    <span>|</span>
+    <button type="button" data-dark aria-pressed="false">다크</button>
+  </nav>
+
+  <main class="mx-auto flex w-full max-w-sm flex-col gap-6 px-4 py-8 min-h-screen justify-center">
+    <section data-mock-state="default" class="flex flex-col gap-6">
+      <div class="flex flex-col items-center gap-1 text-center">
+        <span class="font-heading text-3xl font-semibold text-primary">moa</span>
+        <span class="text-sm text-muted-foreground">게이머의 피드, 메시지, 파티를 한곳에서</span>
+      </div>
+      <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">본인 확인</div>
+          <div data-slot="card-description" class="text-sm text-muted-foreground">만 14세 미만 가입 제한과 1인 1계정 확인에 씁니다. 다른 회원에게 보이지 않습니다.</div>
+        </div>
+        <div data-slot="card-content" class="px-(--card-spacing)"><div class="grid gap-4">
+        <div class="flex items-center justify-between text-sm text-muted-foreground"><span>회원가입 3/4</span><span>본인 확인</span></div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f14" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">생년월일</label>
+        <input data-component="Input" data-slot="input" id="f14" type="date" value="2001-05-14" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+      </div>
+        <div class="grid gap-2">
+          <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f15" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">휴대폰 번호</label>
+        <input data-component="Input" data-slot="input" id="f15" type="tel" value="010-1234-5678" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+      </div>
+          <button type="button" data-component="Button" data-variant="outline" data-slot="button" disabled class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 w-full">인증 번호 다시 받기 (41초 후)</button>
+        </div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f16" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">인증 번호</label>
+        <input data-component="Input" data-slot="input" id="f16" type="text" placeholder="6자리" value="482913" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+        <p class="text-sm text-muted-foreground">남은 시간 2:31 · 5회까지 입력할 수 있습니다</p>
+      </div>
+        <button type="button" data-component="Button" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 w-full">다음</button>
+      </div></div>
+      </div>
+    </section>
+
+    <section data-mock-state="empty" hidden class="flex flex-col gap-6">
+      <div class="flex flex-col items-center gap-1 text-center">
+        <span class="font-heading text-3xl font-semibold text-primary">moa</span>
+        <span class="text-sm text-muted-foreground">게이머의 피드, 메시지, 파티를 한곳에서</span>
+      </div>
+      <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">본인 확인</div>
+          <div data-slot="card-description" class="text-sm text-muted-foreground">만 14세 미만 가입 제한과 1인 1계정 확인에 씁니다. 다른 회원에게 보이지 않습니다.</div>
+        </div>
+        <div data-slot="card-content" class="px-(--card-spacing)"><div class="grid gap-4">
+        <div class="flex items-center justify-between text-sm text-muted-foreground"><span>회원가입 3/4</span><span>본인 확인</span></div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f17" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">생년월일</label>
+        <input data-component="Input" data-slot="input" id="f17" type="date" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+      </div>
+        <div class="grid gap-2">
+          <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f18" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">휴대폰 번호</label>
+        <input data-component="Input" data-slot="input" id="f18" type="tel" value="010-1234-5678" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+      </div>
+          <button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 w-full">인증 번호 받기</button>
+        </div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f19" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">인증 번호</label>
+        <input data-component="Input" data-slot="input" id="f19" type="text" placeholder="6자리" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+        <p class="text-sm text-muted-foreground">인증 번호를 먼저 받으세요</p>
+      </div>
+        <button type="button" data-component="Button" data-slot="button" disabled class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 w-full">다음</button>
+      </div></div>
+      </div>
+      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: 입력 전 모습</p>
+    </section>
+
+    <section data-mock-state="loading" hidden class="flex flex-col gap-3">
+      <div class="flex flex-col items-center gap-1 text-center">
+        <span class="font-heading text-3xl font-semibold text-primary">moa</span>
+        <span class="text-sm text-muted-foreground">게이머의 피드, 메시지, 파티를 한곳에서</span>
+      </div>
+      <div data-component="Skeleton" data-slot="skeleton" class="animate-pulse rounded-md bg-muted h-6 w-1/2"></div>
+      <div data-component="Skeleton" data-slot="skeleton" class="animate-pulse rounded-md bg-muted h-8 w-full"></div>
+      <div data-component="Skeleton" data-slot="skeleton" class="animate-pulse rounded-md bg-muted h-8 w-full"></div>
+      <div data-component="Skeleton" data-slot="skeleton" class="animate-pulse rounded-md bg-muted h-8 w-full"></div>
+    </section>
+
+    <section data-mock-state="error" hidden class="flex flex-col gap-6">
+      <div class="flex flex-col items-center gap-1 text-center">
+        <span class="font-heading text-3xl font-semibold text-primary">moa</span>
+        <span class="text-sm text-muted-foreground">게이머의 피드, 메시지, 파티를 한곳에서</span>
+      </div>
+      <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
+        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">만 14세 이상 가입할 수 있습니다</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty"></div>
+      </div>
+      <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
+        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">이미 가입된 휴대폰 번호입니다</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">ab***@naver.com 계정에 인증된 번호입니다. 그 계정으로 로그인한 뒤 설정 > 로그인 수단 관리에서 연결하세요.</div>
+      </div>
+      <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
+        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">지금은 이 번호로 가입할 수 없습니다</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">최근 탈퇴한 계정의 번호라 정해진 기간 동안 다시 가입할 수 없습니다.</div>
+      </div>
+      <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
+        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">인증 문자를 보내지 못했습니다</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">잠시 후 다시 받기를 눌러 주세요. 다시 받기는 60초에 한 번, 하루 10회까지입니다.</div>
+      </div>
+      <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">본인 확인</div>
+        </div>
+        <div data-slot="card-content" class="px-(--card-spacing)"><div class="grid gap-4">
+        <div class="flex items-center justify-between text-sm text-muted-foreground"><span>회원가입 3/4</span><span>본인 확인</span></div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f20" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">생년월일</label>
+        <input data-component="Input" data-slot="input" id="f20" type="date" value="2014-02-01" aria-invalid="true" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+        <p class="text-sm text-destructive">만 14세 이상만 가입할 수 있습니다.</p>
+      </div>
+        <div class="grid gap-2">
+          <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f21" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">휴대폰 번호</label>
+        <input data-component="Input" data-slot="input" id="f21" type="tel" value="010-1234-5678" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+      </div>
+          <button type="button" data-component="Button" data-variant="outline" data-slot="button" disabled class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 w-full">인증 번호 다시 받기 (41초 후)</button>
+        </div>
+        <div class="grid gap-2">
+        <label data-component="Label" data-slot="label" for="f22" class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">인증 번호</label>
+        <input data-component="Input" data-slot="input" id="f22" type="text" placeholder="6자리" value="111111" aria-invalid="true" class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40">
+        <p class="text-sm text-muted-foreground">남은 시간 1:02</p>
+        <p class="text-sm text-destructive">인증 번호가 맞지 않습니다. 남은 입력 3회</p>
+      </div>
+        <button type="button" data-component="Button" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 w-full">다음</button>
+      </div></div>
+      </div>
+      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: E6 나이 미달, E7 번호 중복(기존 계정 이메일 일부 가림), E8 재가입 제한(DAT-RET-002), E9 번호 틀림·만료, INT-SMS-002 발송 실패·횟수 초과</p>
+    </section>
+  </main>
+
+  <script>
+    // 목업 전용: 네 가지 상태와 다크 테마를 전환한다
+    const bar = document.querySelector('.mock-bar');
+    bar.querySelectorAll('[data-show]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-mock-state]').forEach((s) => { s.hidden = s.dataset.mockState !== btn.dataset.show; });
+        bar.querySelectorAll('[data-show]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      });
+    });
+    const dark = bar.querySelector('[data-dark]');
+    dark.addEventListener('click', () => {
+      const on = document.documentElement.classList.toggle('dark');
+      dark.setAttribute('aria-pressed', String(on));
+    });
+  </script>
+</body>
+</html>

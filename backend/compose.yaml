@@ -1,0 +1,11 @@
+# 로컬 개발용. local 프로필로 실행하면 Spring Boot가 이 파일의 서비스를 띄우고 접속 정보를 잡는다
+services:
+  mariadb:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: psw
+      MARIADB_USER: psw
+      MARIADB_PASSWORD: psw
+      MARIADB_ROOT_PASSWORD: psw
+    ports:
+      - "3306"
