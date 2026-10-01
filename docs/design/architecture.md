@@ -67,10 +67,12 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
 ## UI
 
 - 프론트 키트: `harness-psw-frontend` v0.8.0, 테마 rose, 프레임워크 Next 〔2026-10-01〕 가장 최근 태그. rose는 키트가 SNS·사진 피드용으로 고른 테마
+  - 셸은 키트 커밋 `d1f5c50`(v0.8.0 다음, 모바일 하단 탭 바 설정 추가)의 사이드바형을 쓴다 〔2026-10-02〕 사용자 결정. 키트에 태그(v0.9.0)를 달면 이 줄을 태그로 바꾼다
 - 테마 파일: `frontend/app/theme.css` (`frontend/app/globals.css`가 불러온다)
 - 컴포넌트 코드: `frontend/components/ui/`, `frontend/hooks/use-mobile.ts`
-- 셸: 사이드바형, 설정 왼쪽 · 아이콘만 남김 · 벽에 붙음 · 펼침 〔2026-10-01〕 메뉴(피드·메시지·파티·알림·프로필 등)가 많고 모바일에서 서랍으로 접힌다. 목업 셸 `ui/kit/shell.js`
-- 셸 코드: `frontend/components/app-sidebar.tsx`, `frontend/app/layout.tsx` (구현 첫 화면 FR에서 만든다)
+- 셸: 사이드바형, 설정 왼쪽 · 아이콘만 남김 · 벽에 붙음 · 펼침 〔2026-10-01〕 메뉴(피드·메시지·파티·알림·프로필 등)가 많다. 목업 셸 `ui/kit/shell.js`
+  - 모바일 메뉴: 하단 탭 바(`mobileNav: "tabbar"`) 〔2026-10-02〕 사용자 결정. SNS라 자주 쓰는 화면을 엄지로 바로 연다. 탭과 헤더 아이콘은 `ui/ia/README.md` 모바일 메뉴 절
+- 셸 코드: `frontend/components/app-sidebar.tsx`, `frontend/components/mobile-tab-bar.tsx`, `frontend/app/layout.tsx` (구현 첫 화면 FR에서 만든다. 탭 바는 키트 playground `shells.tsx`의 `MobileTabBar`·`MobileActions`를 따른다)
 - 위 경로는 공유 파일이다. 구현자가 FR 작업 중에 고치지 않는다
 
 ## 백엔드
@@ -81,7 +83,8 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
 - 테스트 위치: `backend/src/test/`. `.claude/psw.conf`의 `PSW_TEST_GLOBS`에 넣는다
 - 골격 테스트 조정: FR-MEM-002(로그인)에서 한다 (키트 APPLY.md "사용자 도메인에서 할 일")
   - 시스템 계정 시드를 만들고 `AUDIT_SYSTEM_ACTOR_ID`에 넣는다
-  - 관리자 계정 한 명을 마이그레이션 시드로 만든다 (`admin/_policy.md` 관리자 계정 생성). 이메일과 BCrypt 해시는 Flyway 자리표시(`${admin_email}`, `${admin_password_hash}`)로 받고, 값은 배포 환경변수 `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`에서 `spring.flyway.placeholders`로 넘긴다. 저장소에는 값을 두지 않는다
+  - 관리자 계정 한 명을 마이그레이션 시드로 만든다 (`admin/_policy.md` 관리자 계정 생성). 이메일과 BCrypt 해시는 Flyway 자리표시(`${admin_email}`, `${admin_password_hash}`)로 받고, 값은 배포 환경변수 `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`에서 `spring.flyway.placeholders`로 넘긴다. 저장소에는 운영 값을 두지 않는다
+    - local·test 프로필은 `application.yml`에 개발용 기본값(예: `admin@moa.local`과 개발용 비밀번호의 해시)을 둔다. 운영(prod) 프로필은 기본값 없이 시작할 때 값이 있는지 검증한다. 두 변수는 `backend/.env.example`에 적는다
   - 게임·모드·티어 초기값(`admin/_policy.md` 게임 목록 초기값)을 마이그레이션 시드로 넣는다. 코드는 특정 게임·티어 이름으로 분기하지 않고 정렬 순서만 쓴다
   - `AuthPrincipalLoader`를 구현하고, `support/TestAuthConfig.java`를 지우고 `AcceptanceTest`의 `@Import`에서 뺀다
   - `AuthTokenAcceptanceTest.login()`이 계정 행을 먼저 만들게 한다

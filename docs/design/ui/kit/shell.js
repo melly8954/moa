@@ -11,6 +11,7 @@ const SHELL = {
   collapsible: "icon", // icon(아이콘만 남김) | offcanvas(완전히 숨김) | none(접지 않음)
   variant: "sidebar", // sidebar(벽에 붙음) | floating(떠 있는 카드) | inset(본문을 안쪽으로 감쌈)
   open: true, // 처음 상태: true 펼침, false 접힘
+  mobileNav: "tabbar", // 폭 768px 미만의 메뉴: drawer(헤더 버튼으로 여는 서랍) | tabbar(하단 탭 바 + 서랍)
 }
 
 // 메뉴: docs/design/ui/ia/README.md의 메뉴 계층과 같게 적는다
@@ -42,6 +43,22 @@ const MENU = [
     ],
   },
 ]
+
+// 하단 탭 바 (mobileNav가 tabbar일 때만 쓴다). 폭 768px 미만에서 화면 아래에 고정된다. 5개까지
+//   label: 탭 이름 / screen: 화면 ID / icon: ICONS의 이름
+const TABS = [
+  { label: "홈", icon: "house", screen: "SCR-FEED-001" },
+  { label: "검색", icon: "search", screen: "SCR-MEM-011" },
+  { label: "파티", icon: "users", screen: "SCR-PTY-001" },
+  { label: "메시지", icon: "message-circle", screen: "SCR-MSG-001" },
+  { label: "프로필", icon: "user", screen: "SCR-MEM-009" },
+]
+
+// 모바일 헤더 아이콘 (mobileNav가 tabbar일 때만 쓴다). 탭에 넣지 못한 자주 쓰는 화면. 폭 768px 미만에서 헤더 오른쪽에 보인다
+//   label: 이름(스크린 리더용) / screen: 화면 ID / icon: ICONS의 이름
+const ACTIONS = [
+  { label: "알림", icon: "bell", screen: "SCR-NTF-001" },
+]
 // @psw-shell-config-end
 
 // lucide 아이콘. 더 필요하면 키트 playground에서 node scripts/icons.mjs <이름>으로 뽑아 더한다
@@ -62,11 +79,11 @@ const ICONS = {
   "shield": '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>',
   "settings": '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg>',
   "circle": '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle></svg>',
-  "panel-left": '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left lucide-sidebar" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path></svg>',
-  "gamepad-2": '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gamepad-2" aria-hidden="true"><line x1="6" x2="10" y1="11" y2="11"></line><line x1="8" x2="8" y1="9" y2="13"></line><line x1="15" x2="15.01" y1="12" y2="12"></line><line x1="18" x2="18.01" y1="10" y2="10"></line><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"></path></svg>',
   "search": '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search" aria-hidden="true"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>',
   "message-circle": '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path></svg>',
+  "gamepad-2": '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gamepad-2" aria-hidden="true"><line x1="6" x2="10" y1="11" y2="11"></line><line x1="8" x2="8" y1="9" y2="13"></line><line x1="15" x2="15.01" y1="12" y2="12"></line><line x1="18" x2="18.01" y1="10" y2="10"></line><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"></path></svg>',
   "user-plus": '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="22" x2="16" y1="11" y2="11"></line></svg>',
+  "panel-left": '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left lucide-sidebar" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path></svg>',
 }
 
 ;(() => {
@@ -100,7 +117,14 @@ const ICONS = {
     trigger: "group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg -ml-1",
     separator: "shrink-0 bg-border data-horizontal:h-px data-horizontal:w-full data-vertical:w-px data-vertical:self-stretch mr-2 h-4",
     page: "flex flex-1 flex-col gap-4 p-4",
+    // 하단 탭 바: shadcn에 해당 컴포넌트가 없어 playground 진짜 셸(app/real/shell/shells.tsx)의 MobileTabBar가 그린 클래스
+    pageTabbar: "pb-20 md:pb-4",
+    actions: "ml-auto flex items-center gap-1 md:hidden",
+    action: "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 size-8",
+    tabbar: "fixed inset-x-0 bottom-0 z-20 flex h-16 border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden",
+    tab: "flex flex-1 flex-col items-center justify-center gap-1 text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:font-medium aria-[current=page]:text-foreground [&_svg]:size-5 [&_svg]:shrink-0",
   }
+  const tabbar = SHELL.mobileNav === "tabbar"
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c])
   const icon = (name) => (name && ICONS[name]) || ""
@@ -155,7 +179,15 @@ const ICONS = {
     `<main data-slot="sidebar-inset" class="${C.inset}"><header data-shell="header" class="${C.header}">` +
     `<button type="button" data-slot="sidebar-trigger" data-sidebar="trigger" class="${C.trigger}">${icon("panel-left")}<span class="sr-only">Toggle Sidebar</span></button>` +
     `<div data-orientation="vertical" role="separator" data-slot="separator" class="${C.separator}"></div>` +
-    `<span class="text-sm font-medium">${esc(title)}</span></header><div data-shell="page" class="${C.page}"></div></main>`
+    `<span class="text-sm font-medium">${esc(title)}</span>` +
+    (tabbar && ACTIONS.length
+      ? `<div data-shell="actions" class="${C.actions}">${ACTIONS.map((a) => `<a data-slot="button" data-shell="action" aria-label="${esc(a.label)}" title="${esc(a.label)}"${a.screen === screen ? ' aria-current="page"' : ""} class="${C.action}">${icon(a.icon)}</a>`).join("")}</div>`
+      : "") +
+    `</header><div data-shell="page" class="${C.page}${tabbar ? " " + C.pageTabbar : ""}"></div>` +
+    (tabbar
+      ? `<nav data-shell="tabbar" aria-label="메뉴" class="${C.tabbar}">${TABS.map((tb) => `<a data-shell="tab"${tb.screen === screen ? ' aria-current="page"' : ""} class="${C.tab}">${icon(tb.icon)}<span>${esc(tb.label)}</span></a>`).join("")}</nav>`
+      : "") +
+    `</main>`
 
   // 화면 본문(<body> 바로 아래 <main>)을 셸의 본문 자리로 옮긴다
   const page = document.querySelector("body > main")
@@ -163,7 +195,11 @@ const ICONS = {
   holder.innerHTML = `<div data-slot="sidebar-wrapper" style="--sidebar-width:16rem;--sidebar-width-icon:3rem" class="${C.wrapper}">${sidebar}${inset}</div>`
   const shell = holder.firstElementChild
   if (page) {
-    shell.querySelector('[data-shell="page"]').append(...page.childNodes)
+    // <main>의 클래스(본문 폭·여백)를 버리지 않도록 내용을 같은 클래스의 상자에 담아 옮긴다
+    const content = document.createElement("div")
+    content.className = page.className
+    content.append(...page.childNodes)
+    shell.querySelector('[data-shell="page"]').append(content)
     page.replaceWith(shell)
   } else {
     document.body.prepend(shell)

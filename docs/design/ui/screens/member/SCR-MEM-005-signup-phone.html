@@ -97,7 +97,7 @@
     <button type="button" data-dark aria-pressed="false">다크</button>
   </nav>
 
-  <main class="mx-auto flex w-full max-w-sm flex-col gap-6 px-4 py-8 min-h-screen justify-center">
+  <main class="mx-auto flex w-full max-w-sm flex-col gap-6 min-h-screen justify-center px-4 py-8">
     <section data-mock-state="default" class="flex flex-col gap-6">
       <div class="flex flex-col items-center gap-1 text-center">
         <span class="font-heading text-3xl font-semibold text-primary">moa</span>
@@ -188,6 +188,10 @@
       <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
         <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">이미 가입된 휴대폰 번호입니다</div>
         <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">ab***@naver.com 계정에 인증된 번호입니다. 그 계정으로 로그인한 뒤 설정 > 로그인 수단 관리에서 연결하세요.</div>
+      </div>
+      <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
+        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">이용이 정지된 계정의 번호입니다</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">ab***@naver.com 계정은 2026-10-15까지 정지돼 있습니다. 정지가 끝난 뒤 그 계정으로 로그인하세요.</div>
       </div>
       <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
         <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">최근 탈퇴한 계정의 번호입니다</div>

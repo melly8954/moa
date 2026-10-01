@@ -33,6 +33,8 @@ refs: [NFR-ENV-001]
 | Separator | 나누기 | separator | `components/ui/separator.tsx` | 구역 나눔 | | | |
 | Sonner | 알려주기 | sonner | `components/ui/sonner.tsx` | 잠깐 떴다 사라지는 알림 | | | 사용자가 읽어야 하는 중요한 오류 (Alert) |
 | Avatar | 보여주기 | avatar | `components/ui/avatar.tsx` | 회원 프로필 사진 (없으면 닉네임 첫 글자) | 크기 sm, default, lg | 사진, 대체 글자 | 회원이 아닌 대상 (게임 등) |
+| MobileTabBar | 셸 | (없음. 앱 컴포넌트) | `components/mobile-tab-bar.tsx` | 모바일 하단 탭 바와 헤더 아이콘 | | 지금 화면 탭 강조 | 데스크톱 폭 (사이드바가 메뉴를 맡는다) |
 | Sidebar | 셸 | sidebar | `components/ui/sidebar.tsx` | 셸 사이드바형의 메뉴 틀 | 위치 left, right / 접기 icon, offcanvas, none / 생김새 sidebar, floating, inset | 펼침, 접힘 | 화면 안에서 보기를 바꿀 때 (Tabs). 사이드바를 쓰지 않는 셸(상단 메뉴형) |
 
 - Avatar 〔2026-10-01〕 SNS라 프로필 사진이 거의 모든 목록에 나온다. 키트에 조각이 없어 `frontend/components/ui/avatar.tsx`의 클래스로 그렸다. 키트에 조각 추가를 요청한다
+- MobileTabBar 〔2026-10-02〕 하단 탭 바 사용자 결정. shadcn에 해당 컴포넌트가 없어 키트 playground `shells.tsx`의 `MobileTabBar`·`MobileActions`를 따라 테마 변수 클래스로 만든다. 셸이 그리므로 목업 본문에 넣지 않는다
