@@ -36,6 +36,7 @@ refs: [SEC-AUTH-001, SEC-AUTH-004, INT-GOOGLE-001, INT-KAKAO-001]
 - AC-2 [MUST] API: 틀린 비밀번호와 없는 이메일에 같은 실패 응답을 준다
 - AC-3 [MUST] API: SUSPENDED·WITHDRAWN 회원의 로그인은 거부되고 세션이 발급되지 않는다
 - AC-4 [MUST] 화면: 정지된 회원이 로그인하면 정지 사유와 끝나는 날이 보인다
+- AC-5 [MUST] 화면: 관리자가 로그인하면 직전 화면과 상관없이 관리자 콘솔의 신고 목록으로 간다 〔2026-10-02〕 사용자 결정
 
 ## 정책 참조
 

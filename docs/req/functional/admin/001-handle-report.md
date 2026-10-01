@@ -1,6 +1,6 @@
 ---
 id: FR-ADM-001
-status: approved
+status: draft
 refs: []
 ---
 
@@ -30,7 +30,7 @@ refs: []
 
 ## 수용 기준
 
-- AC-1 [MUST] API: 숨김을 고르면 대상이 작성자 외의 모든 조회에서 사라지고 신고가 HIDDEN이 된다
+- AC-1 [MUST] API: 숨김을 고르면 대상이 작성자와 관리자 외의 모든 조회에서 사라지고 신고가 HIDDEN이 된다 〔2026-10-02〕 사용자 결정 (관리자 원문 보기)
 - AC-2 [MUST] API: 같은 대상의 다른 접수 신고도 함께 HIDDEN이 된다
 - AC-3 [MUST] API: 기각하면 대상은 그대로이고 신고가 DISMISSED가 된다
 - AC-4 [MUST] API: 관리자가 아닌 계정의 처리 요청은 거부된다
