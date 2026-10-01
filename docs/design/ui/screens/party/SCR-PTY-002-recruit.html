@@ -101,37 +101,38 @@
   </nav>
 
   <main class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
+    <div data-mock-page class="mx-auto flex w-full max-w-2xl flex-col gap-6 py-4">
     <section data-mock-state="default" class="flex flex-col gap-6">
       <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
         <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
           <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">주말 칼바람 5인</div>
-          <div data-slot="card-description" class="text-sm text-muted-foreground">리그 오브 레전드 · 칼바람 나락 · 골드 ~ 다이아몬드 · 2명 구함 (3/5) · 즉시 참여 · 23시간 후 만료</div>
+          <div data-slot="card-description" class="text-sm text-muted-foreground">리그 오브 레전드 · 칼바람 나락 · 골드 IV ~ 다이아몬드 I · 2명 구함 (3/5) · 승인제 · 23시간 후 만료</div>
         </div>
         <div data-slot="card-content" class="px-(--card-spacing)"><div class="flex flex-col gap-3">
         <p>주말 저녁 9시 칼바람 즐겜러 구해요. 욕설 X</p>
         <div data-component="Separator" data-orientation="horizontal" role="separator" aria-orientation="horizontal" data-slot="separator" class="shrink-0 bg-border data-horizontal:h-px data-horizontal:w-full data-vertical:w-px data-vertical:self-stretch"></div>
         <span class="text-sm font-medium">파티원</span>
         <div class="flex flex-col divide-y">
-      <div class="flex items-center gap-3 py-2">
+      <div class="flex items-center gap-3 py-3">
         <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">롤</span></span>
         <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">롤하는곰 (방장)</span><span class="truncate text-xs text-muted-foreground">Lv.12 · 추천 87%</span></div>
         
       </div>
-      <div class="flex items-center gap-3 py-2">
+      <div class="flex items-center gap-3 py-3">
         <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">곰</span></span>
         <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">곰돌이탱커</span><span class="truncate text-xs text-muted-foreground">Lv.5 · 평가 없음</span></div>
         
       </div>
-      <div class="flex items-center gap-3 py-2">
+      <div class="flex items-center gap-3 py-3">
         <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">미</span></span>
         <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">미드차이</span><span class="truncate text-xs text-muted-foreground">Lv.21 · 추천 92%</span></div>
         
       </div>
       </div>
       </div></div>
-        <div data-slot="card-footer" class="flex items-center rounded-b-xl border-t bg-muted/50 p-(--card-spacing)"><div class="flex w-full justify-end"><button type="button" data-component="Button" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">참여하기</button></div></div>
+        <div data-slot="card-footer" class="flex items-center rounded-b-xl border-t bg-muted/50 p-(--card-spacing)"><div class="flex w-full justify-end"><button type="button" data-component="Button" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">참여 신청</button></div></div>
       </div>
-      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: 즉시 참여면 바로 파티원이 되고 채팅방으로 간다. 승인제면 버튼이 '참여 신청'이고, 신청 뒤 '신청 중'(secondary, 누르면 취소). 비회원이 누르면 로그인 안내</p>
+      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: 승인제 모집. 신청 뒤 버튼은 '신청 중'(secondary, 누르면 취소). 즉시 참여 모집이면 버튼이 '참여하기'이고 바로 파티원이 되어 채팅방으로 간다. 비회원이 누르면 로그인 안내</p>
     </section>
 
     <section data-mock-state="empty" hidden class="flex flex-col gap-6">
@@ -139,7 +140,7 @@
         <p class="text-sm text-muted-foreground">마감된 모집입니다</p>
         <button type="button" data-component="Button" data-variant="outline" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">다른 모집 보기</button>
       </div>
-      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: FILLED·CANCELED·EXPIRED 모집이나 찾을 수 없는 모집</p>
+      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: FILLED·CANCELED·EXPIRED 모집, 찾을 수 없는 모집(지워졌거나 방장이 나를 차단함)</p>
     </section>
 
     <section data-mock-state="loading" hidden class="flex flex-col gap-3">
@@ -155,41 +156,38 @@
         <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">참여할 수 없습니다</div>
         <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">자리가 다 찼습니다.</div>
       </div>
-      <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
-        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">이 모집에는 참여할 수 없습니다</div>
-        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">다른 모집을 찾아 보세요.</div>
-      </div>
-      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: 위: 인원이 참(E2). 아래: 방장이 나를 차단함(E3), 차단 사실은 드러내지 않는다. 이미 파티원이면 오류 없이 채팅방을 연다(E1)</p>
+      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: 인원이 참(E2). 이미 파티원이면 오류 없이 채팅방을 연다(E1). 방장이 나를 차단했으면(E3) 모집 자체가 찾을 수 없는 모집으로 보인다(빈 상태, FR-REL-005 AC-3)</p>
       <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
         <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
           <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">주말 칼바람 5인</div>
-          <div data-slot="card-description" class="text-sm text-muted-foreground">리그 오브 레전드 · 칼바람 나락 · 골드 ~ 다이아몬드 · 2명 구함 (3/5) · 즉시 참여 · 23시간 후 만료</div>
+          <div data-slot="card-description" class="text-sm text-muted-foreground">리그 오브 레전드 · 칼바람 나락 · 골드 IV ~ 다이아몬드 I · 2명 구함 (3/5) · 승인제 · 23시간 후 만료</div>
         </div>
         <div data-slot="card-content" class="px-(--card-spacing)"><div class="flex flex-col gap-3">
         <p>주말 저녁 9시 칼바람 즐겜러 구해요. 욕설 X</p>
         <div data-component="Separator" data-orientation="horizontal" role="separator" aria-orientation="horizontal" data-slot="separator" class="shrink-0 bg-border data-horizontal:h-px data-horizontal:w-full data-vertical:w-px data-vertical:self-stretch"></div>
         <span class="text-sm font-medium">파티원</span>
         <div class="flex flex-col divide-y">
-      <div class="flex items-center gap-3 py-2">
+      <div class="flex items-center gap-3 py-3">
         <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">롤</span></span>
         <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">롤하는곰 (방장)</span><span class="truncate text-xs text-muted-foreground">Lv.12 · 추천 87%</span></div>
         
       </div>
-      <div class="flex items-center gap-3 py-2">
+      <div class="flex items-center gap-3 py-3">
         <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">곰</span></span>
         <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">곰돌이탱커</span><span class="truncate text-xs text-muted-foreground">Lv.5 · 평가 없음</span></div>
         
       </div>
-      <div class="flex items-center gap-3 py-2">
+      <div class="flex items-center gap-3 py-3">
         <span data-component="Avatar" data-slot="avatar" data-size="default" class="group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten"><span data-slot="avatar-fallback" class="flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs">미</span></span>
         <div class="flex min-w-0 flex-1 flex-col"><span class="truncate font-medium">미드차이</span><span class="truncate text-xs text-muted-foreground">Lv.21 · 추천 92%</span></div>
         
       </div>
       </div>
       </div></div>
-        <div data-slot="card-footer" class="flex items-center rounded-b-xl border-t bg-muted/50 p-(--card-spacing)"><div class="flex w-full justify-end"><button type="button" data-component="Button" data-slot="button" disabled class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">참여하기</button></div></div>
+        <div data-slot="card-footer" class="flex items-center rounded-b-xl border-t bg-muted/50 p-(--card-spacing)"><div class="flex w-full justify-end"><button type="button" data-component="Button" data-slot="button" disabled class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2">참여 신청</button></div></div>
       </div>
     </section>
+    </div>
   </main>
 
   <script>

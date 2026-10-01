@@ -1,6 +1,6 @@
 ---
 status: draft
-refs: [CON-001, CON-002, FR-ADM-003, FR-PTY-010, NFR-CAP-001, NFR-ENV-001, NFR-I18N-001, SEC-AUTH-001, SEC-AUTH-003, SEC-AUTH-004, INT-GOOGLE-001, INT-GOOGLE-002, INT-KAKAO-001, INT-KAKAO-002, INT-KAKAO-003, INT-MAIL-001, INT-MAIL-002, INT-SMS-001, INT-SMS-002, INT-STORAGE-001, DAT-RET-001, DAT-RET-002]
+refs: [CON-001, CON-002, FR-ADM-003, FR-ADM-004, FR-PTY-010, NFR-CAP-001, NFR-ENV-001, NFR-I18N-001, SEC-AUTH-001, SEC-AUTH-003, SEC-AUTH-004, INT-GOOGLE-001, INT-GOOGLE-002, INT-KAKAO-001, INT-KAKAO-002, INT-KAKAO-003, INT-MAIL-001, INT-MAIL-002, INT-SMS-001, INT-SMS-002, INT-STORAGE-001, DAT-RET-001, DAT-RET-002]
 ---
 
 # 아키텍처
@@ -32,7 +32,7 @@ flowchart LR
 | 웹 프론트 | 화면, 다국어 문구, API·WebSocket 호출 | Next(App Router), shadcn/ui, TanStack Query, next-intl |
 | API 서버 | REST API, 인증·인가, 업무 규칙, 실시간 전달, 예약 작업 | Spring Boot (백엔드 키트 골격) |
 | 실시간 전달 | 메시지·알림 배지를 받는 회원에게 바로 밀어 준다 | Spring WebSocket + STOMP 내장 브로커 |
-| 예약 작업 | 탈퇴 유예 경과 파기, 휴대폰 해시 보관 만료, 정지 기간 만료(SUSPENDED → ACTIVE, 알림), 모집 만료(OPEN → EXPIRED, 대기 신청 거절), 알림 보관 기간 경과 삭제, 붙지 않은 업로드 정리, 리프레시 토큰 정리 | Spring `@Scheduled` (서버 한 대에서만 돈다). 상태 전이의 정본은 각 도메인 `_policy.md` |
+| 예약 작업 | 탈퇴 유예 경과 파기, 휴대폰 해시 보관 만료, 정지 기간 만료(SUSPENDED → ACTIVE, 알림), 모집 만료(OPEN → EXPIRED, 대기 신청 거절), 알림 보관 기간 경과 삭제, 붙지 않은 업로드 정리, 끊긴·만료된 로그인 세션과 리프레시 토큰 정리 | Spring `@Scheduled` (서버 한 대에서만 돈다). 상태 전이의 정본은 각 도메인 `_policy.md` |
 | DB | 업무 데이터 | MariaDB 11.4 (운영 RDS, 로컬 Docker) |
 | 파일 저장소 | 프로필 사진, 게시물·메시지 첨부 | 운영 S3, 로컬은 서버 디스크 (INT-STORAGE-001) |
 
@@ -81,7 +81,8 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
 - 테스트 위치: `backend/src/test/`. `.claude/psw.conf`의 `PSW_TEST_GLOBS`에 넣는다
 - 골격 테스트 조정: FR-MEM-002(로그인)에서 한다 (키트 APPLY.md "사용자 도메인에서 할 일")
   - 시스템 계정 시드를 만들고 `AUDIT_SYSTEM_ACTOR_ID`에 넣는다
-  - 관리자 계정 한 명을 마이그레이션 시드로 만든다. 첫 로그인 뒤 비밀번호를 바꾼다 (`admin/_policy.md` 관리자 계정 생성). 초기 비밀번호 해시를 시드에 넣으므로 첫 로그인 전까지 운영에 노출하지 않는다
+  - 관리자 계정 한 명을 마이그레이션 시드로 만든다 (`admin/_policy.md` 관리자 계정 생성). 이메일과 BCrypt 해시는 Flyway 자리표시(`${admin_email}`, `${admin_password_hash}`)로 받고, 값은 배포 환경변수 `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`에서 `spring.flyway.placeholders`로 넘긴다. 저장소에는 값을 두지 않는다
+  - 게임·모드·티어 초기값(`admin/_policy.md` 게임 목록 초기값)을 마이그레이션 시드로 넣는다. 코드는 특정 게임·티어 이름으로 분기하지 않고 정렬 순서만 쓴다
   - `AuthPrincipalLoader`를 구현하고, `support/TestAuthConfig.java`를 지우고 `AcceptanceTest`의 `@Import`에서 뺀다
   - `AuthTokenAcceptanceTest.login()`이 계정 행을 먼저 만들게 한다
   - 표시 이름의 `[auth-token-refresh]`는 `SEC-AUTH-004`로, `[auth-token-logout]`은 `FR-MEM-003`으로 바꾼다

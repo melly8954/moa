@@ -1,6 +1,6 @@
 ---
 status: draft
-refs: [FR-MEM-003, FR-MEM-005, FR-MEM-009, FR-MEM-010, FR-REL-003, SEC-AUTH-001, SEC-AUTH-002, SEC-AUTH-003, SEC-AUTH-004, SEC-AUTH-005, SEC-PRIV-001, SEC-PRIV-002, INT-GOOGLE-002, INT-KAKAO-002, DAT-RET-002]
+refs: [FR-ADM-001, FR-MEM-003, FR-MEM-005, FR-MEM-009, FR-MEM-010, FR-REL-003, SEC-AUTH-001, SEC-AUTH-002, SEC-AUTH-003, SEC-AUTH-004, SEC-AUTH-005, SEC-PRIV-001, SEC-PRIV-002, INT-GOOGLE-002, INT-KAKAO-002, DAT-RET-002]
 ---
 
 # 보안 설계
@@ -39,7 +39,8 @@ sequenceDiagram
   - 역할: 컨트롤러 메서드의 `@PreAuthorize("hasRole('...')")`. 로그인 없이 부를 API는 `@PermitAll`
   - 조건부 권한(△: 작성자만, 방장만, 친구만, 차단 관계 아님 등): Service에서 검사하고 A005 또는 업무 오류로 거절한다
   - 찾을 수 없는 회원 규칙(탈퇴·정지·나를 차단, `member/_policy.md`)에 걸린 회원과 그 회원의 게시물·모집은 R001로 응답한다 (존재를 드러내지 않는다)
-  - 비공개 계정은 프로필 자체는 비공개 안내와 함께 보여 주고(FR-MEM-005 E1), 게시물·팔로워·팔로잉 목록만 막는다(FR-REL-003 E1). 목록 요청은 A005가 아니라 빈 결과와 비공개 표시로 응답한다
+  - 관리자는 예외로 숨긴 게시물·댓글, 탈퇴·정지 회원의 프로필과 게시물을 볼 수 있다(원문 보기). 응답에 숨김·정지·탈퇴 상태를 함께 준다 (`member/_policy.md`, `feed/_policy.md`, FR-ADM-001 AC-1)
+  - 비공개 계정은 프로필 자체는 비공개 안내와 함께 보여 주고(FR-MEM-005 E1), 게시물·팔로워·팔로잉 목록만 막는다(FR-REL-003 E1). 목록 요청은 오류 없이 항목 없는 결과와 비공개 표시로 응답한다 (FR-REL-003 AC-1)
 - WebSocket: STOMP `CONNECT` 프레임의 `Authorization` 헤더를 REST와 같은 방식으로 검사한다. 구독은 자기 사용자 대상(`/user/queue/...`)만 허용한다
 
 ## 토큰·세션
