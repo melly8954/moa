@@ -190,8 +190,12 @@
         <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">ab***@naver.com 계정에 인증된 번호입니다. 그 계정으로 로그인한 뒤 설정 > 로그인 수단 관리에서 연결하세요.</div>
       </div>
       <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
+        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">최근 탈퇴한 계정의 번호입니다</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">복구는 고객 문의로 할 수 있고, 정해진 기간이 지나면 다시 가입할 수 있습니다.</div>
+      </div>
+      <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
         <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">지금은 이 번호로 가입할 수 없습니다</div>
-        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">최근 탈퇴한 계정의 번호라 정해진 기간 동안 다시 가입할 수 없습니다.</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">정해진 기간 동안 같은 번호로 다시 가입할 수 없습니다.</div>
       </div>
       <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
         <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">인증 문자를 보내지 못했습니다</div>
@@ -224,7 +228,7 @@
         <button type="button" data-component="Button" data-slot="button" class="group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/80 h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 w-full">다음</button>
       </div></div>
       </div>
-      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: E6 나이 미달, E7 번호 중복(기존 계정 이메일 일부 가림), E8 재가입 제한(DAT-RET-002), E9 번호 틀림·만료, INT-SMS-002 발송 실패·횟수 초과</p>
+      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: E6 나이 미달, E7 번호 중복(기존 계정 이메일 일부 가림), 탈퇴 유예 중 계정의 번호(E7, 2026-10-02 결정), E8 파기 뒤 재가입 제한(DAT-RET-002), E9 번호 틀림·만료, INT-SMS-002 발송 실패·횟수 초과</p>
     </section>
   </main>
 

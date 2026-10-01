@@ -11,8 +11,8 @@ refs: [FR-PTY-001, FR-PTY-002, FR-PTY-003, FR-PTY-004, FR-PTY-005, FR-PTY-006, F
 
 | ID | 이름 | 경로 | 접근 역할 | refs |
 |---|---|---|---|---|
-| SCR-PTY-001 | 파티 모집 목록 | /parties | 비회원, 회원, 관리자 | FR-PTY-002 |
-| SCR-PTY-002 | 모집 상세 | /recruits/[id] | 비회원, 회원, 관리자 | FR-PTY-003, FR-REP-002 |
+| SCR-PTY-001 | 파티 모집 목록 | /parties | 비회원, 회원, 관리자 | FR-PTY-002, FR-REP-001 |
+| SCR-PTY-002 | 모집 상세 | /recruits/[id] | 비회원, 회원, 관리자 | FR-PTY-002, FR-PTY-003, FR-REP-002 |
 | SCR-PTY-003 | 파티 만들기 | /parties/new | 회원 | FR-PTY-001 |
 | SCR-PTY-004 | 파티 | /parties/[id] | 회원 | FR-PTY-005, FR-PTY-006, FR-PTY-008, FR-PTY-009 |
 | SCR-PTY-005 | 모집 열기 | /parties/[id]/recruit | 회원 | FR-PTY-010 |

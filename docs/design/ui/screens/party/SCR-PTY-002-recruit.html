@@ -156,9 +156,10 @@
         <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">자리가 다 찼습니다.</div>
       </div>
       <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
-        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">참여할 수 없습니다</div>
-        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">방장이 나를 차단했거나 이미 이 파티의 파티원입니다.</div>
+        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">이 모집에는 참여할 수 없습니다</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">다른 모집을 찾아 보세요.</div>
       </div>
+      <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">목업 메모: 위: 인원이 참(E2). 아래: 방장이 나를 차단함(E3), 차단 사실은 드러내지 않는다. 이미 파티원이면 오류 없이 채팅방을 연다(E1)</p>
       <div data-component="Card" data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl w-full">
         <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
           <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">주말 칼바람 5인</div>

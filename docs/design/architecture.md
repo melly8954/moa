@@ -1,6 +1,6 @@
 ---
 status: draft
-refs: [CON-001, CON-002, NFR-CAP-001, NFR-ENV-001, NFR-I18N-001, SEC-AUTH-001, SEC-AUTH-003, SEC-AUTH-004, INT-GOOGLE-001, INT-GOOGLE-002, INT-KAKAO-001, INT-KAKAO-002, INT-KAKAO-003, INT-MAIL-001, INT-MAIL-002, INT-SMS-001, INT-SMS-002, INT-STORAGE-001, DAT-RET-001, DAT-RET-002]
+refs: [CON-001, CON-002, FR-ADM-003, FR-PTY-010, NFR-CAP-001, NFR-ENV-001, NFR-I18N-001, SEC-AUTH-001, SEC-AUTH-003, SEC-AUTH-004, INT-GOOGLE-001, INT-GOOGLE-002, INT-KAKAO-001, INT-KAKAO-002, INT-KAKAO-003, INT-MAIL-001, INT-MAIL-002, INT-SMS-001, INT-SMS-002, INT-STORAGE-001, DAT-RET-001, DAT-RET-002]
 ---
 
 # 아키텍처
@@ -32,7 +32,7 @@ flowchart LR
 | 웹 프론트 | 화면, 다국어 문구, API·WebSocket 호출 | Next(App Router), shadcn/ui, TanStack Query, next-intl |
 | API 서버 | REST API, 인증·인가, 업무 규칙, 실시간 전달, 예약 작업 | Spring Boot (백엔드 키트 골격) |
 | 실시간 전달 | 메시지·알림 배지를 받는 회원에게 바로 밀어 준다 | Spring WebSocket + STOMP 내장 브로커 |
-| 예약 작업 | 탈퇴 유예 경과 파기, 알림 보관 기간 경과 삭제, 휴대폰 해시 보관 만료, 리프레시 토큰 정리 | Spring `@Scheduled` (서버 한 대에서만 돈다) |
+| 예약 작업 | 탈퇴 유예 경과 파기, 휴대폰 해시 보관 만료, 정지 기간 만료(SUSPENDED → ACTIVE, 알림), 모집 만료(OPEN → EXPIRED, 대기 신청 거절), 알림 보관 기간 경과 삭제, 붙지 않은 업로드 정리, 리프레시 토큰 정리 | Spring `@Scheduled` (서버 한 대에서만 돈다). 상태 전이의 정본은 각 도메인 `_policy.md` |
 | DB | 업무 데이터 | MariaDB 11.4 (운영 RDS, 로컬 Docker) |
 | 파일 저장소 | 프로필 사진, 게시물·메시지 첨부 | 운영 S3, 로컬은 서버 디스크 (INT-STORAGE-001) |
 
@@ -81,14 +81,15 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
 - 테스트 위치: `backend/src/test/`. `.claude/psw.conf`의 `PSW_TEST_GLOBS`에 넣는다
 - 골격 테스트 조정: FR-MEM-002(로그인)에서 한다 (키트 APPLY.md "사용자 도메인에서 할 일")
   - 시스템 계정 시드를 만들고 `AUDIT_SYSTEM_ACTOR_ID`에 넣는다
+  - 관리자 계정 한 명을 마이그레이션 시드로 만든다. 첫 로그인 뒤 비밀번호를 바꾼다 (`admin/_policy.md` 관리자 계정 생성). 초기 비밀번호 해시를 시드에 넣으므로 첫 로그인 전까지 운영에 노출하지 않는다
   - `AuthPrincipalLoader`를 구현하고, `support/TestAuthConfig.java`를 지우고 `AcceptanceTest`의 `@Import`에서 뺀다
   - `AuthTokenAcceptanceTest.login()`이 계정 행을 먼저 만들게 한다
   - 표시 이름의 `[auth-token-refresh]`는 `SEC-AUTH-004`로, `[auth-token-logout]`은 `FR-MEM-003`으로 바꾼다
-- 골격 인증 보강 (토큰 버전): FR-MEM-002에서 한다. 내용은 `security.md` 토큰·세션
+- 골격 인증 보강 (로그인 세션): FR-MEM-002에서 한다. 내용은 `security.md` 토큰·세션
 - 키트 문서 조각(`auth-token`) 대응 〔2026-10-01〕 같은 요구가 이미 승인된 REQ에 있어 새 FR을 만들지 않는다
   - 재발급(`fr-token-refresh`) → `SEC-AUTH-004` 로그인 유지 14일
   - 로그아웃(`fr-token-logout`) → `FR-MEM-003`
-  - 조각의 "액세스 토큰은 서버에서 폐기하지 않는다"는 쓰지 않는다. 토큰 버전으로 즉시 끊는다 (`security.md`)
+  - 조각의 "액세스 토큰은 서버에서 폐기하지 않는다"는 쓰지 않는다. 로그인 세션으로 즉시 끊는다 (`security.md`)
 
 ## 외부 연동
 
@@ -164,7 +165,7 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
 
 | 실패 | 처리 | 보상 |
 |---|---|---|
-| 타임아웃·오류 응답 | 실패 응답, 화면이 실패와 다시 보내기를 보여 준다. 60초에 한 번, 번호당 하루 10회 (실패한 요청도 센다) | 발급한 인증 번호를 무효로 한다 |
+| 타임아웃·오류 응답 | 실패 응답, 화면이 실패와 다시 보내기를 보여 준다. 다시 보내기 제한은 INT-SMS-002 | 발급한 인증 번호를 무효로 한다 |
 
 - 테스트 환경: 개발은 `log` 어댑터. 운영 키·발신번호 등록 준비 대기
 

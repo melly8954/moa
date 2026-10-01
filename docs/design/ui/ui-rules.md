@@ -1,6 +1,6 @@
 ---
 status: draft
-refs: [NFR-ENV-001, NFR-I18N-001, SEC-PRIV-002]
+refs: [NFR-ENV-001, NFR-I18N-001, SEC-PRIV-002, FR-REL-004, FR-MSG-004]
 ---
 
 # UI 규칙
@@ -31,7 +31,7 @@ refs: [NFR-ENV-001, NFR-I18N-001, SEC-PRIV-002]
 
 ## 상태 표시 규칙
 
-- 빈 상태: 점선 테두리 안내 + 다음 행동 Button 하나
+- 빈 상태: 점선 테두리 안내 + 다음 행동 Button. 기본은 하나, FR이 안내할 곳을 둘 정하면 둘 (예: FR-REL-004 E1, FR-MSG-004 E1)
 - 로딩: Skeleton으로 실제 배치 모양을 흉내 낸다. 300ms 안에 끝나면 보이지 않게 한다
 - 오류: Alert destructive + 다시 시도 Button. 입력 오류는 입력칸 아래 `text-destructive` 문구
 - 무한 스크롤(피드, 목록): 아래에 이어서 불러오는 Skeleton, 끝이면 "모두 봤습니다" 문구
@@ -46,6 +46,9 @@ refs: [NFR-ENV-001, NFR-I18N-001, SEC-PRIV-002]
 - 용어는 `docs/glossary.md`를 따른다
 - 시각은 KST로 보여 준다. 24시간 안은 "3분 전"처럼 상대 시각, 그 밖은 날짜
 - 개인정보(이메일, 생년월일, 휴대폰 번호)는 본인 설정·관리자 화면에만 그린다. 관리자 화면의 휴대폰 번호는 가운데 4자리를 가린다 (SEC-PRIV-002)
+  - 예외: 가입 중 휴대폰 번호 중복 안내의 가린 이메일 (SEC-PRIV-002 예외, `member/_policy.md`)
+- 관리자가 원문 보기로 연 사용자 화면에는 회원 행동 버튼(팔로우, 메시지, 좋아요, 댓글, 신고, 참여)을 그리지 않는다. 관리자는 회원 활동을 하지 않는다 (`docs/req/actors.md`, `admin/_policy.md`)
+- 비회원에게는 회원 행동 버튼을 그리고, 누르면 로그인 안내로 보낸다
 
 ## 예외
 
