@@ -1,0 +1,3 @@
+# 이 폴더의 hook 템플릿은 CRLF면 실행되지 않는다. 설치된 프로젝트에서도 LF로 받도록 폴더 안에 둔다
+* text eol=lf
+.gitattributes text
