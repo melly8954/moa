@@ -1,0 +1,23 @@
+{
+  "errors": {
+    "A006": "Your sign-up session is missing or has expired. Please start over.",
+    "A007": "Google or Kakao sign-in did not complete. Try again or use another method.",
+    "R003": "This nickname is already taken.",
+    "B002": "This email is already registered. Log in with it or reset your password.",
+    "B003": "An account with this email already exists. Log in to it and connect this method in login methods.",
+    "B004": "This verification link has expired or was already used. Request a new email.",
+    "B005": "The verification code is incorrect.",
+    "B006": "The verification code has expired. Request a new one.",
+    "B007": "Too many incorrect attempts. Request a new code.",
+    "B008": "Please wait before resending. You can resend once every 60 seconds.",
+    "B009": "You have reached today's limit.",
+    "B010": "You must be 14 or older to sign up.",
+    "B011": "This phone number is already registered.",
+    "B012": "This number belongs to a suspended account.",
+    "B013": "This number belongs to a recently withdrawn account. Contact support to restore it, or sign up again after the waiting period.",
+    "B014": "You cannot sign up with this number right now.",
+    "B015": "Required verification has not been completed.",
+    "S002": "We couldn't send the verification email. Please try resending shortly.",
+    "S003": "We couldn't send the verification text. Please try again shortly."
+  }
+}

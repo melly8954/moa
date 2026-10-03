@@ -1,0 +1,74 @@
+package com.moa.api.application.v1;
+
+import org.springframework.stereotype.Component;
+
+import com.moa.api.application.v1.command.ConfirmEmailVerificationCommand;
+import com.moa.api.application.v1.command.ConfirmPhoneVerificationCommand;
+import com.moa.api.application.v1.command.CreateEmailVerificationCommand;
+import com.moa.api.application.v1.command.CreatePhoneVerificationCommand;
+import com.moa.api.dto.EmailConfirmationDto;
+import com.moa.api.dto.EmailVerificationDto;
+import com.moa.api.dto.PhoneVerificationDto;
+import com.moa.api.dto.SignUpDto;
+
+/**
+ * 가입 진행(이메일 인증, 휴대폰 인증) API의 진입점. 메일·문자 발송은 트랜잭션 밖에서 한다.
+ */
+@Component
+public class SignUpApplication {
+
+	private static final String NOT_IMPLEMENTED = "구현 전입니다";
+
+	/**
+	 * 인증 메일을 보낸다. 링크는 {@code <웹>/signup/phone?token=<토큰>}이다.
+	 *
+	 * @throws com.moa.common.exception.ServiceException 비밀번호가 있는 기존 계정 이메일이면 B002,
+	 *     60초 안에 다시 보내면 B008, 발송 실패면 S002, 가입 진행 토큰이 무효면 A006
+	 */
+	public EmailVerificationDto createEmailVerification(CreateEmailVerificationCommand command) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	/**
+	 * 인증 링크를 확인한다. 같은 이메일의 기존 계정이 있으면 이메일 인증 연결 규칙대로 연결하고 로그인시킨다.
+	 *
+	 * @throws com.moa.common.exception.ServiceException 만료·이미 씀·없는 링크면 B004,
+	 *     비밀번호가 있는 기존 계정 이메일이면 B002
+	 */
+	public EmailConfirmationDto confirmEmailVerification(ConfirmEmailVerificationCommand command) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	/**
+	 * 문자 인증 번호를 보낸다.
+	 *
+	 * @throws com.moa.common.exception.ServiceException 가입 진행 토큰이 무효면 A006, 계정 이메일이 아직 없으면 B015,
+	 *     60초 안에 다시 받으면 B008, 하루 10회를 넘으면 B009, 발송 실패면 S003
+	 */
+	public PhoneVerificationDto createPhoneVerification(CreatePhoneVerificationCommand command) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	/**
+	 * 인증 번호와 생년월일을 확인한다. 번호가 맞으면 번호 주인임이 확인된 것으로 보고 중복을 검사한다.
+	 *
+	 * @throws com.moa.common.exception.ServiceException 가입 진행 토큰이 무효면 A006, 번호가 틀리면 B005,
+	 *     만료면 B006, 5회를 넘으면 B007, 만 14세 미만이면 B010, 번호가 겹치면 계정 상태에 따라 B011·B012·B013,
+	 *     재가입 제한 중이면 B014
+	 */
+	public void confirmPhoneVerification(ConfirmPhoneVerificationCommand command) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	/**
+	 * @throws com.moa.common.exception.ServiceException 가입 진행 토큰이 무효면 A006
+	 */
+	public SignUpDto getSignUp(String signUpToken) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	/** 가입을 취소한다. 토큰이 없거나 무효여도 실패하지 않는다 */
+	public void cancelSignUp(String signUpToken) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+}
