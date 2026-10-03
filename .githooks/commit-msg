@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# harness-psw 커밋 메시지 검사 (5.4)
+# 설정: git config core.hooksPath .githooks
+exec bash "$(git rev-parse --show-toplevel)/.claude/scripts/psw/check-commit-msg.sh" "$1"

@@ -1,5 +1,5 @@
 ---
-status: approved
+status: draft
 refs: [CON-001, FR-REL-003, NFR-I18N-001, SEC-AUTH-004, SEC-AUTH-005, SEC-PRIV-002]
 ---
 
@@ -268,12 +268,14 @@ frontend/
 | lint (백엔드) | Checkstyle (네이버 규칙, error) | `backend/config/checkstyle/` | 백엔드 키트 v0.2.0 |
 | 포맷 (백엔드) | Spotless (네이버 Eclipse 포맷터) | `backend/config/` , `build.gradle` | 백엔드 키트 v0.2.0 |
 | lint (프론트) | ESLint (eslint-config-next) | `frontend/eslint.config.mjs` | 프론트 키트 v0.8.0 |
-| 포맷 (프론트) | (구현 준비에서 정한다) | | |
-| 커밋 검사 | (구현 준비에서 정한다) | | |
-| 시크릿 스캔 | (구현 준비에서 정한다) | | |
-| AC 테스트 | JUnit 5 + MockMvcTester + Testcontainers(MariaDB) (백엔드) / 프론트는 구현 준비에서 정한다 | `backend/src/test/` | 백엔드 키트 v0.2.0 |
+| 포맷 (프론트) | Prettier + prettier-plugin-tailwindcss | `frontend/.prettierrc.json`, `.prettierignore` | 〔2026-10-03〕 사용자 결정. 키트 공유 파일(`components/ui/`, `hooks/use-mobile.ts`, `app/theme.css`)은 포맷하지 않는다. 키트와 같게 둔다 |
+| 커밋 검사 | 하네스 스크립트 `.claude/scripts/psw/check-commit-msg.sh` | `.githooks/commit-msg`, CI `.github/workflows/psw.yml` | 〔2026-10-03〕 사용자 결정 (하네스 기본안) |
+| 시크릿 스캔 | gitleaks | `.githooks/pre-commit`, CI `.github/workflows/psw.yml` | 〔2026-10-03〕 사용자 결정. 커밋 전과 CI 두 곳 |
+| AC 테스트 | API: JUnit 5 + MockMvcTester + Testcontainers(MariaDB). 화면: Playwright | `backend/src/test/`, `frontend/e2e/` | API는 백엔드 키트 v0.2.0, 화면은 〔2026-10-03〕 사용자 결정 |
 
 - 명령은 `CLAUDE.md` 명령 표에 둔다
+- hook 설정: 저장소를 받은 뒤 한 번 `git config core.hooksPath .githooks`. gitleaks가 설치돼 있어야 커밋된다 (`winget install --id Gitleaks.Gitleaks`)
+- CI는 커밋 메시지 검사와 gitleaks만 돌린다. PR과 dev·main 푸시에 돈다. 빌드·테스트는 로컬에서 돌린다 〔2026-10-03〕 사용자 결정. 백엔드 키트의 `backend/.github/workflows/ci.yml`은 GitHub가 읽지 않는 위치라 쓰이지 않는다
 
 ### lint 예외
 
@@ -289,6 +291,14 @@ frontend/
 - 외부 연동: 메일·문자는 `log` 어댑터를 대신하는 테스트 대역으로 보낸 내용을 확인한다. 저장소는 `local` 어댑터
 - 이름: 표시 이름에 AC ID를 단다 (예: `@DisplayName("FR-MEM-002 AC-1: 이메일로 로그인")`)
 - 계약: 구현자가 먼저 쓴 컨트롤러·DTO로 경로와 형식을 확인한다 (harness-psw 9.2)
+
+### 화면 AC 테스트 (Playwright) 〔2026-10-03〕 사용자 결정
+
+- 위치: `frontend/e2e/<도메인>/<FR 번호>-<요약>.spec.ts`. 설정: `frontend/playwright.config.ts`
+- 이름: `test("FR-MSG-003 AC-7: 전송 실패 메시지에 다시 보내기가 보인다", ...)`
+- 폭: 설정의 세 프로젝트(mobile 360, tablet 768, desktop 1280)로 모두 돈다 (NFR-ENV-001). 폭에 따라 다른 AC는 `test.skip`으로 프로젝트를 고른다
+- API: 화면 AC는 API 응답을 `page.route`로 대신해 화면 동작만 본다. API 동작은 백엔드 AC 테스트가 본다
+- 찾기: 역할·이름(`getByRole`, `getByLabel`)으로 찾는다. CSS 클래스로 찾지 않는다
 
 ## 8. 주석 예외
 

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# harness-psw 시크릿 스캔: 스테이징된 변경을 gitleaks로 검사한다 (docs/design/conventions.md 6절)
+# 설정: git config core.hooksPath .githooks
+gl="$(command -v gitleaks || true)"
+if [ -z "$gl" ] && [ -n "${LOCALAPPDATA:-}" ]; then
+  # winget으로 설치했는데 셸을 다시 열지 않아 PATH에 없을 때
+  for c in "$LOCALAPPDATA"/Microsoft/WinGet/Packages/Gitleaks.Gitleaks_*/gitleaks.exe; do
+    [ -f "$c" ] && gl="$c"
+  done
+fi
+if [ -z "$gl" ]; then
+  echo "gitleaks가 없습니다. 설치: winget install --id Gitleaks.Gitleaks (macOS: brew install gitleaks)" >&2
+  exit 1
+fi
+exec "$gl" git --pre-commit --staged --redact --no-banner .

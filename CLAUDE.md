@@ -34,8 +34,12 @@
 
 | 용도 | 명령 |
 |---|---|
-| 개발 서버 | (프로젝트별 결정) |
-| lint·타입 검사 | (프로젝트별 결정) |
-| AC 테스트 | (프로젝트별 결정) |
+| 개발 서버 (백엔드) | `cd backend && ./gradlew bootRun` (local 프로필, Docker로 DB 자동 기동) |
+| 개발 서버 (프론트) | `cd frontend && npm run dev` |
+| lint·포맷·타입 검사 (백엔드) | `cd backend && ./gradlew spotlessCheck checkstyleMain checkstyleTest` (포맷 적용: `./gradlew spotlessApply`) |
+| lint·포맷·타입 검사 (프론트) | `cd frontend && npm run lint && npm run format:check && npm run typecheck` (포맷 적용: `npm run format`) |
+| AC 테스트 (API) | `cd backend && ./gradlew test` (Docker 필요). 전체 검사: `./gradlew build` |
+| AC 테스트 (화면) | `cd frontend && npm run test:e2e` (처음 한 번 `npx playwright install chromium`) |
+| 커밋 hook 설정 (처음 한 번) | `git config core.hooksPath .githooks` (gitleaks 필요) |
 | 설계 교차 검증 | `bash .claude/scripts/psw/crosscheck.sh [도메인]` |
 | 루프 종료 확인 | `bash .claude/scripts/psw/loop-status.sh [경로]` |

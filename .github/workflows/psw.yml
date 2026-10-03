@@ -1,0 +1,50 @@
+# harness-psw 검사 (5.4): 커밋 메시지, 시크릿 스캔
+# 하네스 템플릿(psw-design templates/github-workflow-psw.yml)에서 시작했다.
+# 〔2026-10-03〕 PR에 더해 dev·main 푸시에도 돈다. 구현 흐름이 기능 브랜치를 로컬에서 dev로 병합하기 때문이다
+# 빌드·테스트는 CI에서 돌리지 않는다 〔2026-10-03〕 사용자 결정 (로컬에서 돌린다)
+name: harness-psw
+
+on:
+  pull_request:
+  push:
+    branches: [dev, main]
+
+jobs:
+  commit-message:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: 커밋 메시지
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # PR이면 대상 브랜치 이후, 푸시면 이전 끝 이후의 커밋을 본다
+          if [ -n "$BASE_REF" ]; then
+            range="origin/$BASE_REF..HEAD"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            range="$BEFORE..HEAD"
+          else
+            range="HEAD~1..HEAD"
+          fi
+          fail=0
+          for c in $(git rev-list --no-merges "$range"); do
+            bash .claude/scripts/psw/check-commit-msg.sh --commit "$c" || fail=1
+          done
+          exit $fail
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

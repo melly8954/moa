@@ -1,0 +1,12 @@
+# 키트가 설치한 공유 파일. 키트와 같게 두려고 포맷하지 않는다 (docs/design/conventions.md 6절)
+components/ui/
+hooks/use-mobile.ts
+app/theme.css
+# 생성물
+.next/
+node_modules/
+next-env.d.ts
+lib/api/schema.ts
+playwright-report/
+test-results/
+package-lock.json

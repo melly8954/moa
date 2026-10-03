@@ -1,5 +1,5 @@
 ---
-status: approved
+status: draft
 refs: [CON-001, CON-002, FR-ADM-003, FR-ADM-004, FR-PTY-010, NFR-CAP-001, NFR-ENV-001, NFR-I18N-001, SEC-AUTH-001, SEC-AUTH-003, SEC-AUTH-004, INT-GOOGLE-001, INT-GOOGLE-002, INT-KAKAO-001, INT-KAKAO-002, INT-KAKAO-003, INT-MAIL-001, INT-MAIL-002, INT-SMS-001, INT-SMS-002, INT-STORAGE-001, DAT-RET-001, DAT-RET-002]
 ---
 
@@ -210,7 +210,8 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
 | DB | RDS MariaDB 11.4 | API 서버만 접근한다 (보안 그룹) |
 | 파일 | S3 버킷 (비공개) | EC2 인스턴스 역할로 접근 |
 
-- 시크릿 저장소: (구현 준비에서 정한다)
+- 시크릿 저장소: 백엔드는 AWS SSM Parameter Store(SecureString). EC2 인스턴스 역할로 읽어 시작할 때 환경변수로 넣는다. 프론트는 Vercel 환경변수 〔2026-10-03〕 사용자 결정. 표준 파라미터는 무료이고 EC2 역할로 읽어 키를 따로 두지 않는다
+- 로컬 개발의 시크릿은 저장소에 커밋하지 않는 `.env`에 둔다. 목록은 `.env.example`(루트, `backend/`)
 
 ## 적용 요구사항
 
