@@ -54,7 +54,7 @@ com.moa
 ### 1.3 트랜잭션 [MUST]
 
 - 트랜잭션은 Service 메서드에서 연다 (키트). Application은 여러 Service를 조합하되 트랜잭션을 열지 않는다
-- 외부 호출(메일, 문자, 저장소)은 트랜잭션 밖에서 한다. 트랜잭션 안에서 하면 실패 때 DB만 되돌아가고 발송은 남는다
+- 외부 호출(메일, 문자, 저장소)은 트랜잭션 밖에서 한다. 트랜잭션 안에서 하면 실패 때 DB만 되돌아가고 발송은 남는다 〔2026-10-03〕 사용자 확인
 - 실시간 전달은 커밋 뒤에 보낸다 (`@TransactionalEventListener(phase = AFTER_COMMIT)`)
 
 ### 1.4 응답과 예외 [MUST]
@@ -164,7 +164,7 @@ frontend/
 - API 호출은 `lib/api/` 한 곳에서만 한다. 화면은 TanStack Query 훅(`use<리소스>`)으로 부른다
 - 액세스 토큰은 메모리에만 둔다. A002를 받으면 재발급을 한 번만 요청하고(동시 요청을 하나로 모은다), 실패하면 로그인으로 보낸다 (키트 알려진 제약)
 - 요청은 `credentials: "include"`로 보낸다 (리프레시 쿠키)
-- 응답 타입은 백엔드 OpenAPI 문서에서 `openapi-typescript`로 만든다 (`lib/api/schema.ts`, 손으로 고치지 않는다)
+- 응답 타입은 백엔드 OpenAPI 문서에서 `openapi-typescript`로 만든다 (`lib/api/schema.ts`, 손으로 고치지 않는다) 〔2026-10-03〕 사용자 확인
 
 ### 3.4 상태 관리 [SHOULD]
 
@@ -178,7 +178,7 @@ frontend/
 
 ### 3.6 라우팅·다국어·환경변수 [MUST]
 
-- 라우트는 `docs/design/ui/ia/`의 화면 목록 경로와 같다. 앞에 언어(`/ko`, `/en`)를 붙이지 않고 쿠키로 언어를 고른다 (next-intl, 기본 `ko`)
+- 라우트는 `docs/design/ui/ia/`의 화면 목록 경로와 같다. 앞에 언어(`/ko`, `/en`)를 붙이지 않고 쿠키로 언어를 고른다 (next-intl, 기본 `ko`) 〔2026-10-03〕 사용자 확인. 고르는 곳은 메뉴(비회원 셸 아래, 회원·관리자 설정), 회원의 언어는 서버에도 저장한다. 검색 노출 요구가 없어 주소를 나누지 않는다
 - 화면 문구는 `messages/ko.json`, `messages/en.json`에만 둔다. 컴포넌트에 한국어 문자열을 직접 쓰지 않는다 (NFR-I18N-001)
 - 서버 오류는 `code`로 문구를 고른다 (`errors.<코드>`). 서버 `message`를 그대로 보여 주지 않는다
 - 시각은 `Asia/Seoul`로 보여 준다
@@ -248,7 +248,7 @@ frontend/
 ### 5.4 페이징 [MUST]
 
 - 쪽 번호 목록(관리 화면, 검색): `page`(0부터), `size`(기본 20, 최대 100) → `PageResponse` `{content, page, size, totalElements, totalPages}` (키트)
-- 무한 스크롤 목록(피드, 메시지, 알림, 댓글, 팔로워): 커서 페이징 `cursor`, `size` → `CursorResponse` `{content, nextCursor}`. `nextCursor`가 null이면 끝 〔2026-10-01〕 새 글이 계속 쌓이는 목록에서 쪽 번호는 중복·누락이 생긴다. `CursorResponse`는 `common/response/`에 추가한다
+- 무한 스크롤 목록(피드, 메시지, 알림, 댓글, 팔로워): 커서 페이징 `cursor`, `size` → `CursorResponse` `{content, nextCursor}`. `nextCursor`가 null이면 끝 〔2026-10-01〕 새 글이 계속 쌓이는 목록에서 쪽 번호는 중복·누락이 생긴다. `CursorResponse`는 `common/response/`에 추가한다. 〔2026-10-03〕 사용자 확인
 - 페이징 없는 짧은 목록은 배열 그대로 (키트)
 
 ### 5.5 버전 [SHOULD]
