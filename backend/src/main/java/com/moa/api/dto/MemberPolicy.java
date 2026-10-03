@@ -25,6 +25,9 @@ public final class MemberPolicy {
 
 	public static final int EMAIL_MAX_LENGTH = 255;
 
+	/** 가입 진행 유효 시간. 가입을 시작한 때부터 잰다 (sign_ups.expires_at) */
+	public static final Duration SIGN_UP_TTL = Duration.ofMinutes(30);
+
 	/** 이메일 인증 링크 유효 시간 */
 	public static final Duration EMAIL_LINK_TTL = Duration.ofMinutes(30);
 

@@ -26,8 +26,11 @@ public class OAuthApplication {
 	/**
 	 * 콜백을 처리한다. 오류는 예외로 던지지 않고 실패 주소(error=오류 코드)로 돌려준다.
 	 * <ul>
+	 *   <li>이미 연결된 제공자 계정: 그 회원으로 로그인 세션을 발급한다</li>
+	 *   <li>같은 이메일의 기존 계정이 합치기 조건에 맞음: 연결하고, 로그인 수단 연결 알림을 남기고, 로그인시킨다</li>
 	 *   <li>state 불일치, 취소, 코드 교환 실패: A007</li>
-	 *   <li>같은 이메일 계정이 있으나 제공자가 인증된 이메일로 알려 주지 않음: B003</li>
+	 *   <li>같은 이메일의 기존 계정이 있으나 합치기 조건에 맞지 않음(제공자가 인증된 이메일로 알려 주지 않음,
+	 *       기존 계정이 ACTIVE가 아님, 같은 제공자의 다른 계정이 이미 연결됨): B003. 새 회원도 만들지 않는다</li>
 	 * </ul>
 	 */
 	public OAuthCallbackDto handleCallback(HandleOAuthCallbackCommand command) {

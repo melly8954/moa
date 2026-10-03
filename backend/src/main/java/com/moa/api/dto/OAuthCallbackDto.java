@@ -7,7 +7,7 @@ import com.moa.common.security.token.IssuedTokens;
  *
  * @param redirectUrl 프론트 주소
  *     <ul>
- *       <li>로그인(같은 이메일 계정에 합침 포함): {@code <웹>/}</li>
+ *       <li>로그인(이미 연결된 계정, 같은 이메일 계정에 합침): {@code <웹>/}</li>
  *       <li>새 가입, 이메일 있음: {@code <웹>/signup/phone}</li>
  *       <li>새 가입, 카카오가 이메일을 주지 않음: {@code <웹>/signup/email}</li>
  *       <li>실패: {@code <웹>/signup?error=<오류 코드>} (가입에서 시작) 또는 {@code <웹>/login?error=<오류 코드>}</li>

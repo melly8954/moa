@@ -13,6 +13,6 @@ import jakarta.validation.constraints.Pattern;
 @Schema(description = "문자 인증 번호 확인과 생년월일")
 public record PhoneConfirmationCreateRequest(
 	@Schema(description = "인증 번호 6자리",
-		example = "123456") @NotBlank @Pattern(regexp = MemberPolicy.VERIFICATION_CODE_PATTERN) String code,
+		example = "123456") @NotBlank @Pattern(regexp = MemberPolicy.VERIFICATION_CODE_PATTERN) String verificationCode,
 	@Schema(description = "생년월일", example = "2000-01-31") @NotNull @Past LocalDate birthDate) {
 }

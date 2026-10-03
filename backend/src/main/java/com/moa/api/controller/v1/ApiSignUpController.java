@@ -144,7 +144,7 @@ public class ApiSignUpController {
 	public ResponseEntity<Void> confirmPhoneVerification(@Valid @RequestBody PhoneConfirmationCreateRequest request,
 		HttpServletRequest httpRequest) {
 		signUpApplication.confirmPhoneVerification(new ConfirmPhoneVerificationCommand(
-			signUpTokenTransport.read(httpRequest), request.code(), request.birthDate()));
+			signUpTokenTransport.read(httpRequest), request.verificationCode(), request.birthDate()));
 		return ResponseEntity.noContent().build();
 	}
 

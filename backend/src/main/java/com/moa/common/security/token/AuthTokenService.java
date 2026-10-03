@@ -47,6 +47,15 @@ public class AuthTokenService {
 	}
 
 	/**
+	 * 로그인 세션을 새로 만들고 그 세션에 속한 토큰을 발급한다. 액세스 토큰에는 세션 ID를 sid 클레임으로 넣는다.
+	 * 회원 도메인의 로그인(가입 완료, 이메일 인증 연결, 소셜 콜백, 비밀번호 로그인)은 이 메서드를 부른다.
+	 */
+	@Transactional
+	public IssuedTokens issueWithNewSession(AuthPrincipal principal) {
+		throw new UnsupportedOperationException("구현 전입니다");
+	}
+
+	/**
 	 * @throws ServiceException 무효·만료·폐기면 A003, 이미 쓴 토큰이면 A004
 	 */
 	@Transactional(noRollbackFor = ServiceException.class)
