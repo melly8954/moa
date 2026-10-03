@@ -5,3 +5,6 @@
 
 # git worktree 작업 폴더를 쓸 때 (선택, harness-psw 5.1)
 .worktrees/
+
+# Claude 데스크톱 미리보기 설정 (PC별 절대경로 포함)
+.claude/launch.json
