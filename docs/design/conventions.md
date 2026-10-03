@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 refs: [CON-001, FR-REL-003, NFR-I18N-001, SEC-AUTH-004, SEC-AUTH-005, SEC-PRIV-002]
 ---
 
