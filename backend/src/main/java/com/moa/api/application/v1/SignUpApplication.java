@@ -31,6 +31,11 @@ public class SignUpApplication {
 
 	/**
 	 * 인증 링크를 확인한다. 같은 이메일의 기존 계정이 있으면 이메일 인증 연결 규칙대로 연결하고 로그인시킨다.
+	 * 연결할 때 같은 트랜잭션에서 NotificationService.create로 그 계정에 로그인 수단 변경 알림을 남긴다.
+	 * <ul>
+	 *   <li>비밀번호 추가: LOGIN_METHOD_ADDED, 대상 없음</li>
+	 *   <li>카카오 가입 중이었으면 카카오 연결: LOGIN_METHOD_LINKED, 대상 MEMBER_SOCIAL_ACCOUNT</li>
+	 * </ul>
 	 *
 	 * @throws com.moa.common.exception.ServiceException 만료·이미 씀·없는 링크면 B004,
 	 *     비밀번호가 있는 기존 계정 이메일이면 B002
