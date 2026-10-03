@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 관리 정책

@@ -1,6 +1,6 @@
 ---
 id: FR-MEM-002
-status: draft
+status: approved
 refs: [SEC-AUTH-001, SEC-AUTH-004, INT-GOOGLE-001, INT-KAKAO-001]
 ---
 

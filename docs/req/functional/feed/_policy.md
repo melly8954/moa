@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 피드 정책
