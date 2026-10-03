@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 소셜 로그인
