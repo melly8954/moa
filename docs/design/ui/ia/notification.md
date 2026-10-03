@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 refs: [FR-NTF-001, FR-PTY-007]
 ---
 

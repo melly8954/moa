@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 refs: [FR-MEM-001, FR-MEM-002, FR-MEM-003, FR-MEM-004, FR-MEM-005, FR-MEM-006, FR-MEM-007, FR-MEM-008, FR-MEM-009, FR-MEM-010, FR-MEM-011]
 ---
 

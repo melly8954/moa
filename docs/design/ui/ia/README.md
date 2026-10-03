@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 refs: [NFR-ENV-001, NFR-I18N-001, FR-ADM-004, FR-MEM-002, FR-REL-002, FR-REP-001]
 ---
 

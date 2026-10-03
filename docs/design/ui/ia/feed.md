@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 refs: [FR-FEED-001, FR-FEED-002, FR-FEED-003, FR-FEED-004, FR-FEED-005, FR-FEED-006, FR-FEED-007, FR-FEED-008]
 ---
 

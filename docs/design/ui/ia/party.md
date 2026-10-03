@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 refs: [FR-PTY-001, FR-PTY-002, FR-PTY-003, FR-PTY-004, FR-PTY-005, FR-PTY-006, FR-PTY-007, FR-PTY-008, FR-PTY-009, FR-PTY-010]
 ---
 

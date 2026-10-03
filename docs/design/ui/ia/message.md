@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 refs: [FR-MSG-001, FR-MSG-003, FR-MSG-004, FR-MSG-006]
 ---
 

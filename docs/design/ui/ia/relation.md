@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 refs: [FR-REL-001, FR-REL-002, FR-REL-003, FR-REL-004, FR-REL-005]
 ---
 
