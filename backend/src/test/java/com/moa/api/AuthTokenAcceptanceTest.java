@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import com.jayway.jsonpath.JsonPath;
@@ -24,16 +25,20 @@ import jakarta.servlet.http.Cookie;
 /**
  * 토큰 재발급·로그아웃. AC 번호는 키트 문서 조각 auth-token의 FR 초안과 같다.
  * 프로젝트에 조각을 넣고 FR ID가 정해지면 표시 이름의 [auth-token-refresh], [auth-token-logout]을 그 ID로 바꾼다.
- * 사용자 도메인이 생기면 login()이 계정 행을 먼저 만들게 고친다 (APPLY.md 적용 후 할 일 3).
+ * login()은 회원 행을 먼저 만든다 (FR-MEM-001, APPLY.md 적용 후 할 일 3).
  */
 class AuthTokenAcceptanceTest extends AcceptanceTest {
 
 	private static final String COOKIE = "refresh_token";
 	private static final String REFRESH = "/api/v1/auth/token/refresh";
 	private static final String LOGOUT = "/api/v1/auth/logout";
+	private static final long MEMBER_ID = 7L;
 
 	@Autowired
 	private AuthTokenApplication authTokenApplication;
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	@Test
 	@DisplayName("[auth-token-refresh] AC-1: 웹은 쿠키의 리프레시 토큰으로 재발급받고, 새 리프레시 토큰은 쿠키로만 받는다")
@@ -112,11 +117,14 @@ class AuthTokenAcceptanceTest extends AcceptanceTest {
 	}
 
 	/**
-	 * 로그인 API는 사용자 도메인이 만든다. 여기서는 인증에 성공했다고 보고 바로 발급한다.
-	 * 사용자 도메인이 생기면 발급 전에 계정 행을 만든다. 재발급이 계정을 다시 읽고, FK가 있으면 저장도 실패한다.
+	 * 로그인 API를 거치지 않고 인증에 성공했다고 보고 바로 발급한다.
+	 * 재발급이 회원을 다시 읽으므로 발급 전에 회원 행(ACTIVE)을 먼저 만든다.
 	 */
 	private IssuedTokens login() {
-		return authTokenApplication.issue(new AuthPrincipal(7L, Set.of("USER")));
+		jdbcTemplate.update("insert into members (id, email, nickname, role, status, created_at, created_by, "
+			+ "updated_at, updated_by) values (?, ?, ?, 'MEMBER', 'ACTIVE', now(6), 1, now(6), 1)",
+			MEMBER_ID, "token-user@moa.test", "token_user");
+		return authTokenApplication.issue(new AuthPrincipal(MEMBER_ID, Set.of("USER")));
 	}
 
 	private MvcTestResult refreshAsApp(String refreshToken) {
