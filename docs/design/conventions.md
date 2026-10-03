@@ -1,5 +1,5 @@
 ---
-status: approved
+status: draft
 refs: [CON-001, FR-REL-003, NFR-I18N-001, SEC-AUTH-004, SEC-AUTH-005, SEC-PRIV-002]
 ---
 
@@ -114,6 +114,7 @@ com.moa
 | `refresh_tokens` | 토큰. 키트 골격 |
 | 로그인 세션 | 끊기거나 리프레시 수명(14일)이 지난 세션은 예약 작업이 지운다 (`security.md` 로그인 세션) |
 | 인증 링크·인증 번호 | 한 번 쓰면 끝나는 값. 만료 뒤 정리 |
+| 가입 진행 | 회원이 생기면 지우고, 끝내지 않은 가입은 유효 시간(30분, 회원 `_policy.md`)이 지나면 정리 〔2026-10-04〕 |
 | 알림 | 보관 기간(30일)이 지나면 지운다 (`notification/_policy.md`) |
 | 좋아요, 팔로우, 차단 | 관계 행. 끊으면 이력 없이 없앤다 |
 | 붙지 않은 업로드 | 하루 뒤 정리 (`architecture.md` 파일 저장소) |

@@ -1,5 +1,5 @@
 ---
-status: approved
+status: draft
 refs: [CON-001, CON-002, FR-ADM-003, FR-ADM-004, FR-PTY-010, NFR-CAP-001, NFR-ENV-001, NFR-I18N-001, SEC-AUTH-001, SEC-AUTH-003, SEC-AUTH-004, INT-GOOGLE-001, INT-GOOGLE-002, INT-KAKAO-001, INT-KAKAO-002, INT-KAKAO-003, INT-MAIL-001, INT-MAIL-002, INT-SMS-001, INT-SMS-002, INT-STORAGE-001, DAT-RET-001, DAT-RET-002]
 ---
 
@@ -105,6 +105,7 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
 - 용도와 방향: 가입·로그인, 로그인 수단 연결. 우리 → 구글(인가 코드 교환), 구글 → 우리(리다이렉트 콜백)
 - 인증: OAuth 2.0 / OpenID Connect, 클라이언트 ID·시크릿 (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`)
 - 흐름: 브라우저 → `api/v1/auth/oauth/google` → 구글 동의 → 콜백에서 서버가 코드 교환·ID 토큰 검증 → 리프레시 쿠키를 쓰고 프론트로 리다이렉트 → 프론트가 재발급으로 액세스 토큰을 받는다
+- 구현 범위: 콜백과 로그인 세션 발급은 가입·로그인이 함께 쓰므로 FR-MEM-001에서 만든다(이미 연결된 계정의 로그인 분기 포함). FR-MEM-002는 비밀번호 로그인, 실패 응답, 정지·탈퇴 거부, 관리자 이동을 더한다 〔2026-10-04〕 사용자 결정
 - 계정 합치기: ID 토큰의 `email_verified`가 true일 때만 같은 이메일 계정에 합친다
 
 | 작업 | 엔드포인트 | 타임아웃 | 재시도 | 멱등 키 |
@@ -123,7 +124,8 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
 - 근거: INT-KAKAO-001, INT-KAKAO-002, INT-KAKAO-003
 - 용도와 방향: 구글과 같다
 - 인증: OAuth 2.0, REST API 키·클라이언트 시크릿 (`KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`)
-- 계정 합치기: 사용자 정보의 이메일 인증 여부(`is_email_verified`)가 참일 때만 합친다
+- 계정 합치기: 사용자 정보의 이메일 인증 여부(`is_email_verified`)와 유효 여부(`is_email_valid`)가 모두 참일 때만 합친다 〔2026-10-04〕 INT-KAKAO-002 변경
+- 운영 전제: 앱을 개인 개발자 비즈 앱으로 전환하고(앱 소유자 본인인증, 사업자등록 불필요) 카카오계정(이메일)을 필수 동의로 둔다. 이메일 미동의 흐름은 예비로 남긴다 〔2026-10-04〕 사용자 결정
 - 이메일 미동의: 이메일 없이 돌아오면 가입을 이메일 인증 단계로 이어 간다 (INT-KAKAO-003)
 
 | 작업 | 엔드포인트 | 타임아웃 | 재시도 | 멱등 키 |
