@@ -1,5 +1,5 @@
 ---
-status: approved
+status: draft
 refs: [FR-ADM-001, FR-MEM-003, FR-MEM-005, FR-MEM-009, FR-MEM-010, FR-REL-003, SEC-AUTH-001, SEC-AUTH-002, SEC-AUTH-003, SEC-AUTH-004, SEC-AUTH-005, SEC-PRIV-001, SEC-PRIV-002, INT-GOOGLE-002, INT-KAKAO-002, DAT-RET-002]
 ---
 
@@ -75,7 +75,7 @@ sequenceDiagram
 
 - 세션을 끊으면 그 세션의 리프레시 토큰도 함께 폐기한다
 - WebSocket: STOMP 연결도 세션 ID를 가진다. 세션을 끊을 때 그 세션의 STOMP 연결을 서버가 닫는다
-- 구현: 골격에 포트(예: `AuthSessionChecker`)를 더해 `JwtAuthenticationFilter`가 부르고, 회원 도메인이 구현한다. FR-MEM-002에서 한다
+- 구현: 세션 발급(로그인 세션 생성, `sid` 클레임, 리프레시 토큰 연결)은 FR-MEM-001에서 한다(`architecture.md` 구글 로그인 구현 범위). 요청마다 하는 확인은 골격에 포트(예: `AuthSessionChecker`)를 더해 `JwtAuthenticationFilter`가 부르고, 회원 도메인이 구현한다. FR-MEM-002에서 한다 〔2026-10-04〕 사용자 결정
 
 ## 데이터 보호
 
