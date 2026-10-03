@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # 문서를 approved로 바꾼다 (harness-psw 1.1, 10.5).
 # 사용자가 직접 실행한다. 에이전트의 실행은 guard-paths.sh hook이 막는다.
-#   Claude Code 입력창에서: ! bash .claude/scripts/psw/approve.sh <경로...>
+# 실행 방법 (승인 안내의 정본. 스킬은 이 주석을 가리킨다)
+#   - 터미널의 bash 셸(Windows는 Git Bash)에서: bash .claude/scripts/psw/approve.sh <경로...>
+#   - Claude Code CLI 입력창은 ! 접두사로도 된다. 데스크톱 앱 입력창의 !는 실행되지 않고 메시지로 간다
+#   - Windows에서 bash가 WSL로 연결돼 실패하면 Git Bash를 직접 부른다:
+#     "C:\Program Files\Git\bin\bash.exe" .claude/scripts/psw/approve.sh <경로...>
 #
 # 사용법: approve.sh <파일 또는 폴더...>
 #   - status: draft 인 md 파일(frontmatter)과 목업 html(메타 주석)을 approved로 바꾼다

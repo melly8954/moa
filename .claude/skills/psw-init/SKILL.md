@@ -16,7 +16,8 @@ description: harness-psw 프로젝트 골격(CLAUDE.md, docs/, open-question.md,
 
 ### 1. 상태 확인
 
-- git 저장소가 아니면 사용자에게 `git init` 여부를 묻는다
+- git 저장소가 아니면 사용자에게 `git init` 여부를 묻는다. 기본 브랜치는 `main`으로 만든다 (`git init -b main`)
+- 이미 저장소면 현재 브랜치와 `dev` 브랜치가 있는지 확인한다
 - 아래 경로 중 이미 있는 것을 확인한다
   - `CLAUDE.md`, `docs/`, `.env.example`, `.gitignore`, `.gitattributes`, `.claude/settings.json`
 - MUST: 이미 있는 파일은 덮어쓰지 않는다. 목록을 보고하고 진행 여부를 묻는다
@@ -57,7 +58,7 @@ docs/design/
 
 - 설정 파일을 바꾸는 작업이므로 사용자에게 내용을 보여주고 동의를 받는다
   - 하는 일: 모든 에이전트(메인 세션 포함)가 문서를 `approved`로 바꾸거나 `approve.sh`를 실행하는 것을 막고, 하위 에이전트의 편집 경로를 역할별로 제한한다
-  - 승인은 사용자가 입력창에서 직접 실행한다: `! bash .claude/scripts/psw/approve.sh <경로>`
+  - 승인은 사용자가 직접 실행한다: `bash .claude/scripts/psw/approve.sh <경로>`. 실행 방법은 `approve.sh` 머리 주석을 읽고 그대로 안내한다
 - `.claude/settings.json`이 없으면 `templates/settings.json`을 복사한다
 - 있으면 `hooks.PreToolUse`에 템플릿의 항목을 추가한다. 같은 command가 이미 있으면 추가하지 않는다
 - hook은 워크스페이스 신뢰를 수락한 뒤에 동작한다
@@ -68,12 +69,20 @@ docs/design/
 - `CLAUDE.md`에 `{{`가 남아 있지 않은지 확인한다
 - hook 동작 확인: `printf '{"tool_name":"Bash","tool_input":{"command":"approve.sh"}}' | bash .claude/scripts/psw/guard-paths.sh hook` 가 exit 2로 끝나야 한다
 
-### 8. 보고
+### 8. 첫 커밋과 `dev` 브랜치 (harness-psw 5.1)
+
+- 사용자 승인을 받고 골격을 커밋한다. 메시지 예: `chore: harness-psw 골격 생성`
+  - 새 저장소면 `main`에 첫 커밋을 한다
+- `dev` 브랜치가 없으면 만들고 옮겨 간다: `git switch -c dev`
+  → 기획·설계 문서는 `dev`에 커밋한다. `main`은 사용자가 배포할 때만 바뀐다
+- 이미 있는 저장소에서 `main`에 다른 커밋이 쌓여 있으면 `dev`를 어디서 만들지 사용자에게 묻는다
+
+### 9. 보고
 
 - 생성한 파일과 디렉터리 목록
 - 건너뛴 파일과 이유
+- 현재 브랜치 (`dev`여야 한다)
 - 다음 단계: `psw-interview`로 기획 인터뷰를 시작한다
-- 커밋은 사용자 승인 후에 한다. 메시지 예: `chore: harness-psw 골격 생성`
 
 ## 하지 않는 것
 

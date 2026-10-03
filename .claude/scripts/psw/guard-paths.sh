@@ -13,8 +13,8 @@
 #   reviewer     편집 금지
 #   그 외        역할 제한 없음
 # 모든 역할(메인 세션 포함)
-#   - 파일에 "status: approved"를 새로 쓰지 못한다
-#   - approve.sh를 실행하지 못한다
+#   - docs/ 문서(md, html)에 "status: approved"를 새로 쓰지 못한다
+#   - approve.sh를 실행하지 못한다 (grep·cat 같은 읽기·검색은 허용)
 #   → 승인은 사용자가 직접 approve.sh를 실행해서 한다
 set -uo pipefail
 
@@ -120,21 +120,44 @@ block() {
 tool="$(json_string tool_name)"
 role="$(json_string agent_type)"
 
+# approve.sh를 실행하는 명령인가. 명령을 ; && || | 로 나눠, approve.sh가 들어 있는 조각이
+# 읽기·검색 명령(grep, cat 등)으로 시작하지 않으면 실행으로 본다
+runs_approve() {
+  local seg first
+  while IFS= read -r seg; do
+    [[ "$seg" == *approve.sh* ]] || continue
+    seg="${seg#"${seg%%[![:space:]]*}"}"
+    first="${seg%%[[:space:]]*}"
+    case "$first" in
+      grep|rg|cat|head|tail|less|more|wc|ls|find|stat|file|diff) continue ;;
+      sed) [[ "$seg" =~ ^sed[[:space:]]+-n ]] && continue ;;
+      git) [[ "$seg" =~ ^git[[:space:]]+(log|show|diff|grep|blame|status)([[:space:]]|$) ]] && continue ;;
+    esac
+    return 0
+  done < <(sed -E 's/(\&\&|\|\||;|\|)/\n/g' <<<"$1")
+  return 1
+}
+
 if [[ "$tool" == "Bash" ]]; then
   cmd="$(json_string command)"
-  [[ "$cmd" == *approve.sh* ]] && block "approve.sh는 사용자가 직접 실행한다. 에이전트는 승인을 대신하지 않는다"
+  runs_approve "$cmd" && block "approve.sh는 사용자가 직접 실행한다. 에이전트는 승인을 대신하지 않는다"
   exit 0
-fi
-
-# 새로 쓰는 내용(new_string, content)에 approved가 있으면 막는다
-if grep -oE '"(new_string|content|new_source)"[[:space:]]*:[[:space:]]*"([^"\\]|\\.)*"' <<<"$input" \
-    | grep -qE 'status:[[:space:]]*approved'; then
-  block "문서를 approved로 바꾸는 것은 사용자만 한다 (approve.sh)"
 fi
 
 path="$(json_string file_path)"
 [[ -z "$path" ]] && path="$(json_string notebook_path)"
 [[ -z "$path" ]] && exit 0
+rel="$(to_relative "$path")"
 
-reason="$(deny_reason "$role" "$(to_relative "$path")")" || block "$reason"
+# docs/ 문서에 approved를 새로 쓰면 막는다. 스크립트 같은 다른 파일 안의 문자열은 막지 않는다
+case "$rel" in
+  docs/*.md|docs/*.html)
+    if grep -oE '"(new_string|content|new_source)"[[:space:]]*:[[:space:]]*"([^"\\]|\\.)*"' <<<"$input" \
+        | grep -qE 'status:[[:space:]]*approved'; then
+      block "문서를 approved로 바꾸는 것은 사용자만 한다 (approve.sh)"
+    fi
+    ;;
+esac
+
+reason="$(deny_reason "$role" "$rel")" || block "$reason"
 exit 0

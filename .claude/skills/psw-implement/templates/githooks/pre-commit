@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# harness-psw 시크릿 스캔 (5.3). 스테이징된 변경에 비밀값이 섞였는지 검사한다.
+# 설정: git config core.hooksPath .githooks (commit-msg와 같은 폴더)
+# 시크릿 스캔 도구를 gitleaks로 정한 프로젝트에서만 복사한다 (docs/design/conventions.md 도구 절).
+
+gl="$(command -v gitleaks 2>/dev/null)"
+
+# Windows에서 winget으로 설치한 직후에는 열려 있던 셸의 PATH에 반영되지 않는다. 설치 위치를 직접 찾는다
+if [[ -z "$gl" ]]; then
+  for d in "${LOCALAPPDATA:-}/Microsoft/WinGet/Links" "${LOCALAPPDATA:-}"/Microsoft/WinGet/Packages/Gitleaks.Gitleaks_*; do
+    [[ -n "${LOCALAPPDATA:-}" && -x "$d/gitleaks.exe" ]] && { gl="$d/gitleaks.exe"; break; }
+  done
+fi
+
+if [[ -z "$gl" ]]; then
+  echo "harness-psw: gitleaks를 찾지 못해 커밋을 막았다." >&2
+  echo "  설치했다면 터미널(또는 Claude 세션)을 새로 열어 PATH를 다시 읽는다." >&2
+  echo "  쓰지 않기로 했다면 conventions.md 도구 절에서 시크릿 스캔 도구를 바꾸고 이 hook을 지운다." >&2
+  exit 1
+fi
+exec "$gl" git --pre-commit --staged --redact --no-banner

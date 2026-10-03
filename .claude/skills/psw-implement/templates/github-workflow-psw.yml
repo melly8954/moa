@@ -1,0 +1,48 @@
+# harness-psw 검사 (5.3, 5.4)
+# GitHub를 쓰는 프로젝트에서 .github/workflows/psw.yml로 복사한다.
+# 기능 브랜치를 로컬에서 dev로 합치는 흐름(9.2)이라 PR이 없을 수 있다. dev·main push에도 돈다.
+name: harness-psw
+
+on:
+  pull_request:
+  push:
+    branches: [dev, main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: 커밋 메시지
+        run: |
+          # 검사 범위: PR이면 기준 브랜치 이후, push면 이번 push로 들어온 커밋
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="origin/${{ github.base_ref }}..HEAD"
+          elif [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            range="HEAD~1..HEAD"
+          else
+            range="${{ github.event.before }}..${{ github.sha }}"
+          fi
+          fail=0
+          for c in $(git rev-list --no-merges "$range"); do
+            bash .claude/scripts/psw/check-commit-msg.sh --commit "$c" || fail=1
+          done
+          exit $fail
+
+  # 선택: 시크릿 스캔 도구를 gitleaks로 정했으면 남긴다. 아니면 이 작업을 지운다
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        env:
+          GITLEAKS_VERSION: 8.30.1
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+          ./gitleaks git . --redact --no-banner

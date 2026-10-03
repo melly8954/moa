@@ -34,8 +34,12 @@
 
 | 용도 | 명령 |
 |---|---|
-| 개발 서버 | (프로젝트별 결정) |
-| lint·타입 검사 | (프로젝트별 결정) |
-| AC 테스트 | (프로젝트별 결정) |
+| 프론트 개발 서버 | (프로젝트별 결정) |
+| 프론트 lint·포맷·타입 검사 | (프로젝트별 결정) |
+| 프론트 화면 테스트 | (프로젝트별 결정) |
+| 백엔드 실행 | (프로젝트별 결정) |
+| 백엔드 빌드·lint·AC 테스트 | (프로젝트별 결정) |
+| git hook 연결 (처음 한 번) | `git config core.hooksPath .githooks` |
+| 문서 승인 (사용자, 터미널의 bash 셸) | `bash .claude/scripts/psw/approve.sh <경로>` |
 | 설계 교차 검증 | `bash .claude/scripts/psw/crosscheck.sh [도메인]` |
 | 루프 종료 확인 | `bash .claude/scripts/psw/loop-status.sh [경로]` |

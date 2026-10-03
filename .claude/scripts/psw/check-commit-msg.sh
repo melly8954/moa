@@ -62,7 +62,7 @@ has_trailer() { grep -qE "^$1:" <<<"$trailers"; }
 body="$(sed '1,2d' <<<"$msg")"
 while IFS= read -r line; do
   [[ -z "$line" ]] && continue
-  grep -qxF "$line" <<<"$trailers" && continue
+  grep -qxF -- "$line" <<<"$trailers" && continue
   (( $(clen "$line") > 100 )) && warn "본문 한 줄이 100자를 넘는다: ${line:0:30}..."
 done <<<"$body"
 
@@ -100,7 +100,12 @@ done < <(trailer_values Refs)
 while IFS= read -r v; do
   [[ -z "$v" ]] && continue
   [[ "$v" =~ ^OPEN-[0-9]{3,}$ ]] || { err "Closes 형식이 아니다: $v"; continue; }
-  exists_in "## $v" docs/open-question.md || err "Closes의 $v 항목이 docs/open-question.md에 없다"
+  exists_in "## $v" docs/open-question.md && continue
+  # 이 커밋 안에서 등록하고 바로 해결해 어느 쪽에도 남지 않은 항목은 막지 않는다
+  if git log --all -S "## $v" --format=%h -- docs/open-question.md 2>/dev/null | grep -q .; then
+    continue
+  fi
+  warn "Closes의 $v 항목을 open-question.md 어디에서도 찾지 못했다. 이 커밋에서 등록하고 바로 해결했다면 Closes를 빼도 된다"
 done < <(trailer_values Closes)
 
 # ---------- 필수 트레일러 ----------
@@ -143,11 +148,16 @@ while IFS=$'\t' read -r st path rest; do
   fi
 done <<<"$changed"
 
+# 트레일러는 메시지 맨 끝 한 덩어리만 읽힌다. 빈 줄로 나뉜 앞 덩어리의 Refs·Closes는 무시된다
+split_hint=""
+if grep -qE '^(Refs|Closes):' <<<"$msg" && ! has_trailer Refs && ! has_trailer Closes; then
+  split_hint=" (Refs·Closes 줄이 있지만 트레일러로 읽히지 않았다. 트레일러는 빈 줄 없이 맨 끝 한 덩어리로 둔다)"
+fi
 if (( code_changed )) && [[ "$type" == "feat" || "$type" == "fix" ]]; then
-  has_trailer Refs || err "feat·fix 코드 변경에는 Refs 트레일러가 필요하다"
+  has_trailer Refs || err "feat·fix 코드 변경에는 Refs 트레일러가 필요하다$split_hint"
 fi
 if (( spec_changed )); then
-  has_trailer Refs || has_trailer Closes || err "REQ·설계 문서 변경에는 Refs 또는 Closes 트레일러가 필요하다"
+  has_trailer Refs || has_trailer Closes || err "REQ·설계 문서 변경에는 Refs 또는 Closes 트레일러가 필요하다$split_hint"
 fi
 if [[ ${#approved_touched[@]} -gt 0 ]]; then
   warn "approved 문서를 바꿨다. 사용자가 수락한 변경인지 확인하고 다시 승인받는다 (harness-psw 7.3): ${approved_touched[*]}"

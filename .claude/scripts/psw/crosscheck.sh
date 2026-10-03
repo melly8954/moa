@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 설계 교차 검증의 스크립트 항목을 실행한다 (harness-psw 4.3, 10.5).
-#   1 (경고) 승인된 FR 중 화면에서 참조되지 않는 것 (서버 전용 기능이면 무시)
+#   1 (경고) 승인된 must FR 중 화면에서 참조되지 않는 것 (서버 전용 기능이면 무시)
 #   2 NFR·SEC·INT가 설계 문서 어딘가에서 참조된다
 #   4 목업의 data-component 값이 components.md에 있다
 #   5 목업마다 IA 화면 목록에 행이 있다 (IA 행에 목업이 없으면 경고)
@@ -58,11 +58,16 @@ if [[ -z "$targets" ]]; then
   echo "  (approved FR이 없어 전체 FR로 검사한다)"
   targets="$fr_all"
 fi
+skipped=0
 while IFS= read -r id; do
   [[ -z "$id" ]] && continue
   in_scope "$id" || continue
+  # 우선순위가 must가 아닌 FR(이번 범위가 아닐 수 있음)은 경고하지 않는다. 우선순위는 도메인 README 기능 목록 세 번째 열
+  prio="$(grep -rhE "^\|[[:space:]]*${id}[[:space:]]*\|" "$R/functional"/*/README.md 2>/dev/null | head -1 | awk -F'|' '{gsub(/ /,"",$4); print $4}')"
+  if [[ -n "$prio" && "$prio" != "must" ]]; then skipped=$((skipped + 1)); continue; fi
   grep -rqF "$id" "$D/ui" 2>/dev/null || warn "$id 를 참조하는 화면 없음 (서버 전용 기능이면 무시)"
 done <<<"$targets"
+[[ $skipped -gt 0 ]] && echo "  (우선순위가 must가 아닌 FR ${skipped}개는 건너뜀)"
 
 # ---------- 2 ----------
 echo "[2] NFR·SEC·INT가 설계 문서에서 참조된다"
