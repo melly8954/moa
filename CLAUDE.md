@@ -28,7 +28,9 @@
 - MUST: 테스트를 통과시키려고 테스트를 고치지 않는다
 - NEVER: 시크릿 값을 읽거나 출력하거나 커밋하지 않는다
 - MUST: 커밋에 트레일러(Refs, Closes)를 단다
-- 브랜치: main(배포, 사용자만) ← dev(개발, 문서 커밋) ← feat/<FR-ID>-<요약>(FR 구현)
+- 브랜치: main(배포, 사용자만) ← dev(개발) ← feat/<FR-ID>-<요약>(FR 구현), docs/<주제>(문서, PR 방식만)
+  - dev 병합 방식: PR 〔2026-10-04〕 팀원과 협업하며 dev 변경을 PR로 리뷰한다
+    PR: 문서는 docs/<주제>, 기능은 feat/ 브랜치에서 PR로 합친다. 에이전트는 PR을 병합하지 않는다
 
 ## 명령
 
@@ -40,6 +42,7 @@
 | lint·포맷·타입 검사 (프론트) | `cd frontend && npm run lint && npm run format:check && npm run typecheck` (포맷 적용: `npm run format`) |
 | AC 테스트 (API) | `cd backend && ./gradlew test` (Docker 필요). 전체 검사: `./gradlew build` |
 | AC 테스트 (화면) | `cd frontend && npm run test:e2e` (처음 한 번 `npx playwright install chromium`) |
+| 테스트 하나만 실행 (구현 반복 중) | API: `cd backend && ./gradlew test --tests '<클래스>'`, 화면: `cd frontend && npx playwright test <파일>`. 전체 검사는 보고 직전에 한 번 |
 | 커밋 hook 설정 (처음 한 번) | `git config core.hooksPath .githooks` (gitleaks 필요) |
 | 설계 교차 검증 | `bash .claude/scripts/psw/crosscheck.sh [도메인]` |
 | 루프 종료 확인 | `bash .claude/scripts/psw/loop-status.sh [경로]` |
