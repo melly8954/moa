@@ -14,7 +14,7 @@
 #   그 외        역할 제한 없음
 # 모든 역할(메인 세션 포함)
 #   - docs/ 문서(md, html)에 "status: approved"를 새로 쓰지 못한다
-#   - approve.sh를 실행하지 못한다 (grep·cat 같은 읽기·검색은 허용)
+#   - approve.sh를 실행하지 못한다 (grep·cat 같은 읽기·검색, 커밋 메시지·heredoc 같은 글 속 언급은 허용)
 #   → 승인은 사용자가 직접 approve.sh를 실행해서 한다
 set -uo pipefail
 
@@ -120,26 +120,86 @@ block() {
 tool="$(json_string tool_name)"
 role="$(json_string agent_type)"
 
-# approve.sh를 실행하는 명령인가. 명령을 ; && || | 로 나눠, approve.sh가 들어 있는 조각이
-# 읽기·검색 명령(grep, cat 등)으로 시작하지 않으면 실행으로 본다
+json_command() { # command 값을 명령 그대로 되돌린다 (\n, \t, \", \\ 를 푼다)
+  local s
+  s="$(grep -oE '"command"[[:space:]]*:[[:space:]]*"([^"\\]|\\.)*"' <<<"$input" | head -1)"
+  s="${s#*:}"; s="${s#"${s%%[![:space:]]*}"}"; s="${s#\"}"; s="${s%\"}"
+  s="${s//\\\\/$'\x01'}"
+  s="${s//\\n/$'\n'}"; s="${s//\\t/$'\t'}"; s="${s//\\\"/\"}"; s="${s//\\\//\/}"
+  s="${s//$'\x01'/\\}"
+  printf '%s' "$s"
+}
+
+# heredoc 본문을 뺀다. 본문은 명령이 아니라 데이터다 (커밋 메시지 등)
+strip_heredocs() {
+  local line delim="" dash="" out="" t
+  local re='(^|[^<])<<(-?)[[:space:]]*['\''"]?([A-Za-z_][A-Za-z0-9_]*)'
+  while IFS= read -r line; do
+    if [[ -n "$delim" ]]; then
+      t="$line"; [[ -n "$dash" ]] && t="${t#"${t%%[!$'\t']*}"}"
+      [[ "$t" == "$delim" ]] && { delim=""; out+=$'\n'; }
+      continue
+    fi
+    out+="$line"$'\n'
+    if [[ "$line" =~ $re ]]; then dash="${BASH_REMATCH[2]}"; delim="${BASH_REMATCH[3]}"; fi
+  done <<<"$1"
+  printf '%s' "$out"
+}
+
+# 따옴표 문자열을 다룬다. 공백이 든 문자열은 글(메시지·본문)로 보고 Q로 바꾼다.
+# 다만 bash -c 뒤의 문자열은 명령으로 보고 풀어 둔다. 공백 없는 문자열(경로 등),
+# $( 나 ` 가 든 문자열, approve.sh로 끝나는 문자열(공백 있는 경로)은 따옴표만 벗긴다
+strip_quotes() {
+  local s="$1" out="" q="" buf="" c i n=${#1}
+  for ((i = 0; i < n; i++)); do
+    c="${s:i:1}"
+    if [[ -z "$q" ]]; then
+      case "$c" in
+        \\) out+="$c${s:i+1:1}"; ((i++)) ;;
+        \'|\") q="$c"; buf="" ;;
+        *) out+="$c" ;;
+      esac
+      continue
+    fi
+    if [[ "$q" == '"' && "$c" == \\ ]]; then buf+="$c${s:i+1:1}"; ((i++)); continue; fi
+    if [[ "$c" != "$q" ]]; then buf+="$c"; continue; fi
+    q=""
+    if [[ "$out" =~ (^|[[:space:]])-[A-Za-z]*c[[:space:]]*$ ]]; then out+=$'\n'"$buf"$'\n'
+    elif [[ "$buf" != *[[:space:]]* || "$buf" == *'$('* || "$buf" == *'`'* || "$buf" == *approve.sh ]]; then out+="$buf"
+    else out+="Q"
+    fi
+  done
+  [[ -n "$q" ]] && out+="$q$buf"
+  printf '%s' "$out"
+}
+
+# approve.sh를 실행하는 명령인가. heredoc 본문과 글로 된 따옴표 문자열을 빼고, 명령을
+# 줄바꿈 ; && || | & ( ) ` 로 나눠, approve.sh가 들어 있는 조각이 읽기·출력 명령(grep, cat,
+# echo 등)으로 시작하지 않으면 실행으로 본다
 runs_approve() {
-  local seg first
+  local s="$1" seg first
+  [[ "$s" == *approve.sh* ]] || return 1
+  s="$(strip_heredocs "$s")"
+  s="$(strip_quotes "$s")"
+  s="${s//&&/$'\n'}"; s="${s//||/$'\n'}"
+  local sep
+  for sep in ';' '|' '&' '(' ')' '`'; do s="${s//"$sep"/$'\n'}"; done
   while IFS= read -r seg; do
     [[ "$seg" == *approve.sh* ]] || continue
     seg="${seg#"${seg%%[![:space:]]*}"}"
     first="${seg%%[[:space:]]*}"
     case "$first" in
-      grep|rg|cat|head|tail|less|more|wc|ls|find|stat|file|diff) continue ;;
+      grep|rg|cat|head|tail|less|more|wc|ls|find|stat|file|diff|echo|printf) continue ;;
       sed) [[ "$seg" =~ ^sed[[:space:]]+-n ]] && continue ;;
       git) [[ "$seg" =~ ^git[[:space:]]+(log|show|diff|grep|blame|status)([[:space:]]|$) ]] && continue ;;
     esac
     return 0
-  done < <(sed -E 's/(\&\&|\|\||;|\|)/\n/g' <<<"$1")
+  done <<<"$s"
   return 1
 }
 
 if [[ "$tool" == "Bash" ]]; then
-  cmd="$(json_string command)"
+  cmd="$(json_command)"
   runs_approve "$cmd" && block "approve.sh는 사용자가 직접 실행한다. 에이전트는 승인을 대신하지 않는다"
   exit 0
 fi

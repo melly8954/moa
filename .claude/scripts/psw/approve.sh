@@ -10,6 +10,7 @@
 # 사용법: approve.sh <파일 또는 폴더...>
 #   - status: draft 인 md 파일(frontmatter)과 목업 html(메타 주석)을 approved로 바꾼다
 #   - 미정 또는 끊긴 [OPEN-NNN] 자리표시가 남은 파일은 건너뛴다 (보류 항목은 허용, docs/open-question.md)
+#   - 문서는 문서 브랜치(dev, PR 방식이면 docs/*)에서 승인한다. 기능 브랜치(feat/*)에서 실행하면 아무것도 바꾸지 않고 멈춘다
 #   - 커밋은 하지 않는다
 set -euo pipefail
 
@@ -19,6 +20,15 @@ if [[ $# -eq 0 ]]; then
 fi
 
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "git 저장소 안에서 실행해야 합니다" >&2; exit 1; }
+
+# 구현 중에는 작업 폴더가 기능 브랜치에 있을 때가 많다. 거기서 승인하면 dev의 문서가 바뀌지 않는다
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+echo "폴더: $root"
+echo "브랜치: $branch"
+if [[ "$branch" == feat/* ]]; then
+  echo "기능 브랜치에서는 승인하지 않는다. 승인 안내에 적힌 폴더와 문서 브랜치(dev 또는 docs/*)에서 다시 실행한다 (harness-psw 1.1, 7.2)" >&2
+  exit 1
+fi
 
 files=()
 for target in "$@"; do

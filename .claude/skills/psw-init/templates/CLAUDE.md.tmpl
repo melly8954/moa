@@ -28,7 +28,10 @@
 - MUST: 테스트를 통과시키려고 테스트를 고치지 않는다
 - NEVER: 시크릿 값을 읽거나 출력하거나 커밋하지 않는다
 - MUST: 커밋에 트레일러(Refs, Closes)를 단다
-- 브랜치: main(배포, 사용자만) ← dev(개발, 문서 커밋) ← feat/<FR-ID>-<요약>(FR 구현)
+- 브랜치: main(배포, 사용자만) ← dev(개발) ← feat/<FR-ID>-<요약>(FR 구현), docs/<주제>(문서, PR 방식만)
+  - dev 병합 방식: <직접 | PR> 〔YYYY-MM-DD〕 <이유>
+    직접: 문서는 dev에 바로 커밋하고, 기능 브랜치는 사용자 확인 뒤 로컬에서 병합해 push한다
+    PR: 문서는 docs/<주제>, 기능은 feat/ 브랜치에서 PR로 합친다. 에이전트는 PR을 병합하지 않는다
 
 ## 명령
 
@@ -38,7 +41,8 @@
 | 프론트 lint·포맷·타입 검사 | (프로젝트별 결정) |
 | 프론트 화면 테스트 | (프로젝트별 결정) |
 | 백엔드 실행 | (프로젝트별 결정) |
-| 백엔드 빌드·lint·AC 테스트 | (프로젝트별 결정) |
+| 백엔드 빌드·lint·AC 테스트 (전체 검사) | (프로젝트별 결정) |
+| 테스트 하나만 실행 (구현 반복 중) | (프로젝트별 결정) |
 | git hook 연결 (처음 한 번) | `git config core.hooksPath .githooks` |
 | 문서 승인 (사용자, 터미널의 bash 셸) | `bash .claude/scripts/psw/approve.sh <경로>` |
 | 설계 교차 검증 | `bash .claude/scripts/psw/crosscheck.sh [도메인]` |

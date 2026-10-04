@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# 피드백 루프 종료 조건을 확인한다 (harness-psw 7.1, 8.2, 10.5).
+# 피드백 루프 종료 조건을 확인한다 (harness-psw 7.1, 8.2, 8.3, 10.5).
+#   미정 OPEN, 끊긴 자리표시, FR이 있는데 비어 있는 용어집이 종료를 막는다
 # 종료 가능하면 0, 아니면 1로 끝난다.
 # 사용법: loop-status.sh [자리표시를 검사할 경로...]   (기본: docs)
 set -euo pipefail
@@ -55,6 +56,20 @@ else
       *)    echo "미정: $id ($loc)"; blocking=1 ;;
     esac
   done <<<"$placeholders"
+fi
+
+echo "== 용어집 (docs/glossary.md) =="
+if ! grep -rqE '^id:[[:space:]]*FR-' docs/req/functional 2>/dev/null; then
+  echo "FR 없음 (검사하지 않는다)"
+else
+  # 첫 표의 구분 줄(|---|) 아래 행 수
+  terms="$(awk '/^\|/ { if (sep) n++; else if ($0 ~ /^\|[[:space:]:|-]+$/) sep = 1; next } sep { exit } END { print n + 0 }' docs/glossary.md 2>/dev/null || echo 0)"
+  if [[ "${terms:-0}" -eq 0 ]]; then
+    echo "오류 - 용어집이 비어 있다. psw-req 3-B로 도메인 핵심 용어와 코드 이름을 채운다"
+    blocking=1
+  else
+    echo "용어: ${terms}개"
+  fi
 fi
 
 # 경로를 지정하지 않았으면 자리표시가 없는 미정 항목도 종료를 막는다.
