@@ -104,21 +104,17 @@ description: harness-psw 피드백 루프를 처리한다. 미결(docs/open-ques
 
 ### G. 구현 중 상위 루프의 브랜치
 
-문서 커밋과 승인은 문서 커밋 위치(`CLAUDE.md` 브랜치 줄의 병합 방식: 직접 방식 `dev`, PR 방식 `docs/<주제>`), 구현은 기능 브랜치에서 한다 (harness-psw 5.1, 7.2). 작업 폴더를 옮겼다가 돌아온다.
+문서 커밋과 승인은 `dev`, 구현은 기능 브랜치에서 한다 (harness-psw 5.1, 7.2). 작업 폴더를 `dev`로 옮겼다가 돌아온다.
 
 1. 하위 에이전트가 보고를 마쳐 돌고 있는 에이전트가 없을 때 시작한다
 2. 기능 브랜치를 정리한다
    - 커밋할 수 있는 변경은 커밋한다
    - 중간 변경이면 이름을 붙여 넣어 둔다: `git stash push -u -m "psw-loop <FR-ID>"`
-3. 문서 커밋 위치로 옮겨 A~F 중 필요한 절차를 진행하고 문서를 커밋한다
-   - 직접 방식: `git switch dev`
-   - PR 방식: `git switch dev`, `git pull --ff-only`, `git switch -c docs/<주제>`
-4. 승인을 안내할 때 폴더(프로젝트 루트 절대 경로)와 브랜치를 적는다
+3. `git switch dev`로 옮겨 A~F 중 필요한 절차를 진행하고 문서를 커밋한다
+4. 승인을 안내할 때 폴더(프로젝트 루트 절대 경로)와 브랜치(`dev`)를 적는다
    - 예: `폴더 C:\work\shop, 브랜치 dev 에서 실행: bash .claude/scripts/psw/approve.sh docs/design/architecture.md`
    - `approve.sh`는 기능 브랜치에서 실행하면 아무것도 바꾸지 않고 멈춘다
-   - PR 방식: 승인 커밋 뒤 PR을 열지 묻는다. 병합은 사용자(팀)가 한다
-5. 문서가 `dev`에 들어간 뒤 기능 브랜치로 돌아가 `dev` 위로 옮긴다
-   - PR 방식은 문서 PR이 병합된 뒤 로컬 `dev`를 받아 온다 (`git switch dev`, `git pull --ff-only`)
+5. 승인 커밋 뒤 기능 브랜치로 돌아가 `dev` 위로 옮긴다
    - `git switch <기능 브랜치>`, `git rebase dev`
    - 충돌이 나면 멈추고 사용자에게 보고한다
    - 2단계에서 넣어 둔 변경이 있으면 되돌린다 (`git stash list`에서 이름으로 찾아 `git stash apply <해당 항목>`, 확인 뒤 drop)

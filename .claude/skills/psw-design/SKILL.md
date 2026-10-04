@@ -153,7 +153,7 @@ UI는 디자인을 새로 만들지 않는다. 프론트 키트(`harness-psw-fro
 3. 승인은 사용자가 직접 실행한다. 실행 방법은 `.claude/scripts/psw/approve.sh` 머리 주석을 읽고 그대로 안내한다
    - 전체를 한 번에: `bash .claude/scripts/psw/approve.sh docs/design`
    - 도메인만: `bash .claude/scripts/psw/approve.sh docs/design/ui/ia/<domain>.md docs/design/ui/screens/<domain>`
-   - 안내에 실행할 폴더(프로젝트 루트 절대 경로)와 브랜치(문서 커밋 위치: `dev` 또는 `docs/<주제>`)를 적는다. `approve.sh`는 기능 브랜치에서는 멈춘다
+   - 안내에 실행할 폴더(프로젝트 루트 절대 경로)와 브랜치(`dev`)를 적는다. `approve.sh`는 기능 브랜치에서는 멈춘다
    - 에이전트의 승인 시도는 hook이 막는다
 4. 키트의 조각과 설치한 컴포넌트의 클래스가 다르면 키트를 고치도록 사용자에게 알린다
 
@@ -174,7 +174,6 @@ UI는 디자인을 새로 만들지 않는다. 프론트 키트(`harness-psw-fro
 
 ## 커밋
 
-- 문서 커밋 위치에 커밋한다 (`CLAUDE.md` 브랜치 줄의 병합 방식, harness-psw 5.1): 직접 방식은 `dev`, PR 방식은 `dev`에서 만든 `docs/<주제>`. 다른 브랜치면 멈추고 사용자에게 확인한다
-  - PR 방식이면 작업 단위가 끝날 때(승인 커밋 뒤 등) PR을 열지 사용자에게 묻는다. 병합은 사용자(팀)가 한다
+- `dev` 브랜치에 커밋한다
 - 트레일러: `Refs:`에 근거 요구사항 ID, 미결을 해결했으면 `Closes:`
 - 메시지 예: `docs: 주문 도메인 화면 설계`

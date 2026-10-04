@@ -97,7 +97,7 @@ description: harness-psw 요구사항(REQ)의 상세를 채운다. 인터뷰가 
 2. 사용자가 승인한 파일만 `status: approved`가 된다
    - 승인은 사용자가 직접 실행한다: `bash .claude/scripts/psw/approve.sh docs/req` (도메인만이면 `docs/req/functional/<domain>`)
      - 실행 방법은 `.claude/scripts/psw/approve.sh` 머리 주석을 읽고 그대로 안내한다
-     - 안내에 실행할 폴더(프로젝트 루트 절대 경로)와 브랜치(문서 커밋 위치: `dev` 또는 `docs/<주제>`)를 적는다. `approve.sh`는 기능 브랜치에서는 멈춘다
+     - 안내에 실행할 폴더(프로젝트 루트 절대 경로)와 브랜치(`dev`)를 적는다. `approve.sh`는 기능 브랜치에서는 멈춘다
    - 영역 파일과 `actors.md`도 같은 방법으로 승인한다
    - 에이전트의 승인 시도는 hook이 막는다
    - 승인 커밋 트레일러: `Refs: <도메인 접두사>`
@@ -105,8 +105,7 @@ description: harness-psw 요구사항(REQ)의 상세를 채운다. 인터뷰가 
 
 ## 커밋
 
-- 문서 커밋 위치에 커밋한다 (`CLAUDE.md` 브랜치 줄의 병합 방식, harness-psw 5.1): 직접 방식은 `dev`, PR 방식은 `dev`에서 만든 `docs/<주제>`. 다른 브랜치면 멈추고 사용자에게 확인한다
-  - PR 방식이면 작업 단위가 끝날 때(승인 커밋 뒤 등) PR을 열지 사용자에게 묻는다. 병합은 사용자(팀)가 한다
+- `dev` 브랜치에 커밋한다
 - 최초 작성: `Refs:`에 도메인·영역 접두사 (예: `Refs: FR-ORD, NFR-PERF`)
 - 갱신: `Refs:`에 바뀐 ID, 미결을 해결했으면 `Closes:`
 - 메시지 예: `docs: 주문 도메인 REQ 상세 작성`
