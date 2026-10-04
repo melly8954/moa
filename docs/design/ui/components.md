@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 refs: [NFR-ENV-001]
 ---
 
