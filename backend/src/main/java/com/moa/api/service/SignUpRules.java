@@ -57,15 +57,16 @@ final class SignUpRules {
 	/**
 	 * 동시 요청으로 유니크 제약에 걸리면 앞서 검사한 업무 오류와 같은 코드로 바꾼다.
 	 *
+	 * @param emailConflict 계정 이메일이 겹쳤을 때의 코드. 이메일 가입은 B002, 구글·카카오 가입은 B003
 	 * @return 제약 이름으로 정한 오류. 모르는 제약이면 S001
 	 */
-	static ServiceException uniqueViolation(DataIntegrityViolationException ex) {
+	static ServiceException uniqueViolation(DataIntegrityViolationException ex, ErrorCode emailConflict) {
 		String message = String.valueOf(ex.getMostSpecificCause().getMessage());
 		ErrorCode code = ErrorCode.INTERNAL_ERROR;
 		if (message.contains("uk_members_nickname")) {
 			code = ErrorCode.NICKNAME_TAKEN;
 		} else if (message.contains("uk_members_email")) {
-			code = ErrorCode.EMAIL_ALREADY_REGISTERED;
+			code = emailConflict;
 		} else if (message.contains("uk_members_phone_hmac")) {
 			code = ErrorCode.PHONE_ALREADY_REGISTERED;
 		} else if (message.contains("uk_member_social_accounts")) {

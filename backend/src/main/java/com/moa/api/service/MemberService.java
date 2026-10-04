@@ -77,7 +77,9 @@ public class MemberService {
 					new MemberSocialAccount(member.getId(), signUp.getProvider(), signUp.getProviderUserId()));
 			}
 		} catch (DataIntegrityViolationException ex) {
-			throw SignUpRules.uniqueViolation(ex);
+			throw SignUpRules.uniqueViolation(ex, signUp.getProvider() == null
+				? ErrorCode.EMAIL_ALREADY_REGISTERED
+				: ErrorCode.PROVIDER_EMAIL_CONFLICT);
 		}
 		signUpWriter.delete(signUp);
 		IssuedTokens tokens = authTokenService.issueWithNewSession(SignUpRules.principalOf(member));

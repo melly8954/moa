@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -190,8 +191,13 @@ public class SignUpService {
 		String method = SignUpRules.loginMethod(null);
 		if (providerSignUp.isPresent()) {
 			SignUp signUp = providerSignUp.get();
-			MemberSocialAccount account = memberSocialAccountWriter.create(
-				new MemberSocialAccount(member.getId(), signUp.getProvider(), signUp.getProviderUserId()));
+			MemberSocialAccount account;
+			try {
+				account = memberSocialAccountWriter.create(
+					new MemberSocialAccount(member.getId(), signUp.getProvider(), signUp.getProviderUserId()));
+			} catch (DataIntegrityViolationException ex) {
+				throw SignUpRules.uniqueViolation(ex, ErrorCode.PROVIDER_EMAIL_CONFLICT);
+			}
 			notificationWriter.create(new Notification(member.getId(), NotificationType.LOGIN_METHOD_LINKED, null,
 				NotificationTargetType.MEMBER_SOCIAL_ACCOUNT, account.getId()));
 			signUpWriter.delete(signUp);

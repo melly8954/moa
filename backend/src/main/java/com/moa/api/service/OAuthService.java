@@ -141,7 +141,7 @@ public class OAuthService {
 			account = memberSocialAccountWriter.create(
 				new MemberSocialAccount(member.getId(), user.provider(), user.providerUserId()));
 		} catch (DataIntegrityViolationException ex) {
-			throw SignUpRules.uniqueViolation(ex);
+			throw SignUpRules.uniqueViolation(ex, ErrorCode.PROVIDER_EMAIL_CONFLICT);
 		}
 		notificationWriter.create(new Notification(member.getId(), NotificationType.LOGIN_METHOD_LINKED, null,
 			NotificationTargetType.MEMBER_SOCIAL_ACCOUNT, account.getId()));
