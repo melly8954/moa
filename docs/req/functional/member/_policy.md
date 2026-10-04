@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 회원 정책
