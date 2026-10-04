@@ -6,7 +6,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { oauthSignUpUrl } from "@/lib/api/oauth"
 
-/** SCR-MEM-002 가입 수단 선택. 소셜 인증이 실패하면 서버가 ?error=<코드>를 붙여 돌려보낸다 */
+/** SCR-MEM-002 가입 수단 선택. 구글·카카오 인증이 실패하면 서버가 ?error=<코드>를 붙여 돌려보낸다 */
 export default async function SignUpMethodPage({ searchParams }: PageProps<"/signup">) {
   const t = await getTranslations("signUp.method")
   const { error } = await searchParams

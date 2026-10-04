@@ -9,6 +9,7 @@ import { z } from "zod"
 import { ErrorAlert } from "@/components/member/error-alert"
 import { useSignUpFlow } from "@/components/member/sign-up-flow"
 import { SignUpStep } from "@/components/member/sign-up-step"
+import { useHydrated } from "@/components/member/use-hydrated"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,6 +28,7 @@ export function SignUpEmailForm() {
   const { setPendingEmail } = useSignUpFlow()
   const signUp = useSignUp()
   const request = useRequestEmailVerification()
+  const hydrated = useHydrated()
   // 구글·카카오가 이메일을 주지 않았거나 인증되지 않은 이메일을 줘서 이 단계로 왔다 (제공자 이메일 없음)
   const providerWithoutEmail = Boolean(signUp.data?.provider) && !signUp.data?.email
 
@@ -94,47 +96,49 @@ export function SignUpEmailForm() {
           <ErrorAlert title={t("failedTitle")} code={failure} />
         ) : null}
         <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(submit)} noValidate>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">{t("email")}</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              aria-invalid={Boolean(errors.email) || emailExists}
-              {...form.register("email")}
-            />
-            {errors.email ? <p className="text-sm text-destructive">{errors.email.message}</p> : null}
-            {emailExists ? <p className="text-sm text-destructive">{t("existingField")}</p> : null}
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">{t("password")}</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              aria-invalid={Boolean(errors.password)}
-              {...form.register("password")}
-            />
-            <p className={errors.password ? "text-sm text-destructive" : "text-sm text-muted-foreground"}>
-              {errors.password ? errors.password.message : t("passwordHint")}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="passwordConfirm">{t("passwordConfirm")}</Label>
-            <Input
-              id="passwordConfirm"
-              type="password"
-              autoComplete="new-password"
-              aria-invalid={Boolean(errors.passwordConfirm)}
-              {...form.register("passwordConfirm")}
-            />
-            {errors.passwordConfirm ? (
-              <p className="text-sm text-destructive">{errors.passwordConfirm.message}</p>
-            ) : null}
-          </div>
-          <Button type="submit" size="lg" disabled={request.isPending}>
-            {t("submit")}
-          </Button>
+          <fieldset className="flex min-w-0 flex-col gap-4" disabled={!hydrated}>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email">{t("email")}</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                aria-invalid={Boolean(errors.email) || emailExists}
+                {...form.register("email")}
+              />
+              {errors.email ? <p className="text-sm text-destructive">{errors.email.message}</p> : null}
+              {emailExists ? <p className="text-sm text-destructive">{t("existingField")}</p> : null}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password">{t("password")}</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                aria-invalid={Boolean(errors.password)}
+                {...form.register("password")}
+              />
+              <p className={errors.password ? "text-sm text-destructive" : "text-sm text-muted-foreground"}>
+                {errors.password ? errors.password.message : t("passwordHint")}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="passwordConfirm">{t("passwordConfirm")}</Label>
+              <Input
+                id="passwordConfirm"
+                type="password"
+                autoComplete="new-password"
+                aria-invalid={Boolean(errors.passwordConfirm)}
+                {...form.register("passwordConfirm")}
+              />
+              {errors.passwordConfirm ? (
+                <p className="text-sm text-destructive">{errors.passwordConfirm.message}</p>
+              ) : null}
+            </div>
+            <Button type="submit" size="lg" disabled={request.isPending}>
+              {t("submit")}
+            </Button>
+          </fieldset>
         </form>
         {emailExists ? (
           <div className="flex justify-center gap-2">

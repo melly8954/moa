@@ -6,6 +6,7 @@ import { useState } from "react"
 import { ErrorAlert } from "@/components/member/error-alert"
 import { SignUpExpired } from "@/components/member/sign-up-expired"
 import { SignUpStep } from "@/components/member/sign-up-step"
+import { useHydrated } from "@/components/member/use-hydrated"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -14,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { errorCode } from "@/lib/api/client"
 import { useCancelSignUp, useCreateMember, useSignUp } from "@/lib/api/sign-up"
-import { NICKNAME_PATTERN } from "@/lib/validation/member-policy"
+import { NICKNAME_MAX_LENGTH, NICKNAME_PATTERN } from "@/lib/validation/member-policy"
 
 const SIGN_UP_REQUIRED = "A006"
 const NICKNAME_TAKEN = "R003"
@@ -26,6 +27,7 @@ export function SignUpProfileForm() {
   const signUp = useSignUp()
   const createMember = useCreateMember()
   const cancel = useCancelSignUp()
+  const hydrated = useHydrated()
 
   const [nickname, setNickname] = useState("")
   const [nicknameError, setNicknameError] = useState<string | null>(null)
@@ -78,47 +80,49 @@ export function SignUpProfileForm() {
         <SignUpStep step="profile" />
         {failure && failure !== NICKNAME_TAKEN ? <ErrorAlert title={t("failedTitle")} code={failure} /> : null}
         <form className="flex flex-col gap-4" onSubmit={submit} noValidate>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="nickname">{t("nickname")}</Label>
-            <Input
-              id="nickname"
-              autoComplete="nickname"
-              maxLength={12}
-              value={nickname}
-              onChange={(event) => setNickname(event.target.value)}
-              aria-invalid={Boolean(nicknameError) || failure === NICKNAME_TAKEN}
-            />
-            {nicknameError ? (
-              <p className="text-sm text-destructive">{nicknameError}</p>
-            ) : failure === NICKNAME_TAKEN ? (
-              <NicknameTaken />
-            ) : (
-              <p className="text-sm text-muted-foreground">{t("nicknameHint")}</p>
-            )}
-          </div>
-          <div className="flex flex-col gap-3">
-            <ConsentCheckbox id="agree-all" checked={allAgreed} onChange={agreeAll} label={t("agreeAll")} />
-            <Separator />
-            <ConsentCheckbox id="agree-terms" checked={termsAgreed} onChange={setTermsAgreed} label={t("terms")} />
-            <ConsentCheckbox
-              id="agree-privacy"
-              checked={privacyAgreed}
-              onChange={setPrivacyAgreed}
-              label={t("privacy")}
-            />
-            <ul className="flex flex-col gap-1 pl-6 text-sm text-muted-foreground">
-              <li>{t("privacyEmail")}</li>
-              <li>{t("privacyBirthDate")}</li>
-              <li>{t("privacyPhone")}</li>
-              <li>{t("privacyRetention")}</li>
-            </ul>
-          </div>
-          <Button type="submit" size="lg" disabled={!allAgreed || createMember.isPending}>
-            {t("submit")}
-          </Button>
-          <Button type="button" variant="ghost" onClick={cancelSignUp} disabled={cancel.isPending}>
-            {t("cancel")}
-          </Button>
+          <fieldset className="flex min-w-0 flex-col gap-4" disabled={!hydrated}>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="nickname">{t("nickname")}</Label>
+              <Input
+                id="nickname"
+                autoComplete="nickname"
+                maxLength={NICKNAME_MAX_LENGTH}
+                value={nickname}
+                onChange={(event) => setNickname(event.target.value)}
+                aria-invalid={Boolean(nicknameError) || failure === NICKNAME_TAKEN}
+              />
+              {nicknameError ? (
+                <p className="text-sm text-destructive">{nicknameError}</p>
+              ) : failure === NICKNAME_TAKEN ? (
+                <NicknameTaken />
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("nicknameHint")}</p>
+              )}
+            </div>
+            <div className="flex flex-col gap-3">
+              <ConsentCheckbox id="agree-all" checked={allAgreed} onChange={agreeAll} label={t("agreeAll")} />
+              <Separator />
+              <ConsentCheckbox id="agree-terms" checked={termsAgreed} onChange={setTermsAgreed} label={t("terms")} />
+              <ConsentCheckbox
+                id="agree-privacy"
+                checked={privacyAgreed}
+                onChange={setPrivacyAgreed}
+                label={t("privacy")}
+              />
+              <ul className="flex flex-col gap-1 pl-6 text-sm text-muted-foreground">
+                <li>{t("privacyEmail")}</li>
+                <li>{t("privacyBirthDate")}</li>
+                <li>{t("privacyPhone")}</li>
+                <li>{t("privacyRetention")}</li>
+              </ul>
+            </div>
+            <Button type="submit" size="lg" disabled={!allAgreed || createMember.isPending}>
+              {t("submit")}
+            </Button>
+            <Button type="button" variant="ghost" onClick={cancelSignUp} disabled={cancel.isPending}>
+              {t("cancel")}
+            </Button>
+          </fieldset>
         </form>
       </CardContent>
     </Card>

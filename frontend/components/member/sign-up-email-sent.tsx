@@ -12,6 +12,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { errorCode } from "@/lib/api/client"
 import { useRequestEmailVerification } from "@/lib/api/sign-up"
+import { EMAIL_LINK_TTL_MINUTES } from "@/lib/validation/member-policy"
 
 /** SCR-MEM-004 인증 메일 안내. 다시 보내기는 60초에 한 번 (INT-MAIL-002) */
 export function SignUpEmailSent() {
@@ -61,7 +62,7 @@ export function SignUpEmailSent() {
         <CardTitle>
           <h1>{t("title")}</h1>
         </CardTitle>
-        <CardDescription>{t("body", { email: pendingEmail.email })}</CardDescription>
+        <CardDescription>{t("body", { email: pendingEmail.email, minutes: EMAIL_LINK_TTL_MINUTES })}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <SignUpStep step="email" />
