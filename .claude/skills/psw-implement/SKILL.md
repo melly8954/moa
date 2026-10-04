@@ -62,6 +62,7 @@ description: harness-psw 구현 흐름을 진행한다. 승인된 FR을 하나�
    - 확인: 가짜 키를 넣은 파일을 스테이징하고 커밋이 막히는지 본 뒤, 그 파일은 스테이징을 풀고 지운다
    - 다른 도구로 정했으면 그 도구의 pre-commit 연결 방법을 따른다
 3. GitHub를 쓰면 `templates/github-workflow-psw.yml`을 `.github/workflows/psw.yml`로 복사할지 사용자에게 묻는다
+   - 병합 방식이 PR이면, 워크플로가 한 번 돈 뒤 GitHub `dev` 규칙의 CI 통과 필수에 그 작업 이름(커밋 메시지·시크릿 검사)을 넣도록 사용자에게 안내한다. 설정은 사용자가 한다
 
 ## FR 흐름
 

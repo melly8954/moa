@@ -80,8 +80,10 @@ docs/design/
   - 직접 방식(혼자 할 때 추천): 문서는 `dev`에 바로, 기능은 로컬 병합 뒤 push
   - PR 방식(팀이 함께 쓸 때 추천): 문서는 `docs/<주제>`, 기능은 `feat/` 브랜치에서 PR. 원격이 있어야 한다
   - 원격이 있으면 GitHub 설정을 안내한다. 설정은 사용자가 한다
-    - `dev`·`main`에만 규칙을 건다: force push 금지, 삭제 금지. PR 방식이면 `dev`에 PR 필수·CI 통과 필수를 더한다. `main`은 PR 필수를 권장한다(혼자면 승인 수 0)
-    - PR 방식이면 저장소 설정에서 squash merge를 끈다 (트레일러 보존)
+    - `dev`·`main`에만 규칙을 건다: force push 금지, 삭제 금지. PR 방식이면 `dev`에 PR 필수(병합 방법 merge·rebase)·CI 통과 필수를 더한다. `main`은 PR 필수를 권장한다(혼자면 승인 수 0)
+      - CI 통과 필수에 넣을 작업은 CI를 설정한 뒤(`psw-implement` 준비) 정한다. 워크플로가 한 번 돌아야 GitHub 설정 화면에 이름이 나온다
+    - "Restrict updates"는 켜지 않는다. 우회 권한이 없으면 PR 병합까지 막힌다
+    - PR 방식이면 저장소 설정에서 squash merge를 끄고(트레일러 보존), head 브랜치 자동 삭제를 켠다
 
 ### 9. 보고
 
