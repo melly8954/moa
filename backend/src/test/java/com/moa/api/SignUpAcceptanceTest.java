@@ -228,12 +228,47 @@ class SignUpAcceptanceTest extends AcceptanceTest {
 
 		MvcTestResult callback = oauthCallback(new OAuthUser(provider, "social-1", EMAIL, false));
 
+		// 2026-10-04 정책 변경: 인증되지 않은 제공자 이메일은 이메일 인증 단계로 이어 간다 (제공자 이메일 없음)
 		assertThat(callback).hasStatus(302);
-		assertThat(location(callback).getQuery()).contains("error=B003");
+		assertThat(location(callback).getPath()).isEqualTo("/signup/email");
+		assertThat(cookieValue(callback, SIGN_UP_COOKIE)).isNotBlank();
 		assertThat(totalSocialAccountCount()).isZero();
 		assertThat(activeLoginSessionCount(existingId)).isZero();
 		assertThat(cookieValue(callback, REFRESH_COOKIE)).isNull();
 		assertThat(memberCount()).isEqualTo(1);
+	}
+
+	// AC-15
+
+	@ParameterizedTest(name = "{0}")
+	@EnumSource(OAuthProvider.class)
+	@DisplayName("FR-MEM-001 AC-15: 구글·카카오가 인증되지 않은 이메일을 주면 그 이메일로 회원이 생기지 않고, "
+		+ "이메일 인증을 마친 이메일이 계정 이메일이 된다")
+	void unverifiedProviderEmailIsNotAccountEmail(OAuthProvider provider) {
+		String unverifiedEmail = "someone-else@moa.test";
+		MvcTestResult callback = oauthCallback(new OAuthUser(provider, "social-1", unverifiedEmail, false));
+
+		assertThat(callback).hasStatus(302);
+		assertThat(location(callback).getPath()).isEqualTo("/signup/email");
+		String signUpToken = cookieValue(callback, SIGN_UP_COOKIE);
+		assertThat(signUpToken).isNotBlank();
+		assertThat(requestPhoneCode(signUpToken, PHONE))
+			.hasStatus(409)
+			.bodyJson().extractingPath("$.code").isEqualTo("B015");
+
+		assertThat(requestEmailVerification(EMAIL, PASSWORD, signUpToken)).hasStatus(201);
+		MvcTestResult confirmation = confirmEmail(lastMailToken(EMAIL));
+		assertThat(confirmation).hasStatus(200);
+		assertThat(confirmation).bodyJson().extractingPath("$.result").isEqualTo("CONTINUE_SIGN_UP");
+		String continued = cookieValue(confirmation, SIGN_UP_COOKIE);
+		verifyPhone(continued, PHONE, ADULT_BIRTH_DATE);
+		assertThat(createMember(continued, "moa_gamer", true, true)).hasStatus(201);
+
+		assertThat(memberCount()).isEqualTo(1);
+		assertThat(jdbcTemplate.queryForObject("select count(*) from members where email = ?", Integer.class,
+			unverifiedEmail)).isZero();
+		Long memberId = memberIdByEmail(EMAIL);
+		assertThat(socialAccountCount(memberId, provider, "social-1")).isEqualTo(1);
 	}
 
 	// AC-8
@@ -383,7 +418,70 @@ class SignUpAcceptanceTest extends AcceptanceTest {
 		assertThat(memberCount()).isEqualTo(1);
 	}
 
-	/** AC-14의 ACTIVE가 아닌 계정 상태 (PURGED는 이메일이 지워져 같은 이메일 계정이 될 수 없다) */
+	@Test
+	@DisplayName("FR-MEM-001 AC-14: 이메일을 주지 않은 카카오로 이메일 인증한 기존 계정에 다른 카카오 계정이 이미 연결돼 있으면 "
+		+ "연결하지 않고 새 회원도 만들지 않는다")
+	void doNotLinkKakaoByEmailWhenKakaoAlreadyLinked() {
+		Long existingId = insertMember(EMAIL, null, "existing", "ACTIVE");
+		insertSocialAccount(existingId, OAuthProvider.KAKAO, "kakao-old");
+		String signUpToken = cookieValue(
+			oauthCallback(new OAuthUser(OAuthProvider.KAKAO, "kakao-new", null, false)), SIGN_UP_COOKIE);
+		assertThat(requestEmailVerification(EMAIL, PASSWORD, signUpToken)).hasStatus(201);
+
+		MvcTestResult confirmation = confirmEmail(lastMailToken(EMAIL));
+
+		assertThat(confirmation.getResponse().getStatus()).isBetween(400, 499);
+		assertThat(totalSocialAccountCount()).isEqualTo(1);
+		assertThat(socialAccountCount(existingId, OAuthProvider.KAKAO, "kakao-old")).isEqualTo(1);
+		assertThat(activeLoginSessionCount(existingId)).isZero();
+		assertThat(memberCount()).isEqualTo(1);
+	}
+
+	// AC-16
+
+	@ParameterizedTest(name = "{0}")
+	@EnumSource(MemberStatusValue.class)
+	@DisplayName("FR-MEM-001 AC-16: 이메일 인증 연결의 대상인 비밀번호 없는 기존 계정이 ACTIVE가 아니면 "
+		+ "연결하지 않고 새 회원도 만들지 않는다")
+	void doNotLinkEmailToInactiveAccount(MemberStatusValue status) {
+		Long existingId = insertMember(EMAIL, null, "existing", status.name());
+		insertSocialAccount(existingId, OAuthProvider.GOOGLE, "google-1");
+		assertThat(requestEmailVerification(EMAIL, PASSWORD, null)).hasStatus(201);
+
+		MvcTestResult confirmation = confirmEmail(lastMailToken(EMAIL));
+
+		assertNotLinked(confirmation, existingId);
+		assertThat(totalSocialAccountCount()).isEqualTo(1);
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@EnumSource(MemberStatusValue.class)
+	@DisplayName("FR-MEM-001 AC-16: 이메일을 주지 않은 카카오로 이메일 인증한 비밀번호 없는 기존 계정이 ACTIVE가 아니면 "
+		+ "카카오를 연결하지 않고 새 회원도 만들지 않는다")
+	void doNotLinkKakaoToInactiveAccount(MemberStatusValue status) {
+		Long existingId = insertMember(EMAIL, null, "existing", status.name());
+		insertSocialAccount(existingId, OAuthProvider.GOOGLE, "google-1");
+		String signUpToken = cookieValue(
+			oauthCallback(new OAuthUser(OAuthProvider.KAKAO, "kakao-1", null, false)), SIGN_UP_COOKIE);
+		assertThat(requestEmailVerification(EMAIL, PASSWORD, signUpToken)).hasStatus(201);
+
+		MvcTestResult confirmation = confirmEmail(lastMailToken(EMAIL));
+
+		assertNotLinked(confirmation, existingId);
+		assertThat(socialAccountCount(existingId, OAuthProvider.KAKAO, "kakao-1")).isZero();
+	}
+
+	/** 이메일 인증 링크를 열었지만 기존 계정에 연결·로그인하지 않았고, 가입도 이어 가지 않았다 */
+	private void assertNotLinked(MvcTestResult confirmation, Long existingId) {
+		assertThat(confirmation.getResponse().getStatus()).isBetween(400, 499);
+		assertThat(cookieValue(confirmation, REFRESH_COOKIE)).isNull();
+		assertThat(cookieValue(confirmation, SIGN_UP_COOKIE)).isNull();
+		assertThat(passwordHashOf(existingId)).isNull();
+		assertThat(activeLoginSessionCount(existingId)).isZero();
+		assertThat(memberCount()).isEqualTo(1);
+	}
+
+	/** AC-14·AC-16의 ACTIVE가 아닌 계정 상태 (PURGED는 이메일이 지워져 같은 이메일 계정이 될 수 없다) */
 	enum MemberStatusValue {
 		SUSPENDED,
 		WITHDRAWN
