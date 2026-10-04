@@ -18,6 +18,7 @@ import com.moa.common.security.AuthPrincipal;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -29,6 +30,7 @@ import io.jsonwebtoken.security.Keys;
 public class JwtTokenProvider {
 
 	private static final String ROLES_CLAIM = "roles";
+	private static final String SESSION_CLAIM = "sid";
 
 	private final JwtProperties properties;
 	private final SecretKey key;
@@ -39,15 +41,24 @@ public class JwtTokenProvider {
 	}
 
 	public String createAccessToken(AuthPrincipal principal) {
+		return createAccessToken(principal, null);
+	}
+
+	/**
+	 * @param sessionId 로그인 세션 ID. 있으면 sid 클레임에 넣는다 (docs/design/security.md 로그인 세션)
+	 */
+	public String createAccessToken(AuthPrincipal principal, Long sessionId) {
 		Instant now = Instant.now();
-		return Jwts.builder()
+		JwtBuilder builder = Jwts.builder()
 			.issuer(properties.issuer())
 			.subject(String.valueOf(principal.userId()))
 			.claim(ROLES_CLAIM, List.copyOf(principal.roles()))
 			.issuedAt(Date.from(now))
-			.expiration(Date.from(now.plus(properties.accessTokenTtl())))
-			.signWith(key)
-			.compact();
+			.expiration(Date.from(now.plus(properties.accessTokenTtl())));
+		if (sessionId != null) {
+			builder.claim(SESSION_CLAIM, sessionId);
+		}
+		return builder.signWith(key).compact();
 	}
 
 	public long accessTokenTtlSeconds() {

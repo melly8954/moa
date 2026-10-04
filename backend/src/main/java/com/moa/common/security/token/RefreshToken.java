@@ -36,6 +36,10 @@ public class RefreshToken extends BaseTimeEntity {
 	@Column(name = "family_id", nullable = false, length = 36)
 	private String familyId;
 
+	/** 속한 로그인 세션. 세션 없이 발급한 토큰(골격)이면 null */
+	@Column(name = "login_session_id")
+	private Long loginSessionId;
+
 	@Column(name = "token_hash", nullable = false, length = 64)
 	private String tokenHash;
 
@@ -49,8 +53,14 @@ public class RefreshToken extends BaseTimeEntity {
 	private LocalDateTime revokedAt;
 
 	public RefreshToken(Long userId, String familyId, String tokenHash, LocalDateTime expiresAt) {
+		this(userId, familyId, null, tokenHash, expiresAt);
+	}
+
+	public RefreshToken(Long userId, String familyId, Long loginSessionId, String tokenHash,
+		LocalDateTime expiresAt) {
 		this.userId = userId;
 		this.familyId = familyId;
+		this.loginSessionId = loginSessionId;
 		this.tokenHash = tokenHash;
 		this.expiresAt = expiresAt;
 	}

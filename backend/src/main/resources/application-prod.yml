@@ -3,3 +3,37 @@ logging:
   structured:
     format:
       console: ecs
+
+# 운영 필수 값. 기본값이 없어 비어 있으면 시작할 때 실패한다
+spring:
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
+
+psw:
+  web:
+    base-url: ${WEB_BASE_URL}
+  mail:
+    provider: ${MAIL_PROVIDER:smtp}
+    from: ${MAIL_FROM}
+  sms:
+    provider: ${SMS_PROVIDER:solapi}
+  oauth:
+    callback-base-url: ${OAUTH_CALLBACK_BASE_URL}
+    google:
+      client-id: ${GOOGLE_CLIENT_ID}
+      client-secret: ${GOOGLE_CLIENT_SECRET}
+    kakao:
+      client-id: ${KAKAO_CLIENT_ID}
+      client-secret: ${KAKAO_CLIENT_SECRET}
+  pii:
+    encryption-key: ${PII_ENCRYPTION_KEY}
+    hmac-key: ${PII_HMAC_KEY}

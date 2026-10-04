@@ -39,11 +39,12 @@ public class AuthTokenService {
 	private final JwtTokenProvider jwtTokenProvider;
 	private final JwtProperties jwtProperties;
 	private final RefreshTokenRepository refreshTokenRepository;
+	private final LoginSessionRepository loginSessionRepository;
 	private final ObjectProvider<AuthPrincipalLoader> authPrincipalLoader;
 
 	@Transactional
 	public IssuedTokens issue(AuthPrincipal principal) {
-		return issueTokens(principal, UUID.randomUUID().toString());
+		return issueTokens(principal, UUID.randomUUID().toString(), null);
 	}
 
 	/**
@@ -52,7 +53,8 @@ public class AuthTokenService {
 	 */
 	@Transactional
 	public IssuedTokens issueWithNewSession(AuthPrincipal principal) {
-		throw new UnsupportedOperationException("구현 전입니다");
+		LoginSession session = loginSessionRepository.save(new LoginSession(principal.userId()));
+		return issueTokens(principal, UUID.randomUUID().toString(), session.getId());
 	}
 
 	/**
@@ -78,7 +80,7 @@ public class AuthTokenService {
 		// 사용자를 먼저 읽는다. 실패하면 토큰을 쓴 것으로 표시하지 않는다
 		AuthPrincipal principal = loader().load(token.getUserId());
 		token.markUsed(now);
-		return issueTokens(principal, token.getFamilyId());
+		return issueTokens(principal, token.getFamilyId(), token.getLoginSessionId());
 	}
 
 	/** 로그아웃. 없는 토큰이어도 실패하지 않는다 */
@@ -97,11 +99,11 @@ public class AuthTokenService {
 		refreshTokenRepository.revokeAllByUserId(userId, LocalDateTime.now());
 	}
 
-	private IssuedTokens issueTokens(AuthPrincipal principal, String familyId) {
+	private IssuedTokens issueTokens(AuthPrincipal principal, String familyId, Long loginSessionId) {
 		String rawRefreshToken = newRawToken();
-		refreshTokenRepository.save(new RefreshToken(principal.userId(), familyId, hash(rawRefreshToken),
-			LocalDateTime.now().plus(jwtProperties.refreshTokenTtl())));
-		return new IssuedTokens(jwtTokenProvider.createAccessToken(principal),
+		refreshTokenRepository.save(new RefreshToken(principal.userId(), familyId, loginSessionId,
+			hash(rawRefreshToken), LocalDateTime.now().plus(jwtProperties.refreshTokenTtl())));
+		return new IssuedTokens(jwtTokenProvider.createAccessToken(principal, loginSessionId),
 			jwtTokenProvider.accessTokenTtlSeconds(), rawRefreshToken, jwtProperties.refreshTokenTtl());
 	}
 

@@ -9,3 +9,9 @@ services:
       MARIADB_ROOT_PASSWORD: psw
     ports:
       - "3306"
+  # 로컬 메일 수신함. SMTP 1025, 웹 http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"

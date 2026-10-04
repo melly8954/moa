@@ -39,4 +39,8 @@ public class LoginSession extends BaseTimeEntity {
 	/** 끊은 사유 (로그아웃, 비밀번호 변경·재설정, 제재, 탈퇴). 끊지 않았으면 null */
 	@Column(name = "revoke_reason", length = 30)
 	private String revokeReason;
+
+	public LoginSession(Long memberId) {
+		this.memberId = memberId;
+	}
 }
