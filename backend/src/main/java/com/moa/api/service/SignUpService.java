@@ -18,6 +18,8 @@ import com.moa.api.dto.SignUpDto;
 import com.moa.api.entity.EmailVerification;
 import com.moa.api.entity.Member;
 import com.moa.api.entity.MemberSocialAccount;
+import com.moa.api.entity.MemberStatus;
+import com.moa.api.entity.Notification;
 import com.moa.api.entity.NotificationTargetType;
 import com.moa.api.entity.NotificationType;
 import com.moa.api.entity.PhoneVerification;
@@ -29,13 +31,14 @@ import com.moa.api.repository.reader.PhoneVerificationReader;
 import com.moa.api.repository.reader.SignUpReader;
 import com.moa.api.repository.writer.EmailVerificationWriter;
 import com.moa.api.repository.writer.MemberSocialAccountWriter;
+import com.moa.api.repository.writer.NotificationWriter;
 import com.moa.api.repository.writer.PhoneVerificationWriter;
 import com.moa.api.repository.writer.SignUpWriter;
 import com.moa.common.exception.ErrorCode;
 import com.moa.common.exception.ServiceException;
+import com.moa.common.logging.AuthAuditLogger;
 import com.moa.common.mail.MailMessage;
 import com.moa.common.mail.MailSender;
-import com.moa.common.oauth.OAuthProvider;
 import com.moa.common.security.SecureTokens;
 import com.moa.common.security.pii.PiiCipher;
 import com.moa.common.security.token.AuthTokenService;
@@ -65,7 +68,8 @@ public class SignUpService {
 	private final MemberReader memberReader;
 	private final MemberSocialAccountReader memberSocialAccountReader;
 	private final MemberSocialAccountWriter memberSocialAccountWriter;
-	private final NotificationService notificationService;
+	private final NotificationWriter notificationWriter;
+	private final AuthAuditLogger auditLogger;
 	private final AuthTokenService authTokenService;
 	private final PasswordEncoder passwordEncoder;
 	private final PiiCipher piiCipher;
@@ -73,19 +77,8 @@ public class SignUpService {
 	private final MailSender mailSender;
 	private final SmsSender smsSender;
 
-	/**
-	 * 유효한 가입 진행을 읽는다.
-	 *
-	 * @throws ServiceException 토큰이 없거나, 가입 진행이 없거나 만료됐으면 A006
-	 */
-	@Transactional(readOnly = true)
-	public SignUp getValidSignUp(String rawToken) {
-		if (rawToken == null || rawToken.isBlank()) {
-			throw new ServiceException(ErrorCode.SIGN_UP_REQUIRED);
-		}
-		return signUpReader.findByTokenHash(SecureTokens.sha256(rawToken))
-			.filter(signUp -> !signUp.isExpired(LocalDateTime.now()))
-			.orElseThrow(() -> new ServiceException(ErrorCode.SIGN_UP_REQUIRED));
+	private SignUp getValidSignUp(String rawToken) {
+		return SignUpRules.validSignUp(signUpReader, rawToken);
 	}
 
 	// 이메일 인증
@@ -127,7 +120,8 @@ public class SignUpService {
 	public void sendVerificationMail(IssuedEmailVerificationDto issued) {
 		String link = webProperties.url("/signup/phone?token=" + issued.rawToken());
 		mailSender.send(new MailMessage(issued.email(), "[moa] 이메일 인증",
-			"moa 가입을 이어 가려면 30분 안에 아래 링크를 여세요. 링크는 한 번만 쓸 수 있습니다.\n\n" + link + "\n\n"
+			"moa 가입을 이어 가려면 " + MemberPolicy.EMAIL_LINK_TTL.toMinutes()
+				+ "분 안에 아래 링크를 여세요. 링크는 한 번만 쓸 수 있습니다.\n\n" + link + "\n\n"
 				+ "가입을 요청하지 않았다면 이 메일을 무시하세요."));
 	}
 
@@ -138,8 +132,12 @@ public class SignUpService {
 	}
 
 	/**
+	 * 인증 링크를 확인한다. 같은 이메일의 기존 계정이 있으면 이메일 인증 연결 규칙대로 연결하고 로그인시킨다.
+	 * 이메일 가입의 가입 진행 유효 시간은 인증 메일을 요청한 때부터 잰다.
+	 *
 	 * @throws ServiceException 만료·이미 씀·없는 링크면 B004, 비밀번호가 있는 기존 계정 이메일이면 B002,
-	 *     기존 계정이 ACTIVE가 아니면 B001, 카카오를 연결할 수 없으면 B003, 이어 온 가입 진행이 만료됐으면 A006
+	 *     비밀번호 없는 기존 계정이 정지면 B016·탈퇴 유예면 B017, 기존 계정에 같은 제공자의 다른 계정이 연결돼 있으면 B003,
+	 *     이어 온 가입 진행이 만료됐으면 A006
 	 */
 	@Transactional
 	public EmailConfirmationDto confirmEmailVerification(String rawToken) {
@@ -150,56 +148,68 @@ public class SignUpService {
 			.orElseThrow(() -> new ServiceException(ErrorCode.VERIFICATION_LINK_INVALID));
 		verification.markUsed(now);
 
-		Optional<SignUp> kakaoSignUp = Optional.empty();
+		Optional<SignUp> providerSignUp = Optional.empty();
 		if (verification.getSignUpId() != null) {
-			kakaoSignUp = Optional.of(signUpReader.findById(verification.getSignUpId())
+			providerSignUp = Optional.of(signUpReader.findById(verification.getSignUpId())
 				.filter(signUp -> !signUp.isExpired(now))
 				.orElseThrow(() -> new ServiceException(ErrorCode.SIGN_UP_REQUIRED)));
 		}
 
 		Optional<Member> existing = memberReader.findByEmail(verification.getEmail());
 		if (existing.isPresent()) {
-			return linkToExistingAccount(existing.get(), verification, kakaoSignUp);
+			return linkToExistingAccount(existing.get(), verification, providerSignUp);
 		}
 		String newToken = SecureTokens.newToken();
-		if (kakaoSignUp.isPresent()) {
-			kakaoSignUp.get().confirmEmail(verification.getEmail(), verification.getPasswordHash(),
+		if (providerSignUp.isPresent()) {
+			providerSignUp.get().confirmEmail(verification.getEmail(), verification.getPasswordHash(),
 				SecureTokens.sha256(newToken));
 		} else {
 			signUpWriter.create(SignUp.startWithEmail(SecureTokens.sha256(newToken), verification.getEmail(),
-				verification.getPasswordHash(), MemberPolicy.SIGN_UP_TTL));
+				verification.getPasswordHash(), verification.getCreatedAt().plus(MemberPolicy.SIGN_UP_TTL)));
 		}
 		return new EmailConfirmationDto(EmailConfirmationResult.CONTINUE_SIGN_UP, newToken, null);
 	}
 
-	/** 이메일 인증 연결: 비밀번호를 추가하고, 카카오 가입 중이었으면 카카오도 연결한 뒤 로그인시킨다 */
+	/**
+	 * 이메일 인증 연결 (회원 _policy.md): 비밀번호를 추가하고, 구글·카카오 가입 중이었으면 그 제공자도 연결한 뒤 로그인시킨다.
+	 */
 	private EmailConfirmationDto linkToExistingAccount(Member member, EmailVerification verification,
-		Optional<SignUp> kakaoSignUp) {
+		Optional<SignUp> providerSignUp) {
 		if (member.hasPassword()) {
 			throw new ServiceException(ErrorCode.EMAIL_ALREADY_REGISTERED);
 		}
 		if (!member.isActive()) {
-			throw new ServiceException(ErrorCode.INVALID_STATE);
+			throw new ServiceException(member.getStatus() == MemberStatus.SUSPENDED
+				? ErrorCode.EMAIL_OWNER_SUSPENDED
+				: ErrorCode.EMAIL_OWNER_WITHDRAWN);
 		}
+		providerSignUp.ifPresent(signUp -> checkLinkable(member, signUp));
 		member.addPassword(verification.getPasswordHash());
-		notificationService.create(member.getId(), NotificationType.LOGIN_METHOD_ADDED, null, null, null);
-		if (kakaoSignUp.isPresent()) {
-			SignUp signUp = kakaoSignUp.get();
-			MemberSocialAccount account = linkSocialAccount(member, signUp.getProvider(), signUp.getProviderUserId());
-			notificationService.create(member.getId(), NotificationType.LOGIN_METHOD_LINKED, null,
-				NotificationTargetType.MEMBER_SOCIAL_ACCOUNT, account.getId());
+		notificationWriter.create(new Notification(member.getId(), NotificationType.LOGIN_METHOD_ADDED, null, null,
+			null));
+		String method = SignUpRules.loginMethod(null);
+		if (providerSignUp.isPresent()) {
+			SignUp signUp = providerSignUp.get();
+			MemberSocialAccount account = memberSocialAccountWriter.create(
+				new MemberSocialAccount(member.getId(), signUp.getProvider(), signUp.getProviderUserId()));
+			notificationWriter.create(new Notification(member.getId(), NotificationType.LOGIN_METHOD_LINKED, null,
+				NotificationTargetType.MEMBER_SOCIAL_ACCOUNT, account.getId()));
 			signUpWriter.delete(signUp);
+			method = SignUpRules.loginMethod(signUp.getProvider());
 		}
 		IssuedTokens tokens = authTokenService.issueWithNewSession(SignUpRules.principalOf(member));
+		auditLogger.signInSucceeded(member.getId(), method, "EMAIL_VERIFICATION_LINK");
 		return new EmailConfirmationDto(EmailConfirmationResult.SIGNED_IN, null, tokens);
 	}
 
-	private MemberSocialAccount linkSocialAccount(Member member, OAuthProvider provider, String providerUserId) {
-		boolean providerTaken = memberSocialAccountReader.find(provider, providerUserId).isPresent();
-		if (providerTaken || memberSocialAccountReader.existsByMemberAndProvider(member.getId(), provider)) {
-			throw new ServiceException(ErrorCode.SOCIAL_EMAIL_CONFLICT);
+	/** 한 제공자 계정은 회원 하나에만, 회원 하나에 제공자별로 하나만 연결된다 */
+	private void checkLinkable(Member member, SignUp signUp) {
+		boolean providerTaken = memberSocialAccountReader.find(signUp.getProvider(), signUp.getProviderUserId())
+			.isPresent();
+		if (providerTaken || memberSocialAccountReader.existsByMemberAndProvider(member.getId(),
+			signUp.getProvider())) {
+			throw new ServiceException(ErrorCode.PROVIDER_EMAIL_CONFLICT);
 		}
-		return memberSocialAccountWriter.create(new MemberSocialAccount(member.getId(), provider, providerUserId));
 	}
 
 	// 휴대폰 인증
@@ -236,7 +246,8 @@ public class SignUpService {
 	 */
 	public void sendVerificationSms(IssuedPhoneVerificationDto issued) {
 		smsSender.send(new SmsMessage(issued.phoneNumber(),
-			"[moa] 인증 번호 " + issued.verificationCode() + "를 3분 안에 입력하세요."));
+			"[moa] 인증 번호 " + issued.verificationCode() + "를 " + MemberPolicy.PHONE_CODE_TTL.toMinutes()
+				+ "분 안에 입력하세요."));
 	}
 
 	/** 보내지 못한 인증 번호를 지운다. 쓸 수 없게 되고, 다시 받기 간격과 하루 횟수에도 세지 않는다 */

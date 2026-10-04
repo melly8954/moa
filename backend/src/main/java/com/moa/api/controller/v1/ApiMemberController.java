@@ -50,7 +50,8 @@ public class ApiMemberController {
 			@ApiResponse(responseCode = "401", description = "A006 가입 진행 없음·만료",
 				content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
 			@ApiResponse(responseCode = "409",
-				description = "B015 인증 미완료, B011~B014 휴대폰 번호 겹침·재가입 제한, B002 이메일 이미 가입, R003 닉네임 중복",
+				description = "B015 인증 미완료, B011~B014 휴대폰 번호 겹침·재가입 제한, B002 이메일 이미 가입(이메일 가입), "
+					+ "B003 이메일 이미 가입·제공자 계정 이미 연결(구글·카카오 가입), R003 닉네임 중복",
 				content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 		})
 	@PermitAll

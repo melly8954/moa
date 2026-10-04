@@ -15,7 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 소셜 인증의 state 값을 쿠키로 둔다. 콜백은 제공자에서 넘어오는 교차 사이트 이동이라 SameSite=Lax로 둔다
+ * 구글·카카오 인증의 state 값을 쿠키로 둔다. 콜백은 제공자에서 넘어오는 교차 사이트 이동이라 SameSite=Lax로 둔다
  * (Strict면 콜백 요청에 쿠키가 실리지 않는다).
  */
 @Component

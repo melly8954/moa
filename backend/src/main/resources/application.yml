@@ -75,10 +75,10 @@ psw:
     kakao:
       client-id: ${KAKAO_CLIENT_ID:}
       client-secret: ${KAKAO_CLIENT_SECRET:}
-  # 개발·테스트용 기본 키 재료. 운영(prod)은 application-prod.yml에서 기본값 없이 받는다
+  # 기본값이 없다. local 프로필만 개발용 값을 둔다
   pii:
-    encryption-key: ${PII_ENCRYPTION_KEY:local-only-pii-encryption-key-change-me}
-    hmac-key: ${PII_HMAC_KEY:local-only-pii-hmac-key-change-me}
+    encryption-key: ${PII_ENCRYPTION_KEY:}
+    hmac-key: ${PII_HMAC_KEY:}
 
 logging:
   pattern:

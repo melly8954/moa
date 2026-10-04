@@ -56,7 +56,8 @@ public class SignUpApplication {
 	 * </ul>
 	 *
 	 * @throws com.moa.common.exception.ServiceException 만료·이미 씀·없는 링크면 B004,
-	 *     비밀번호가 있는 기존 계정 이메일이면 B002
+	 *     비밀번호가 있는 기존 계정 이메일이면 B002, 비밀번호 없는 기존 계정이 정지면 B016·탈퇴 유예면 B017,
+	 *     기존 계정에 같은 제공자의 다른 계정이 연결돼 있으면 B003, 이어 온 가입 진행이 만료됐으면 A006
 	 */
 	public EmailConfirmationDto confirmEmailVerification(ConfirmEmailVerificationCommand command) {
 		return signUpService.confirmEmailVerification(command.token());

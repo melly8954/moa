@@ -85,7 +85,11 @@ public class ApiSignUpController {
 			@ApiResponse(responseCode = "200", description = "확인", useReturnTypeSchema = true),
 			@ApiResponse(responseCode = "400", description = "B004 만료·이미 쓴 링크",
 				content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-			@ApiResponse(responseCode = "409", description = "B002 비밀번호가 있는 기존 계정의 이메일",
+			@ApiResponse(responseCode = "401", description = "A006 이어 온 구글·카카오 가입 진행이 만료됨",
+				content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+			@ApiResponse(responseCode = "409",
+				description = "B002 비밀번호가 있는 기존 계정의 이메일, B016 정지 계정의 이메일, B017 탈퇴 유예 계정의 이메일, "
+					+ "B003 기존 계정에 같은 제공자의 다른 계정이 연결됨",
 				content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 		})
 	@PostMapping("/email-confirmations")

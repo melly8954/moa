@@ -35,6 +35,6 @@ public record OAuthProperties(@NotBlank String callbackBaseUrl, @Valid @NotNull 
 	 * @param clientId 클라이언트 ID (카카오는 REST API 키)
 	 * @param clientSecret 클라이언트 시크릿
 	 */
-	public record Client(String clientId, String clientSecret) {
+	public record Client(@NotBlank String clientId, @NotBlank String clientSecret) {
 	}
 }

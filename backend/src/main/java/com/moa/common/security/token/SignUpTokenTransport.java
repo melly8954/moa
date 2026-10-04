@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 가입 진행 토큰을 HttpOnly 쿠키로 주고받는다. 가입 단계 API(/api/v1/sign-ups, /api/v1/members)와
- * 소셜 콜백(/api/v1/auth/oauth)이 모두 받도록 경로는 /api/v1이다.
+ * 구글·카카오 콜백(/api/v1/auth/oauth)이 모두 받도록 경로는 /api/v1이다.
  */
 @Component
 @RequiredArgsConstructor

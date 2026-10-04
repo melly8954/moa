@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 토큰 발급·재발급·폐기. 로그인 방식(비밀번호, 소셜 등)은 사용자 도메인이 정하고, 인증에 성공하면 issue를 부른다.
+ * 토큰 발급·재발급·폐기. 로그인 방식(비밀번호, 구글·카카오 등)은 사용자 도메인이 정하고, 인증에 성공하면 issue를 부른다.
  *
  * <p>리프레시 토큰은 재발급할 때마다 새 토큰으로 바꾼다(회전). 이미 쓴 토큰이 다시 오면 탈취로 보고
  * 그 사용자의 토큰을 모두 폐기한다(재사용 감지).
@@ -49,7 +49,7 @@ public class AuthTokenService {
 
 	/**
 	 * 로그인 세션을 새로 만들고 그 세션에 속한 토큰을 발급한다. 액세스 토큰에는 세션 ID를 sid 클레임으로 넣는다.
-	 * 회원 도메인의 로그인(가입 완료, 이메일 인증 연결, 소셜 콜백, 비밀번호 로그인)은 이 메서드를 부른다.
+	 * 회원 도메인의 로그인(가입 완료, 이메일 인증 연결, 구글·카카오 콜백, 비밀번호 로그인)은 이 메서드를 부른다.
 	 */
 	@Transactional
 	public IssuedTokens issueWithNewSession(AuthPrincipal principal) {

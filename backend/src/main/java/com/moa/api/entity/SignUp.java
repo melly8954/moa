@@ -1,6 +1,5 @@
 package com.moa.api.entity;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -66,29 +65,35 @@ public class SignUp extends BaseTimeEntity {
 	@Column(name = "expires_at", nullable = false)
 	private LocalDateTime expiresAt;
 
-	/** 이메일 인증을 마친 이메일 가입 */
-	public static SignUp startWithEmail(String tokenHash, String email, String passwordHash, Duration ttl) {
+	/**
+	 * 이메일 인증을 마친 이메일 가입.
+	 *
+	 * @param expiresAt 가입 진행 만료 시각. 인증 메일을 요청한 때부터 잰다
+	 */
+	public static SignUp startWithEmail(String tokenHash, String email, String passwordHash,
+		LocalDateTime expiresAt) {
 		SignUp signUp = new SignUp();
 		signUp.tokenHash = tokenHash;
 		signUp.email = email;
 		signUp.passwordHash = passwordHash;
-		signUp.expiresAt = LocalDateTime.now().plus(ttl);
+		signUp.expiresAt = expiresAt;
 		return signUp;
 	}
 
 	/**
 	 * 구글·카카오 가입.
 	 *
-	 * @param email 제공자가 준 이메일. 카카오가 주지 않았으면 null이고 이메일 인증으로 정한다
+	 * @param email 제공자가 인증된 이메일로 알려 준 이메일. 주지 않았거나 인증되지 않았으면 null이고 이메일 인증으로 정한다
+	 * @param expiresAt 가입 진행 만료 시각. 제공자 인증에서 돌아온 때부터 잰다
 	 */
 	public static SignUp startWithProvider(String tokenHash, OAuthProvider provider, String providerUserId,
-		String email, Duration ttl) {
+		String email, LocalDateTime expiresAt) {
 		SignUp signUp = new SignUp();
 		signUp.tokenHash = tokenHash;
 		signUp.provider = provider;
 		signUp.providerUserId = providerUserId;
 		signUp.email = email;
-		signUp.expiresAt = LocalDateTime.now().plus(ttl);
+		signUp.expiresAt = expiresAt;
 		return signUp;
 	}
 
@@ -96,7 +101,7 @@ public class SignUp extends BaseTimeEntity {
 		return !expiresAt.isAfter(now);
 	}
 
-	/** 카카오가 이메일을 주지 않아 이메일 인증을 기다리는 가입 */
+	/** 제공자가 이메일을 주지 않았거나 인증되지 않은 이메일을 줘서 이메일 인증을 기다리는 가입 */
 	public boolean awaitsEmail() {
 		return email == null && provider != null;
 	}

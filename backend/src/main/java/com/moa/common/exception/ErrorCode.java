@@ -36,7 +36,7 @@ public enum ErrorCode {
 	// B: 업무 규칙
 	INVALID_STATE("B001", HttpStatus.CONFLICT, "현재 상태에서 할 수 없는 요청입니다."),
 	EMAIL_ALREADY_REGISTERED("B002", HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
-	SOCIAL_EMAIL_CONFLICT("B003", HttpStatus.CONFLICT, "같은 이메일로 가입된 계정이 있어 합칠 수 없습니다."),
+	PROVIDER_EMAIL_CONFLICT("B003", HttpStatus.CONFLICT, "같은 이메일로 가입된 계정이 있어 합칠 수 없습니다."),
 	VERIFICATION_LINK_INVALID("B004", HttpStatus.BAD_REQUEST, "인증 링크가 만료되었거나 이미 쓰였습니다."),
 	VERIFICATION_CODE_MISMATCH("B005", HttpStatus.BAD_REQUEST, "인증 번호가 맞지 않습니다."),
 	VERIFICATION_CODE_EXPIRED("B006", HttpStatus.BAD_REQUEST, "인증 번호가 만료되었습니다."),
@@ -49,6 +49,8 @@ public enum ErrorCode {
 	PHONE_OWNER_WITHDRAWN("B013", HttpStatus.CONFLICT, "최근 탈퇴한 계정의 휴대폰 번호입니다."),
 	PHONE_REJOIN_RESTRICTED("B014", HttpStatus.CONFLICT, "지금은 이 휴대폰 번호로 가입할 수 없습니다."),
 	SIGN_UP_INCOMPLETE("B015", HttpStatus.CONFLICT, "가입에 필요한 인증을 마치지 않았습니다."),
+	EMAIL_OWNER_SUSPENDED("B016", HttpStatus.CONFLICT, "이용이 정지된 계정의 이메일입니다."),
+	EMAIL_OWNER_WITHDRAWN("B017", HttpStatus.CONFLICT, "최근 탈퇴한 계정의 이메일입니다."),
 
 	// S: 시스템
 	INTERNAL_ERROR("S001", HttpStatus.INTERNAL_SERVER_ERROR, "처리 중 문제가 발생했습니다."),

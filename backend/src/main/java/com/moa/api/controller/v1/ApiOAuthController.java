@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * 구글·카카오 인증 API. 브라우저가 주소로 이동해 부른다(fetch가 아니다). 가입과 로그인이 같은 콜백을 쓴다.
  */
-@Tag(name = "소셜 인증 API", description = "구글·카카오 동의 화면 이동과 콜백")
+@Tag(name = "구글·카카오 인증 API", description = "구글·카카오 동의 화면 이동과 콜백")
 @PermitAll
 @SecurityRequirements
 @RestController

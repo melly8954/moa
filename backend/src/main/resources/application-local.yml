@@ -28,6 +28,17 @@ psw:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   mail:
     provider: ${MAIL_PROVIDER:smtp}
+  # 개발용 키 재료와 자리표시. 실제 구글·카카오 인증은 .env의 키로 한다
+  pii:
+    encryption-key: ${PII_ENCRYPTION_KEY:local-only-pii-encryption-key-change-me}
+    hmac-key: ${PII_HMAC_KEY:local-only-pii-hmac-key-change-me}
+  oauth:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:local-google-client-id}
+      client-secret: ${GOOGLE_CLIENT_SECRET:local-google-client-secret}
+    kakao:
+      client-id: ${KAKAO_CLIENT_ID:local-kakao-client-id}
+      client-secret: ${KAKAO_CLIENT_SECRET:local-kakao-client-secret}
 
 logging:
   level:

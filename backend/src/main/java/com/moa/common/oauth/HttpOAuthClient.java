@@ -110,7 +110,7 @@ public class HttpOAuthClient implements OAuthClient {
 		}
 		String email = claims.hasNonNull("email") ? claims.get("email").asText() : null;
 		boolean emailVerified = claims.path("email_verified").asBoolean(false);
-		return new OAuthUser(OAuthProvider.GOOGLE, claims.path("sub").asText(), email, emailVerified);
+		return new OAuthUser(OAuthProvider.GOOGLE, requireUserId(claims.path("sub")), email, emailVerified);
 	}
 
 	private OAuthUser kakaoUser(JsonNode token) throws JsonProcessingException {
@@ -125,7 +125,17 @@ public class HttpOAuthClient implements OAuthClient {
 		String email = account.hasNonNull("email") ? account.get("email").asText() : null;
 		boolean emailVerified = account.path("is_email_verified").asBoolean(false)
 			&& account.path("is_email_valid").asBoolean(false);
-		return new OAuthUser(OAuthProvider.KAKAO, user.path("id").asText(), email, email != null && emailVerified);
+		return new OAuthUser(OAuthProvider.KAKAO, requireUserId(user.path("id")), email,
+			email != null && emailVerified);
+	}
+
+	/** 제공자 사용자 ID가 없으면 사용자를 정할 수 없으므로 인증 실패로 다룬다 */
+	private static String requireUserId(JsonNode node) {
+		String id = node.isMissingNode() || node.isNull() ? "" : node.asText("");
+		if (id.isBlank()) {
+			throw new IllegalArgumentException("제공자 사용자 ID가 없습니다");
+		}
+		return id;
 	}
 
 	private JsonNode readKakaoUser(String accessToken) throws JsonProcessingException {

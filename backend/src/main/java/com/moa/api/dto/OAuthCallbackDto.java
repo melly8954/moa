@@ -3,7 +3,7 @@ package com.moa.api.dto;
 import com.moa.common.security.token.IssuedTokens;
 
 /**
- * 소셜 인증 콜백 처리 결과. 컨트롤러는 쿠키를 쓰고 redirectUrl로 보낸다.
+ * 구글·카카오 인증 콜백 처리 결과. 컨트롤러는 쿠키를 쓰고 redirectUrl로 보낸다.
  *
  * @param redirectUrl 프론트 주소
  *     <ul>
