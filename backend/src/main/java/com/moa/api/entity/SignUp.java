@@ -1,5 +1,6 @@
 package com.moa.api.entity;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -64,4 +65,57 @@ public class SignUp extends BaseTimeEntity {
 
 	@Column(name = "expires_at", nullable = false)
 	private LocalDateTime expiresAt;
+
+	/** 이메일 인증을 마친 이메일 가입 */
+	public static SignUp startWithEmail(String tokenHash, String email, String passwordHash, Duration ttl) {
+		SignUp signUp = new SignUp();
+		signUp.tokenHash = tokenHash;
+		signUp.email = email;
+		signUp.passwordHash = passwordHash;
+		signUp.expiresAt = LocalDateTime.now().plus(ttl);
+		return signUp;
+	}
+
+	/**
+	 * 구글·카카오 가입.
+	 *
+	 * @param email 제공자가 준 이메일. 카카오가 주지 않았으면 null이고 이메일 인증으로 정한다
+	 */
+	public static SignUp startWithProvider(String tokenHash, OAuthProvider provider, String providerUserId,
+		String email, Duration ttl) {
+		SignUp signUp = new SignUp();
+		signUp.tokenHash = tokenHash;
+		signUp.provider = provider;
+		signUp.providerUserId = providerUserId;
+		signUp.email = email;
+		signUp.expiresAt = LocalDateTime.now().plus(ttl);
+		return signUp;
+	}
+
+	public boolean isExpired(LocalDateTime now) {
+		return !expiresAt.isAfter(now);
+	}
+
+	/** 카카오가 이메일을 주지 않아 이메일 인증을 기다리는 가입 */
+	public boolean awaitsEmail() {
+		return email == null && provider != null;
+	}
+
+	public boolean isPhoneVerified() {
+		return phoneVerifiedAt != null;
+	}
+
+	/** 이메일 인증으로 계정 이메일과 비밀번호를 정한다. 다른 브라우저에서 이어 가도록 토큰을 새로 바꾼다 */
+	public void confirmEmail(String email, String passwordHash, String newTokenHash) {
+		this.email = email;
+		this.passwordHash = passwordHash;
+		this.tokenHash = newTokenHash;
+	}
+
+	public void verifyPhone(LocalDate birthDate, String phoneEncrypted, String phoneHmac, LocalDateTime now) {
+		this.birthDate = birthDate;
+		this.phoneEncrypted = phoneEncrypted;
+		this.phoneHmac = phoneHmac;
+		this.phoneVerifiedAt = now;
+	}
 }

@@ -64,4 +64,38 @@ public class Member extends SoftDeleteEntity {
 
 	@Column(name = "privacy_agreed_at")
 	private LocalDateTime privacyAgreedAt;
+
+	/**
+	 * 가입을 마친 ACTIVE 회원.
+	 *
+	 * @param passwordHash 비밀번호가 없으면(구글·카카오 가입) null
+	 */
+	public static Member createActive(String email, String passwordHash, String nickname, LocalDate birthDate,
+		String phoneEncrypted, String phoneHmac, LocalDateTime agreedAt) {
+		Member member = new Member();
+		member.email = email;
+		member.passwordHash = passwordHash;
+		member.nickname = nickname;
+		member.birthDate = birthDate;
+		member.phoneEncrypted = phoneEncrypted;
+		member.phoneHmac = phoneHmac;
+		member.role = MemberRole.MEMBER;
+		member.status = MemberStatus.ACTIVE;
+		member.termsAgreedAt = agreedAt;
+		member.privacyAgreedAt = agreedAt;
+		return member;
+	}
+
+	public boolean isActive() {
+		return status == MemberStatus.ACTIVE;
+	}
+
+	public boolean hasPassword() {
+		return passwordHash != null;
+	}
+
+	/** 이메일 인증 연결로 비밀번호 로그인 수단을 더한다 */
+	public void addPassword(String passwordHash) {
+		this.passwordHash = passwordHash;
+	}
 }

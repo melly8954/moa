@@ -5,14 +5,23 @@ import org.springframework.stereotype.Component;
 import com.moa.api.application.v1.command.HandleOAuthCallbackCommand;
 import com.moa.api.dto.OAuthAuthorizationDto;
 import com.moa.api.dto.OAuthCallbackDto;
+import com.moa.api.service.OAuthService;
+import com.moa.common.exception.ErrorCode;
+import com.moa.common.exception.ServiceException;
+import com.moa.common.oauth.OAuthException;
+import com.moa.common.oauth.OAuthProvider;
+import com.moa.common.oauth.OAuthUser;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * 구글·카카오 인증 API의 진입점. 가입과 로그인이 같은 콜백을 쓴다.
  */
 @Component
+@RequiredArgsConstructor
 public class OAuthApplication {
 
-	private static final String NOT_IMPLEMENTED = "구현 전입니다";
+	private final OAuthService oauthService;
 
 	/**
 	 * @param provider 경로의 제공자 값 (google, kakao)
@@ -20,7 +29,7 @@ public class OAuthApplication {
 	 * @throws com.moa.common.exception.ServiceException 모르는 제공자면 R001
 	 */
 	public OAuthAuthorizationDto authorize(String provider, String intent) {
-		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+		return oauthService.authorize(oauthService.provider(provider), intent);
 	}
 
 	/**
@@ -35,6 +44,22 @@ public class OAuthApplication {
 	 * </ul>
 	 */
 	public OAuthCallbackDto handleCallback(HandleOAuthCallbackCommand command) {
-		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+		OAuthProvider provider = oauthService.provider(command.provider());
+		String intent = oauthService.intentOf(command.expectedState());
+		boolean stateMatches = command.state() != null && command.state().equals(command.expectedState());
+		if (!stateMatches || command.error() != null || command.code() == null) {
+			return oauthService.failure(intent, ErrorCode.OAUTH_FAILED);
+		}
+		OAuthUser user;
+		try {
+			user = oauthService.fetchUser(provider, command.code());
+		} catch (OAuthException ex) {
+			return oauthService.failure(intent, ErrorCode.OAUTH_FAILED);
+		}
+		try {
+			return oauthService.signInOrStartSignUp(user);
+		} catch (ServiceException ex) {
+			return oauthService.failure(intent, ex.getErrorCode());
+		}
 	}
 }

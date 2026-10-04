@@ -40,4 +40,10 @@ public class MemberSocialAccount extends SoftDeleteEntity {
 
 	@Column(name = "provider_user_id", nullable = false)
 	private String providerUserId;
+
+	public MemberSocialAccount(Long memberId, OAuthProvider provider, String providerUserId) {
+		this.memberId = memberId;
+		this.provider = provider;
+		this.providerUserId = providerUserId;
+	}
 }

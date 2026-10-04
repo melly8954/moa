@@ -8,16 +8,26 @@ import com.moa.api.application.v1.command.CreateEmailVerificationCommand;
 import com.moa.api.application.v1.command.CreatePhoneVerificationCommand;
 import com.moa.api.dto.EmailConfirmationDto;
 import com.moa.api.dto.EmailVerificationDto;
+import com.moa.api.dto.IssuedEmailVerificationDto;
+import com.moa.api.dto.IssuedPhoneVerificationDto;
 import com.moa.api.dto.PhoneVerificationDto;
 import com.moa.api.dto.SignUpDto;
+import com.moa.api.service.SignUpService;
+import com.moa.common.exception.ErrorCode;
+import com.moa.common.exception.ServiceException;
+import com.moa.common.mail.MailSendException;
+import com.moa.common.sms.SmsSendException;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * 가입 진행(이메일 인증, 휴대폰 인증) API의 진입점. 메일·문자 발송은 트랜잭션 밖에서 한다.
  */
 @Component
+@RequiredArgsConstructor
 public class SignUpApplication {
 
-	private static final String NOT_IMPLEMENTED = "구현 전입니다";
+	private final SignUpService signUpService;
 
 	/**
 	 * 인증 메일을 보낸다. 링크는 {@code <웹>/signup/phone?token=<토큰>}이다.
@@ -26,7 +36,15 @@ public class SignUpApplication {
 	 *     60초 안에 다시 보내면 B008, 발송 실패면 S002, 가입 진행 토큰이 무효면 A006
 	 */
 	public EmailVerificationDto createEmailVerification(CreateEmailVerificationCommand command) {
-		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+		IssuedEmailVerificationDto issued = signUpService.issueEmailVerification(command.email(), command.password(),
+			command.signUpToken());
+		try {
+			signUpService.sendVerificationMail(issued);
+		} catch (MailSendException ex) {
+			signUpService.discardEmailVerification(issued.id());
+			throw new ServiceException(ErrorCode.MAIL_SEND_FAILED);
+		}
+		return new EmailVerificationDto(issued.email(), issued.expiresAt(), issued.resendAvailableAt());
 	}
 
 	/**
@@ -41,7 +59,7 @@ public class SignUpApplication {
 	 *     비밀번호가 있는 기존 계정 이메일이면 B002
 	 */
 	public EmailConfirmationDto confirmEmailVerification(ConfirmEmailVerificationCommand command) {
-		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+		return signUpService.confirmEmailVerification(command.token());
 	}
 
 	/**
@@ -51,7 +69,15 @@ public class SignUpApplication {
 	 *     60초 안에 다시 받으면 B008, 하루 10회를 넘으면 B009, 발송 실패면 S003
 	 */
 	public PhoneVerificationDto createPhoneVerification(CreatePhoneVerificationCommand command) {
-		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+		IssuedPhoneVerificationDto issued = signUpService.issuePhoneVerification(command.signUpToken(),
+			command.phoneNumber());
+		try {
+			signUpService.sendVerificationSms(issued);
+		} catch (SmsSendException ex) {
+			signUpService.discardPhoneVerification(issued.id());
+			throw new ServiceException(ErrorCode.SMS_SEND_FAILED);
+		}
+		return issued.result();
 	}
 
 	/**
@@ -62,18 +88,24 @@ public class SignUpApplication {
 	 *     재가입 제한 중이면 B014
 	 */
 	public void confirmPhoneVerification(ConfirmPhoneVerificationCommand command) {
-		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+		signUpService.confirmPhoneVerification(command.signUpToken(), command.verificationCode(),
+			command.birthDate());
 	}
 
 	/**
 	 * @throws com.moa.common.exception.ServiceException 가입 진행 토큰이 무효면 A006
 	 */
 	public SignUpDto getSignUp(String signUpToken) {
-		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+		return signUpService.getSignUp(signUpToken);
 	}
 
 	/** 가입을 취소한다. 토큰이 없거나 무효여도 실패하지 않는다 */
 	public void cancelSignUp(String signUpToken) {
-		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+		signUpService.cancelSignUp(signUpToken);
+	}
+
+	/** 만료된 가입 진행과 인증을 지운다. 예약 작업이 부른다 */
+	public void deleteExpired() {
+		signUpService.deleteExpired();
 	}
 }

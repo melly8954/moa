@@ -3,13 +3,19 @@ package com.moa.api.application.v1;
 import org.springframework.stereotype.Component;
 
 import com.moa.api.application.v1.command.CreateMemberCommand;
+import com.moa.api.service.MemberService;
 import com.moa.common.security.token.IssuedTokens;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * 회원 API의 진입점.
  */
 @Component
+@RequiredArgsConstructor
 public class MemberApplication {
+
+	private final MemberService memberService;
 
 	/**
 	 * 가입 진행을 마치고 ACTIVE 회원을 만든 뒤 로그인시킨다. 가입 진행은 지운다.
@@ -19,6 +25,6 @@ public class MemberApplication {
 	 *     재가입 제한 중이면 B014, 이메일이 이미 가입돼 있으면 B002, 닉네임이 쓰이면 R003
 	 */
 	public IssuedTokens createMember(CreateMemberCommand command) {
-		throw new UnsupportedOperationException("구현 전입니다");
+		return memberService.createMember(command.signUpToken(), command.nickname());
 	}
 }

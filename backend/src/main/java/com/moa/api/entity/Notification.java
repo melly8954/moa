@@ -52,4 +52,13 @@ public class Notification extends BaseTimeEntity {
 
 	@Column(name = "read_at")
 	private LocalDateTime readAt;
+
+	public Notification(Long memberId, NotificationType type, Long actorId, NotificationTargetType targetType,
+		Long targetId) {
+		this.memberId = memberId;
+		this.type = type;
+		this.actorId = actorId;
+		this.targetType = targetType;
+		this.targetId = targetId;
+	}
 }

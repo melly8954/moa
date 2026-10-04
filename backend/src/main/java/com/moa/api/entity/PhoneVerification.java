@@ -49,4 +49,34 @@ public class PhoneVerification extends BaseTimeEntity {
 
 	@Column(name = "verified_at")
 	private LocalDateTime verifiedAt;
+
+	public PhoneVerification(Long signUpId, String phoneEncrypted, String phoneHmac, String codeHash,
+		LocalDateTime expiresAt) {
+		this.signUpId = signUpId;
+		this.phoneEncrypted = phoneEncrypted;
+		this.phoneHmac = phoneHmac;
+		this.codeHash = codeHash;
+		this.expiresAt = expiresAt;
+	}
+
+	public boolean isExpired(LocalDateTime now) {
+		return !expiresAt.isAfter(now);
+	}
+
+	public boolean isVerified() {
+		return verifiedAt != null;
+	}
+
+	public void recordFailure() {
+		this.failedAttempts++;
+	}
+
+	public void verify(LocalDateTime now) {
+		this.verifiedAt = now;
+	}
+
+	/** 발송에 실패한 번호를 쓸 수 없게 한다 */
+	public void expire(LocalDateTime now) {
+		this.expiresAt = now;
+	}
 }

@@ -46,4 +46,30 @@ public class EmailVerification extends BaseTimeEntity {
 
 	@Column(name = "used_at")
 	private LocalDateTime usedAt;
+
+	/**
+	 * @param signUpId 카카오가 이메일을 주지 않아 이어 온 가입이면 그 가입 진행 ID, 아니면 null
+	 */
+	public EmailVerification(Long signUpId, String email, String passwordHash, String tokenHash,
+		LocalDateTime expiresAt) {
+		this.signUpId = signUpId;
+		this.email = email;
+		this.passwordHash = passwordHash;
+		this.tokenHash = tokenHash;
+		this.expiresAt = expiresAt;
+	}
+
+	/** 아직 쓰지 않았고 만료되지 않았는지 */
+	public boolean isUsable(LocalDateTime now) {
+		return usedAt == null && expiresAt.isAfter(now);
+	}
+
+	public void markUsed(LocalDateTime now) {
+		this.usedAt = now;
+	}
+
+	/** 발송에 실패한 링크를 쓸 수 없게 한다 */
+	public void expire(LocalDateTime now) {
+		this.expiresAt = now;
+	}
 }
