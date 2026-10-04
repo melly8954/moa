@@ -1,5 +1,5 @@
 ---
-status: approved
+status: draft
 refs: [CON-001, CON-002, FR-ADM-003, FR-ADM-004, FR-PTY-010, NFR-CAP-001, NFR-ENV-001, NFR-I18N-001, SEC-AUTH-001, SEC-AUTH-003, SEC-AUTH-004, INT-GOOGLE-001, INT-GOOGLE-002, INT-KAKAO-001, INT-KAKAO-002, INT-KAKAO-003, INT-MAIL-001, INT-MAIL-002, INT-SMS-001, INT-SMS-002, INT-STORAGE-001, DAT-RET-001, DAT-RET-002]
 ---
 
@@ -74,6 +74,7 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
   - 모바일 메뉴: 하단 탭 바(`mobileNav: "tabbar"`) 〔2026-10-02〕 사용자 결정. SNS라 자주 쓰는 화면을 엄지로 바로 연다. 탭과 헤더 아이콘은 `ui/ia/README.md` 모바일 메뉴 절
 - 셸 코드: `frontend/components/app-sidebar.tsx`, `frontend/components/mobile-tab-bar.tsx`, `frontend/app/layout.tsx` (구현 첫 화면 FR에서 만든다. 탭 바는 키트 playground `shells.tsx`의 `MobileTabBar`·`MobileActions`를 따른다)
 - 위 경로는 공유 파일이다. 구현자가 FR 작업 중에 고치지 않는다
+  - 사이드바·탭 바 셸을 어느 FR이 만드는지, FR-MEM-001이 `app/layout.tsx`에 더한 공급자·lang을 "첫 화면 FR"로 볼지 [OPEN-022]
 
 ## 백엔드
 

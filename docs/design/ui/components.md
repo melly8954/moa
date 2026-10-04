@@ -1,5 +1,5 @@
 ---
-status: approved
+status: draft
 refs: [NFR-ENV-001]
 ---
 
@@ -13,6 +13,8 @@ refs: [NFR-ENV-001]
 - 코드 경로는 Next 기준이다. 추가 명령: npx shadcn@latest add <shadcn 이름>
 - 모양은 web/mockup/snippets.md의 조각을 쓴다. 조각이 없는 변형은 키트의 playground/README.md 절차로 뽑아 추가한다
 -->
+
+- 여러 화면이 함께 쓰는 회원 가입 컴포넌트(`components/member/error-alert.tsx`, `locale-switcher.tsx`)를 이 표에 올릴지 [OPEN-021]
 
 | 컴포넌트 | 분류 | shadcn 이름 | 코드 경로 | 용도 | 변형 | 상태 | 쓰지 말아야 할 경우 |
 |---|---|---|---|---|---|---|---|
