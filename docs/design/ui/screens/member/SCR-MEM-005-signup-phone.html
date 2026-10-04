@@ -1,4 +1,4 @@
-<!-- psw id: SCR-MEM-005 | refs: FR-MEM-001, SEC-AUTH-003, INT-SMS-001, INT-SMS-002, DAT-RET-002 | status: approved -->
+<!-- psw id: SCR-MEM-005 | refs: FR-MEM-001, SEC-AUTH-003, INT-SMS-001, INT-SMS-002, DAT-RET-002 | status: draft -->
 <!doctype html>
 <html lang="ko">
 <head>
@@ -195,6 +195,15 @@
       </div>
       <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
         <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">최근 탈퇴한 계정의 번호입니다</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">복구는 고객 문의로 할 수 있고, 정해진 기간이 지나면 다시 가입할 수 있습니다.</div>
+      </div>
+      <!-- 이메일 인증 링크를 열었는데 연결 대상 계정이 ACTIVE가 아닐 때 (FR-MEM-001 E1-1·E3, AC-16) 〔2026-10-04〕 -->
+      <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
+        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">이용이 정지된 계정의 이메일입니다</div>
+        <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">정지가 끝난 뒤 그 계정으로 로그인하세요. 이메일 인증 연결은 하지 않았습니다.</div>
+      </div>
+      <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">
+        <div data-slot="alert-title" class="font-medium group-has-[>svg]/alert:col-start-2">최근 탈퇴한 계정의 이메일입니다</div>
         <div data-slot="alert-description" class="text-sm text-balance text-muted-foreground md:text-pretty">복구는 고객 문의로 할 수 있고, 정해진 기간이 지나면 다시 가입할 수 있습니다.</div>
       </div>
       <div data-component="Alert" data-variant="destructive" data-slot="alert" role="alert" class="group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current">

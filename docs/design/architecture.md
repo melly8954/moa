@@ -1,5 +1,5 @@
 ---
-status: approved
+status: draft
 refs: [CON-001, CON-002, FR-ADM-003, FR-ADM-004, FR-PTY-010, NFR-CAP-001, NFR-ENV-001, NFR-I18N-001, SEC-AUTH-001, SEC-AUTH-003, SEC-AUTH-004, INT-GOOGLE-001, INT-GOOGLE-002, INT-KAKAO-001, INT-KAKAO-002, INT-KAKAO-003, INT-MAIL-001, INT-MAIL-002, INT-SMS-001, INT-SMS-002, INT-STORAGE-001, DAT-RET-001, DAT-RET-002]
 ---
 
@@ -107,6 +107,7 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
 - 흐름: 브라우저 → `api/v1/auth/oauth/google` → 구글 동의 → 콜백에서 서버가 코드 교환·ID 토큰 검증 → 리프레시 쿠키를 쓰고 프론트로 리다이렉트 → 프론트가 재발급으로 액세스 토큰을 받는다
 - 구현 범위: 콜백과 로그인 세션 발급은 가입·로그인이 함께 쓰므로 FR-MEM-001에서 만든다(이미 연결된 계정의 로그인 분기 포함). FR-MEM-002는 비밀번호 로그인, 실패 응답, 정지·탈퇴 거부, 관리자 이동을 더한다 〔2026-10-04〕 사용자 결정
 - 계정 합치기: ID 토큰의 `email_verified`가 true일 때만 같은 이메일 계정에 합친다
+- 미인증 이메일: `email_verified`가 false면 가입을 이메일 인증 단계로 이어 간다 (INT-GOOGLE-001) 〔2026-10-04〕 사용자 결정
 
 | 작업 | 엔드포인트 | 타임아웃 | 재시도 | 멱등 키 |
 |---|---|---|---|---|
@@ -126,7 +127,7 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
 - 인증: OAuth 2.0, REST API 키·클라이언트 시크릿 (`KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`)
 - 계정 합치기: 사용자 정보의 이메일 인증 여부(`is_email_verified`)와 유효 여부(`is_email_valid`)가 모두 참일 때만 합친다 〔2026-10-04〕 INT-KAKAO-002 변경
 - 운영 전제: 앱을 개인 개발자 비즈 앱으로 전환하고(앱 소유자 본인인증, 사업자등록 불필요) 카카오계정(이메일)을 필수 동의로 둔다. 이메일 미동의 흐름은 예비로 남긴다 〔2026-10-04〕 사용자 결정
-- 이메일 미동의: 이메일 없이 돌아오면 가입을 이메일 인증 단계로 이어 간다 (INT-KAKAO-003)
+- 이메일 미동의·미인증: 이메일 없이 돌아오거나 인증되지 않은 이메일(위 계정 합치기 조건이 거짓)이면 가입을 이메일 인증 단계로 이어 간다 (INT-KAKAO-003) 〔2026-10-04〕 미인증 추가
 
 | 작업 | 엔드포인트 | 타임아웃 | 재시도 | 멱등 키 |
 |---|---|---|---|---|
@@ -144,7 +145,7 @@ common (응답·예외·보안·감사·설정·외부 연동 어댑터)은 어�
 - 근거: INT-MAIL-001, INT-MAIL-002
 - 용도와 방향: 가입 이메일 인증, 비밀번호 재설정 링크. 우리 → 메일 서버
 - 인증: SMTP 계정 (`MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`)
-- 어댑터: `psw.mail.provider` = `smtp`(처음) / `ses`(안정화 후) / `log`(테스트·로컬, 본문을 로그로). 기능 코드는 포트 `MailSender`만 부른다
+- 어댑터: `psw.mail.provider` = `smtp`(처음) / `ses`(안정화 후) / `log`(테스트·기본값. 받는 사람(가림)과 제목만 로그로 남기고 본문은 남기지 않는다. 인증 링크에 토큰이 있다(`security.md` 로그 NEVER). 로컬은 `smtp`로 Mailpit에서 본문을 본다 〔2026-10-04〕 사용자 결정). 기능 코드는 포트 `MailSender`만 부른다
 - 로컬: Docker Compose의 Mailpit으로 SMTP를 받는다 (`http://localhost:8025`)
 
 | 작업 | 엔드포인트 | 타임아웃 | 재시도 | 멱등 키 |
