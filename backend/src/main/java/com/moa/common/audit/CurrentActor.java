@@ -17,7 +17,7 @@ import com.moa.common.security.PermitAllSupport;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 감사 행위자를 정한다. 행위자는 비지 않는다 (harness-psw 4.7).
+ * 감사 행위자를 정한다. 행위자는 비지 않는다.
  *
  * <ol>
  *   <li>로그인 사용자가 있으면 그 사용자 ID</li>

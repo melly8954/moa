@@ -22,7 +22,7 @@ import com.moa.common.security.SecureTokens;
 
 /**
  * 솔라피 메시지 API로 문자를 보낸다 (psw.sms.provider=solapi). 인증은 API 키·시크릿의 HMAC 서명이다.
- * 중복 발송을 막으려고 재시도하지 않는다 (docs/design/architecture.md 문자 발송).
+ * 중복 발송을 막으려고 재시도하지 않는다 (docs/backend.md 외부 연동).
  */
 @Component
 @ConditionalOnProperty(name = "psw.sms.provider", havingValue = "solapi")

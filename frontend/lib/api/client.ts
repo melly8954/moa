@@ -1,4 +1,4 @@
-// API 호출은 이 폴더에서만 한다 (docs/design/conventions.md 3.3)
+// API 호출은 이 폴더에서만 한다 (docs/frontend.md API 호출)
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"
 

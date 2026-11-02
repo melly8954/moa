@@ -27,7 +27,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 토큰 재발급·로그아웃 API. 정본은 프로젝트 API 문서다 (키트 문서 조각 auth-token에서 옮김)
+ * 토큰 재발급·로그아웃 API.
  */
 @Tag(name = "인증 토큰 API", description = "액세스 토큰 재발급과 로그아웃")
 @PermitAll

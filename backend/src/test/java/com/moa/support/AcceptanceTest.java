@@ -15,7 +15,7 @@ import com.moa.common.security.jwt.JwtTokenProvider;
 import com.moa.support.external.ExternalTestDoubleConfig;
 
 /**
- * AC 테스트 기반 (harness-psw 5.2). API 수준에서 사용자가 보는 동작을 확인한다.
+ * AC 테스트 기반. API 수준에서 사용자가 보는 동작을 확인한다.
  *
  * <ul>
  *   <li>DB는 Testcontainers MariaDB. Docker가 실행 중이어야 한다</li>

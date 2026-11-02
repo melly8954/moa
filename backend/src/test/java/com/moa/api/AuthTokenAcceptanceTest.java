@@ -23,9 +23,8 @@ import com.moa.support.AcceptanceTest;
 import jakarta.servlet.http.Cookie;
 
 /**
- * 토큰 재발급·로그아웃. AC 번호는 키트 문서 조각 auth-token의 FR 초안과 같다.
- * 프로젝트에 조각을 넣고 FR ID가 정해지면 표시 이름의 [auth-token-refresh], [auth-token-logout]을 그 ID로 바꾼다.
- * login()은 회원 행을 먼저 만든다 (FR-MEM-001, APPLY.md 적용 후 할 일 3).
+ * 토큰 재발급·로그아웃.
+ * login()은 회원 행을 먼저 만든다.
  */
 class AuthTokenAcceptanceTest extends AcceptanceTest {
 

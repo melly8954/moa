@@ -8,7 +8,7 @@ import com.moa.common.audit.SystemActor;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 끝내지 않은 가입 진행(유효 30분)과 만료된 인증을 정리한다 (conventions.md 하드 삭제 표).
+ * 끝내지 않은 가입 진행(유효 30분)과 만료된 인증을 정리한다.
  */
 @Component
 @RequiredArgsConstructor

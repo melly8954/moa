@@ -9,7 +9,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 운영(prod) 프로필에서 문자 log 어댑터를 켜면 시작을 막는다 (docs/design/security.md 금지·제약).
+ * 운영(prod) 프로필에서 문자 log 어댑터를 켜면 시작을 막는다 (docs/backend.md 외부 연동).
  */
 @Component
 @RequiredArgsConstructor

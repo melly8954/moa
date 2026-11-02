@@ -91,7 +91,7 @@ public class OAuthService {
 	 *   <li>이미 연결된 제공자 계정: 그 회원으로 로그인</li>
 	 *   <li>제공자가 인증된 이메일로 알려 줬고 같은 이메일의 기존 계정이 있음: 계정 합치기 조건에 맞으면 합치고 로그인</li>
 	 *   <li>제공자가 인증된 이메일로 알려 줌: 그 이메일로 가입 시작 (다음은 휴대폰 인증)</li>
-	 *   <li>이메일이 없거나 인증되지 않음: 이메일 없이 가입 시작 (다음은 이메일 가입 단계, 회원 _policy.md 제공자 이메일 없음)</li>
+	 *   <li>이메일이 없거나 인증되지 않음: 이메일 없이 가입 시작 (다음은 이메일 가입 단계)</li>
 	 * </ul>
 	 *
 	 * @throws ServiceException 연결된 계정이 ACTIVE가 아니면 A001, 같은 이메일 계정이 있으나 합치기 조건(ACTIVE,
@@ -129,7 +129,7 @@ public class OAuthService {
 		return new OAuthCallbackDto(webProperties.url(path + "?error=" + errorCode.getCode()), null, null);
 	}
 
-	/** 계정 합치기 (회원 _policy.md): 제공자가 인증된 이메일로 알려 줬을 때, ACTIVE 계정이고 같은 제공자의 다른 계정이 없으면 */
+	/** 계정 합치기: 제공자가 인증된 이메일로 알려 줬을 때, ACTIVE 계정이고 같은 제공자의 다른 계정이 없으면 */
 	private OAuthCallbackDto merge(Member member, OAuthUser user) {
 		boolean mergeable = member.isActive()
 			&& !memberSocialAccountReader.existsByMemberAndProvider(member.getId(), user.provider());

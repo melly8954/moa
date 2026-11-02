@@ -24,7 +24,7 @@ import com.moa.common.security.AuthPrincipal;
 import com.moa.common.security.SecureTokens;
 
 /**
- * 가입 단계와 가입 완료가 함께 쓰는 규칙 (회원 _policy.md 가입 나이, 1인 1계정, 휴대폰 번호 중복 안내).
+ * 가입 단계와 가입 완료가 함께 쓰는 규칙 (가입 나이, 1인 1계정, 휴대폰 번호 중복 안내).
  */
 final class SignUpRules {
 

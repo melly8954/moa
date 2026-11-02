@@ -1,7 +1,7 @@
 package com.moa.api.entity;
 
 /**
- * 알림 사건. 사건 목록의 정본은 docs/req/functional/notification/_policy.md 알림 사건이다.
+ * 알림 사건. 사건 목록의 정본이다.
  * 이름은 {@code <대상>_<사건>}으로 짓는다 (예: FOLLOW_REQUESTED, PARTY_INVITED). 다른 사건은 해당 기능에서 더한다.
  */
 public enum NotificationType {

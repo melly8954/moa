@@ -10,7 +10,7 @@ import com.moa.common.logging.TraceIdFilter;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * 오류 응답. 형식은 docs/design/conventions.md REST 절을 따른다.
+ * 오류 응답. 형식은 docs/backend.md REST 절을 따른다.
  */
 @Schema(description = "오류 응답")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

@@ -1,4 +1,4 @@
-// FR-MEM-001 회원가입 화면 AC (docs/design/conventions.md 7절)
+// FR-MEM-001 회원가입 화면 AC (docs/frontend.md 테스트)
 // API 응답은 page.route로 대신하고 화면 동작만 본다. API 동작은 백엔드 SignUpAcceptanceTest가 본다
 import { expect, type Page, test } from "@playwright/test"
 

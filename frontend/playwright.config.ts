@@ -1,4 +1,4 @@
-// 화면 AC 테스트 (docs/design/conventions.md 7절). 테스트는 e2e/에 둔다
+// 화면 AC 테스트 (docs/frontend.md 테스트). 테스트는 e2e/에 둔다
 import { defineConfig, devices } from "@playwright/test"
 
 export default defineConfig({

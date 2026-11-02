@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 /**
  * 소프트 삭제를 쓰지 않는 엔터티 표시. SoftDeleteEntity를 상속하지 않는 엔터티는 반드시 붙인다.
- * 이유는 docs/design/conventions.md DB 절 하드 삭제 표에도 같은 내용으로 적는다.
+ * 이유는 reason에 적는다 (docs/backend.md DB).
  */
 @Documented
 @Target(ElementType.TYPE)

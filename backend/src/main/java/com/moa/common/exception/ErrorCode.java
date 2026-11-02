@@ -7,8 +7,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 에러 코드 목록.
- * 에러 코드 목록의 정본이다. 형식과 번호 규칙은 docs/design/conventions.md REST 절을 따른다.
- * 기본 코드는 하네스 conventions.md 템플릿의 기본 표와 같다 (harness-psw 4.7).
+ * 에러 코드 목록의 정본이다. 형식과 번호 규칙은 docs/backend.md REST 절을 따른다.
  */
 @Getter
 @RequiredArgsConstructor

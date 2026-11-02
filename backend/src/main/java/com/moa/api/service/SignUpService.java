@@ -172,7 +172,7 @@ public class SignUpService {
 	}
 
 	/**
-	 * 이메일 인증 연결 (회원 _policy.md): 비밀번호를 추가하고, 구글·카카오 가입 중이었으면 그 제공자도 연결한 뒤 로그인시킨다.
+	 * 이메일 인증 연결: 비밀번호를 추가하고, 구글·카카오 가입 중이었으면 그 제공자도 연결한 뒤 로그인시킨다.
 	 */
 	private EmailConfirmationDto linkToExistingAccount(Member member, EmailVerification verification,
 		Optional<SignUp> providerSignUp) {

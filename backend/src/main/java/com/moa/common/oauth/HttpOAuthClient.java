@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * 구글(OpenID Connect)·카카오 OAuth 어댑터 (docs/design/architecture.md 구글 로그인, 카카오 로그인).
+ * 구글(OpenID Connect)·카카오 OAuth 어댑터 (docs/backend.md 외부 연동).
  *
  * <ul>
  *   <li>구글: 코드를 토큰 엔드포인트에서 바로(TLS) 교환해 받은 ID 토큰의 iss·aud·exp를 확인하고 sub, email,

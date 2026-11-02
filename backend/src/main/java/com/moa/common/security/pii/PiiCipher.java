@@ -16,7 +16,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.stereotype.Component;
 
 /**
- * 휴대폰 번호 보호 (docs/design/security.md 데이터 보호). 원문은 AES-GCM으로 암호화해 두고,
+ * 휴대폰 번호 보호 (docs/backend.md 개인정보와 로그). 원문은 AES-GCM으로 암호화해 두고,
  * 중복 검사는 HMAC-SHA256 값으로 한다. 키 재료는 SHA-256으로 256비트 키로 만든다.
  */
 @Component

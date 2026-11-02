@@ -18,7 +18,7 @@ import com.moa.common.security.jwt.JwtTokenProvider;
 import com.moa.support.AcceptanceTest;
 
 /**
- * 오류 응답 형식 (conventions.md REST 절)
+ * 오류 응답 형식 (docs/backend.md REST 절)
  */
 class ErrorResponseAcceptanceTest extends AcceptanceTest {
 

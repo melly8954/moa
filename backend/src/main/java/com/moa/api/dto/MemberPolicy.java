@@ -3,7 +3,7 @@ package com.moa.api.dto;
 import java.time.Duration;
 
 /**
- * 회원 정책 수치. 값의 정본은 docs/req/functional/member/_policy.md와 SEC-AUTH·INT 요구사항이다.
+ * 회원 정책 수치의 정본이다.
  * 화면 검증(zod)도 같은 값을 쓴다.
  */
 public final class MemberPolicy {

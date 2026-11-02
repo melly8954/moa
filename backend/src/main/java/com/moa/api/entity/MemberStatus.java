@@ -1,7 +1,7 @@
 package com.moa.api.entity;
 
 /**
- * 회원 계정 상태. 값과 전이는 docs/req/functional/member/_policy.md 상태 전이 절을 따른다.
+ * 회원 계정 상태.
  */
 public enum MemberStatus {
 	/** 정상 */

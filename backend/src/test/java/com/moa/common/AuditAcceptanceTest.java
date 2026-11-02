@@ -19,7 +19,7 @@ import com.moa.support.sample.SampleItem;
 import com.moa.support.sample.SampleItemRepository;
 
 /**
- * 감사 행위자와 소프트 삭제 (harness-psw 4.7 공통 엔터티)
+ * 감사 행위자와 소프트 삭제 (공통 엔터티)
  */
 class AuditAcceptanceTest extends AcceptanceTest {
 

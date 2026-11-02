@@ -1,4 +1,4 @@
-# 환경변수는 이 파일에서만 읽는다 (harness-psw 5.3).
+# 환경변수는 이 파일에서만 읽는다.
 # 값이 필요한 설정은 @ConfigurationProperties + @Validated로 시작할 때 검증한다.
 spring:
   application:

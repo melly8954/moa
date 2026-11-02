@@ -12,7 +12,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // shadcn sidebar가 생성한 코드. 고치지 않는다 (프론트 키트 Next 절차 4)
+    // shadcn sidebar가 생성한 코드. 고치지 않는다
     "hooks/use-mobile.ts",
   ]),
 ])

@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server"
 import { LocaleSwitcher } from "@/components/member/locale-switcher"
 import { SignUpFlowProvider } from "@/components/member/sign-up-flow"
 
-/** 가입 단계 화면: 셸 없이 가운데 카드 (docs/design/ui/ui-rules.md 예외) */
+/** 가입 단계 화면: 셸 없이 가운데 카드 (docs/frontend.md 셸) */
 export default async function SignUpLayout({ children }: LayoutProps<"/signup">) {
   const t = await getTranslations("common")
   return (

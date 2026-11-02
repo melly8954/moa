@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
 /**
- * 외부 연동(메일, 문자, OAuth) 포트를 테스트 대역으로 바꾼다 (conventions.md 7절 외부 연동).
+ * 외부 연동(메일, 문자, OAuth) 포트를 테스트 대역으로 바꾼다 (docs/backend.md 테스트).
  * 설정으로 고른 어댑터가 있어도 @Primary로 이 대역이 쓰인다.
  */
 @TestConfiguration(proxyBeanMethods = false)

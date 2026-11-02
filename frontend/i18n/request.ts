@@ -1,4 +1,4 @@
-// 언어는 주소가 아니라 쿠키(NEXT_LOCALE)로 고른다. 기본은 한국어 (docs/design/conventions.md 3.6)
+// 언어는 주소가 아니라 쿠키(NEXT_LOCALE)로 고른다. 기본은 한국어 (docs/frontend.md 라우팅·다국어)
 import { cookies } from "next/headers"
 import { getRequestConfig } from "next-intl/server"
 

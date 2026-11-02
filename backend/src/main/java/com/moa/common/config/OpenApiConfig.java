@@ -10,8 +10,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 
 /**
- * Swagger UI 설정. API의 정본은 docs/design/api/*.md이고, 어노테이션은 그 문서를 옮겨 적은 것이다.
- * 둘이 어긋나면 문서를 기준으로 코드를 고친다.
+ * Swagger UI 설정. API의 정본은 코드이고, 명세는 컨트롤러와 DTO의 어노테이션에서 만든다.
  */
 @Configuration
 public class OpenApiConfig {

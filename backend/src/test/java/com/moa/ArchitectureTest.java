@@ -23,7 +23,7 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import jakarta.persistence.Entity;
 
 /**
- * 레이어 규칙과 삭제 규칙을 강제한다 (harness-psw 4.7, 5.1). 규칙의 이유와 예외는 docs/design/conventions.md에 둔다.
+ * 레이어 규칙과 삭제 규칙을 강제한다. 규칙의 이유와 예외는 docs/backend.md에 둔다.
  *
  * <pre>
  * Controller → Application → Service → Reader/Writer → Repository
@@ -63,7 +63,7 @@ class ArchitectureTest {
 	static final ArchRule entitiesDeclareDeletePolicy = classes().that().areAnnotatedWith(Entity.class)
 		.should(declareDeletePolicy())
 		.allowEmptyShould(true)
-		.because("소프트 삭제가 기본이다. 하드 삭제는 @HardDelete(reason)로 이유를 남긴다 (harness-psw 4.7)");
+		.because("소프트 삭제가 기본이다. 하드 삭제는 @HardDelete(reason)로 이유를 남긴다");
 
 	@ArchTest
 	static final ArchRule softDeleteEntitiesHideDeletedRows = classes().that().areAnnotatedWith(Entity.class)

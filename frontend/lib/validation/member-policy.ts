@@ -1,4 +1,4 @@
-// 회원 정책 수치. 백엔드 MemberPolicy와 같은 값이다 (docs/design/conventions.md 4절)
+// 회원 정책 수치. 백엔드 MemberPolicy와 같은 값이다 (docs/backend.md 프론트와 맞춰 바꾸는 것)
 
 export const NICKNAME_MAX_LENGTH = 12
 export const NICKNAME_PATTERN = /^[가-힣A-Za-z0-9_]{2,12}$/

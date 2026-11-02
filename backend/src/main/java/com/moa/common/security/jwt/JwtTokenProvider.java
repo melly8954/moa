@@ -45,7 +45,7 @@ public class JwtTokenProvider {
 	}
 
 	/**
-	 * @param sessionId 로그인 세션 ID. 있으면 sid 클레임에 넣는다 (docs/design/security.md 로그인 세션)
+	 * @param sessionId 로그인 세션 ID. 있으면 sid 클레임에 넣는다 (docs/backend.md 인증·인가)
 	 */
 	public String createAccessToken(AuthPrincipal principal, Long sessionId) {
 		Instant now = Instant.now();

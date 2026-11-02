@@ -1,7 +1,7 @@
 package com.moa.api.entity;
 
 /**
- * 회원 역할. 역할 코드는 docs/design/security.md 인가 모델을 따른다.
+ * 회원 역할 (docs/backend.md 인증·인가).
  */
 public enum MemberRole {
 	MEMBER,

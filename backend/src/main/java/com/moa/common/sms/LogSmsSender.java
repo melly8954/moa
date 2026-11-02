@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 문자를 보내지 않고 본문(인증 번호 포함)을 로그로 남긴다. 개발·테스트용 (psw.sms.provider=log, INT-SMS-001).
- * 인증 번호 출력은 security.md가 허용한 예외다. 휴대폰 번호는 가운데 4자리를 가린다.
+ * 인증 번호 출력은 개발용 예외다 (운영에서 금지). 휴대폰 번호는 가운데 4자리를 가린다.
  * 운영 프로필에서는 SmsAdapterGuard가 시작을 막는다.
  */
 @Slf4j

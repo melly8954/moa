@@ -7,7 +7,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 로그인 감사 로그 (docs/design/security.md 감사 로그). 항목: 회원 ID 또는 입력 이메일, 수단, IP, 결과.
+ * 로그인 감사 로그 (docs/backend.md 개인정보와 로그). 항목: 회원 ID 또는 입력 이메일, 수단, IP, 결과.
  * traceId는 로그 패턴이 함께 남긴다. 비밀번호·토큰·인증 번호·휴대폰 번호는 남기지 않는다.
  */
 @Slf4j

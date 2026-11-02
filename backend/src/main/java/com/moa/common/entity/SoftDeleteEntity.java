@@ -7,7 +7,7 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 
 /**
- * 소프트 삭제 엔터티. 도메인 엔터티의 기본 부모다 (harness-psw 4.7).
+ * 소프트 삭제 엔터티. 도메인 엔터티의 기본 부모다.
  *
  * <p>상속하는 엔터티가 지킬 것 (ArchitectureTest가 검사한다)
  * <ul>
