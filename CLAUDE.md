@@ -8,9 +8,9 @@
 | 위치 | 내용 |
 |---|---|
 | `.specify/memory/constitution.md` | 프로젝트 원칙. 모든 작업에 적용된다. 이 문서와 충돌하면 원칙을 따른다 |
-| `specs/README.md` | 도메인·기능 지도. 무엇이 키트에서 왔고 무엇을 moa가 만드는지 (아직 없음) |
+| `specs/README.md` | 도메인·기능 지도. 무엇이 키트에서 왔고 무엇을 moa가 만드는지 |
 | `specs/<번호>-<이름>/` | 기능 스펙 (spec·plan·tasks 등). 첫 `/speckit-specify` 때 생긴다 |
-| `docs/decisions/` | 여러 기능에 걸친 결정 기록 (아직 없음) |
+| `docs/decisions/` | 여러 기능에 걸친 결정 기록 |
 
 - 작업 전에 해당 기능의 스펙과 원칙 문서만 읽는다. `specs/` 전체를 한꺼번에 읽지 않는다
 - 원칙 내용을 이 파일에 다시 적지 않는다
