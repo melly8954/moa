@@ -11,7 +11,11 @@
 **출처**: psw-dev-kit springboot admin 프리셋 (code, login-history, menu, rbac, user-admin). 태그는 키트를 적용할 때 적는다.
 키트 기능의 동작은 키트 문서와 함께 들어오는 키트 수용 테스트가 기준이다 (원칙 III).
 
-**근거**: `docs/decisions/0001-admin-kit-preset.md`, `docs/decisions/0002-admin-account.md`, `specs/README.md`
+**배경** (2026-11-07 결정):
+
+- admin 프리셋 전체를 쓴다. rbac를 넣어 운영자가 늘면 역할로 권한을 나눈다. 예전 기획의 "관리자 등급을 나누지 않는다"를 바꾼 것이다
+- 프리셋 밖의 헬퍼(redis, excel, mail 등)는 넣지 않는다. 필요한 기능의 스펙에서 정한다
+- 운영 환경의 첫 관리자를 만드는 방법이 키트에 없어 moa가 만든다. 다른 프로젝트에도 필요하면 키트로 올릴 후보다
 
 ## User Scenarios & Testing *(mandatory)*
 
