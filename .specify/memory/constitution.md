@@ -1,50 +1,70 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# moa Constitution
+
+moa는 게임 커뮤니티, 피드형 SNS, 메신저를 합친 서비스다.
+이 문서는 모든 기능의 스펙·계획·구현에 항상 적용되는 원칙만 담는다.
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. 스펙이 먼저다
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+- 스펙(`specs/<번호>-<기능>/spec.md`)에 없는 동작은 구현하지 않는다(MUST NOT).
+- 정해지지 않은 동작은 추측으로 정하지 않고 `[NEEDS CLARIFICATION]`으로 남긴 뒤 묻는다(MUST).
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+이유: 추측으로 정한 동작은 나중에 스펙과 코드가 어긋나는 가장 흔한 원인이다.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. AC마다 테스트 하나
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+- spec.md의 수용 시나리오(AC)마다 자동 테스트를 하나 둔다(MUST).
+- 테스트 이름에 AC 번호를 적는다(MUST). 예: `US1-AC2 로그인하지 않으면 401`.
+- API 통합 테스트를 기본으로 한다. e2e 테스트는 핵심 사용자 흐름에만 둔다(SHOULD).
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+이유: AC 번호만으로 스펙에서 테스트까지 추적할 수 있어 별도 추적 문서가 필요 없다.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. 키트를 따른다
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+- 백엔드·프론트는 psw-dev-kit 템플릿의 골격 규칙을 따른다(MUST).
+- 키트에서 온 기능을 고칠 때는 `specs/`에 기능 스펙을 만들고, 머리에 출처(태그·헬퍼)를 적고,
+  바뀌는 것만 쓴다(MUST).
+- 키트에서 온 기능의 기존 동작은 함께 들어온 키트의 수용 테스트가 기준이다.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+이유: 키트 코드는 복사된 뒤 moa가 정본이지만, 키트 스펙을 다시 옮겨 적으면 두 곳이 어긋난다.
+
+### IV. 기존 기능은 제자리에서 고친다
+
+- 이미 있는 기능을 바꿀 때는 새 기능 폴더를 만들지 않고 그 기능의 spec.md를 고친다(MUST).
+- 변경 이력은 문서 안에 쌓지 않고 git에 맡긴다.
+
+이유: 같은 기능의 스펙이 여러 곳에 흩어지면 현재 동작을 알 수 없다.
+
+### V. 테스트를 고쳐서 통과시키지 않는다
+
+- 실패하는 테스트를 통과시키려고 테스트를 고치지 않는다(MUST NOT).
+- 테스트가 틀렸다고 판단되면 스펙의 AC부터 확인하고, 스펙을 바꿔야 하면 스펙을 먼저 고친다.
+
+### VI. 시크릿을 다루지 않는다
+
+- 시크릿 값(키, 비밀번호, 토큰)을 읽거나 출력하거나 커밋하지 않는다(MUST NOT).
+
+## 기술 제약
+
+- 모노레포다. 백엔드는 `backend/`, 프론트는 `frontend/`에 둔다.
+- 백엔드: Spring Boot, psw-dev-kit `springboot` 템플릿.
+- 프론트: Next, psw-dev-kit `web-next` 템플릿.
+- 키트 버전 태그는 키트를 적용할 때 이 절에 적는다.
+
+## 품질 관문
+
+- dev에는 PR로만 병합하고, PR의 CI(lint·테스트)가 통과해야 한다(MUST).
+- 작성자가 직접 병합할 수 있다. 다른 사람의 리뷰는 권장한다(SHOULD).
+- 병합 전에 원칙 I~VI을 지켰는지 확인한다.
+- 브랜치 이름, 커밋 형식, 실행 명령은 이 문서가 아니라 `CLAUDE.md`에 둔다.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- 이 문서는 다른 작업 규칙보다 우선한다. 충돌하면 이 문서를 따르고 충돌을 보고한다.
+- 원칙은 리더가 PR로 바꾼다.
+- 버전 규칙: 원칙을 빼거나 뜻을 바꾸면 MAJOR, 원칙·절을 추가하거나 크게 넓히면 MINOR,
+  문구만 고치면 PATCH를 올린다.
+- 문서는 100줄 안팎으로 짧게 유지한다. 길어지면 원칙이 아닌 내용이 섞였는지 먼저 본다.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-07
