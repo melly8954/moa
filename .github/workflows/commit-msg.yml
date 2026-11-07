@@ -1,0 +1,59 @@
+# 커밋 메시지, PR 브랜치, 태그 검사 (docs/git.md)
+name: git
+
+on:
+  push:
+    branches: [main, dev]
+    tags: ['**']
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  check:
+    if: github.ref_type != 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 새 커밋의 메시지 검사
+        env:
+          BEFORE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          AFTER: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # 새 브랜치 push처럼 이전 커밋이 없으면 마지막 커밋만 본다
+          if [[ -z "$BEFORE" || "$BEFORE" =~ ^0+$ ]]; then
+            commits="$AFTER"
+          else
+            commits="$(git rev-list --no-merges "$BEFORE..$AFTER")"
+          fi
+          failed=0
+          for c in $commits; do
+            echo "::group::$(git log -1 --format='%h %s' "$c")"
+            bash scripts/check-commit-msg.sh --commit "$c" || failed=1
+            echo "::endgroup::"
+          done
+          exit $failed
+
+  branch:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PR 브랜치 이름과 병합 방향 검사
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: bash scripts/check-branch.sh --pr "$HEAD_REF" "$BASE_REF"
+
+  tag:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 태그 이름과 주석 태그 검사
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
+          bash scripts/check-branch.sh --tag "$TAG"
