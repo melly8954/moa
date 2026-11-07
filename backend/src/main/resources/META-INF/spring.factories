@@ -1,0 +1,2 @@
+# 시작 가드: 설정을 읽은 직후, 빈을 만들기 전에 돈다 (common/guard/StartupGuard)
+org.springframework.boot.EnvironmentPostProcessor=com.moa.common.guard.StartupGuard

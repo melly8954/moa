@@ -1,0 +1,10 @@
+spring:
+  flyway:
+    # localdata: 로컬 개발 계정 SQL도 함께 돌려 문법을 확인한다. 테스트는 각자 필요한 사용자를 TestUsers로 만든다
+    locations: classpath:db/migration,classpath:db/localdata,classpath:db/testmigration
+
+app:
+  jwt:
+    secret: test-only-secret-0123456789abcdef0123456789
+  audit:
+    system-actor-id: 1

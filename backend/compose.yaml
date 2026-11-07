@@ -1,0 +1,13 @@
+# 로컬 개발용. local 프로필로 실행하면 Spring Boot가 이 파일의 서비스를 띄우고 접속 정보를 잡는다
+# 프로젝트 이름. 없으면 폴더 이름(backend)이 되어 다른 프로젝트의 컨테이너·DB와 섞인다. apply.sh가 --name으로 바꾼다
+name: moa
+services:
+  mariadb:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: moa
+      MARIADB_USER: moa
+      MARIADB_PASSWORD: moa
+      MARIADB_ROOT_PASSWORD: moa
+    ports:
+      - "3306"

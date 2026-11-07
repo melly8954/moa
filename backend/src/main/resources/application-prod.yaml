@@ -1,0 +1,17 @@
+# 운영 로그
+# - 콘솔: 항상 JSON(ECS). 수집 도구(ELK, Loki, CloudWatch)나 docker logs가 읽는다. traceId는 MDC에서 함께 나간다
+# - 파일: LOG_FILE(경로)을 줄 때만 쓴다. 사람이 읽는 텍스트이고 날짜별로 나뉜다. VM에 직접 배포할 때 준다
+#   예: LOG_FILE=/var/log/app/app.log → app.log, app.log.2026-11-03.0.gz ...
+logging:
+  structured:
+    format:
+      console: ecs
+  file:
+    name: ${LOG_FILE:}
+  logback:
+    rollingpolicy:
+      # 날짜가 바뀌거나 파일이 100MB를 넘으면 나눈다. 30일이 지나거나 전체가 3GB를 넘으면 오래된 것부터 지운다
+      max-file-size: 100MB
+      max-history: 30
+      total-size-cap: 3GB
+      clean-history-on-start: true

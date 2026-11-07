@@ -1,0 +1,19 @@
+# 개발 서버 (팀 공용, gitflow develop). 운영과 같은 방식으로 띄우되 확인 편의를 조금 연다
+# - Swagger: 기본으로 켠다 (SWAGGER_ENABLED=false로 끈다)
+# - 로그: 콘솔은 사람이 읽는 텍스트. LOG_FILE을 주면 날짜별 파일도 쓴다 (30일·1GB를 넘으면 지운다)
+# 시작 가드: 비밀키·로컬 계정 SQL·docker compose는 막고, 나머지 운영 기준(쿠키 secure, CORS 등)은 경고만 낸다
+springdoc:
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+
+logging:
+  file:
+    name: ${LOG_FILE:}
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 30
+      total-size-cap: 1GB
+      clean-history-on-start: true

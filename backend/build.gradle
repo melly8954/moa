@@ -1,0 +1,142 @@
+plugins {
+	id 'java'
+	id 'checkstyle'
+	id 'org.springframework.boot' version '4.1.2'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.diffplug.spotless' version '7.2.1'
+}
+
+group = 'com'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	querydslVersion = '7.7' // OpenFeign 포크. 원본 com.querydsl 5.x는 Hibernate 7을 지원하지 않는다
+	jjwtVersion = '0.13.0'
+	springdocVersion = '3.2.0'
+	archunitVersion = '1.5.1'
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	// DB
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
+	implementation 'org.flywaydb:flyway-mysql'
+
+	// QueryDSL
+	implementation "io.github.openfeign.querydsl:querydsl-jpa:${querydslVersion}"
+	annotationProcessor "io.github.openfeign.querydsl:querydsl-apt:${querydslVersion}:jpa"
+	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+
+	// JWT
+	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+
+	// API 문서
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+	// 로컬 실행 시 compose.yaml의 DB를 띄운다
+	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+	testImplementation 'org.testcontainers:testcontainers-mariadb'
+	testImplementation "com.tngtech.archunit:archunit-junit5:${archunitVersion}"
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+}
+
+tasks.withType(Javadoc).configureEach {
+	options.encoding = 'UTF-8'
+}
+
+// 로컬 실행은 local 프로필이다. 다른 프로필로 띄우려면 SPRING_PROFILES_ACTIVE를 준다
+tasks.named('bootRun') {
+	systemProperty 'spring.profiles.active', System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
+}
+
+// DB 테스트(@Tag("db"), AcceptanceTest 상속)는 Testcontainers로 MariaDB를 띄워 메모리를 많이 쓴다.
+// 기본 test·build에서는 빼고, ./gradlew dbTest로 따로 돌린다. CI는 둘 다 돌린다
+tasks.named('test') {
+	useJUnitPlatform {
+		excludeTags 'db'
+	}
+	systemProperty 'file.encoding', 'UTF-8'
+}
+
+tasks.register('dbTest', Test) {
+	description = 'DB가 필요한 AC 테스트(@Tag("db"))만 돌린다. Docker가 실행 중이어야 한다'
+	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'db'
+	}
+	systemProperty 'file.encoding', 'UTF-8'
+	shouldRunAfter tasks.named('test')
+}
+
+// 포맷: 네이버 코딩 컨벤션 포맷터. 커밋 전 ./gradlew spotlessApply
+spotless {
+	java {
+		target 'src/*/java/**/*.java'
+		lineEndings 'UNIX'
+		eclipse().configFile('config/format/naver-eclipse-formatter.xml')
+		importOrder('\\#', 'java', 'javax', 'org', 'net', 'com', '')
+		removeUnusedImports()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+}
+
+// lint: 네이버 코딩 컨벤션 규칙. 위반은 빌드를 막는다
+checkstyle {
+	toolVersion = '10.26.1'
+	configFile = file('config/checkstyle/naver-checkstyle-rules.xml')
+	configProperties = ['suppressionFile': file('config/checkstyle/naver-checkstyle-suppressions.xml')]
+	maxWarnings = 0
+}
+
+tasks.withType(Checkstyle).configureEach {
+	// QueryDSL이 만든 Q클래스는 검사하지 않는다
+	exclude '**/Q*.java'
+	source = source.filter { !it.path.contains('generated') }
+}
+
+// 선택 헬퍼: 키트의 apply.sh가 gradle/helpers/에 넣은 설정을 불러온다
+fileTree('gradle/helpers') { include '*.gradle' }.sort().each { apply from: it }

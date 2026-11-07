@@ -1,0 +1,18 @@
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+out/
+bin/
+
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+.env
+*.log
+
+# 선택 헬퍼 file의 로컬 저장 폴더
+/data/
