@@ -37,7 +37,7 @@
 ### Functional Requirements
 
 - **FR-001**: 시스템은 로그인 성공과 실패를 접속 이력으로 남겨야 한다(MUST). 동작은 키트를 따른다
-- **FR-002**: 접속 이력은 [NEEDS CLARIFICATION: 보관 기간. 키트 기본은 365일이다. IP와 기기는 개인정보라 개인정보 처리 방침에 맞춰야 한다] 동안 보관하고, 지나면 지운다(MUST)
+- **FR-002**: 접속 이력은 90일 동안 보관하고, 지나면 지운다(MUST). 키트 기본(365일)보다 짧게 둔다. IP와 기기는 개인정보라 필요한 만큼만 둔다 (2026-11-07 결정)
 
 ### Key Entities *(include if feature involves data)*
 

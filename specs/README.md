@@ -15,7 +15,7 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 회원 | 첫 관리자, 운영자 계정 | 키트 user-admin, 골격 부트스트랩 | `002-admin-users` | 기획 중 (미결 1) |
 | 시스템 | 운영자 역할 | 키트 rbac | `003-admin-roles` | 기획 중 |
 | 시스템 | 공통코드 | 키트 code | `004-admin-codes` | 기획 중 |
-| 시스템 | 접속 이력 | 키트 login-history | `005-admin-login-history` | 기획 중 (미결 1) |
+| 시스템 | 접속 이력 | 키트 login-history | `005-admin-login-history` | 기획 중 |
 | 회원 | 탈퇴 계정 복구 | moa | - | 보류: 탈퇴 상태·유예 기간이 정해진 뒤 |
 | 회원 | 회원 제재·해제 | moa | - | 미정 |
 | 신고 | 신고 처리 | moa | - | 미정 |

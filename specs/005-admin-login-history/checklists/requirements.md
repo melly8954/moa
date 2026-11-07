@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,6 +31,6 @@
 
 ## Notes
 
-- 남은 미결: FR-002 접속 이력 보관 기간
+- 미결 해결 (2026-11-07): FR-002 보관 기간 90일
 - 키트 동작은 다시 적지 않고 moa가 정하는 것만 적었다 (원칙 III 1.1.0)
 - 출처 표시(psw-dev-kit 헬퍼)는 원칙 III이 요구하는 항목이다
