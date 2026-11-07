@@ -8,8 +8,7 @@
 
 **Input**: User description: "운영 환경의 첫 관리자를 만들고, 이후 운영자 계정은 관리자가 사용자 관리에서 만든다. 관리자와 운영자는 회원 활동을 하지 않는다."
 
-**출처**: psw-dev-kit springboot user-admin 헬퍼와 골격의 첫 관리자 부트스트랩. 태그는 키트를 적용할 때 적는다.
-부트스트랩은 `springboot/v0.2.0`에 없어 그다음 태그가 필요하다 (psw-dev-kit `71abef4`).
+**출처**: psw-dev-kit springboot user-admin 헬퍼와 골격의 첫 관리자 부트스트랩. 태그 `springboot/v0.3.0`.
 키트 동작(사용자 목록·만들기·잠금·비밀번호 초기화, 임시 비밀번호, ADMIN 보호, 부트스트랩 조건)은 키트 문서와 키트 수용 테스트가 기준이다 (원칙 III).
 
 ## User Scenarios & Testing *(mandatory)*

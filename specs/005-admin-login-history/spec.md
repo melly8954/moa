@@ -8,7 +8,7 @@
 
 **Input**: User description: "로그인 성공·실패를 접속 IP와 기기와 함께 남기고 관리자가 목록으로 본다. 보관 기간은 moa가 정한다."
 
-**출처**: psw-dev-kit springboot login-history 헬퍼. 태그는 키트를 적용할 때 적는다.
+**출처**: psw-dev-kit springboot login-history 헬퍼. 태그 `springboot/v0.3.0`.
 키트 동작(기록, 조회 조건, 기기 분석, 보관 기간이 지난 이력 정리)은 키트 문서와 키트 수용 테스트가 기준이다 (원칙 III).
 
 ## User Scenarios & Testing *(mandatory)*

@@ -8,7 +8,7 @@
 
 **Input**: User description: "관리 화면에서 바꾸는 값(분류, 상태 이름 등)을 공통코드로 두고 관리자가 코드 관리에서 바꾼다. moa가 쓰는 코드 그룹을 이 스펙에 모은다."
 
-**출처**: psw-dev-kit springboot code 헬퍼. 태그는 키트를 적용할 때 적는다.
+**출처**: psw-dev-kit springboot code 헬퍼. 태그 `springboot/v0.3.0`.
 키트 동작(코드 그룹·코드 만들기·바꾸기·지우기, 화면용 목록, 코드 형식)은 키트 문서와 키트 수용 테스트가 기준이다 (원칙 III).
 
 ## User Scenarios & Testing *(mandatory)*
