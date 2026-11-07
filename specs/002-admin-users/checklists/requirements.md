@@ -1,4 +1,4 @@
-# Specification Quality Checklist: 관리자 백오피스 기반 (admin-foundation)
+# Specification Quality Checklist: 관리자·운영자 계정 (admin-users)
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-11-07
@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [x] No [NEEDS CLARIFICATION] markers remain
+- [ ] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,6 +31,6 @@
 
 ## Notes
 
-- 첫 관리자(옛 US4)는 키트 부트스트랩으로 옮겨 이 스펙에서 뺐다 (2026-11-07). 동작은 키트 수용 테스트가 기준이다
-- "배포 설정(환경변수)", "local 프로필"은 운영 방식을 정하는 결정(스펙 배경)이라 기술 세부가 아닌 요구로 남겼다
-- 출처 표시(psw-dev-kit admin 프리셋)는 원칙 III이 요구하는 항목이다
+- 남은 미결: FR-003 관리자·운영자의 회원 활동을 막는 방법 (사용자 쪽과 맞출 경계)
+- 키트 동작은 다시 적지 않고 moa가 정하는 것만 적었다 (원칙 III 1.1.0)
+- 출처 표시(psw-dev-kit 헬퍼)는 원칙 III이 요구하는 항목이다
