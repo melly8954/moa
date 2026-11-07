@@ -37,4 +37,14 @@
 
 ## 명령
 
-키트를 적용할 때 채운다.
+백엔드는 `backend/`에서 실행한다. Windows는 `./gradlew` 대신 `.\gradlew.bat`.
+
+| 용도 | 명령 |
+|---|---|
+| 로컬 실행 | `./gradlew bootRun` (local 프로필, Docker로 DB를 함께 띄운다. 시험 계정 `admin`·`user`) |
+| 전체 검사 | `./gradlew build` (포맷·lint·테스트. DB 테스트 제외) |
+| DB 테스트 (AC) | `./gradlew dbTest` (Docker 필요) |
+| 포맷 적용 | `./gradlew spotlessApply` |
+
+- 키트 사용법은 psw-dev-kit `springboot/v0.3.0`의 `backend/springboot/README.md`를 본다
+- 프론트 명령은 프론트 키트를 적용할 때 채운다

@@ -8,7 +8,7 @@
 
 **Input**: User description: "백오피스의 관리 메뉴 구성과 순서를 정하고, 권한이 없는 사용자는 관리 메뉴를 보지 못하고 관리 화면에 들어오지 못하게 한다."
 
-**출처**: psw-dev-kit springboot menu 헬퍼와 admin 프리셋의 메뉴 시드. 태그는 키트를 적용할 때 적는다.
+**출처**: psw-dev-kit springboot menu 헬퍼와 admin 프리셋의 메뉴 시드. 태그 `springboot/v0.3.0`.
 키트 동작(메뉴 트리 관리, 내 메뉴, 권한 판정)은 키트 문서와 키트 수용 테스트가 기준이다 (원칙 III).
 
 ## User Scenarios & Testing *(mandatory)*
