@@ -11,7 +11,7 @@
 # 저장소 설정 (.githooks/branch-rules, 없으면 기본값)
 #   base=main dev          기준 브랜치. 앞이 배포 쪽이다. 이름 검사를 받지 않는다
 #   protected=main dev     직접 push를 막는 브랜치. 원격에 처음 만들 때만 허용한다
-#   tag-pattern=<정규식>   태그 이름 (기본 ^v[0-9]+\.[0-9]+\.[0-9]+$). 태그는 주석 태그(git tag -a)만, 이미 올린 태그는 옮기지 않는다
+#   tag-pattern=<정규식>   태그 이름 (기본 ^(release/)?v[0-9]+\.[0-9]+\.[0-9]+$). 태그는 주석 태그(git tag -a)만, 이미 올린 태그는 옮기지 않는다
 # 종류는 커밋 검사와 같은 목록(.githooks/commit-types)을 쓴다.
 set -uo pipefail
 
@@ -22,7 +22,7 @@ types='feat|fix|design|style|refactor|test|docs|chore'
 
 base="main dev"
 protected="main dev"
-tag_pattern='^v[0-9]+\.[0-9]+\.[0-9]+$'
+tag_pattern='^(release/)?v[0-9]+\.[0-9]+\.[0-9]+$'
 if [[ -f "$top/.githooks/branch-rules" ]]; then
   while IFS='=' read -r key value; do
     value="${value%$'\r'}"

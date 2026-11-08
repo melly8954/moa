@@ -15,9 +15,15 @@ psw-dev-kit `git` 템플릿에서 온 파일이다. 여기서 고치지 않는�
 ## 태그
 
 - 형식: `vMAJOR.MINOR.PATCH` (예: `v1.2.0`). 저장소마다 다르면 `.githooks/branch-rules`의 `tag-pattern`으로 정한다
+- 배포 태그: `release/vMAJOR.MINOR.PATCH` (예: `release/v1.2.0`)
+- PR이 병합되면 CI(`.github/workflows/tag.yml`)가 그 머지 커밋에 자동으로 단다
+  - 작업 브랜치 → `dev`: `vX.Y.Z`. `feat/*`는 MINOR, `fix/*`·`refactor/*`·`design/*`는 PATCH를 올린다. 그 밖의 종류는 태그를 달지 않는다. MAJOR는 PR에 `tag:major` 라벨을 붙인다
+  - `dev` → `main`: 함께 들어간 가장 높은 `vX.Y.Z`에 `release/`를 붙인다. 그 태그가 이미 있으면(새 번호 없이 문서만 바뀐 병합 등) 달지 않는다
+  - PR 검사가 실패했거나 끝나지 않았으면 달지 않고 그 job이 실패한다
+  - 무엇이 배포됐는지는 `release/` 태그로 본다
 - 주석 태그만 쓴다: `git tag -a v1.2.0 -m "v1.2.0: <무엇이 바뀌었나>"`
 - 이미 올린 태그는 옮기거나 다시 쓰지 않는다. 고칠 것이 있으면 다음 번호로 단다
-- 태그는 검사(빌드·테스트)를 통과한 커밋에만 단다. 올리기는 사용자가 요청할 때만: `git push origin refs/tags/<태그>`
+- 태그는 검사(빌드·테스트)를 통과한 커밋에만 단다. 손으로 달아 올리는 것은 사용자가 요청할 때만: `git push origin refs/tags/<태그>`
 
 ## 종류
 
@@ -61,4 +67,4 @@ Co-Authored-By: ...
 - hook 켜기 (클론마다 한 번): `git config core.hooksPath .githooks`
 - 저장소마다 다른 값은 `.githooks/` 아래 설정 파일에 둔다. 키트에서 복사되지 않으므로 다시 적용해도 남는다
   - `commit-types`: 종류 목록 (예: `feat|fix|build`). 커밋과 브랜치가 함께 쓴다
-  - `branch-rules`: 기준 브랜치, 직접 push를 막는 브랜치, 태그 이름 (기본 `base=main dev`, `protected=main dev`, `tag-pattern=^v[0-9]+\.[0-9]+\.[0-9]+$`)
+  - `branch-rules`: 기준 브랜치, 직접 push를 막는 브랜치, 태그 이름 (기본 `base=main dev`, `protected=main dev`, `tag-pattern=^(release/)?v[0-9]+\.[0-9]+\.[0-9]+$`)
