@@ -1,0 +1,76 @@
+# PR이 병합되면 그 머지 커밋에 태그를 단다. 작업 브랜치 → dev는 vX.Y.Z, dev → main은 release/vX.Y.Z. 규칙은 docs/git.md "태그".
+# psw-dev-kit git 템플릿에서 온 파일이다. 여기서 고치지 않는다.
+name: tag
+
+on:
+  pull_request:
+    branches: [main, dev]
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  auto-tag:
+    if: github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      checks: read
+    # 연달아 병합돼도 번호를 차례로 계산한다
+    concurrency:
+      group: tag
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+      - name: 태그 달고 올리기
+        env:
+          BRANCH: ${{ github.head_ref }}
+          BASE: ${{ github.base_ref }}
+          TITLE: ${{ github.event.pull_request.title }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          MAJOR: ${{ contains(github.event.pull_request.labels.*.name, 'tag:major') }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch --force --tags origin
+
+          if [ "$BASE" = main ]; then
+            tag="$(bash scripts/next-tag.sh --release)"
+          else
+            # 다시 실행해도 같은 커밋에 태그를 또 달지 않는다
+            if git tag --points-at HEAD | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "이미 태그가 있다: $(git tag --points-at HEAD | tr '\n' ' ')"
+              exit 0
+            fi
+            args=()
+            if [ "$MAJOR" = true ]; then args=(--major); fi
+            tag="$(bash scripts/next-tag.sh "$BRANCH" "${args[@]}")"
+          fi
+          if [ -z "$tag" ]; then
+            echo "달 태그가 없다: $BRANCH → $BASE"
+            exit 0
+          fi
+
+          # 태그는 검사를 통과한 커밋에만 단다. 끝나지 않았거나 실패한 검사가 있으면 달지 않는다 (이 job은 뺀다)
+          bad="$(gh api --paginate "repos/$REPO/commits/$HEAD_SHA/check-runs" --jq '
+            .check_runs[]
+            | select(.name != "auto-tag")
+            | select(.status != "completed" or .conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out" or .conclusion == "action_required")
+            | "\(.name) (\(.conclusion // .status))"')"
+          if [ -n "$bad" ]; then
+            echo "::error::PR 검사가 통과하지 않아 태그를 달지 않는다: $bad"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "$tag: ${TITLE#*: } (#$PR)"
+          # GITHUB_TOKEN으로 올린 태그는 다른 워크플로우를 깨우지 않으므로 태그 검사를 여기서 돌린다
+          bash scripts/check-branch.sh --tag "$tag"
+          git push origin "refs/tags/$tag"
+          echo "태그를 달았다: $tag"
