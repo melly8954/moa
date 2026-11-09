@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,6 +31,6 @@
 
 ## Notes
 
-- 남은 미결: FR-003 관리자·운영자의 회원 활동을 막는 방법 (사용자 쪽과 맞출 경계)
+- FR-003의 회원 활동 차단은 회원 기능 스펙으로 넘겼다 (`specs/README.md` 맞춰야 할 경계)
 - 키트 동작은 다시 적지 않고 moa가 정하는 것만 적었다 (원칙 III 1.1.0)
 - 출처 표시(psw-dev-kit 헬퍼)는 원칙 III이 요구하는 항목이다
