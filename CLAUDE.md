@@ -46,5 +46,14 @@
 | DB 테스트 (AC) | `./gradlew dbTest` (Docker 필요) |
 | 포맷 적용 | `./gradlew spotlessApply` |
 
-- 키트 사용법은 psw-dev-kit `springboot/v0.3.0`의 `backend/springboot/README.md`를 본다
-- 프론트 명령은 프론트 키트를 적용할 때 채운다
+프론트는 `frontend/`에서 실행한다.
+
+| 용도 | 명령 |
+|---|---|
+| 로컬 실행 | `npm run dev` (http://localhost:3000. 백엔드는 따로 띄운다) |
+| 전체 검사 | `npm run check` (포맷·lint·타입·색 검사·문구 검사·단위 테스트) |
+| 화면 검사 | `npm run test:e2e` (처음 한 번 `npx playwright install chromium`) |
+| API 타입 만들기 | `npm run gen:api` (local 프로필 백엔드가 떠 있어야 한다) |
+| 포맷 적용 | `npm run format` |
+
+- 키트 사용법은 psw-dev-kit `springboot/v0.3.1`의 `backend/springboot/README.md`, `web-next/v0.3.0`의 `frontend/web/next/README.md`를 본다

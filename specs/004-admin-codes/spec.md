@@ -8,7 +8,7 @@
 
 **Input**: User description: "관리 화면에서 바꾸는 값(분류, 상태 이름 등)을 공통코드로 두고 관리자가 코드 관리에서 바꾼다. moa가 쓰는 코드 그룹을 이 스펙에 모은다."
 
-**출처**: psw-dev-kit springboot code 헬퍼. 태그 `springboot/v0.3.0`.
+**출처**: psw-dev-kit springboot code 헬퍼. 태그 `springboot/v0.3.1`, 화면은 `web-next/v0.3.0`.
 키트 동작(코드 그룹·코드 만들기·바꾸기·지우기, 화면용 목록, 코드 형식)은 키트 문서와 키트 수용 테스트가 기준이다 (원칙 III).
 
 ## User Scenarios & Testing *(mandatory)*
@@ -58,5 +58,5 @@
 
 ## Assumptions
 
-- 관리자 화면(프론트)은 프론트 키트(web-next)가 만드는 admin 화면을 쓴다. 아직 태그가 없어 키트를 적용할 때 확인한다
+- 관리자 화면(프론트)은 프론트 키트(web-next admin 프리셋)가 만드는 admin 화면을 쓴다
 - 코드 로직이 값에 따라 갈리는 상태값은 공통코드가 아니라 각 기능 안에 둔다 (키트 안내: 언제 공통코드, 언제 enum)

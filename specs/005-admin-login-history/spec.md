@@ -8,7 +8,7 @@
 
 **Input**: User description: "로그인 성공·실패를 접속 IP와 기기와 함께 남기고 관리자가 목록으로 본다. 보관 기간은 moa가 정한다."
 
-**출처**: psw-dev-kit springboot login-history 헬퍼. 태그 `springboot/v0.3.0`.
+**출처**: psw-dev-kit springboot login-history 헬퍼. 태그 `springboot/v0.3.1`, 화면은 `web-next/v0.3.0`.
 키트 동작(기록, 조회 조건, 기기 분석, 보관 기간이 지난 이력 정리)은 키트 문서와 키트 수용 테스트가 기준이다 (원칙 III).
 
 ## User Scenarios & Testing *(mandatory)*
@@ -53,6 +53,6 @@
 
 ## Assumptions
 
-- 관리자 화면(프론트)은 프론트 키트(web-next)가 만드는 admin 화면을 쓴다. 아직 태그가 없어 키트를 적용할 때 확인한다
+- 관리자 화면(프론트)은 프론트 키트(web-next admin 프리셋)가 만드는 admin 화면을 쓴다
 - 운영 환경은 프록시(로드밸런서 등) 뒤에 있을 수 있다. 실제 접속 IP를 남기는 설정은 배포 구성 때 맞춘다
 - 로그인 실패 횟수로 계정을 잠그는 기능은 두지 않는다 (예전 기획 결정: 로그인 실패 잠금 없음)
