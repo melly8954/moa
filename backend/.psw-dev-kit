@@ -1,6 +1,6 @@
 # psw-dev-kit 적용 기록 (CONTRACT.md 3절)
 template=springboot
-tag=springboot/v0.3.0
+tag=springboot/v0.3.1
 package=com.moa
 helpers=code,login-history,menu,rbac,user-admin
 presets=admin
