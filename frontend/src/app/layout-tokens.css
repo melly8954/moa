@@ -1,0 +1,32 @@
+/*
+ * 배치 상수. 화면 여백·높이·폭은 여기 한 곳에만 숫자로 적는다
+ * 셸과 공통 컴포넌트는 숫자 대신 이 변수를 쓴다 (예: p-(--page-padding), w-(--label-width))
+ * 색은 theme.css가 맡는다. 디자인을 정하면 키트가 이 값들을 한 번에 바꾼다
+ */
+:root {
+  /* 화면 안쪽 여백과 덩어리 사이 간격 */
+  --page-padding: 1rem;
+  --page-gap: 1rem;
+  /* 셸 헤더 높이 */
+  --header-height: 3.5rem;
+  /* 두 겹 사이드바 셸: 아이콘 띠 폭, 메뉴 목록 폭 */
+  --rail-width: 3.5rem;
+  --panel-width: 14rem;
+  /* 라벨 열 조건표·정보표의 라벨 칸 폭 */
+  --label-width: 8rem;
+  /* 등록·수정 폼의 최대 폭 */
+  --form-max-width: 40rem;
+  /* 날짜·시각 입력칸 폭 */
+  --date-input-width: 10rem;
+  --date-range-input-width: 7.5rem;
+  --time-input-width: 6rem;
+  /* 표 열 폭 (DataTable kind). text 열은 내용만큼 넓어지고 --col-text-max를 넘으면 말줄임
+     열들이 화면보다 넓으면 표 안에서 가로로 넘긴다 */
+  --col-text-max: 20rem;
+  --col-select: 2.5rem;
+  --col-date: 7rem;
+  --col-datetime: 9.5rem;
+  --col-number: 7rem;
+  --col-status: 7rem;
+  --col-actions: 7rem;
+}
