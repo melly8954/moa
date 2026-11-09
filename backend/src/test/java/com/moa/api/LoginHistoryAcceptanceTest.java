@@ -84,6 +84,9 @@ class LoginHistoryAcceptanceTest extends AcceptanceTest {
 
 		assertThat(november).bodyJson().extractingPath("$.totalElements").isEqualTo(3);
 		assertThat(november).bodyJson().extractingPath("$.content[0].createdAt").asString().startsWith("2026-11-30");
+		// 시각은 시간대(오프셋)를 붙여 내보낸다 (CONTRACT.md 4절)
+		assertThat(november).bodyJson().extractingPath("$.content[0].createdAt").asString()
+			.matches(".*([+-]\\d{2}:\\d{2}|Z)$");
 		assertThat(november).bodyJson().extractingPath("$.content[2].createdAt").asString().startsWith("2026-11-01");
 		assertThat(search("from=2026-11-16")).bodyJson().extractingPath("$.totalElements").isEqualTo(2);
 		assertThat(search("to=2026-10-31")).bodyJson().extractingPath("$.totalElements").isEqualTo(1);

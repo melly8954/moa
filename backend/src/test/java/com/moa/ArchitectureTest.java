@@ -2,9 +2,11 @@ package com.moa;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -117,6 +119,13 @@ class ArchitectureTest {
 		.should().dependOnClassesThat().resideInAPackage("..api.entity..")
 		.allowEmptyShould(true)
 		.because("엔터티를 API로 내보내지 않는다. Dto와 Response로 바꾼다");
+
+	@ArchTest
+	static final ArchRule controllersDoNotExposeLocalDateTime = noFields().that()
+		.areDeclaredInClassesThat().resideInAPackage(CONTROLLER)
+		.should().haveRawType(LocalDateTime.class)
+		.allowEmptyShould(true)
+		.because("API의 시각은 시간대를 붙여 내보낸다 (CONTRACT.md 4절). OffsetDateTime으로 바꾼다: ApiTimes.of(...)");
 
 	@ArchTest
 	static final ArchRule entitiesDeclareDeletePolicy = classes().that().areAnnotatedWith(Entity.class)

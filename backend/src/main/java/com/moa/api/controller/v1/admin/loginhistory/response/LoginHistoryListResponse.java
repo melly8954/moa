@@ -1,10 +1,11 @@
 package com.moa.api.controller.v1.admin.loginhistory.response;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import org.jspecify.annotations.Nullable;
 
 import com.moa.api.dto.loginhistory.LoginHistoryDto;
+import com.moa.common.response.ApiTimes;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -19,10 +20,10 @@ public record LoginHistoryListResponse(
 	@Schema(description = "기기 종류", example = "PC") String deviceType,
 	@Schema(description = "OS", example = "Windows") String os,
 	@Schema(description = "브라우저", example = "Chrome") String browser,
-	@Schema(description = "시각") LocalDateTime createdAt) {
+	@Schema(description = "시각 (시간대 포함)") OffsetDateTime createdAt) {
 
 	public static LoginHistoryListResponse from(LoginHistoryDto dto) {
 		return new LoginHistoryListResponse(dto.id(), dto.userId(), dto.loginId(), dto.success(), dto.failureCode(),
-			dto.ip(), dto.deviceType(), dto.os(), dto.browser(), dto.createdAt());
+			dto.ip(), dto.deviceType(), dto.os(), dto.browser(), ApiTimes.of(dto.createdAt()));
 	}
 }

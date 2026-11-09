@@ -1,0 +1,38 @@
+# 프론트 기본 CI. 전체 검사(포맷·lint·타입·색 검사·단위 테스트)와 화면 검사(Playwright: 반응형·접근성)를 확인한다.
+# moa: main·dev 푸시와 두 브랜치로 가는 PR에서 돈다. feature 브랜치 푸시는 PR에서 확인한다.
+#
+# 키트 ci.yml을 frontend/ 하위 폴더에 맞춰 루트로 옮겼다 (키트 README "CI").
+name: frontend-ci
+
+on:
+  pull_request:
+    branches: [main, dev]
+    paths: ['frontend/**', '.github/workflows/frontend-ci.yml']
+  push:
+    branches: [main, dev]
+    paths: ['frontend/**', '.github/workflows/frontend-ci.yml']
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npx playwright install --with-deps chromium
+      # 빌드한 앱을 띄워 검사한다 (playwright.config.ts webServer). 백엔드는 띄우지 않는다
+      - run: npm run test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          # upload-artifact는 working-directory를 따르지 않는다
+          path: frontend/playwright-report

@@ -8,7 +8,7 @@
 
 **Input**: User description: "백오피스의 관리 메뉴 구성과 순서를 정하고, 권한이 없는 사용자는 관리 메뉴를 보지 못하고 관리 화면에 들어오지 못하게 한다."
 
-**출처**: psw-dev-kit springboot menu 헬퍼와 admin 프리셋의 메뉴 시드. 태그 `springboot/v0.3.0`.
+**출처**: psw-dev-kit springboot menu 헬퍼와 admin 프리셋의 메뉴 시드. 태그 `springboot/v0.3.1`, 화면은 `web-next/v0.3.0`.
 키트 동작(메뉴 트리 관리, 내 메뉴, 권한 판정)은 키트 문서와 키트 수용 테스트가 기준이다 (원칙 III).
 
 ## User Scenarios & Testing *(mandatory)*
@@ -82,5 +82,5 @@
 
 ## Assumptions
 
-- 관리자 화면(프론트)은 프론트 키트(web-next)가 만드는 admin 화면을 쓴다. 아직 태그가 없어 키트를 적용할 때 확인한다
+- 관리자 화면(프론트)은 프론트 키트(web-next admin 프리셋)가 만드는 admin 화면을 쓴다
 - 처음 메뉴 구성은 키트 admin 프리셋의 기본 시드와 같다. moa가 따로 바꾸지 않는다

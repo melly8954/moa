@@ -1,0 +1,17 @@
+# 생성 코드와 테마는 포맷하지 않는다 (shadcn이 만든 그대로 둔다)
+node_modules
+.next
+next-env.d.ts
+package-lock.json
+src/components/ui
+src/hooks/use-mobile.ts
+src/hooks/use-highlighted-code.ts
+src/lib/highlighter.tsx
+src/app/globals.css
+src/app/theme.css
+src/types/schema.d.ts
+playwright-report
+test-results
+coverage
+AGENTS.md
+CLAUDE.md
