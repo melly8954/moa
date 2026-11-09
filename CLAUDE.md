@@ -20,11 +20,13 @@
 
 ```text
 /speckit-specify → (/speckit-clarify) → /speckit-plan → /speckit-tasks
-→ (/speckit-analyze) → /speckit-implement → (/speckit-converge) → PR
+→ (/speckit-analyze) → 문서 PR 병합
+→ /speckit-implement → (/speckit-converge) → 구현 PR
 ```
 
 - 기존 기능을 바꿀 때는 새 스펙 폴더를 만들지 않고 그 기능의 spec.md를 고친다
 - 키트에서 온 기능도 도입할 때 스펙을 만들고, 머리에 출처(태그·헬퍼)를 적는다
+- 스펙 작업 브랜치는 `docs/<이름>`, 구현 브랜치는 `feat/<스펙 번호>-<이름>`이다. spec·plan·tasks를 먼저 PR로 병합한 뒤 구현 브랜치를 딴다
 
 ## git
 
