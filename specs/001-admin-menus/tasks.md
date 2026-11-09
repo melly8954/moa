@@ -22,7 +22,7 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 **Purpose**: 테스트 클래스 준비
 
-- [ ] T001 `AcceptanceTest`를 상속한 `AdminMenusAcceptanceTest`를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 만든다. 클래스 주석에 스펙 `001-admin-menus`를 적는다. ADMIN 요청은 `bearer(2L, "ADMIN")`, 일반 회원 요청은 `bearer(3L, "USER")`로 만드는 도우미를 `MenuAcceptanceTest`와 같은 모양으로 둔다. 키트 `MenuAcceptanceTest`는 고치지 않는다
+- [X] T001 `AcceptanceTest`를 상속한 `AdminMenusAcceptanceTest`를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 만든다. 클래스 주석에 스펙 `001-admin-menus`를 적는다. ADMIN 요청은 `bearer(2L, "ADMIN")`, 일반 회원 요청은 `bearer(3L, "USER")`로 만드는 도우미를 `MenuAcceptanceTest`와 같은 모양으로 둔다. 키트 `MenuAcceptanceTest`는 고치지 않는다
 
 ---
 
@@ -32,7 +32,7 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 **⚠️ CRITICAL**: US1-AC1과 US2-AC1이 이 작업에 기댄다
 
-- [ ] T002 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java의 `@BeforeEach`에서 `delete from menus`로 표를 비운 뒤, `classpath:db/migration/V1_7__menus.sql`과 `classpath:db/migration/V1_7_1__admin_menus.sql`을 이 순서로 읽어 주석을 뺀 문 중 INSERT 문만 실행한다 (`CREATE TABLE`은 실행하지 않는다). 시드 값을 테스트에 다시 적지 않는다 (research.md R2)
+- [X] T002 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java의 `@BeforeEach`에서 `delete from menus`로 표를 비운 뒤, `classpath:db/migration/V1_7__menus.sql`과 `classpath:db/migration/V1_7_1__admin_menus.sql`을 이 순서로 읽어 주석을 뺀 문 중 INSERT 문만 실행한다 (`CREATE TABLE`은 실행하지 않는다). 시드 값을 테스트에 다시 적지 않는다 (research.md R2)
 
 **Checkpoint**: 테스트마다 처음 배포 때의 메뉴 구성으로 시작한다
 
@@ -44,8 +44,8 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 **Independent Test**: `./gradlew dbTest --tests "*AdminMenusAcceptanceTest"`에서 US1-AC1, US1-AC2가 통과한다
 
-- [ ] T003 [US1] `@DisplayName("US1-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. ADMIN으로 `GET /api/v1/menus/me`를 불러 200, 최상위 항목이 "관리" 하나, 하위 메뉴 이름이 사용자 관리, 메뉴 관리, 코드 관리, 접속 이력, 역할 관리 순서임을 확인한다 (data-model.md 표)
-- [ ] T004 [US1] `@DisplayName("US1-AC2 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. ADMIN으로 contracts/admin-access.md의 목록 API 5개(`/api/v1/admin/users`, `/api/v1/admin/menus`, `/api/v1/admin/code-groups`, `/api/v1/admin/login-histories`, `/api/v1/admin/roles`)를 불러 모두 200임을 확인한다
+- [X] T003 [US1] `@DisplayName("US1-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. ADMIN으로 `GET /api/v1/menus/me`를 불러 200, 최상위 항목이 "관리" 하나, 하위 메뉴 이름이 사용자 관리, 메뉴 관리, 코드 관리, 접속 이력, 역할 관리 순서임을 확인한다 (data-model.md 표)
+- [X] T004 [US1] `@DisplayName("US1-AC2 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. ADMIN으로 contracts/admin-access.md의 목록 API 5개(`/api/v1/admin/users`, `/api/v1/admin/menus`, `/api/v1/admin/code-groups`, `/api/v1/admin/login-histories`, `/api/v1/admin/roles`)를 불러 모두 200임을 확인한다
 
 **Checkpoint**: US1이 단독으로 검증된다
 
@@ -57,9 +57,9 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 **Independent Test**: `./gradlew dbTest --tests "*AdminMenusAcceptanceTest"`에서 US2-AC1~AC3가 통과한다
 
-- [ ] T005 [US2] `@DisplayName("US2-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. USER로 `GET /api/v1/menus/me`를 불러 200과 빈 목록임을 확인한다
-- [ ] T006 [US2] `@DisplayName("US2-AC2 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. USER로 목록 API 5개와 쓰기 요청 `POST /api/v1/admin/menus`(유효한 본문, 모양은 `MenuAcceptanceTest`와 같게)를 불러 모두 403, `$.code` = `A005`임을 확인한다
-- [ ] T007 [US2] `@DisplayName("US2-AC3 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. 토큰 없이 목록 API 5개를 불러 모두 401, `$.code` = `A001`임을 확인한다
+- [X] T005 [US2] `@DisplayName("US2-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. USER로 `GET /api/v1/menus/me`를 불러 200과 빈 목록임을 확인한다
+- [X] T006 [US2] `@DisplayName("US2-AC2 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. USER로 목록 API 5개와 쓰기 요청 `POST /api/v1/admin/menus`(유효한 본문, 모양은 `MenuAcceptanceTest`와 같게)를 불러 모두 403, `$.code` = `A005`임을 확인한다
+- [X] T007 [US2] `@DisplayName("US2-AC3 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. 토큰 없이 목록 API 5개를 불러 모두 401, `$.code` = `A001`임을 확인한다
 
 **Checkpoint**: US1과 US2가 모두 검증된다
 
@@ -69,8 +69,8 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 **Purpose**: 전체 검사와 문서 정합성
 
-- [ ] T008 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`를 돌려 통과를 확인한다. 테스트가 실패하면 테스트를 고치지 말고 spec.md의 AC부터 확인한다 (원칙 V)
-- [ ] T009 specs/README.md 기능 지도에서 `001-admin-menus`의 상태를 `기획 중`에서 `구현됨`으로 바꾼다
+- [X] T008 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`를 돌려 통과를 확인한다. 테스트가 실패하면 테스트를 고치지 말고 spec.md의 AC부터 확인한다 (원칙 V)
+- [X] T009 specs/README.md 기능 지도에서 `001-admin-menus`의 상태를 `기획 중`에서 `구현됨`으로 바꾼다
 - [ ] T010 specs/001-admin-menus/quickstart.md의 "화면 확인" 절차를 사람이 직접 수행한다. 시험 계정 비밀번호가 필요하므로 에이전트는 하지 않는다 (원칙 VI)
 
 ---
