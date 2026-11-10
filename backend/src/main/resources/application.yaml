@@ -66,5 +66,5 @@ logging:
 # 선택 헬퍼: login-history. apply.sh가 src/main/resources/application.yaml 끝에 문서로 덧붙인다
 app:
   login-history:
-    # 이 기간이 지난 접속 이력은 매일 새벽에 지운다
-    retention-days: ${LOGIN_HISTORY_RETENTION_DAYS:365}
+    # 이 기간이 지난 접속 이력은 매일 새벽에 지운다. 90일은 specs/005-admin-login-history FR-002가 정한다
+    retention-days: ${LOGIN_HISTORY_RETENTION_DAYS:90}
