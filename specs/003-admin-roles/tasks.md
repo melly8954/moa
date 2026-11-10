@@ -20,10 +20,10 @@ description: "운영자 역할 (admin-roles) 작업 목록"
 
 **Purpose**: 메뉴 처음 구성 복원을 001과 함께 쓰게 하고, 테스트 클래스를 준비한다 (research.md R3)
 
-- [ ] T001 backend/src/test/java/com/moa/support/MenuSeed.java에 `@Component` `MenuSeed`를 만든다. `restore()`는 `delete from menus`로 표를 비운 뒤 `classpath:db/migration/V1_7__menus.sql`, `classpath:db/migration/V1_7_1__admin_menus.sql`을 이 순서로 읽어 `--` 줄 주석을 뺀 문 중 INSERT 문만 실행한다. 지금 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java의 `restoreInitialMenus`·`insertStatementsOf`와 같은 동작이다
-- [ ] T002 [P] backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java의 `@BeforeEach`가 `MenuSeed.restore()`를 부르게 바꾸고, 옮겨 간 `insertStatementsOf`와 쓰지 않게 된 import·상수를 지운다. AC 테스트 메서드의 확인 내용은 바꾸지 않는다 (원칙 V)
-- [ ] T003 [P] `AcceptanceTest`를 상속한 `AdminRolesAcceptanceTest`를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 만든다. 클래스 주석에 스펙 `003-admin-roles`를 적는다. `MenuSeed`, `TestUsers`를 주입한다
-- [ ] T004 backend/에서 `./gradlew dbTest --tests "*AdminMenusAcceptanceTest"`를 돌려 001 AC 5개가 그대로 통과하는지 확인한다
+- [X] T001 backend/src/test/java/com/moa/support/MenuSeed.java에 `@Component` `MenuSeed`를 만든다. `restore()`는 `delete from menus`로 표를 비운 뒤 `classpath:db/migration/V1_7__menus.sql`, `classpath:db/migration/V1_7_1__admin_menus.sql`을 이 순서로 읽어 `--` 줄 주석을 뺀 문 중 INSERT 문만 실행한다. 지금 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java의 `restoreInitialMenus`·`insertStatementsOf`와 같은 동작이다
+- [X] T002 [P] backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java의 `@BeforeEach`가 `MenuSeed.restore()`를 부르게 바꾸고, 옮겨 간 `insertStatementsOf`와 쓰지 않게 된 import·상수를 지운다. AC 테스트 메서드의 확인 내용은 바꾸지 않는다 (원칙 V)
+- [X] T003 [P] `AcceptanceTest`를 상속한 `AdminRolesAcceptanceTest`를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 만든다. 클래스 주석에 스펙 `003-admin-roles`를 적는다. `MenuSeed`, `TestUsers`를 주입한다
+- [X] T004 backend/에서 `./gradlew dbTest --tests "*AdminMenusAcceptanceTest"`를 돌려 001 AC 5개가 그대로 통과하는지 확인한다
 
 ---
 
@@ -33,7 +33,7 @@ description: "운영자 역할 (admin-roles) 작업 목록"
 
 **⚠️ CRITICAL**: US1의 모든 AC가 이 작업에 기댄다
 
-- [ ] T005 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java의 `@BeforeEach`에서 `menuSeed.restore()`를 부르고, `testUsers.create`로 시스템 계정(1L), 관리자(2L, `Role.ADMIN`), 운영자(10L, `Role.USER`)를 만든다. `bearer(2L, "ADMIN")`으로 `POST /api/v1/admin/roles`를 불러 역할을 만든다 (코드는 "영문 대문자로 시작하고 영문 대문자·숫자·`_` 50자 이하" 예: `SECURITY`, 이름은 "필수, 50자 이하" 예: 보안 담당, `permissions` = `["LOGIN_HISTORY_READ"]`). 201과 응답의 `id`를 확인한 뒤 `PUT /api/v1/admin/users/10/roles`(`roleIds` = 그 id 하나)로 운영자에게 주고 성공(2xx)을 확인한다. 운영자 요청은 `bearer(10L, "USER")`로 만든다
+- [X] T005 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java의 `@BeforeEach`에서 `menuSeed.restore()`를 부르고, `testUsers.create`로 시스템 계정(1L), 관리자(2L, `Role.ADMIN`), 운영자(10L, `Role.USER`)를 만든다. `bearer(2L, "ADMIN")`으로 `POST /api/v1/admin/roles`를 불러 역할을 만든다 (코드는 "영문 대문자로 시작하고 영문 대문자·숫자·`_` 50자 이하" 예: `SECURITY`, 이름은 "필수, 50자 이하" 예: 보안 담당, `permissions` = `["LOGIN_HISTORY_READ"]`). 201과 응답의 `id`를 확인한 뒤 `PUT /api/v1/admin/users/10/roles`(`roleIds` = 그 id 하나)로 운영자에게 주고 성공(2xx)을 확인한다. 운영자 요청은 `bearer(10L, "USER")`로 만든다
 
 **Checkpoint**: 테스트마다 처음 메뉴 구성과 "접속 이력만 보는 운영자"로 시작한다
 
@@ -45,9 +45,9 @@ description: "운영자 역할 (admin-roles) 작업 목록"
 
 **Independent Test**: `./gradlew dbTest --tests "*AdminRolesAcceptanceTest"`에서 US1-AC1~AC3이 통과한다
 
-- [ ] T006 [US1] `@DisplayName("US1-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 더한다. 운영자로 `GET /api/v1/menus/me`를 불러 200, 최상위 항목이 "관리" 하나, 하위 메뉴 이름이 "접속 이력" 하나임을 확인한다
-- [ ] T007 [US1] `@DisplayName("US1-AC2 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 더한다. 운영자로 `GET /api/v1/admin/login-histories`를 불러 200임을 확인한다
-- [ ] T008 [US1] `@DisplayName("US1-AC3 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 더한다. 운영자로 `GET /api/v1/admin/users`를 불러 403, `$.code` = `A005`임을 확인한다
+- [X] T006 [US1] `@DisplayName("US1-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 더한다. 운영자로 `GET /api/v1/menus/me`를 불러 200, 최상위 항목이 "관리" 하나, 하위 메뉴 이름이 "접속 이력" 하나임을 확인한다
+- [X] T007 [US1] `@DisplayName("US1-AC2 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 더한다. 운영자로 `GET /api/v1/admin/login-histories`를 불러 200임을 확인한다
+- [X] T008 [US1] `@DisplayName("US1-AC3 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 더한다. 운영자로 `GET /api/v1/admin/users`를 불러 403, `$.code` = `A005`임을 확인한다
 
 **Checkpoint**: US1이 검증된다
 
@@ -57,8 +57,8 @@ description: "운영자 역할 (admin-roles) 작업 목록"
 
 **Purpose**: 전체 검사와 문서 정합성
 
-- [ ] T009 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`를 돌려 통과를 확인한다. 테스트가 실패하면 테스트를 고치지 말고 spec.md의 AC부터 확인한다 (원칙 V)
-- [ ] T010 specs/README.md 기능 지도에서 `003-admin-roles`의 상태를 `기획 중`에서 `구현됨`으로 바꾼다
+- [X] T009 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`를 돌려 통과를 확인한다. 테스트가 실패하면 테스트를 고치지 말고 spec.md의 AC부터 확인한다 (원칙 V)
+- [X] T010 specs/README.md 기능 지도에서 `003-admin-roles`의 상태를 `기획 중`에서 `구현됨`으로 바꾼다
 - [ ] T011 specs/003-admin-roles/quickstart.md의 "화면 확인" 절차를 사람이 직접 수행한다. 시험 계정 비밀번호가 필요하므로 에이전트는 하지 않는다 (원칙 VI)
 
 ---
