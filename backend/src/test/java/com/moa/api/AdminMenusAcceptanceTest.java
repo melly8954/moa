@@ -2,23 +2,19 @@ package com.moa.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.assertj.MockMvcTester.MockMvcRequestBuilder;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import com.moa.support.AcceptanceTest;
+import com.moa.support.MenuSeed;
 
 /**
  * 관리 메뉴와 접근. 스펙 specs/001-admin-menus의 수용 시나리오다
@@ -33,22 +29,14 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		"/api/v1/admin/code-groups",
 		"/api/v1/admin/login-histories",
 		"/api/v1/admin/roles");
-	private static final List<String> MENU_SEED_SCRIPTS = List.of(
-		"db/migration/V1_7__menus.sql",
-		"db/migration/V1_7_1__admin_menus.sql");
 
 	@Autowired
-	private JdbcTemplate jdbcTemplate;
+	private MenuSeed menuSeed;
 
-	/** DatabaseCleaner가 시드까지 지우므로, 마이그레이션 파일의 INSERT 문을 다시 실행해 처음 구성으로 시작한다 */
+	/** DatabaseCleaner가 시드까지 지우므로 처음 구성으로 되돌리고 시작한다 */
 	@BeforeEach
-	void restoreInitialMenus() throws IOException {
-		jdbcTemplate.update("delete from menus");
-		for (String script : MENU_SEED_SCRIPTS) {
-			for (String insert : insertStatementsOf(script)) {
-				jdbcTemplate.update(insert);
-			}
-		}
+	void restoreInitialMenus() {
+		menuSeed.restore();
 	}
 
 	@Test
@@ -101,15 +89,6 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 			assertThat(mvc.get().uri(api)).as(api).hasStatus(401)
 				.bodyJson().extractingPath("$.code").isEqualTo("A001");
 		}
-	}
-
-	private List<String> insertStatementsOf(String script) throws IOException {
-		String sql = new ClassPathResource(script).getContentAsString(StandardCharsets.UTF_8)
-			.replaceAll("(?m)^\\s*--.*$", "");
-		return Arrays.stream(sql.split(";"))
-			.map(String::strip)
-			.filter(statement -> statement.startsWith("INSERT"))
-			.toList();
 	}
 
 	private MvcTestResult asAdmin(MockMvcRequestBuilder request) {
