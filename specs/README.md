@@ -12,7 +12,7 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 도메인 | 기능 | 출처 | 스펙 | 상태 |
 |---|---|---|---|---|
 | 시스템 | 관리 메뉴 구성과 접근 제한 | 키트 menu | `001-admin-menus` | 구현됨 |
-| 회원 | 첫 관리자, 운영자 계정 | 키트 user-admin, 골격 부트스트랩 | `002-admin-users` | 기획 중 |
+| 회원 | 첫 관리자, 운영자 계정 | 키트 user-admin, 골격 부트스트랩 | `002-admin-users` | 구현됨 |
 | 시스템 | 운영자 역할 | 키트 rbac | `003-admin-roles` | 기획 중 |
 | 시스템 | 공통코드 | 키트 code | `004-admin-codes` | 기획 중 |
 | 시스템 | 접속 이력 | 키트 login-history | `005-admin-login-history` | 기획 중 |
