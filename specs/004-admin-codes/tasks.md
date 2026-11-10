@@ -22,7 +22,7 @@ description: "공통코드 (admin-codes) 작업 목록"
 
 **Purpose**: 테스트 클래스 준비
 
-- [ ] T001 `AcceptanceTest`를 상속한 `AdminCodesAcceptanceTest`를 backend/src/test/java/com/moa/api/AdminCodesAcceptanceTest.java에 만든다. 클래스 주석에 스펙 `004-admin-codes`를 적는다. ADMIN 요청은 `bearer(2L, "ADMIN")`으로 만든다. 키트 `CodeAcceptanceTest`는 고치지 않는다
+- [X] T001 `AcceptanceTest`를 상속한 `AdminCodesAcceptanceTest`를 backend/src/test/java/com/moa/api/AdminCodesAcceptanceTest.java에 만든다. 클래스 주석에 스펙 `004-admin-codes`를 적는다. ADMIN 요청은 `bearer(2L, "ADMIN")`으로 만든다. 키트 `CodeAcceptanceTest`는 고치지 않는다
 
 ---
 
@@ -38,7 +38,7 @@ description: "공통코드 (admin-codes) 작업 목록"
 
 **Independent Test**: `./gradlew dbTest --tests "*AdminCodesAcceptanceTest"`에서 US1-AC1이 통과한다
 
-- [ ] T002 [US1] `@DisplayName("US1-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminCodesAcceptanceTest.java에 더한다. 관리자로 `GET /api/v1/admin/code-groups`를 불러 200이고, 그룹 코드 목록(`$[*].groupCode`)이 spec.md FR-001 표와 같음을 확인한다. 지금 표는 "(아직 없음)"이므로 빈 목록(`$.length()` = 0)이다. 기대 목록은 테스트 안에 상수로 두고, FR-001 표에 그룹이 더해지면 함께 고친다고 주석으로 적는다
+- [X] T002 [US1] `@DisplayName("US1-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminCodesAcceptanceTest.java에 더한다. 관리자로 `GET /api/v1/admin/code-groups`를 불러 200이고, 그룹 코드 목록(`$[*].groupCode`)이 spec.md FR-001 표와 같음을 확인한다. 지금 표는 "(아직 없음)"이므로 빈 목록(`$.length()` = 0)이다. 기대 목록은 테스트 안에 상수로 두고, FR-001 표에 그룹이 더해지면 함께 고친다고 주석으로 적는다
 
 **Checkpoint**: US1이 검증된다
 
@@ -48,8 +48,8 @@ description: "공통코드 (admin-codes) 작업 목록"
 
 **Purpose**: 전체 검사와 문서 정합성
 
-- [ ] T003 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`를 돌려 통과를 확인한다 (Docker 필요). 테스트가 실패하면 테스트를 고치지 말고 spec.md의 AC부터 확인한다 (원칙 V)
-- [ ] T004 specs/README.md 기능 지도에서 `004-admin-codes`의 상태를 `기획 중`에서 `구현됨`으로 바꾼다
+- [X] T003 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`를 돌려 통과를 확인한다 (Docker 필요). 테스트가 실패하면 테스트를 고치지 말고 spec.md의 AC부터 확인한다 (원칙 V)
+- [X] T004 specs/README.md 기능 지도에서 `004-admin-codes`의 상태를 `기획 중`에서 `구현됨`으로 바꾼다
 - [ ] T005 specs/004-admin-codes/quickstart.md의 "화면 확인" 절차를 사람이 직접 수행한다. 시험 계정 비밀번호가 필요하므로 에이전트는 하지 않는다 (원칙 VI)
 
 ---
