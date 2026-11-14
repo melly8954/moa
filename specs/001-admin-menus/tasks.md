@@ -124,10 +124,39 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 ---
 
+## Phase 8: 메뉴 대상 (2026-11-15 FR-002·FR-005·FR-007 변경)
+
+**Purpose**: 메뉴에 대상(관리자·사용자)을 두어 사용자 셸 메뉴도 메뉴 관리에서 다룬다 (research.md R9~R11). 키트 menu 헬퍼를 moa에서 먼저 고친다
+
+**백엔드**
+
+- [ ] T035 backend/src/main/resources/db/migration/V2_4__menu_audience.sql을 더한다: `menus.audience VARCHAR(10) NOT NULL DEFAULT 'ADMIN'`, 사용자 메뉴 홈(`/`, `house`, 10)·공지(`/notices`, `megaphone`, 20)를 `USER`로 넣는다 (data-model.md)
+- [ ] T036 backend/src/main/java/com/moa/api/entity/menu/MenuAudience.java(`ADMIN`, `USER`)와 Menu.java의 `audience` 열을 더한다. 만들기·고치기가 대상을 받는다
+- [ ] T037 backend/src/main/java/com/moa/api/service/menu/MenuService.java: 보이는 트리를 대상별로 거른다. `ADMIN` 대상의 권한 칸이 빈 메뉴는 시스템 역할 ADMIN만, `USER` 대상의 권한 칸이 빈 메뉴는 모두(로그인하지 않은 사람 포함). 하위 메뉴는 부모 대상을 따르고, 부모 대상을 바꾸면 하위 메뉴도 바꾼다 (R9, R10)
+- [ ] T038 backend/src/main/java/com/moa/api/application/v1/menu/MenuApplication.java와 controller/v1/menu/ApiMenuController.java: `/menus/me`는 `ADMIN` 대상만, `GET /api/v1/menus/user`(`@PermitAll`, 로그인했으면 그 권한으로)를 더한다. controller/v1/admin/menu의 요청(`MenuCreateRequest`, 고치기 요청)과 `MenuTreeResponse`에 `audience`를 더한다 (contracts/admin-access.md)
+- [ ] T039 backend/src/test/java/com/moa/support/MenuSeed.java가 `V2_4`도 읽게 하고, backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 `US3-AC1`~`US3-AC4`를 더한다 (contracts/admin-access.md)
+- [ ] T040 backend/src/test/java/com/moa/api/MenuAcceptanceTest.java(키트)에서 권한 칸이 빈 관리 메뉴의 보임을 보는 기대만 FR-002에 맞춰 고친다 (원칙 V, R8)
+
+**프론트**
+
+- [ ] T041 frontend/src/types/menu.ts에 `MenuAudience`와 `audience`(관리 메뉴, 요청)를, frontend/src/api/menu.ts에 `user()`(`/api/v1/menus/user`)를 더한다. local 백엔드를 띄울 수 있으면 `npm run gen:api`로 생성 타입도 맞춘다
+- [ ] T042 frontend/src/components/shell/use-menu.ts의 `useUserMenu`가 `/menus/user`를 읽게 하고(로그인 여부와 상관없이, 로그인 상태가 바뀌면 다시 읽는다) 새 공지 점을 주소 `/notices` 항목에 붙인다. frontend/src/components/shell/menu.ts의 코드 메뉴 항목을 비우고 주석을 고친다. frontend/src/components/menu/icons.ts에 `house`, `megaphone`을 더한다 (R11, 006 FR-010)
+- [ ] T043 frontend/src/app/(admin)/admin/menus/에 대상 탭(관리자 메뉴 / 사용자 메뉴)을 두고 탭마다 그 대상의 트리·순서를 보인다. 만들기는 지금 탭의 대상, 하위 메뉴 대화상자는 부모 대상을 보여 주기만 한다. 문구는 frontend/messages/ko.json `menuAdmin`에 둔다 (R11)
+- [ ] T044 frontend/e2e/support/api.ts의 `signedIn`·`signedOut`이 `/menus/user`를 홈·공지로 가로채게 하고, frontend/e2e/menu.spec.ts에 대상 탭(사용자 메뉴 탭에서 만들면 `audience` = `USER`로 보낸다)과 사용자 셸이 서버 사용자 메뉴를 그리는 검사를 더한다
+
+**마무리**
+
+- [ ] T045 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*Menu*AcceptanceTest"`, frontend/에서 `npm run format`, `npm run check`, 바꾼 e2e 묶음(menu·notices·notifications·auth·screens)을 돌린다. 전체 검사는 PR CI로 본다
+- [ ] T046 specs/README.md 기능 지도의 001 상태에서 "메뉴 대상은 기획 중"을 지운다
+- [ ] T047 specs/001-admin-menus/quickstart.md "화면 확인" 3번을 사람이 직접 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 → T002 → US1(T003, T004)·US2(T005~T007) → T008 → T009, T010
 - T011 → T012 → T013, T014 → T015 → T016
+- Phase 8: T035 → T036 → T037 → T038 → T039, T040 → T041 → T042, T043 → T044 → T045 → T046, T047. 백엔드(T035~T040)와 프론트 타입(T041)은 API 모양이 정해지면 나란히 해도 된다
 - Phase 7: T017 → T018 → T019 → T022~T026 → T027 → T028~T031 → T032 → T033, T034. T020·T021은 T017과 함께 해도 된다. T027은 T020에 기댄다
 - US1과 US2는 서로 기대지 않는다. 둘 다 T002에 기댄다
 - 같은 파일을 고치므로 병렬로 진행하지 않는다
