@@ -1,5 +1,5 @@
 # 백엔드 기본 CI. 포맷(Spotless), lint(Checkstyle), 테스트(ArchUnit 등)와 DB 테스트(AC 테스트, Testcontainers)를 확인한다.
-# moa: main·dev 푸시와 두 브랜치로 가는 PR에서 돈다. feature 브랜치 푸시는 PR에서 확인한다.
+# 브랜치 흐름은 작업 브랜치 → dev → main이다 (docs/git.md). main·dev 푸시와 두 브랜치로 가는 PR에서 돈다. 작업 브랜치 푸시는 PR에서 확인한다.
 #
 # 키트 ci.yml을 backend/ 하위 폴더에 맞춰 루트로 옮겼다 (키트 README "CI").
 name: backend-ci

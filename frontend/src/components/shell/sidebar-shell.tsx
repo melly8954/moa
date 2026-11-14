@@ -52,6 +52,7 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
+          {/* 메뉴 영역을 navigation으로 알린다 (다른 셸과 같다) */}
           <nav aria-label={t("shell.menu")}>
             <SidebarGroup>
               <SidebarGroupLabel>{t("shell.menu")}</SidebarGroupLabel>

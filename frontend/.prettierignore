@@ -1,4 +1,5 @@
 # 생성 코드와 테마는 포맷하지 않는다 (shadcn이 만든 그대로 둔다)
+# 생성 코드 항목은 scripts/generated-files.mjs와 같게 둔다. 다르면 npm run check가 실패한다
 node_modules
 .next
 next-env.d.ts

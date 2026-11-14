@@ -65,6 +65,7 @@ Co-Authored-By: ...
 | 태그 이름, 주석 태그, 옮기지 않기 (`scripts/check-branch.sh`) | push할 때 `pre-push` | 태그 push |
 
 - hook 켜기 (클론마다 한 번): `git config core.hooksPath .githooks`
+  - 키트의 앱 템플릿으로 만든 프로젝트는 `npm install`이나 Gradle 빌드 때 자동으로 켜진다 (`core.hooksPath`가 비어 있을 때만)
 - 저장소마다 다른 값은 `.githooks/` 아래 설정 파일에 둔다. 키트에서 복사되지 않으므로 다시 적용해도 남는다
   - `commit-types`: 종류 목록 (예: `feat|fix|build`). 커밋과 브랜치가 함께 쓴다
   - `branch-rules`: 기준 브랜치, 직접 push를 막는 브랜치, 태그 이름 (기본 `base=main dev`, `protected=main dev`, `tag-pattern=^(release/)?v[0-9]+\.[0-9]+\.[0-9]+$`)

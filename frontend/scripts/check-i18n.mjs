@@ -1,18 +1,18 @@
 // 문구 검사
 //   1. 화면 코드(src)에 한글 글자를 직접 적지 않는다. 글자는 messages/ko.json에 키로 두고 t("키")로 쓴다
-//      (주석은 보지 않는다. shadcn 생성 코드와 개발용 화면 (dev)는 보지 않는다)
+//      (주석은 보지 않는다. 생성 코드(scripts/generated-files.mjs)와 개발용 화면 (dev)는 보지 않는다)
 //   2. messages/<언어>.json은 ko.json과 키가 같아야 한다. 빠진 키는 실행할 때 한국어로 보이지만 여기서 실패한다
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { join, relative } from "node:path"
 import { fileURLToPath } from "node:url"
+import { GENERATED } from "./generated-files.mjs"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const SRC = join(ROOT, "src")
 const MESSAGES = join(ROOT, "messages")
 const SKIP = [
-  join(SRC, "components", "ui"),
-  join(SRC, "hooks", "use-highlighted-code.ts"),
-  join(SRC, "lib", "highlighter.tsx"),
+  ...GENERATED.map((path) => join(ROOT, path)),
+  // 이 검사만 빼는 것은 여기에 적는다
   join(SRC, "app", "(dev)"),
 ]
 const HANGUL = /[ㄱ-ㆎ가-힣]/
