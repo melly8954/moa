@@ -104,7 +104,7 @@ test("US1-AC3 로그인하지 않은 화면은 실시간 연결을 하지 않는
     route.fulfill({ json: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 } }),
   )
   await page.goto("/notices")
-  await expect(page.getByRole("link", { name: "로그인" })).toBeVisible()
+  await expect(page.getByRole("link", { name: "로그인" }).first()).toBeVisible()
   await page.waitForTimeout(500)
   expect(stomp.connected()).toBe(false)
 })
@@ -130,7 +130,7 @@ test("US3-AC1 새 개인 알림이 오면 토스트가 뜨고 벨 숫자가 하�
   await expect(page.getByRole("button", { name: "알림, 안 읽은 알림 1개" }).first()).toBeVisible()
 })
 
-test("US4-AC4 브라우저 알림 권한을 거부했으면 꺼져 있고 브라우저 설정 안내가 보인다 (알림 화면 가로 넘침·접근성)", async ({
+test("US4-AC4 브라우저 알림 권한을 거부했으면 설정 화면에서 꺼져 있고 브라우저 설정 안내가 보인다 (설정 화면 가로 넘침·접근성)", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -145,13 +145,12 @@ test("US4-AC4 브라우저 알림 권한을 거부했으면 꺼져 있고 브라
       Object.defineProperty(window, "PushManager", { configurable: true, value: function PushManager() {} })
   })
   await mockSignedInApis(page)
-  await page.goto("/notifications")
+  await page.goto("/settings")
 
-  await expect(page.getByRole("heading", { level: 1, name: "알림" })).toBeVisible()
+  await expect(page.getByRole("heading", { level: 1, name: "설정" })).toBeVisible()
   await expect(page.getByText("브라우저 알림이 막혀 있어요. 브라우저 설정에서 알림을 허용해 주세요.")).toBeVisible()
   await expect(page.getByRole("switch", { name: "브라우저 알림" })).not.toBeChecked()
   await expect(page.getByRole("switch", { name: "브라우저 알림" })).toBeDisabled()
-  await expect(page.getByText("알림이 없어요.")).toBeVisible()
   await expectNoHorizontalOverflow(page)
   await expectNoSeriousA11yViolations(page)
   // 화면 모드를 바꾸면 색이 전환(transition)되므로 끝난 뒤에 대비를 본다
@@ -171,4 +170,17 @@ test("벨: 좁은 폭에서는 화면 머리에 벨이 있고, 펼친 목록의 
   await expect(page.getByRole("link", { name: "모두 보기" })).toBeVisible()
   await expectNoHorizontalOverflow(page)
   await expectNoSeriousA11yViolations(page)
+})
+
+test("벨: 관리 셸 계정 줄에도 벨이 있다 (FR-005) @wide", async ({ page }) => {
+  await mockSignedInApis(page, { unread: () => 2 })
+  await page.route("**/api/v1/menus/me", (route) =>
+    route.fulfill({ json: [{ id: 1, name: "사용자 관리", path: "/admin/users", icon: "users", children: [] }] }),
+  )
+  await page.route("**/api/v1/admin/users?*", (route) =>
+    route.fulfill({ json: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 } }),
+  )
+  await page.goto("/admin/users")
+  await expect(page.getByRole("navigation", { name: "메뉴" }).getByRole("link")).toHaveText(["사용자 관리"])
+  await expect(page.getByRole("button", { name: "알림, 안 읽은 알림 2개" })).toBeVisible()
 })

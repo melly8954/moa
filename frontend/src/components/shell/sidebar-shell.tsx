@@ -1,8 +1,10 @@
 "use client"
 
+import { LogIn } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { LinkButton } from "@/components/kit/link-button"
 import { NotificationBell } from "@/components/notification/notification-bell"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -25,20 +27,32 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { signInPath } from "@/lib/next-path"
 import { SITE } from "@/lib/site"
+import { useAuthStore } from "@/stores/auth"
 import { HAS_LOCALE_CHOICE, LocaleMenu } from "./locale-menu"
 import { AccountMenu } from "./account-menu"
-import { isActive, screenTitle } from "./menu"
+import { isActive, type MenuItem, screenTitle } from "./menu"
 import { ThemeMenu } from "./theme-menu"
-import { useMenu } from "./use-menu"
 
 // 사이드바형 셸. 폭 768px 미만에서는 사이드바가 서랍(Sheet)으로 바뀐다
 // 설정: side left|right, collapsible icon|offcanvas|none, variant sidebar|floating|inset
-export function SidebarShell({ children }: { children: React.ReactNode }) {
+// moa: 메뉴와 로고 주소를 받아 관리 셸·사용자 셸이 함께 쓴다 (specs/001-admin-menus FR-005, research R5. 키트로 옮길 것)
+//   로그인하지 않았으면 계정 줄에 벨·계정 메뉴 대신 로그인 단추를 둔다 (사용자 셸의 공지 화면)
+export function SidebarShell({
+  menu,
+  homeHref,
+  children,
+}: {
+  menu: MenuItem[]
+  homeHref: string
+  children: React.ReactNode
+}) {
   const pathname = usePathname()
-  const menu = useMenu()
   const t = useTranslations()
   const title = screenTitle(menu, pathname)
+  const status = useAuthStore((s) => s.status)
+  const signedIn = status === "signedIn"
   // 좁은 폭은 사이드바가 서랍이라 계정 줄 벨이 숨는다. 머리에도 벨을 둔다 (moa 007 FR-005, 키트로 옮길 것)
   const isMobile = useIsMobile()
   return (
@@ -47,7 +61,7 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" render={<Link href="/" />}>
+              <SidebarMenuButton size="lg" render={<Link href={homeHref} />}>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   {SITE.name.slice(0, 1).toUpperCase()}
                 </div>
@@ -106,9 +120,11 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
         <SidebarFooter>
           <SidebarMenu>
             {/* 개인 알림 벨 (moa 007 US2, 키트로 옮길 것) */}
-            <SidebarMenuItem>
-              <NotificationBell showLabel trigger={<SidebarMenuButton tooltip={t("notification.bell")} />} />
-            </SidebarMenuItem>
+            {signedIn && (
+              <SidebarMenuItem>
+                <NotificationBell showLabel trigger={<SidebarMenuButton tooltip={t("notification.bell")} />} />
+              </SidebarMenuItem>
+            )}
             <SidebarMenuItem>
               <ThemeMenu showLabel trigger={<SidebarMenuButton tooltip={t("shell.theme")} />} />
             </SidebarMenuItem>
@@ -117,9 +133,19 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
                 <LocaleMenu showLabel trigger={<SidebarMenuButton tooltip={t("shell.language")} />} />
               </SidebarMenuItem>
             )}
-            <SidebarMenuItem>
-              <AccountMenu trigger={<SidebarMenuButton tooltip={t("shell.account")} />} />
-            </SidebarMenuItem>
+            {signedIn && (
+              <SidebarMenuItem>
+                <AccountMenu trigger={<SidebarMenuButton tooltip={t("shell.account")} />} />
+              </SidebarMenuItem>
+            )}
+            {status === "signedOut" && (
+              <SidebarMenuItem>
+                <SidebarMenuButton tooltip={t("shell.signIn")} render={<Link href={signInPath(pathname)} />}>
+                  <LogIn />
+                  <span>{t("shell.signIn")}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
           </SidebarMenu>
         </SidebarFooter>
         <SidebarRail />
@@ -131,10 +157,16 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
           <Separator orientation="vertical" className="mr-2 h-4" />
           {/* 위치(메뉴 이름)만 보인다. 화면 제목(h1)은 화면의 PageHeader가 둔다 */}
           {title && <span className="text-sm font-medium">{title.label}</span>}
-          {isMobile && (
+          {isMobile && signedIn && (
             <div className="ml-auto">
               <NotificationBell trigger={<Button variant="ghost" size="icon" />} />
             </div>
+          )}
+          {/* 좁은 폭에서 로그인하지 않았으면 서랍을 열지 않아도 로그인할 수 있게 머리에도 둔다 */}
+          {isMobile && status === "signedOut" && (
+            <LinkButton href={signInPath(pathname)} variant="outline" size="sm" className="ml-auto">
+              {t("shell.signIn")}
+            </LinkButton>
           )}
         </header>
         <div className="flex min-w-0 flex-1 flex-col gap-(--page-gap) p-(--page-padding)">{children}</div>
