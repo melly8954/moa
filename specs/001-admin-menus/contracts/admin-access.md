@@ -8,7 +8,7 @@
 
 | AC | 호출자 | 기대 |
 |---|---|---|
-| US1-AC1 | ADMIN | 200. 최상위 항목 5개(하위 메뉴 없음), 이름이 [data-model.md](../data-model.md) 표의 순서 |
+| US1-AC1 | ADMIN | 200. 최상위 항목 6개(하위 메뉴 없음), 이름이 [data-model.md](../data-model.md) 표의 순서 |
 | US2-AC1 | USER (역할 없음) | 200. 빈 목록 |
 
 ## 관리 화면이 쓰는 목록 API
@@ -20,9 +20,10 @@
 | 코드 관리 | `GET /api/v1/admin/code-groups` |
 | 접속 이력 | `GET /api/v1/admin/login-histories` |
 | 역할 관리 | `GET /api/v1/admin/roles` |
+| 공지 관리 | `GET /api/v1/admin/notices` |
 
 | AC | 호출자 | 기대 |
 |---|---|---|
-| US1-AC2 | ADMIN | 다섯 API 모두 200 |
-| US2-AC2 | USER (역할 없음) | 다섯 API 모두 403, `code` = `A005`. 쓰기 요청(`POST /api/v1/admin/menus`)도 403 `A005` |
-| US2-AC3 | 토큰 없음 | 다섯 API 모두 401, `code` = `A001` |
+| US1-AC2 | ADMIN | 여섯 API 모두 200 |
+| US2-AC2 | USER (역할 없음) | 여섯 API 모두 403, `code` = `A005`. 쓰기 요청(`POST /api/v1/admin/menus`)도 403 `A005` |
+| US2-AC3 | 토큰 없음 | 여섯 API 모두 401, `code` = `A001` |
