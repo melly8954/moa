@@ -79,11 +79,11 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 **Purpose**: "관리" 그룹을 없애고 관리 메뉴 5개를 최상위에 둔다 (spec.md FR-001, research.md R1)
 
-- [ ] T011 backend/src/main/resources/db/migration/V2__flat_admin_menus.sql을 더한다. `parent_id` 1인 메뉴를 `parent_id` NULL로 옮기고, "관리" 그룹(`id` 1)을 `deleted_at`·`deleted_by`로 지운다. 키트 시드 `V1_7`·`V1_7_1`은 고치지 않는다
-- [ ] T012 backend/src/test/java/com/moa/support/MenuSeed.java가 `V2`도 읽어 INSERT 다음에 UPDATE 문을 실행하게 한다
-- [ ] T013 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java의 US1-AC1을 T003의 바뀐 기대로 고친다
-- [ ] T014 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java의 US1-AC1을 `003-admin-roles` contracts의 바뀐 기대(최상위 "접속 이력" 하나)로 고친다
-- [ ] T015 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`를 돌려 통과를 확인한다
+- [X] T011 backend/src/main/resources/db/migration/V2__flat_admin_menus.sql을 더한다. `parent_id` 1인 메뉴를 `parent_id` NULL로 옮기고, "관리" 그룹(`id` 1)을 `deleted_at`·`deleted_by`로 지운다. 키트 시드 `V1_7`·`V1_7_1`은 고치지 않는다
+- [X] T012 backend/src/test/java/com/moa/support/MenuSeed.java가 `V2`도 읽어 INSERT 다음에 UPDATE 문을 실행하게 한다
+- [X] T013 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java의 US1-AC1을 T003의 바뀐 기대로 고친다
+- [X] T014 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java의 US1-AC1을 `003-admin-roles` contracts의 바뀐 기대(최상위 "접속 이력" 하나)로 고친다
+- [X] T015 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`를 돌려 통과를 확인한다
 - [ ] T016 specs/001-admin-menus/quickstart.md의 "화면 확인" 2번을 사람이 직접 확인한다
 
 ---

@@ -57,9 +57,7 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 		MvcTestResult result = asOperator(mvc.get().uri("/api/v1/menus/me"));
 
 		assertThat(result).hasStatus(200);
-		assertThat(result).bodyJson().extractingPath("$.length()").isEqualTo(1);
-		assertThat(result).bodyJson().extractingPath("$[0].name").isEqualTo("관리");
-		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
+		assertThat(result).bodyJson().extractingPath("$[*].name").asArray()
 			.containsExactly("접속 이력");
 	}
 
