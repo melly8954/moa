@@ -4,14 +4,14 @@ Technical Context에 미결은 없다. 아래는 키트와 moa 코드를 확인�
 
 ## R1. rich-text 헬퍼를 얹는 방법
 
-- **Decision**: 키트 태그의 헬퍼 파일을 손으로 옮긴다. 백엔드는 `springboot/v0.3.1`, 프론트는 `web-next/v0.4.0`의 `helpers/rich-text`를 쓴다. 얹은 뒤 `backend/.psw-dev-kit`·`frontend/.psw-dev-kit`의 `helpers`에 `rich-text`를 더하고, 프론트 기록의 `tag`를 `web-next/v0.4.0`으로 올린다. 헌법 "기술 제약"의 프론트 버전도 함께 고친다
+- **Decision**: 키트 태그의 헬퍼 파일을 손으로 옮긴다. 백엔드는 `springboot/v0.5.0`, 프론트는 `web-next/v0.5.0`의 `helpers/rich-text`를 쓴다. 얹은 뒤 `backend/.psw-dev-kit`·`frontend/.psw-dev-kit`의 `helpers`에 `rich-text`를 더하고, 헌법 "기술 제약"의 키트 버전을 실제(v0.5.0)와 맞춘다
   - 백엔드: `files/`를 `com.example.psw` → `com.moa`로 바꿔 옮긴다. `helper.gradle` → `gradle/helpers/rich-text.gradle`, `application.yaml` 조각은 `src/main/resources/application.yaml` 끝에 문서로 덧붙인다 (키트 `apply.sh`가 하는 일과 같다)
   - 프론트: `files/`를 옮기고, `helper.json`의 의존성 6개를 `package.json`에, `inserts`를 `src/api/index.ts`에, `messages.ko.json`을 `messages/ko.json`의 `richText`로 넣는다
-  - 프론트 기록을 `web-next/v0.4.0`으로 올리면 골격도 그 태그와 맞춘다. v0.3.0 → v0.4.0의 골격 변경은 sidebar 셸 `<nav>` 하나이고 moa에 이미 들어 있다 (키트 쪽 주석 한 줄만 다르다)
+  - moa는 `chore/kit-update`(#22)에서 이미 키트 v0.5.0(골격·sidebar 셸 `<nav>` 포함)으로 올라가 있다. 이 기능은 rich-text 헬퍼만 더한다. rich-text는 v0.3.1·v0.4.0과 v0.5.0의 내용이 같고, 프론트 단위 테스트 이름만 `rich-text.dom.test.ts`(v0.5.0 jsdom 규칙)다
 - **Rationale**: 키트에는 적용 뒤 헬퍼를 더하는 스크립트가 없다 (`backend/springboot/README.md` 7절). 백엔드 rich-text 계약은 v0.3.1 이후 바뀌지 않았다
 - **Alternatives considered**:
   - file 헬퍼도 함께 얹기: rich-text가 본문 이미지 올리기·저장·정리를 모두 해서 필요 없다 (spec Assumptions)
-  - moa에서 편집기를 따로 만들기: 원칙 III. 키트에 먼저 넣었다 (`web-next/v0.4.0`)
+  - moa에서 편집기를 따로 만들기: 원칙 III. 키트에 먼저 넣었다 (`web-next/v0.5.0`)
 - **주의**: rich-text 설정 조각의 `spring.servlet.multipart`는 file 헬퍼와 같은 환경 변수(`FILE_MAX_SIZE`)를 쓴다. moa에 file 헬퍼가 없어도 그대로 둔다
 
 ## R2. 공지 상태와 게시 시각

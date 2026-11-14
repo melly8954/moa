@@ -68,3 +68,20 @@ app:
   login-history:
     # 이 기간이 지난 접속 이력은 매일 새벽에 지운다. 90일은 specs/005-admin-login-history FR-002가 정한다
     retention-days: ${LOGIN_HISTORY_RETENTION_DAYS:90}
+---
+# 선택 헬퍼: rich-text. apply.sh가 src/main/resources/application.yaml 끝에 문서로 덧붙인다
+app:
+  rich-text:
+    # 본문 이미지를 저장할 폴더. 운영은 백업되는 디스크로 준다
+    image-dir: ${RICH_TEXT_IMAGE_DIR:./data/rich-text-images}
+    # 본문 이미지 한 장의 최대 크기 (넘으면 V001)
+    image-max-size: ${RICH_TEXT_IMAGE_MAX_SIZE:5MB}
+    # 글에 쓰이지 않은(임시) 이미지를 이 시간이 지나면 지운다
+    temp-retention: ${RICH_TEXT_TEMP_RETENTION:24h}
+    cleanup-cron: ${RICH_TEXT_CLEANUP_CRON:0 50 4 * * *}
+# 업로드 크기 상한. file 헬퍼와 같은 값을 쓴다 (둘 다 적용해도 같은 설정)
+spring:
+  servlet:
+    multipart:
+      max-file-size: ${FILE_MAX_SIZE:20MB}
+      max-request-size: ${FILE_MAX_REQUEST_SIZE:50MB}

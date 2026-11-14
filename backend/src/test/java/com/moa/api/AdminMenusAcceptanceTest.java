@@ -28,7 +28,8 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		ADMIN_MENUS,
 		"/api/v1/admin/code-groups",
 		"/api/v1/admin/login-histories",
-		"/api/v1/admin/roles");
+		"/api/v1/admin/roles",
+		"/api/v1/admin/notices");
 
 	@Autowired
 	private MenuSeed menuSeed;
@@ -40,18 +41,18 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC1 관리자는 관리 메뉴 5개를 최상위에서 정해진 순서로 본다")
+	@DisplayName("US1-AC1 관리자는 관리 메뉴 6개를 최상위에서 정해진 순서로 본다")
 	void adminSeesMenusInOrder() {
 		MvcTestResult result = asAdmin(mvc.get().uri(MY_MENUS));
 
 		assertThat(result).hasStatus(200);
 		assertThat(result).bodyJson().extractingPath("$[*].name").asArray()
-			.containsExactly("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "역할 관리");
+			.containsExactly("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "역할 관리", "공지 관리");
 		assertThat(result).bodyJson().extractingPath("$[*].children[*]").asArray().isEmpty();
 	}
 
 	@Test
-	@DisplayName("US1-AC2 관리자는 관리 화면 5개의 목록을 연다")
+	@DisplayName("US1-AC2 관리자는 관리 화면 6개의 목록을 연다")
 	void adminOpensEveryList() {
 		for (String api : ADMIN_LIST_APIS) {
 			assertThat(asAdmin(mvc.get().uri(api))).as(api).hasStatus(200);

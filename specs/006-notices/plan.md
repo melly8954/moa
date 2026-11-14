@@ -7,7 +7,7 @@
 ## Summary
 
 moa가 처음 직접 만드는 기능이다. 백엔드에 공지 엔터티와 관리·공개 API, 새 공지 확인 기록을 더하고, 프론트에 관리자 공지 관리 화면과 사용자 공지 목록·상세 화면을 만든다.
-본문의 서식·이미지는 키트 rich-text 헬퍼(백엔드 `springboot/v0.3.1`, 프론트 `web-next/v0.4.0`)를 손으로 얹어 쓴다 ([research.md](./research.md) R1).
+본문의 서식·이미지는 키트 rich-text 헬퍼(백엔드 `springboot/v0.5.0`, 프론트 `web-next/v0.5.0`)를 손으로 얹어 쓴다 ([research.md](./research.md) R1).
 관리 메뉴에 "공지 관리"를 6번째로 더하고 `001-admin-menus`의 스펙과 테스트를 함께 고친다.
 실시간 알림(US4, FR-009)은 `007-notifications` 뒤로 미룬다 (R9).
 

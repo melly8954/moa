@@ -6,8 +6,10 @@ import { http, refreshAccessToken } from "./client"
 import { codeApi } from "./code"
 import { loginHistoryApi } from "./login-history"
 import { menuApi } from "./menu"
+import { noticeAdminApi, noticeApi } from "./notice"
 import { roleApi } from "./role"
 import { userAdminApi } from "./user-admin"
+import { richTextApi } from "./rich-text"
 // @helpers:imports
 
 // 백엔드 API 창구. 화면은 이것만 부른다 (axios·fetch를 직접 부르지 않는다)
@@ -30,8 +32,11 @@ export const api = {
     code: codeApi,
     loginHistory: loginHistoryApi,
     menu: menuApi,
+    notice: noticeApi,
+    noticeAdmin: noticeAdminApi,
     role: roleApi,
     userAdmin: userAdminApi,
+    richText: richTextApi,
     // @helpers:api
   },
 }
