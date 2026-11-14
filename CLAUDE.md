@@ -58,4 +58,8 @@
 | API 타입 만들기 | `npm run gen:api` (local 프로필 백엔드가 떠 있어야 한다) |
 | 포맷 적용 | `npm run format` |
 
+- PR 전에 로컬에서 화면 검사(`npm run test:e2e`)와 DB 테스트 전체(`./gradlew dbTest`)를 돌리지 않는다. PR CI가 같은 검사를 돈다. 사용자가 요청할 때만 돌린다
+  - 로컬에서는 빠른 검사만 한다: 백엔드 `./gradlew build`, 바꾼 기능의 DB 테스트 한 묶음(`--tests "*<기능>AcceptanceTest"`), 프론트 `npm run check`
+  - 무거운 검사는 PR CI 결과로 확인하고, 실패하면 그때 고친다
+
 - 키트 사용법은 psw-dev-kit `springboot/v0.5.0`의 `backend/springboot/README.md`, `web-next/v0.5.0`의 `frontend/web/next/README.md`를 본다

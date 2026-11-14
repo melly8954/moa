@@ -150,7 +150,7 @@ description: "공지사항 (notices) 작업 목록"
 - [X] T053 [US3] frontend/src/components/shell/menu.ts의 메뉴 항목 타입에 배지(점) 자리를 더하고, frontend/src/components/shell/use-menu.ts가 "공지" 항목에 `GET /api/v1/notices/new`의 `hasNew`를 붙이게 한다. frontend/src/components/shell/sidebar-shell.tsx가 메뉴 옆에 점을 그린다(접으면 아이콘 위, 화면 낭독기용 "새 공지" 글자). 키트 셸 파일을 moa에서 먼저 고친다 (research.md R12)
 - [X] T054 [US3] 첫 화면 안내문을 지운다: frontend/src/app/(main)/page.tsx에서 `NewNoticeAlert`를 빼고 frontend/src/components/notice/new-notice-alert.tsx는 새 공지 쿼리 키·hook만 남긴다. 쓰지 않는 문구(`notice.newNotice`, `notice.newNoticeLink`)를 지운다
 - [X] T055 frontend/e2e/notices.spec.ts를 바꾼 화면대로 고친다: 사용자 목록 표(번호·고정 표시), 새 공지 점이 메뉴 옆에 보이고 목록을 열면 사라짐 (원칙 V: 스펙이 먼저 바뀌었다)
-- [ ] T056 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`, frontend/에서 `npm run check`, `npm run test:e2e`로 통과를 확인한다
+- [X] T056 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`, frontend/에서 `npm run check`, `npm run test:e2e`로 통과를 확인한다
 - [ ] T057 specs/006-notices/quickstart.md의 "화면 확인" 4·5번을 사람이 직접 확인한다
 - [ ] T058 메뉴 배지(R12)를 키트 web-next 골격의 세 셸(sidebar·dual·top)과 menu e2e로 옮기고, 새 태그가 나오면 moa 셸 파일을 그 태그와 맞춘다 (키트 작업, 나중)
 
