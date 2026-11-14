@@ -40,15 +40,14 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC1 관리자는 관리 메뉴 5개를 정해진 순서로 본다")
+	@DisplayName("US1-AC1 관리자는 관리 메뉴 5개를 최상위에서 정해진 순서로 본다")
 	void adminSeesMenusInOrder() {
 		MvcTestResult result = asAdmin(mvc.get().uri(MY_MENUS));
 
 		assertThat(result).hasStatus(200);
-		assertThat(result).bodyJson().extractingPath("$.length()").isEqualTo(1);
-		assertThat(result).bodyJson().extractingPath("$[0].name").isEqualTo("관리");
-		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
+		assertThat(result).bodyJson().extractingPath("$[*].name").asArray()
 			.containsExactly("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "역할 관리");
+		assertThat(result).bodyJson().extractingPath("$[*].children[*]").asArray().isEmpty();
 	}
 
 	@Test
