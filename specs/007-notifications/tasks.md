@@ -45,7 +45,7 @@ description: "알림 (notifications) 작업 목록"
 - [ ] T010 [P] backend/src/main/resources/application.yaml에 moa 설정 문서를 덧붙인다: `app.notification.retention-days: ${NOTIFICATION_RETENTION_DAYS:90}`, `cleanup-cron: ${NOTIFICATION_CLEANUP_CRON:0 0 5 * * *}`, `app.web-push.public-key: ${WEB_PUSH_PUBLIC_KEY:}`, `private-key: ${WEB_PUSH_PRIVATE_KEY:}`, `subject: ${WEB_PUSH_SUBJECT:}`. backend/.env.example에 같은 이름을 빈 값으로 더한다. 키 값은 넣지 않는다 (원칙 VI)
 - [ ] T011 backend/src/test/java/com/moa/support/에 실시간 테스트 틀을 만든다: `RealtimeAcceptanceTest`(`@Tag("db")`, `@SpringBootTest(RANDOM_PORT)`, `@AutoConfigureMockMvc`, Testcontainers, DatabaseCleaner, 토큰 도우미), STOMP 도우미(연결·구독·받을 때까지 기다리기·일정 시간 안 온다 확인), `FakePushServer`(받은 요청을 쌓아 두는 `com.sun.net.httpserver`). 키트 `WebSocketAcceptanceTest` 방식을 따른다
 - [ ] T012 [P] frontend/src/app/layout.tsx가 서버 환경 변수 `WS_URL`(비우면 `ws://localhost:8080/ws`)을 요청 때 읽어 frontend/src/providers/app-providers.tsx에 넘기게 한다. frontend/.env.example에 `WS_URL=`을 더한다 (research R2)
-- [ ] T013 frontend/src/lib/realtime.ts와 frontend/src/providers/realtime-provider.tsx를 만든다: 로그인 상태면 액세스 토큰으로 STOMP 연결, 로그아웃이면 끊기, 토큰이 바뀌면 다시 연결, 끊긴 뒤 다시 이어지면 벨의 수·새 공지 여부 쿼리를 무효화, 구독을 등록하는 hook(`useRealtimeSubscription(destination, handler)`). app-providers.tsx에 공급자를 둔다 (research R3)
+- [ ] T013 frontend/src/lib/realtime.ts와 frontend/src/providers/realtime-provider.tsx를 만든다: 로그인 상태면 액세스 토큰으로 STOMP 연결, 로그아웃이면 끊기, 토큰이 바뀌면 다시 연결, 끊긴 뒤 다시 이어지면 벨의 수·새 공지 여부 쿼리를 무효화, 구독을 등록하는 hook(`useRealtimeSubscription(destination, handler)`). app-providers.tsx에 공급자를 둔다 (research R3). 백엔드 WebSocket 허용 출처(`CORS_ALLOWED_ORIGINS`) 로컬 기본값에 프론트 주소(`http://localhost:3000`)가 있는지 확인하고, 없으면 backend/.env.example과 quickstart.md에 적는다 (브라우저가 백엔드에 직접 붙는다, research R2)
 - [ ] T014 [P] frontend/src/types/notification.ts, frontend/src/api/notification.ts(contracts/notifications-api.md 7개)를 만들고 frontend/src/api/index.ts에 `notification`을 더한다. frontend/messages/ko.json에 `notification` 문구 묶음을 더한다
 
 **Checkpoint**: 테이블·엔터티·설정이 있고, 로그인한 화면이 실시간 연결을 연다
@@ -116,7 +116,7 @@ description: "알림 (notifications) 작업 목록"
 - [ ] T037 [US4] frontend/src/lib/web-push.ts를 만든다: 지원 여부, 권한 상태, 켜기(권한 요청 → 서비스 워커 등록 → `pushManager.subscribe` → 서버 저장), 끄기(서버 지우기 → `unsubscribe`), 브라우저 쪽만 해제
 - [ ] T038 [US4] frontend/src/app/(main)/notifications/page.tsx에 브라우저 알림 스위치를 둔다: 지원 안 함, 권한 거부(꺼짐 + 브라우저 설정 안내), 서버 웹 푸시 꺼짐(공개 키 없음) 안내 (contracts/notifications-screens.md)
 - [ ] T039 [US4] 로그아웃 때 구독 해제: frontend/src/components/shell/use-sign-out.ts가 서버 로그아웃 전에 구독을 서버에서 지우고, frontend/src/providers/realtime-provider.tsx(또는 같은 자리)가 로그인 상태가 `signedOut`·`expired`로 바뀌면 이유와 관계없이 브라우저 쪽 구독을 해제한다 (research R8)
-- [ ] T040 [US4] frontend/e2e/notifications.spec.ts에 US4-AC4(`Notification.permission` = "denied" 흉내 → 꺼짐 + 안내)를 더한다
+- [ ] T040 [US4] frontend/e2e/notifications.spec.ts에 US4-AC4(`Notification.permission` = "denied" 흉내 → 꺼짐 + 안내)를 더한다. 같은 파일에 `/notifications` 화면과 벨 팝오버의 3폭 가로 넘침·접근성(밝은·어두운 화면), 좁은 폭에서 화면 머리 벨이 보이는지를 더한다 (FR-005, 다른 화면과 같은 검사)
 
 **Checkpoint**: US1~US4가 모두 된다
 
