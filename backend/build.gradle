@@ -138,5 +138,43 @@ tasks.withType(Checkstyle).configureEach {
 	source = source.filter { !it.path.contains('generated') }
 }
 
+// git hook 켜기: 저장소 루트에 git 템플릿의 .githooks가 있으면 core.hooksPath를 맞춘다 (CONTRACT.md 1절 "저장소 템플릿")
+// git 저장소가 아니거나 .githooks가 없거나 hooksPath를 이미 다른 곳에 두었으면 아무것도 하지 않는다. 빌드를 막지 않는다
+def gitProviders = providers
+def gitOutput = { List<String> args ->
+	try {
+		def out = gitProviders.exec {
+			commandLine(['git'] + args)
+			ignoreExitValue = true
+		}
+		out.result.get().exitValue == 0 ? out.standardOutput.asText.get().trim() : null
+	} catch (Exception ignored) {
+		null
+	}
+}
+
+tasks.register('gitHooks') {
+	description = '저장소 루트의 .githooks를 git hook으로 켠다 (core.hooksPath)'
+	group = 'build setup'
+	doLast {
+		def top = gitOutput(['rev-parse', '--show-toplevel'])
+		if (!top || !new File(top, '.githooks').isDirectory()) {
+			return
+		}
+		def current = gitOutput(['-C', top, 'config', '--get', 'core.hooksPath'])
+		if (!current) {
+			if (gitOutput(['-C', top, 'config', 'core.hooksPath', '.githooks']) != null) {
+				logger.lifecycle('git hook을 켰다 (core.hooksPath=.githooks)')
+			}
+		} else if (current != '.githooks') {
+			logger.lifecycle("git hook을 켜지 않았다: core.hooksPath가 이미 ${current}이다")
+		}
+	}
+}
+
+tasks.named('compileJava') {
+	dependsOn 'gitHooks'
+}
+
 // 선택 헬퍼: 키트의 apply.sh가 gradle/helpers/에 넣은 설정을 불러온다
 fileTree('gradle/helpers') { include '*.gradle' }.sort().each { apply from: it }

@@ -28,7 +28,7 @@ class MenuAcceptanceTest extends AcceptanceTest {
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
-	/** 마이그레이션 시드(관리 > 메뉴 관리)를 비우고 테스트마다 직접 만든다 */
+	/** 마이그레이션 시드(메뉴 관리)를 비우고 테스트마다 직접 만든다 */
 	@BeforeEach
 	void clearMenus() {
 		jdbcTemplate.update("delete from menus");
