@@ -1,0 +1,4 @@
+// 선택 헬퍼: rich-text. apply.sh가 gradle/helpers/rich-text.gradle로 복사한다
+dependencies {
+	implementation 'org.jsoup:jsoup:1.23.1'
+}
