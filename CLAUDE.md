@@ -32,6 +32,13 @@
 
 @docs/git.md
 
+- 브랜치 정리 (psw-gongbu와 같다, 키트 `git` 템플릿으로 옮길 것)
+  - 작업 브랜치 → `dev` PR을 병합하면 그 작업 브랜치를 원격과 로컬에서 함께 지운다
+    - 원격: `git push origin --delete <브랜치>`
+    - 로컬: `git checkout dev && git pull --ff-only && git branch -d <브랜치>`
+  - `dev` → `main` 병합에서는 아무 브랜치도 지우지 않는다
+  - 저장소 설정 "Automatically delete head branches"는 끈다. 켜 두면 `dev` → `main` 병합 때 head인 `dev`가 지워질 수 있다
+
 ## 작업 기록
 
 - 답변 끝에 정해진 양식을 붙이지 않는다
