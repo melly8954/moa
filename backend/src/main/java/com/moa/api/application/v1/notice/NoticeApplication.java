@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.moa.api.dto.notice.NoticeDto;
 import com.moa.api.dto.notice.NoticeStatus;
+import com.moa.api.dto.notice.PublishedNoticeDto;
 import com.moa.api.entity.notice.Notice;
 import com.moa.api.service.notice.NoticeService;
 import com.moa.common.audit.CurrentActor;
@@ -38,7 +39,7 @@ public class NoticeApplication {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<NoticeDto> getPublishedPage(Pageable pageable) {
+	public Page<PublishedNoticeDto> getPublishedPage(Pageable pageable) {
 		return noticeService.getPublishedPage(pageable);
 	}
 

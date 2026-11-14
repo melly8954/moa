@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { api } from "@/api"
 import { menuIcon } from "@/components/menu/icons"
+import { useHasNewNotice } from "@/components/notice/use-new-notice"
 import { useMyPermissions } from "@/lib/me"
 import { STALE_TIME } from "@/lib/query"
 import { useAuthStore } from "@/stores/auth"
@@ -28,6 +29,8 @@ function fromServer(menus: MyMenu[]): MenuItem[] {
 
 export function useMenu(): MenuItem[] {
   const t = useTranslations("menu")
+  const tn = useTranslations("notice")
+  const hasNewNotice = useHasNewNotice()
   const permissions = useMyPermissions().data
   const signedIn = useAuthStore((s) => s.status === "signedIn")
   const server = useQuery({
@@ -40,5 +43,9 @@ export function useMenu(): MenuItem[] {
     visibleMenu(MENU, (key) => permissions?.has(key) ?? false),
     (label) => t(label),
   )
-  return [...local, ...fromServer(server.data ?? [])]
+  // moa 006: "공지" 메뉴 옆 새 공지 점 (specs/006-notices FR-010, research R12)
+  const withBadges = local.map((item) =>
+    item.key === "notices" && hasNewNotice ? { ...item, badge: tn("newBadge") } : item,
+  )
+  return [...withBadges, ...fromServer(server.data ?? [])]
 }

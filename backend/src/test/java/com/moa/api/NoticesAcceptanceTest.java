@@ -132,18 +132,22 @@ class NoticesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US2-AC1 사용자 목록은 고정 공지 먼저, 그다음 게시 최신순으로 제목·게시 날짜·고정 여부와 함께 보인다")
+	@DisplayName("US2-AC1 사용자 목록은 고정 공지 먼저, 그다음 게시 최신순으로 번호(게시 순번)·제목·게시 날짜·고정 여부와 함께 보인다")
 	void publicListOrder() {
 		create("pinned-old", true, true);
 		create("normal-old", false, true);
+		long gone = create("gone", false, true);
 		create("pinned-new", true, true);
 		create("normal-new", false, true);
 		create("draft", true, false);
+		assertThat(asAdmin(mvc.delete().uri(ADMIN_NOTICES + "/" + gone))).hasStatus(204);
 
 		MvcTestResult list = mvc.get().uri(NOTICES).exchange();
 
 		assertThat(list).hasStatus(200);
 		assertThat(titles(list)).containsExactly("pinned-new", "pinned-old", "normal-new", "normal-old");
+		List<Number> numbers = JsonPath.read(body(list), "$.content[*].number");
+		assertThat(numbers).extracting(Number::longValue).containsExactly(3L, 1L, 4L, 2L);
 		assertThat(list).bodyJson().extractingPath("$.content[0].pinned").isEqualTo(true);
 		assertThat(list).bodyJson().extractingPath("$.content[2].pinned").isEqualTo(false);
 		assertThat(list).bodyJson().extractingPath("$.content[0].publishedAt").isNotNull();
