@@ -28,6 +28,8 @@ export type MenuItem = {
   label: string
   href?: string
   icon?: LucideIcon
+  // 새 소식 점. 값은 화면 낭독기가 읽을 글자 (moa 006: "공지" 옆 새 공지 점, 키트로 옮길 것)
+  badge?: string
   children?: MenuItem[]
 }
 

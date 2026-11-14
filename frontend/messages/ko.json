@@ -408,10 +408,10 @@
     "empty": "게시한 공지가 없어요.",
     "notFound": "없는 공지예요.",
     "backToList": "공지 목록으로",
-    "newNotice": "새 공지가 있어요.",
-    "newNoticeLink": "공지 보기",
     "signIn": "로그인",
     "home": "처음으로",
-    "actionsOf": "{title} 작업"
+    "actionsOf": "{title} 작업",
+    "newBadge": "새 공지",
+    "number": "번호"
   }
 }

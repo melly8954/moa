@@ -31,7 +31,8 @@ export type NoticeCreateRequest = { title: string; content: string; pinned: bool
 export type NoticeModifyRequest = { title: string; content: string }
 
 // 사용자 목록 항목과 상세 (게시한 공지만)
-export type NoticeListItem = { id: number; title: string; pinned: boolean; publishedAt: string }
-export type Notice = NoticeListItem & { content: string }
+// number: 게시 순번 (처음 게시한 공지가 1, 지운 공지는 세지 않는다. 고정 공지는 화면에서 고정 표시)
+export type NoticeListItem = { id: number; number: number; title: string; pinned: boolean; publishedAt: string }
+export type Notice = Omit<NoticeListItem, "number"> & { content: string }
 
 export type NoticeNew = { hasNew: boolean }

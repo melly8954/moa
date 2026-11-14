@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.moa.api.dto.notice.NoticeDto;
 import com.moa.api.dto.notice.NoticeStatus;
+import com.moa.api.dto.notice.PublishedNoticeDto;
 import com.moa.api.entity.notice.Notice;
 import com.moa.api.entity.notice.NoticeRead;
 import com.moa.api.repository.reader.notice.NoticeReader;
@@ -38,8 +39,9 @@ public class NoticeService {
 		return NoticeDto.from(require(id));
 	}
 
-	public Page<NoticeDto> getPublishedPage(Pageable pageable) {
-		return noticeReader.findPublishedPage(pageable).map(NoticeDto::from);
+	public Page<PublishedNoticeDto> getPublishedPage(Pageable pageable) {
+		return noticeReader.findPublishedPage(pageable).map(row -> new PublishedNoticeDto(row.notice().getId(),
+			row.number(), row.notice().getTitle(), row.notice().isPinned(), row.notice().getPublishedAt()));
 	}
 
 	/**

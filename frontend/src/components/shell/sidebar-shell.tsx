@@ -60,12 +60,23 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
                 {menu.map((item) => (
                   <SidebarMenuItem key={item.key}>
                     <SidebarMenuButton
+                      className="relative"
                       isActive={isActive(item, pathname)}
                       tooltip={item.label}
                       render={item.href ? <Link href={item.href} /> : undefined}
                     >
                       {item.icon && <item.icon />}
-                      <span>{item.label}</span>
+                      {/* 새 소식 점 (moa 006 R12): 펼치면 이름 오른쪽, 접으면 아이콘 오른쪽 위. 이름 칸이 마지막이어야 말줄임이 된다 */}
+                      {item.badge && (
+                        <i
+                          aria-hidden
+                          className="order-last ml-auto size-2 shrink-0 rounded-full bg-destructive group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1 group-data-[collapsible=icon]:right-1"
+                        />
+                      )}
+                      <span>
+                        {item.label}
+                        {item.badge && <span className="sr-only">, {item.badge}</span>}
+                      </span>
                     </SidebarMenuButton>
                     {item.children && (
                       <SidebarMenuSub>
