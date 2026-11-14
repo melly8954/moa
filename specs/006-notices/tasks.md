@@ -154,6 +154,12 @@ description: "공지사항 (notices) 작업 목록"
 - [ ] T057 specs/006-notices/quickstart.md의 "화면 확인" 4·5번을 사람이 직접 확인한다
 - [ ] T058 메뉴 배지(R12)를 키트 web-next 골격의 세 셸(sidebar·dual·top)과 menu e2e로 옮기고, 새 태그가 나오면 moa 셸 파일을 그 태그와 맞춘다 (키트 작업, 나중)
 
+## Phase 9: 사용자 셸로 옮기기 (2026-11-15 FR-010 변경)
+
+- 공지 사용자 화면을 `(site)`에서 사용자 셸로 옮기고 새 공지 점을 사용자 셸 메뉴에만 둔다. 작업은 `specs/001-admin-menus/tasks.md` Phase 7(T018, T023, T029)에서 한다
+
+---
+
 ## Dependencies & Execution Order
 
 - Setup: 백엔드(T001~T003 → T004)와 프론트(T005·T006 → T007·T008·T009 → T011)는 서로 기대지 않는다. T010은 둘 다 끝난 뒤

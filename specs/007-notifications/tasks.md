@@ -134,6 +134,12 @@ description: "알림 (notifications) 작업 목록"
 
 ---
 
+## Phase 8: 셸 나누기 반영 (2026-11-15 FR-005·FR-008 변경)
+
+- 벨을 두 셸에 두고 브라우저 알림 스위치를 설정 화면으로 옮긴다. 작업은 `specs/001-admin-menus/tasks.md` Phase 7(T017, T026, T030)에서 한다
+
+---
+
 ## Dependencies & Execution Order
 
 - Setup: T001(라이브러리 확인)은 T032보다 먼저. T002 → T004 → T005. T003은 아무 때나
