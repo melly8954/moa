@@ -69,3 +69,18 @@ Co-Authored-By: ...
 - 저장소마다 다른 값은 `.githooks/` 아래 설정 파일에 둔다. 키트에서 복사되지 않으므로 다시 적용해도 남는다
   - `commit-types`: 종류 목록 (예: `feat|fix|build`). 커밋과 브랜치가 함께 쓴다
   - `branch-rules`: 기준 브랜치, 직접 push를 막는 브랜치, 태그 이름 (기본 `base=main dev`, `protected=main dev`, `tag-pattern=^(release/)?v[0-9]+\.[0-9]+\.[0-9]+$`)
+
+### 빌드·테스트 (앱 CI)
+
+앱 템플릿의 CI(백엔드 `backend-ci`, 프론트 `frontend-ci`)가 돈다. 빠른 검사는 매번, 무거운 검사는 한 번만 돈다.
+
+| 검사 | 작업 브랜치 → `dev` PR | `dev` push, `dev` → `main` PR, `main` push |
+|---|---|---|
+| 빠른 검사: 포맷·lint·타입·단위 테스트 (백엔드 `build`, 프론트 `check`) | 돈다 | 돈다 |
+| 무거운 검사: DB 테스트 (백엔드 `db-test`), 화면 검사 (프론트 `e2e`) | 돈다 | 건너뛴다 (같은 내용이다) |
+
+- 무거운 job은 `if: github.base_ref == 'dev'`로 건다. 새로 더하는 무거운 job도 같은 조건을 건다
+- PR 전에 로컬에서 무거운 검사 전체를 돌리지 않는다. PR CI가 같은 검사를 돈다. 사용자가 요청할 때만 돌린다
+  - 로컬에서는 빠른 검사와 바꾼 기능의 테스트 한 묶음만 한다 (예: 백엔드 `./gradlew build`와 `dbTest --tests "*<기능>AcceptanceTest"`, 프론트 `npm run check`)
+  - 무거운 검사는 PR CI 결과로 확인하고, 실패하면 그때 고친다
+- moa: 이 절은 moa에서 먼저 더했다. 키트 `git` 템플릿으로 옮긴 뒤 다시 적용하면 이 줄은 빠진다
