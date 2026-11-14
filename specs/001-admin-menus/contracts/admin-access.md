@@ -8,7 +8,7 @@
 
 | AC | 호출자 | 기대 |
 |---|---|---|
-| US1-AC1 | ADMIN | 200. "관리" 그룹 하나, 하위 메뉴 이름이 [data-model.md](../data-model.md) 표의 순서 |
+| US1-AC1 | ADMIN | 200. 최상위 항목 5개(하위 메뉴 없음), 이름이 [data-model.md](../data-model.md) 표의 순서 |
 | US2-AC1 | USER (역할 없음) | 200. 빈 목록 |
 
 ## 관리 화면이 쓰는 목록 API

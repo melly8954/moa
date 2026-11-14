@@ -44,7 +44,7 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 **Independent Test**: `./gradlew dbTest --tests "*AdminMenusAcceptanceTest"`에서 US1-AC1, US1-AC2가 통과한다
 
-- [X] T003 [US1] `@DisplayName("US1-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. ADMIN으로 `GET /api/v1/menus/me`를 불러 200, 최상위 항목이 "관리" 하나, 하위 메뉴 이름이 사용자 관리, 메뉴 관리, 코드 관리, 접속 이력, 역할 관리 순서임을 확인한다 (data-model.md 표)
+- [X] T003 [US1] `@DisplayName("US1-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. ADMIN으로 `GET /api/v1/menus/me`를 불러 200, 최상위 항목 이름이 사용자 관리, 메뉴 관리, 코드 관리, 접속 이력, 역할 관리 순서이고 하위 메뉴가 없음을 확인한다 (data-model.md 표)
 - [X] T004 [US1] `@DisplayName("US1-AC2 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java에 더한다. ADMIN으로 contracts/admin-access.md의 목록 API 5개(`/api/v1/admin/users`, `/api/v1/admin/menus`, `/api/v1/admin/code-groups`, `/api/v1/admin/login-histories`, `/api/v1/admin/roles`)를 불러 모두 200임을 확인한다
 
 **Checkpoint**: US1이 단독으로 검증된다
@@ -75,9 +75,23 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 ---
 
+## Phase 6: 관리 메뉴를 최상위로 옮긴다 (2026-11-14 FR-001 변경)
+
+**Purpose**: "관리" 그룹을 없애고 관리 메뉴 5개를 최상위에 둔다 (spec.md FR-001, research.md R1)
+
+- [X] T011 backend/src/main/resources/db/migration/V2__flat_admin_menus.sql을 더한다. `parent_id` 1인 메뉴를 `parent_id` NULL로 옮기고, "관리" 그룹(`id` 1)을 `deleted_at`·`deleted_by`로 지운다. 키트 시드 `V1_7`·`V1_7_1`은 고치지 않는다
+- [X] T012 backend/src/test/java/com/moa/support/MenuSeed.java가 `V2`도 읽어 INSERT 다음에 UPDATE 문을 실행하게 한다
+- [X] T013 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java의 US1-AC1을 T003의 바뀐 기대로 고친다
+- [X] T014 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java의 US1-AC1을 `003-admin-roles` contracts의 바뀐 기대(최상위 "접속 이력" 하나)로 고친다
+- [X] T015 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`를 돌려 통과를 확인한다
+- [ ] T016 specs/001-admin-menus/quickstart.md의 "화면 확인" 2번을 사람이 직접 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 → T002 → US1(T003, T004)·US2(T005~T007) → T008 → T009, T010
+- T011 → T012 → T013, T014 → T015 → T016
 - US1과 US2는 서로 기대지 않는다. 둘 다 T002에 기댄다
 - 같은 파일을 고치므로 병렬로 진행하지 않는다
 
