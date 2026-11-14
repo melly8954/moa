@@ -1,7 +1,11 @@
 # 백엔드 기본 CI. 포맷(Spotless), lint(Checkstyle), 테스트(ArchUnit 등)와 DB 테스트(AC 테스트, Testcontainers)를 확인한다.
-# 브랜치 흐름은 작업 브랜치 → dev → main이다 (docs/git.md). main·dev 푸시와 두 브랜치로 가는 PR에서 돈다. 작업 브랜치 푸시는 PR에서 확인한다.
+# 브랜치 흐름은 작업 브랜치 → dev → main이다 (docs/git.md). 작업 브랜치 푸시는 PR에서 확인한다.
+#   build:   main·dev 푸시와 두 브랜치로 가는 PR에서 모두 돈다 (포맷·lint·단위·아키텍처 테스트)
+#   db-test: 작업 브랜치 → dev PR에서만 한 번 돈다. dev 푸시, dev → main PR, main 푸시는 같은 내용이라 건너뛴다
+#            (frontend-ci의 e2e와 같은 규칙. 합친 뒤 깨지는 것은 대부분 build가 잡는다)
 #
 # 키트 ci.yml을 backend/ 하위 폴더에 맞춰 루트로 옮겼다 (키트 README "CI").
+# db-test 분리는 moa에서 먼저 했다. 키트 springboot 템플릿으로 옮길 것
 name: backend-ci
 
 on:
@@ -12,12 +16,33 @@ on:
     branches: [main, dev]
     paths: ['backend/**', '.github/workflows/backend-ci.yml']
 
+defaults:
+  run:
+    working-directory: backend
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v6
+      - run: ./gradlew build --no-daemon
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-reports
+          # upload-artifact는 working-directory를 따르지 않는다
+          path: |
+            backend/build/reports/tests
+            backend/build/reports/checkstyle
+
+  db-test:
+    if: github.base_ref == 'dev'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -26,12 +51,9 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v6
       # Testcontainers는 러너의 Docker를 쓴다
-      - run: ./gradlew build dbTest --no-daemon
+      - run: ./gradlew dbTest --no-daemon
       - if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: reports
-          # upload-artifact는 working-directory를 따르지 않는다
-          path: |
-            backend/build/reports/tests
-            backend/build/reports/checkstyle
+          name: db-test-reports
+          path: backend/build/reports/tests
