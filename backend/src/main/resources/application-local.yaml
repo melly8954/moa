@@ -1,5 +1,8 @@
 # 로컬 개발: compose.yaml의 MariaDB를 자동으로 띄우고 접속한다
 spring:
+  # backend/.env.local(KEY=값)을 읽는다. 없으면 건너뛴다. 터미널 환경 변수가 이 파일보다 우선한다
+  config:
+    import: optional:file:.env.local[.properties]
   flyway:
     # 로컬 개발 계정(admin, user)을 함께 넣는다
     locations: classpath:db/migration,classpath:db/localdata

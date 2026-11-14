@@ -22,8 +22,8 @@ npm run check
 VAPID 키는 시크릿이라 에이전트가 만들거나 읽지 않는다 (원칙 VI).
 
 1. 키 한 쌍을 만든다 (예: `npx web-push generate-vapid-keys`)
-2. `backend/.env`에 `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY`, `WEB_PUSH_SUBJECT=mailto:<운영 메일>`을 넣는다. 비우면 웹 푸시가 꺼진다
-3. 운영은 같은 이름의 환경 변수로 준다. 키를 바꾸면 기존 구독은 모두 다시 켜야 한다
+2. `backend/.env.local`(로컬, `.env.example`을 복사)에 `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY`, `WEB_PUSH_SUBJECT=mailto:<연락 가능한 메일>`을 넣는다. `./gradlew bootRun`(local 프로필)이 읽는다. 비우면 웹 푸시가 꺼진다
+3. dev·prod 서버는 실행 폴더의 `.env.dev`·`.env.prod`나 같은 이름의 환경 변수로 준다. 키를 바꾸면 기존 구독은 모두 다시 켜야 한다
 
 ## 화면 확인
 
