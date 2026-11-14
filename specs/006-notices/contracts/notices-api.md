@@ -26,7 +26,7 @@
 
 | 요청 | 설명 | 응답 |
 |---|---|---|
-| `GET /api/v1/notices?page=&size=` | 게시한 공지만. 고정 먼저, 게시 최신순 (FR-005) | 200 `PageResponse` {id, title, pinned, publishedAt} |
+| `GET /api/v1/notices?page=&size=` | 게시한 공지만. 고정 먼저, 게시 최신순 (FR-005) | 200 `PageResponse` {id, number, title, pinned, publishedAt}. `number`는 게시 순번 (research R11) |
 | `GET /api/v1/notices/{id}` | 게시한 공지 상세 | 200 {id, title, content, pinned, publishedAt}. 임시 저장·지운 공지·없는 공지는 404 `R001` |
 
 ## 새 공지 (로그인한 사용자)
@@ -50,7 +50,7 @@
 | US1-AC6 | `DELETE` → 공개 목록·상세 | 204, 목록에 없음, 상세 404 `R001` |
 | US1-AC7 | 역할 없는 운영자(USER) `POST`·`PUT` | 403 `A005` |
 | US1-AC8 | ADMIN `POST` 본문 `<p>안녕</p><script>alert(1)</script><img src="x" onerror="alert(1)">` → 공개 상세 | `content`에 `script`·`onerror`·외부 `img`가 없고 `<p>안녕</p>`은 남음 |
-| US2-AC1 | 고정·일반 공지 여러 개 → 공개 목록 | 고정 먼저, 각 무리 안에서 게시 최신순. 칸 {title, publishedAt, pinned} |
+| US2-AC1 | 고정·일반 공지 여러 개(지운 공지 하나 포함) → 공개 목록 | 고정 먼저, 각 무리 안에서 게시 최신순. 칸 {number, title, publishedAt, pinned}. `number`는 게시 순번이고 지운 공지는 세지 않는다 |
 | US2-AC2 | 공개 상세 (본문에 서식·본문 이미지 주소) | 제목·게시 시각·본문 HTML 그대로 |
 | US2-AC3 | 토큰 없이 공개 목록·상세 / 토큰 있이 같은 요청 | 둘 다 200, 같은 내용 |
 | US3-AC1 | 사용자 `PUT seen` → ADMIN 게시 → `GET new` | `hasNew`=true |
