@@ -8,7 +8,7 @@ moa 마이그레이션 `V2_3__notifications.sql`을 더한다. 전체 알림(공
 |---|---|---|
 | `id` | BIGINT, 자동 증가 | |
 | `user_id` | BIGINT | 받는 사람. 필수 |
-| `type` | VARCHAR(30) | `NotificationType` (지금은 `TEST`, 기능이 생길 때 더함, research R5) |
+| `type` | VARCHAR(30) | `NotificationType` (지금은 `SYSTEM`, 기능이 생길 때 더함, research R5) |
 | `title` | VARCHAR(200) | 필수, 1~200자 |
 | `link` | VARCHAR(500) | 관련 화면 경로. `/`로 시작하는 moa 경로만 |
 | `created_at` | DATETIME(6) | 만든 시각 |

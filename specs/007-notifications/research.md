@@ -22,19 +22,19 @@ Technical Context에 미결은 없다. 아래는 키트와 moa 코드를 확인�
 
 ## R4. 보내는 때: 커밋 뒤
 
-- **Decision**: 보내기는 모두 DB 커밋 뒤에 한다. 공지 게시는 `NoticeApplication.publish`가 `NoticePublishedEvent(id, title)`를 내고, 개인 알림은 `NotificationApplication.notify`가 저장한 뒤 `NotificationCreatedEvent`를 낸다. `@TransactionalEventListener(phase = AFTER_COMMIT)` 리스너가 STOMP(`SimpMessagingTemplate`)와 웹 푸시로 보낸다. 웹 푸시는 느릴 수 있어 `@Async`로 보낸다
+- **Decision**: 보내기는 모두 DB 커밋 뒤에 한다. 공지 게시는 `NoticeApplication.publish`가 `NoticePublishedEvent(id, title)`를 내고, 개인 알림은 `NotificationApplication.notify`가 저장한 뒤 `NotificationCreatedEvent`를 낸다. `@TransactionalEventListener(phase = AFTER_COMMIT)` 리스너가 STOMP(`SimpMessagingTemplate`)와 웹 푸시로 보낸다. 웹 푸시는 느릴 수 있어 `@Async`로 보낸다. 골격에 `@EnableAsync`가 없으므로(키트 `Application.java`는 `@EnableScheduling`만) moa 설정 클래스 `AsyncConfig`에 `@EnableAsync`를 둔다 (키트 파일은 고치지 않는다)
 - **Rationale**: 키트 websocket HELPER 권장. 롤백된 공지·알림을 알리지 않는다. `006-notices` R9가 미룬 게시 이벤트를 여기서 정한다
 - **Alternatives considered**: Application 안에서 바로 보내기. 롤백되면 이미 보낸 알림을 되돌릴 수 없다
 
 ## R5. 개인 알림을 보내는 쪽 (다른 기능)
 
-- **Decision**: `NotificationApplication.notify(Long userId, NotificationType type, String title, String link)`를 다른 기능의 Application이 같은 트랜잭션에서 부른다. `NotificationType`은 enum이고 지금은 `TEST`만 둔다(테스트에서 쓴다). 기능이 생길 때 그 기능의 스펙이 종류를 더한다(`COMMENT`, `INVITE`, `MESSAGE`, `SANCTION` 등). `link`는 moa 화면 경로(`/`로 시작)만 받는다
+- **Decision**: `NotificationApplication.notify(Long userId, NotificationType type, String title, String link)`를 다른 기능의 Application이 같은 트랜잭션에서 부른다. `NotificationType`은 enum이고 지금은 `SYSTEM`(운영자가 한 사용자에게 알리는 시스템 알림 성격)만 둔다. 테스트도 `SYSTEM`을 쓴다. 테스트 전용 값을 운영 enum에 두지 않는다. 기능이 생길 때 그 기능의 스펙이 종류를 더한다(`COMMENT`, `INVITE`, `MESSAGE`, `SANCTION` 등). `link`는 moa 화면 경로(`/`로 시작)만 받는다
 - **Rationale**: spec FR-004, Assumptions. 알림 목록 화면이 종류별 아이콘·문구를 고를 수 있게 종류를 enum으로 둔다
 - **Alternatives considered**: 종류를 문자열로 열어 두기. 오타와 화면 문구 누락을 막지 못한다
 
 ## R6. 웹 푸시 보내기 (백엔드)
 
-- **Decision**: 웹 푸시 프로토콜(VAPID, 페이로드 암호화 aes128gcm)을 구현한 Java 라이브러리를 쓴다. 후보 `nl.martijndwars:web-push`(BouncyCastle 필요). 구현 때 최신 판과 Spring Boot 4·Java 21 호환을 확인하고, 맞지 않으면 다른 라이브러리로 바꾼다. 보내는 코드는 `common/helper/webpush/`에 모아 나중에 키트 헬퍼로 옮긴다
+- **Decision**: 웹 푸시 프로토콜(VAPID, 페이로드 암호화 aes128gcm)을 구현한 Java 라이브러리를 쓴다. 후보 `nl.martijndwars:web-push`(BouncyCastle 필요). 오래 갱신되지 않았을 수 있어 **구현 첫 작업으로** 최신 판과 Spring Boot 4·Java 21 호환을 확인하고(가짜 푸시 서버로 한 번 보내 보기), 맞지 않으면 다른 라이브러리로 바꾸고 이 절을 고친다. 보내는 코드는 `common/helper/webpush/`에 모아 나중에 키트 헬퍼로 옮긴다
   - VAPID 키: 환경 변수 `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY`, `WEB_PUSH_SUBJECT`(`mailto:` 주소). 비어 있으면 웹 푸시를 끈다(구독 API는 "지원 안 함"을 돌려준다). 테스트는 테스트 안에서 키를 만든다
   - 푸시 서버가 404·410을 돌려주면 그 구독을 지운다 (만료된 구독)
 - **Rationale**: 암호화와 서명을 직접 짜면 틀리기 쉽다. 키는 원칙 VI에 따라 환경 변수로만
@@ -49,7 +49,8 @@ Technical Context에 미결은 없다. 아래는 키트와 moa 코드를 확인�
 ## R8. 브라우저 알림 구독의 생애
 
 - **Decision**: 켜기 = 권한 요청 → `pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: 공개 키 })` → 구독(엔드포인트·키)을 서버에 저장. 끄기 = 서버에서 지우고 `subscription.unsubscribe()`. 로그아웃 = `use-sign-out.ts`가 서버 로그아웃 전에 그 브라우저의 구독을 지운다. 같은 엔드포인트로 다른 사용자가 저장하면 그 사용자 것으로 바꾼다
-- **Rationale**: FR-008(로그아웃하면 그 브라우저는 꺼짐), US4-AC5. 공유 PC에서 앞 사용자의 알림이 뒤 사용자에게 가지 않게 엔드포인트를 유일하게 둔다
+- 로그인 상태가 로그아웃(`signedOut`, `expired`)으로 바뀌면 이유와 관계없이(로그아웃 단추, 재발급 실패, 다른 탭의 로그아웃) 그 브라우저의 구독을 브라우저 쪽에서 해제한다(`subscription.unsubscribe()`, 서버 호출 없이). 서버에 남은 행은 푸시 서버가 404·410을 돌려줄 때 지운다(R6). 로그아웃 단추는 그 전에 서버 행도 지운다
+- **Rationale**: FR-008(로그아웃하면 그 브라우저는 꺼짐), US4-AC5. 로그아웃 단추만 보면 재발급 실패로 끊긴 브라우저에 구독이 남는다. 공유 PC에서 앞 사용자의 알림이 뒤 사용자에게 가지 않게 엔드포인트를 유일하게 둔다
 - **Alternatives considered**: 서버가 로그아웃 때 지우기. 로그아웃 API는 키트 것이고 어느 브라우저의 구독인지 모른다
 
 ## R9. 개인 알림 정리 (90일)

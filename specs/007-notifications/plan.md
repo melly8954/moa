@@ -82,7 +82,7 @@ backend/
 │       ├── service/notification/  repository/{jpa,reader,writer}/notification/
 │       ├── entity/notification/                     # Notification, PushSubscription
 │       ├── dto/notification/
-│       └── realtime/                                # 커밋 뒤 STOMP·웹 푸시로 보내는 리스너, NotificationCleaner
+│       └── realtime/                                # 커밋 뒤 STOMP·웹 푸시로 보내는 리스너, NotificationCleaner, AsyncConfig(@EnableAsync)
 └── src/test/java/com/moa/
     ├── common/WebSocketAcceptanceTest.java          # 키트 그대로
     ├── api/NotificationsAcceptanceTest.java         # US1~US4 AC
@@ -110,4 +110,4 @@ frontend/
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |---|---|---|
-| 키트 셸 파일(`sidebar-shell.tsx`, `use-sign-out.ts`)을 moa에서 고친다 | 벨 자리와 로그아웃 때 구독 해제 (FR-005, FR-008) | 키트에 먼저 넣기: 사용자가 moa 먼저로 정했다 (006 R12와 같은 길). 키트 옮길 목록에 있다 |
+| 키트 골격 파일(`sidebar-shell.tsx`, `use-sign-out.ts`, `app/layout.tsx`, `providers/app-providers.tsx`)을 moa에서 고친다 | 벨 자리, 로그아웃 때 구독 해제, WebSocket 주소 넘기기와 실시간 공급자 (FR-001, FR-005, FR-008) | 키트에 먼저 넣기: 사용자가 moa 먼저로 정했다 (006 R12와 같은 길). 키트 옮길 목록에 있다 |
