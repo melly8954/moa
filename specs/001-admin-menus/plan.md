@@ -13,6 +13,8 @@ moa가 할 일은 키트 시드의 "관리" 그룹을 없애 메뉴를 최상위
 **셸 나누기 (2026-11-15, FR-005·FR-006)**: 프론트만 바꾼다. 한 셸(`(main)`)과 셸 없는 공지 화면(`(site)`)을 관리 셸·사용자 셸 두 벌로 나눈다.
 두 셸은 키트 사이드바 셸 하나를 메뉴만 바꿔 쓴다. 백엔드와 API는 바꾸지 않는다 ([research.md](./research.md) R5~R8).
 
+**메뉴 대상 (2026-11-15, FR-007)**: 메뉴에 대상(`ADMIN`·`USER`)을 더해 사용자 셸 메뉴도 메뉴 관리에서 다룬다. 키트 menu 헬퍼(백엔드 열·API, 메뉴 관리 화면)를 moa에서 먼저 고치고 키트로 옮긴다 ([research.md](./research.md) R9~R11).
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)
@@ -95,6 +97,27 @@ frontend/src/components/shell/
 └── landing.ts                      # 로그인 뒤 첫 화면 정하기 (R6)
 frontend/src/app/(public)/sign-in/page.tsx  # 로그인 뒤 landing으로 보낸다
 frontend/e2e/                       # menu·auth·notices·notifications e2e를 바뀐 셸에 맞춘다
+```
+
+메뉴 대상 (2026-11-15):
+
+```text
+backend/src/main/resources/db/migration/V2_4__menu_audience.sql   # audience 열, 사용자 메뉴 홈·공지 (R9)
+backend/src/main/java/com/moa/api/
+├── entity/menu/{Menu.java, MenuAudience.java}                    # 대상 enum과 열
+├── service/menu/MenuService.java                                 # 대상별 보이는 트리, 하위 메뉴는 부모 대상 (R9, R10)
+├── application/v1/menu/MenuApplication.java                      # 관리 메뉴(me), 사용자 메뉴(user)
+└── controller/v1/menu/ApiMenuController.java, controller/v1/admin/menu/**  # GET /menus/user, 요청·응답 audience
+backend/src/test/java/com/moa/
+├── api/AdminMenusAcceptanceTest.java   # US3-AC1~AC4
+├── api/MenuAcceptanceTest.java         # 키트. 권한 칸이 빈 관리 메뉴의 보임이 바뀐 만큼 (R8)
+└── support/MenuSeed.java               # V2_4도 읽는다
+frontend/src/
+├── api/menu.ts, types/menu.ts          # user(), audience
+├── components/shell/{use-menu.ts, menu.ts}   # 사용자 셸은 /menus/user, 코드 메뉴 비움 (R11)
+├── components/menu/icons.ts            # house, megaphone
+└── app/(admin)/admin/menus/            # 대상 탭, 대화상자 (R11)
+frontend/e2e/{menu.spec.ts, support/api.ts}   # 사용자 메뉴 가로채기, 대상 탭
 ```
 
 **Structure Decision**: 인수 테스트는 키트와 같은 `com.moa.api` 패키지에 둔다. 마이그레이션은 키트 것을 고치지 않고 moa 것을 하나 더한다. 셸 나누기는 프론트만 고치고, 키트 셸 파일을 고친 것은 키트로 옮길 목록에 올린다 (원칙 III).
