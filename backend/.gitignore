@@ -12,6 +12,8 @@ bin/
 .classpath
 
 .env
+.env.*
+!.env.example
 *.log
 
 # 선택 헬퍼 file의 로컬 저장 폴더
