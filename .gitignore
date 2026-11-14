@@ -14,5 +14,7 @@ Thumbs.db
 
 # Claude Code 개인 설정
 .claude/settings.local.json
+# 데스크톱 앱이 서버를 띄울 때 쓰는 실행 설정 (경로가 PC마다 다르다)
+.claude/launch.json
 
 # 빌드 산출물은 키트를 적용할 때 backend/·frontend/의 .gitignore를 따른다
