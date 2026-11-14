@@ -18,6 +18,7 @@ const menu = (id: number, name: string, path: string | null, icon: string, sortO
   sortOrder,
   enabled: true,
   permission: null as string | null,
+  audience: "ADMIN",
   children: [] as unknown[],
   ...extra,
 })
@@ -27,12 +28,21 @@ const ADMIN_MENUS = [
   menu(7, "업무", null, "folder", 50, {
     children: [menu(8, "주문", "/orders", "cart", 10, { parentId: 7 })],
   }),
+  // moa: 사용자 메뉴 (대상 USER, specs/001-admin-menus FR-007)
+  menu(101, "홈", "/", "home", 10, { audience: "USER" }),
+  menu(102, "공지", "/notices", "megaphone", 20, { audience: "USER" }),
 ]
 
-async function mock(page: Page, onOrder?: (body: unknown) => void) {
+async function mock(page: Page, onOrder?: (body: unknown) => void, onCreate?: (body: unknown) => void) {
   await signedIn(page, { permissions: ["MENU_MANAGE"] })
   await page.route("**/api/v1/menus/me", (route) => route.fulfill({ json: MY_MENUS }))
-  await page.route("**/api/v1/admin/menus", (route) => route.fulfill({ json: ADMIN_MENUS }))
+  await page.route("**/api/v1/admin/menus", (route) => {
+    if (route.request().method() === "POST") {
+      onCreate?.(route.request().postDataJSON())
+      return route.fulfill({ status: 201, json: menu(200, "새 메뉴", "/new", "list", 30) })
+    }
+    return route.fulfill({ json: ADMIN_MENUS })
+  })
   await page.route("**/api/v1/admin/menus/order", (route) => {
     onOrder?.(route.request().postDataJSON())
     return route.fulfill({ status: 204 })
@@ -106,6 +116,45 @@ test("관리자의 계정 화면(설정)은 관리 셸 안에 열린다 @wide", 
   await page.goto("/settings")
   await expect(page.getByRole("heading", { name: "설정" })).toBeVisible()
   await expect(menuLinks(page)).toHaveText(SIX_ADMIN_MENUS.map((m) => m.name))
+})
+
+test("메뉴 관리는 대상 탭으로 나뉘고, 사용자 메뉴 탭에서 만들면 대상 USER로 보낸다 (FR-007) @wide", async ({
+  page,
+}) => {
+  let created: unknown
+  await mock(page, undefined, (body) => (created = body))
+  await page.goto("/admin/menus")
+  // 관리자 메뉴 탭: 관리 메뉴만
+  await expect(page.getByRole("cell", { name: "메뉴 관리", exact: true })).toBeVisible()
+  await expect(page.getByRole("cell", { name: "홈", exact: true })).toHaveCount(0)
+
+  await page.getByRole("tab", { name: "사용자 메뉴" }).click()
+  await expect(page.getByRole("cell", { name: "홈", exact: true })).toBeVisible()
+  await expect(page.getByRole("cell", { name: "공지", exact: true })).toBeVisible()
+  await expect(page.getByRole("cell", { name: "메뉴 관리", exact: true })).toHaveCount(0)
+
+  await page.getByRole("button", { name: "메뉴 추가" }).click()
+  const dialog = page.getByRole("dialog")
+  await expect(dialog.getByText("대상: 사용자 메뉴", { exact: false })).toBeVisible()
+  await dialog.getByLabel("이름").fill("이벤트")
+  await dialog.getByLabel("경로").fill("/events")
+  await dialog.getByRole("button", { name: "저장" }).click()
+  await expect.poll(() => created).toMatchObject({ name: "이벤트", path: "/events", audience: "USER" })
+})
+
+test("사용자 셸은 서버의 사용자 메뉴를 그린다 (FR-007) @wide", async ({ page }) => {
+  await signedIn(page)
+  await page.route("**/api/v1/menus/user", (route) =>
+    route.fulfill({
+      json: [
+        { id: 101, name: "홈", path: "/", icon: "home", children: [] },
+        { id: 103, name: "이벤트", path: "/events", icon: "bell", children: [] },
+      ],
+    }),
+  )
+  await page.route("**/api/v1/notices/new", (route) => route.fulfill({ json: { hasNew: false } }))
+  await page.goto("/")
+  await expect(menuLinks(page)).toHaveText(["홈", "이벤트"])
 })
 
 test("아래로 옮기면 그 단계 순서를 한 번에 보낸다", async ({ page }) => {

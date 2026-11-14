@@ -1,6 +1,7 @@
 package com.moa.api.controller.v1.admin.menu.request;
 
 import com.moa.api.application.v1.menu.command.ModifyMenuCommand;
+import com.moa.api.dto.menu.MenuAudience;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
@@ -22,10 +23,13 @@ public record MenuModifyRequest(
 	@Schema(requiredMode = Schema.RequiredMode.REQUIRED,
 		description = "사용 여부. false면 내 메뉴에서 빠진다") @NotNull Boolean enabled,
 	@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED,
-		description = "볼 때 필요한 권한 키. 비우면 로그인한 사용자 모두가 본다. 등록되지 않은 키는 V001",
-		example = "CODE_MANAGE") @Size(max = 100) String permission) {
+		description = "볼 때 필요한 권한 키. 비우면 대상의 모두가 본다(관리 메뉴는 ADMIN, 사용자 메뉴는 로그인하지 않은 사람까지). 등록되지 않은 키는 V001",
+		example = "CODE_MANAGE") @Size(max = 100) String permission,
+	@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+		description = "moa: 메뉴 대상 (ADMIN 관리 셸, USER 사용자 셸). 비우면 그대로 둔다. 1단계 메뉴를 바꾸면 하위 메뉴도 바뀌고, 하위 메뉴는 부모를 따른다",
+		example = "ADMIN") MenuAudience audience) {
 
 	public ModifyMenuCommand toCommand(Long id) {
-		return new ModifyMenuCommand(id, parentId, name, path, icon, sortOrder, enabled, permission);
+		return new ModifyMenuCommand(id, parentId, name, path, icon, sortOrder, enabled, permission, audience);
 	}
 }

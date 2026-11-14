@@ -26,7 +26,8 @@ public class MenuSeed {
 		"db/migration/V1_7__menus.sql",
 		"db/migration/V1_7_1__admin_menus.sql",
 		"db/migration/V2__flat_admin_menus.sql",
-		"db/migration/V2_2__notice_admin_menu.sql");
+		"db/migration/V2_2__notice_admin_menu.sql",
+		"db/migration/V2_4__menu_audience.sql");
 
 	private final JdbcTemplate jdbcTemplate;
 

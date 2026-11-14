@@ -59,7 +59,7 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
 
 ## R9. 메뉴 대상을 어떻게 저장하나 (FR-007, 2026-11-15)
 
-- **Decision**: `menus`에 `audience`(`ADMIN`·`USER`, 기본 `ADMIN`) 열을 moa 마이그레이션 `V2_4__menu_audience.sql`로 더한다. 기존 메뉴는 모두 `ADMIN`이 되고, 같은 파일이 사용자 메뉴 홈(`/`, 아이콘 `house`)·공지(`/notices`, 아이콘 `megaphone`)를 `USER`로 넣는다. 하위 메뉴는 부모의 대상을 따른다: 만들 때 부모가 있으면 부모 대상으로 정하고, 부모의 대상을 바꾸면 하위 메뉴도 함께 바꾼다
+- **Decision**: `menus`에 `audience`(`ADMIN`·`USER`, 기본 `ADMIN`) 열을 moa 마이그레이션 `V2_4__menu_audience.sql`로 더한다. 기존 메뉴는 모두 `ADMIN`이 되고, 같은 파일이 사용자 메뉴 홈(`/`, 아이콘 `home`)·공지(`/notices`, 아이콘 `megaphone`)를 `USER`로 넣는다. 하위 메뉴는 부모의 대상을 따른다: 만들 때 부모가 있으면 부모 대상으로 정하고, 부모의 대상을 바꾸면 하위 메뉴도 함께 바꾼다
 - **Rationale**: 대상은 메뉴마다 하나다. 별도 표나 그룹 메뉴("사용자" 묶음)로 나누면 2단계 깊이 제한과 "그룹 없이 최상위" 결정(FR-001)과 부딪힌다
 - **Alternatives considered**: 사용자 메뉴를 "사용자" 그룹 아래에 두기. 깊이를 하나 써 버리고 관리 셸의 최상위 구성이 깨진다. 권한 키로 구분하기(`USER_MENU` 같은 가짜 권한): 권한의 뜻이 섞인다
 

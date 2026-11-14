@@ -26,7 +26,7 @@ moa의 `V2__flat_admin_menus.sql`이 최상위로 옮긴 뒤 그룹을 지운다
 
 | 순서 | 메뉴 (`name`) | `path` | `icon` | `sort_order` | `permission` | `audience` |
 |---|---|---|---|---|---|---|
-| 1 | 홈 | `/` | `house` | 10 | 없음 | `USER` |
+| 1 | 홈 | `/` | `home` | 10 | 없음 | `USER` |
 | 2 | 공지 | `/notices` | `megaphone` | 20 | 없음 | `USER` |
 
 위 관리 메뉴 표의 메뉴는 모두 `audience` = `ADMIN`이다.

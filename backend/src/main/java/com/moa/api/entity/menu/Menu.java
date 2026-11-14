@@ -2,10 +2,13 @@ package com.moa.api.entity.menu;
 
 import org.hibernate.annotations.SQLRestriction;
 
+import com.moa.api.dto.menu.MenuAudience;
 import com.moa.common.entity.SoftDeleteEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -46,11 +49,17 @@ public class Menu extends SoftDeleteEntity {
 	@Column(nullable = false)
 	private boolean enabled;
 
-	/** 볼 때 필요한 권한 키. null이면 로그인한 사용자 모두 */
+	/** 볼 때 필요한 권한 키. null이면 대상의 모두 (관리 메뉴는 ADMIN, 사용자 메뉴는 로그인하지 않은 사람까지) */
 	@Column(length = 100)
 	private String permission;
 
-	public Menu(Long parentId, String name, String path, String icon, int sortOrder, String permission) {
+	/** 메뉴 대상 (moa, specs/001-admin-menus FR-007). 하위 메뉴는 부모와 같다 */
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 10)
+	private MenuAudience audience;
+
+	public Menu(Long parentId, String name, String path, String icon, int sortOrder, String permission,
+		MenuAudience audience) {
 		this.parentId = parentId;
 		this.name = name;
 		this.path = path;
@@ -58,10 +67,11 @@ public class Menu extends SoftDeleteEntity {
 		this.sortOrder = sortOrder;
 		this.enabled = true;
 		this.permission = permission;
+		this.audience = audience;
 	}
 
 	public void modify(Long parentId, String name, String path, String icon, int sortOrder, boolean enabled,
-		String permission) {
+		String permission, MenuAudience audience) {
 		this.parentId = parentId;
 		this.name = name;
 		this.path = path;
@@ -69,6 +79,12 @@ public class Menu extends SoftDeleteEntity {
 		this.sortOrder = sortOrder;
 		this.enabled = enabled;
 		this.permission = permission;
+		this.audience = audience;
+	}
+
+	/** 부모의 대상을 따른다 */
+	public void followAudience(MenuAudience audience) {
+		this.audience = audience;
 	}
 
 	public void move(Long parentId, int sortOrder) {

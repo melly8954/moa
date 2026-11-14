@@ -1,4 +1,4 @@
-import { House, type LucideIcon, Megaphone } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import type ko from "../../../messages/ko.json"
 // 헬퍼가 더하는 메뉴 아이콘 (apply가 아래 표시 위에 줄을 끼운다. 표시 줄은 지우지 않는다)
 // @helpers:imports
@@ -15,10 +15,9 @@ export type MenuEntry = {
   children?: MenuEntry[]
 }
 
+// moa: 셸 메뉴는 모두 서버 메뉴다. 관리 셸은 /menus/me, 사용자 셸은 /menus/user (specs/001-admin-menus FR-007, use-menu.ts)
+//   홈·공지는 메뉴 관리의 사용자 메뉴로 옮겼다. 코드 메뉴는 두지 않는다
 export const MENU: MenuEntry[] = [
-  { label: "home", href: "/", icon: House },
-  // 공지 (specs/006-notices): 로그인 없이 보는 화면이지만 로그인한 모두에게 메뉴로 보인다
-  { label: "notices", href: "/notices", icon: Megaphone },
   // @helpers:menu
 ]
 

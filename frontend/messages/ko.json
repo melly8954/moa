@@ -194,7 +194,7 @@
   },
   "menuAdmin": {
     "title": "메뉴 관리",
-    "pageDescription": "셸에 보일 메뉴(2단계)와 메뉴마다 볼 때 필요한 권한을 정해요. 메뉴를 숨겨도 기능 자체는 서버 권한이 막아요.",
+    "pageDescription": "셸에 보일 메뉴(2단계)와 메뉴마다 볼 때 필요한 권한을 정해요. 관리자 메뉴는 관리 화면, 사용자 메뉴는 사용자 화면 사이드바에 보여요. 메뉴를 숨겨도 기능 자체는 서버 권한이 막아요.",
     "empty": "아직 메뉴가 없어요.",
     "add": "메뉴 추가",
     "edit": "메뉴 수정",
@@ -218,12 +218,13 @@
     "noIcon": "없음",
     "sortOrder": "정렬 순서",
     "permission": "필요한 권한",
-    "permissionHint": "권한 키 (예: CODE_MANAGE). 비우면 로그인한 사용자 모두가 봐요.",
+    "permissionHint": "권한 키 (예: CODE_MANAGE). 비우면 관리자 메뉴는 관리자만, 사용자 메뉴는 로그인하지 않은 사람까지 모두 봐요.",
     "enabled": "사용",
     "inUse": "사용",
     "notInUse": "사용 안 함",
     "group": "그룹",
     "everyone": "모두",
+    "adminOnly": "관리자만",
     "actions": "관리",
     "save": "저장",
     "cancel": "취소",
@@ -236,7 +237,11 @@
     "pathPattern": "/로 시작하는 화면 주소를 적거나 비워 주세요. 다른 사이트 주소는 쓸 수 없어요.",
     "pathMax": "200자 이하로 입력해 주세요.",
     "sortOrderInvalid": "0 이상의 숫자로 입력해 주세요.",
-    "permissionMax": "100자 이하로 입력해 주세요."
+    "permissionMax": "100자 이하로 입력해 주세요.",
+    "audience": "메뉴 대상",
+    "audienceAdmin": "관리자 메뉴",
+    "audienceUser": "사용자 메뉴",
+    "dialogAudience": "대상: {name} (하위 메뉴는 상위 메뉴를 따라요)"
   },
   "role": {
     "title": "역할 관리",
