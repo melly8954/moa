@@ -53,8 +53,7 @@
     "loginHistories": "접속 이력",
     "roles": "역할 관리",
     "users": "사용자 관리",
-    "notices": "공지",
-    "notifications": "알림"
+    "notices": "공지"
   },
   "locales": {
     "ko": "한국어"
