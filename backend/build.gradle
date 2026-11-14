@@ -91,7 +91,7 @@ tasks.named('bootRun') {
 }
 
 // DB 테스트(@Tag("db"), AcceptanceTest 상속)는 Testcontainers로 MariaDB를 띄워 메모리를 많이 쓴다.
-// 기본 test·build에서는 빼고, ./gradlew dbTest로 따로 돌린다. CI는 둘 다 돌린다
+// 기본 test·build에서는 빼고, ./gradlew dbTest로 따로 돌린다. CI는 build를 매번, dbTest를 작업 브랜치 → dev PR에서 한 번 돌린다 (docs/git.md)
 tasks.named('test') {
 	useJUnitPlatform {
 		excludeTags 'db'
