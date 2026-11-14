@@ -6,7 +6,6 @@ import { useState } from "react"
 import { api } from "@/api"
 import { PageHeader } from "@/components/kit/page-header"
 import { QueryState } from "@/components/kit/query-state"
-import { PushToggle } from "@/components/notification/push-toggle"
 import { NOTIFICATIONS_KEY, useOpenNotification, useReadAll } from "@/components/notification/use-notifications"
 import { Button } from "@/components/ui/button"
 import { formatDateTime } from "@/lib/format"
@@ -14,7 +13,7 @@ import { cn } from "@/lib/utils"
 
 const SIZE = 20
 
-// 알림 화면 (specs/007-notifications US2·US4). 내 개인 알림 최신순, 모두 읽음, 브라우저 알림 켜기·끄기
+// 알림 화면 (specs/007-notifications US2). 내 개인 알림 최신순, 모두 읽음. 브라우저 알림 켜기·끄기는 설정 화면 (FR-008)
 // 알림을 누르면 읽음 처리 뒤 관련 화면으로 간다
 export default function NotificationsPage() {
   const t = useTranslations("notification")
@@ -39,7 +38,6 @@ export default function NotificationsPage() {
           </Button>
         }
       />
-      <PushToggle />
       <QueryState query={notifications} isEmpty={(data) => data.content.length === 0} empty={t("empty")}>
         {(data) => (
           <>
