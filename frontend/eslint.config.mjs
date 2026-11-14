@@ -2,6 +2,7 @@ import { defineConfig, globalIgnores } from "eslint/config"
 import nextVitals from "eslint-config-next/core-web-vitals"
 import nextTs from "eslint-config-next/typescript"
 import security from "eslint-plugin-security"
+import { GENERATED } from "./scripts/generated-files.mjs"
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -27,13 +28,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "playwright-report/**",
     "test-results/**",
-    // shadcn 생성 코드. 고치지 않는다
-    "src/components/ui/**",
-    "src/hooks/use-mobile.ts",
-    "src/hooks/use-highlighted-code.ts",
-    "src/lib/highlighter.tsx",
-    // npm run gen:api가 만든 타입
-    "src/types/schema.d.ts",
+    // 생성 코드. 고치지 않는다 (scripts/generated-files.mjs)
+    ...GENERATED.flatMap((path) => [path, `${path}/**`]),
   ]),
 ])
 

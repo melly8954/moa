@@ -1,8 +1,8 @@
 # psw-dev-kit 적용 기록 (CONTRACT.md 3절)
 template=web-next
-tag=web-next/v0.3.0
+tag=web-next/v0.5.0
 theme=default
 shell=sidebar
 helpers=code,login-history,menu,rbac,user-admin
 presets=admin
-applied=2026-11-09
+applied=2026-11-14

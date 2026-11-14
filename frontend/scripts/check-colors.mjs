@@ -1,17 +1,14 @@
 // 색 직접 클래스 검사: 색은 테마 변수 클래스(bg-primary, text-muted-foreground 등)로만 쓴다
 // Tailwind 팔레트 색(text-red-500, bg-zinc-50, bg-white …)과 hex·rgb 인라인을 찾으면 실패한다
-// shadcn 생성 코드(src/components/ui, 코드 강조 hook·lib)와 테마 파일은 보지 않는다
+// 생성 코드(scripts/generated-files.mjs)와 테마 파일(css)은 보지 않는다
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { join, relative } from "node:path"
 import { fileURLToPath } from "node:url"
+import { GENERATED } from "./generated-files.mjs"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const SRC = join(ROOT, "src")
-const SKIP = [
-  join(SRC, "components", "ui"),
-  join(SRC, "hooks", "use-highlighted-code.ts"),
-  join(SRC, "lib", "highlighter.tsx"),
-]
+const SKIP = GENERATED.map((path) => join(ROOT, path))
 
 const PALETTE =
   "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose"
