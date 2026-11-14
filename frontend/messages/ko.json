@@ -53,7 +53,8 @@
     "loginHistories": "접속 이력",
     "roles": "역할 관리",
     "users": "사용자 관리",
-    "notices": "공지"
+    "notices": "공지",
+    "notifications": "알림"
   },
   "locales": {
     "ko": "한국어"
@@ -413,5 +414,25 @@
     "actionsOf": "{title} 작업",
     "newBadge": "새 공지",
     "number": "번호"
+  },
+  "notification": {
+    "title": "알림",
+    "description": "나에게 온 알림",
+    "bell": "알림",
+    "bellUnread": "알림, 안 읽은 알림 {count}개",
+    "recent": "최근 알림",
+    "readAll": "모두 읽음",
+    "viewAll": "모두 보기",
+    "empty": "알림이 없어요.",
+    "unread": "안 읽음",
+    "noticeToast": "새 공지: {title}",
+    "push": "브라우저 알림",
+    "pushDescription": "moa 화면을 보고 있지 않을 때 새 알림을 이 브라우저의 알림으로 받아요.",
+    "pushUnsupported": "이 브라우저는 브라우저 알림을 지원하지 않아요.",
+    "pushDenied": "브라우저 알림이 막혀 있어요. 브라우저 설정에서 알림을 허용해 주세요.",
+    "pushServerOff": "지금은 브라우저 알림을 쓸 수 없어요.",
+    "pushOn": "브라우저 알림을 켰어요.",
+    "pushOff": "브라우저 알림을 껐어요.",
+    "open": "보기"
   }
 }

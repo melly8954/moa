@@ -29,8 +29,8 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 시스템 | 운영자 역할 | 키트 rbac | `003-admin-roles` | 구현됨 |
 | 시스템 | 공통코드 | 키트 code | `004-admin-codes` | 구현됨 |
 | 시스템 | 접속 이력 | 키트 login-history | `005-admin-login-history` | 구현됨 |
-| 공지 | 공지사항 (관리 화면과 사용자 목록·상세) | moa | `006-notices` | 구현됨 (실시간 알림 US4는 007 뒤) |
-| 알림 | 알림 (실시간 전달, 개인 알림함, 브라우저 알림) | moa, 키트 websocket | `007-notifications` | 기획 중. 공지가 첫 사용처, 사용자 쪽 기능도 쓴다 |
+| 공지 | 공지사항 (관리 화면과 사용자 목록·상세) | moa | `006-notices` | 구현됨 |
+| 알림 | 알림 (실시간 전달, 개인 알림함, 브라우저 알림) | moa, 키트 websocket | `007-notifications` | 구현됨. 개인 알림을 보내는 기능은 각 기능이 `NotificationApplication.notify`로 붙는다 |
 | 회원 | 탈퇴 계정 복구 | moa | - | 보류: 탈퇴 상태·유예 기간이 정해진 뒤 |
 | 회원 | 회원 제재·해제 | moa | - | 미정 |
 | 신고 | 신고 처리 | moa | - | 미정 |

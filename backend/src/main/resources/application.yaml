@@ -85,3 +85,16 @@ spring:
     multipart:
       max-file-size: ${FILE_MAX_SIZE:20MB}
       max-request-size: ${FILE_MAX_REQUEST_SIZE:50MB}
+---
+# moa: 알림 (specs/007-notifications). 개인 알림 보관 기간과 브라우저 알림(웹 푸시) VAPID 키
+app:
+  notification:
+    # 이 기간이 지난 개인 알림은 매일 지운다 (FR-009)
+    retention-days: ${NOTIFICATION_RETENTION_DAYS:90}
+    cleanup-cron: ${NOTIFICATION_CLEANUP_CRON:0 0 5 * * *}
+  web-push:
+    # VAPID 키(base64url). 비우면 브라우저 알림을 끈다. 키는 사람이 만들어 환경 변수로만 준다 (quickstart)
+    public-key: ${WEB_PUSH_PUBLIC_KEY:}
+    private-key: ${WEB_PUSH_PRIVATE_KEY:}
+    # 푸시 서버가 연락할 운영자 주소 (mailto:...)
+    subject: ${WEB_PUSH_SUBJECT:}

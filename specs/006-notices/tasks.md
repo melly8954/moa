@@ -121,9 +121,9 @@ description: "공지사항 (notices) 작업 목록"
 
 **선행 조건**: `007-notifications`가 키트 websocket 헬퍼와 전체 알림 경로를 만든 뒤 시작한다. 그 전까지 이 단계는 체크하지 않는다 (research.md R9)
 
-- [ ] T041 [US4] `007-notifications`의 전체 알림 경로로 backend/src/main/java/com/moa/api/application/v1/notice/NoticeApplication.java의 `publish`에서 공지 제목을 보낸다 (자세한 방법은 007 plan을 따른다)
-- [ ] T042 [US4] `@DisplayName("US4-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/NoticesAcceptanceTest.java에 더한다 (방법은 007의 알림 테스트를 따른다)
-- [ ] T043 [US4] frontend/에서 전체 알림을 받으면 공지 제목 알림을 띄우고 새 공지 쿼리를 무효화한다
+- [X] T041 [US4] `007-notifications`의 전체 알림 경로로 backend/src/main/java/com/moa/api/application/v1/notice/NoticeApplication.java의 `publish`에서 공지 제목을 보낸다 (자세한 방법은 007 plan을 따른다)
+- [X] T042 [US4] `@DisplayName("US4-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/NoticesAcceptanceTest.java에 더한다 (방법은 007의 알림 테스트를 따른다)
+- [X] T043 [US4] frontend/에서 전체 알림을 받으면 공지 제목 알림을 띄우고 새 공지 쿼리를 무효화한다
 
 ---
 

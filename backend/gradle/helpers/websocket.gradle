@@ -1,0 +1,4 @@
+// 선택 헬퍼: websocket. apply.sh가 gradle/helpers/websocket.gradle로 복사한다
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+}
