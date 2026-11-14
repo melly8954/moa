@@ -5,7 +5,7 @@
 ## 처음 구성 (FR-001과 시드의 대응)
 
 모두 최상위 메뉴다 (`parent_id` 없음). 키트 시드(`V1_7`, `V1_7_1`)는 "관리" 그룹(`id` 1) 아래에 넣고,
-moa의 `V2__flat_admin_menus.sql`이 최상위로 옮긴 뒤 그룹을 지운다(`deleted_at`).
+moa의 `V2__flat_admin_menus.sql`이 최상위로 옮긴 뒤 그룹을 지운다(`deleted_at`). 공지 관리는 `006-notices`의 `V2_2__notice_admin_menu.sql`이 처음부터 최상위에 넣는다.
 
 | 순서 | 메뉴 (`name`) | `path` | `sort_order` | `permission` | 시드 파일 |
 |---|---|---|---|---|---|
@@ -14,6 +14,7 @@ moa의 `V2__flat_admin_menus.sql`이 최상위로 옮긴 뒤 그룹을 지운다
 | 3 | 코드 관리 | `/admin/codes` | 20 | `CODE_MANAGE` | `V1_7_1` |
 | 4 | 접속 이력 | `/admin/login-histories` | 30 | `LOGIN_HISTORY_READ` | `V1_7_1` |
 | 5 | 역할 관리 | `/admin/roles` | 40 | `ROLE_MANAGE` | `V1_7_1` |
+| 6 | 공지 관리 | `/admin/notices` | 50 | `NOTICE_MANAGE` | `V2_2` (moa, `006-notices`) |
 
 ## 규칙
 
