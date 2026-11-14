@@ -6,6 +6,7 @@ import { http, refreshAccessToken } from "./client"
 import { codeApi } from "./code"
 import { loginHistoryApi } from "./login-history"
 import { menuApi } from "./menu"
+import { notificationApi } from "./notification"
 import { noticeAdminApi, noticeApi } from "./notice"
 import { roleApi } from "./role"
 import { userAdminApi } from "./user-admin"
@@ -34,6 +35,7 @@ export const api = {
     menu: menuApi,
     notice: noticeApi,
     noticeAdmin: noticeAdminApi,
+    notification: notificationApi,
     role: roleApi,
     userAdmin: userAdminApi,
     richText: richTextApi,

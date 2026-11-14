@@ -5,6 +5,19 @@ moa의 도메인과 기능, 출처, 담당, 상태를 한 장에 둔다. 기능 
 - 출처: `키트` = psw-dev-kit 헬퍼에서 온 기능, `moa` = moa가 만드는 기능
 - 키트 기능도 도입할 때 스펙을 만든다. 스펙에는 키트 동작을 다시 적지 않고 moa가 어떻게 쓰는지만 적는다 (원칙 III)
 
+## 스펙 번호
+
+여럿이 각자 `/speckit-specify`를 돌리면 같은 번호를 받을 수 있다 (번호는 로컬 `specs/` 폴더의 가장 큰 번호 + 1이다). 그래서 번호를 먼저 예약한다.
+
+1. 그 기능의 도메인 표(관리자 백오피스 또는 사용자 쪽)에 예약 줄을 넣는다: 스펙 칸에 다음 번호(`008`), 상태 칸에 `예약 (담당: <이름>)`. 이 변경만 `dev`에 먼저 병합한다 (`docs/` 브랜치)
+2. 스펙을 만들 때 예약한 번호를 명시한다: `/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/008-<이름> <기능 설명>`
+   - 명시하지 않으면 스킬이 로컬 폴더로 번호를 정해, 아직 폴더가 없는 남의 예약 번호를 받을 수 있다
+   - Spec Kit 스크립트(`.specify/scripts/bash/create-new-feature.sh`)를 직접 쓸 때는 `--number 8`. 로컬에 같은 번호 폴더가 있으면 다음 빈 번호로 바뀌니 출력의 번호를 확인한다
+3. 스펙이 생기면 표의 스펙 칸을 폴더 이름(`008-<이름>`)으로, 상태를 `기획 중`으로 바꾼다
+
+- 겹침 검사: CI(`.github/workflows/specs.yml`)가 dev·main으로 가는 PR과 push에서 `scripts/check-spec-numbers.sh`를 돌린다. 같은 번호를 서로 다른 스펙이 쓰면(폴더끼리, 표의 `008-<이름>`과 폴더, 예약 줄 둘) 실패한다. 예약 줄과 그 번호의 스펙 하나가 함께 있는 것은 괜찮다
+- 겹치면 나중에 만든 쪽이 번호를 바꾼다. 문서 PR을 병합한 뒤면 폴더·구현 브랜치(`feat/<번호>-…`)·문서 참조를 모두 바꿔야 하니, 가능하면 그 전에 바꾼다
+
 ## 관리자 백오피스
 
 psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)로 세운다. 프리셋 밖 헬퍼는 넣지 않고 필요한 기능의 스펙에서 정한다.
@@ -16,8 +29,8 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 시스템 | 운영자 역할 | 키트 rbac | `003-admin-roles` | 구현됨 |
 | 시스템 | 공통코드 | 키트 code | `004-admin-codes` | 구현됨 |
 | 시스템 | 접속 이력 | 키트 login-history | `005-admin-login-history` | 구현됨 |
-| 공지 | 공지사항 (관리 화면과 사용자 목록·상세) | moa | `006-notices` | 구현됨 (실시간 알림 US4는 007 뒤) |
-| 알림 | 알림 (실시간 전달, 개인 알림함, 브라우저 알림) | moa, 키트 websocket | `007-notifications` | 기획 중. 공지가 첫 사용처, 사용자 쪽 기능도 쓴다 |
+| 공지 | 공지사항 (관리 화면과 사용자 목록·상세) | moa | `006-notices` | 구현됨 |
+| 알림 | 알림 (실시간 전달, 개인 알림함, 브라우저 알림) | moa, 키트 websocket | `007-notifications` | 구현됨. 개인 알림을 보내는 기능은 각 기능이 `NotificationApplication.notify`로 붙는다 |
 | 회원 | 탈퇴 계정 복구 | moa | - | 보류: 탈퇴 상태·유예 기간이 정해진 뒤 |
 | 회원 | 회원 제재·해제 | moa | - | 미정 |
 | 신고 | 신고 처리 | moa | - | 미정 |

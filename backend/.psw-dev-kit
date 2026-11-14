@@ -2,6 +2,6 @@
 template=springboot
 tag=springboot/v0.5.0
 package=com.moa
-helpers=code,login-history,menu,rbac,rich-text,user-admin
+helpers=code,login-history,menu,rbac,rich-text,user-admin,websocket
 presets=admin
 applied=2026-11-14

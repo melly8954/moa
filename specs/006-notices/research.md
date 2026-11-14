@@ -86,6 +86,7 @@ Technical Context에 미결은 없다. 아래는 키트와 moa 코드를 확인�
 - **Decision**: 이번 구현에서 US4-AC1, FR-009는 만들지 않는다. tasks에 "007 뒤"로 표시하고, 007이 전체 알림 경로를 만든 뒤 이 스펙의 tasks에 이어서 붙인다. 게시 처리에 알림을 붙일 자리만 `NoticeApplication.publish` 한 곳으로 모은다
 - **Rationale**: spec Assumptions(007 전에도 US1~US3은 단독으로 쓴다). 키트 websocket 헬퍼는 007에서 적용한다
 - **Alternatives considered**: 게시 이벤트(`NoticePublishedEvent`)를 지금 만들어 두기. 받는 쪽이 없어 원칙 I(스펙에 없는 동작)에 가깝다. 007에서 정한다
+- **결과 (2026-11-15)**: `007-notifications` R4로 정했다. `NoticeApplication`이 게시(바로 게시 포함) 때 `NoticePublishedEvent`를 내고, 커밋 뒤 `NoticeRealtimeListener`가 `/topic/notices`로 보낸다. US4-AC1은 007 `NotificationsAcceptanceTest` US1-AC1과 e2e로 확인한다
 
 ## R10. 테스트 방식
 

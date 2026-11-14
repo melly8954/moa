@@ -1,5 +1,6 @@
 package com.moa.api.application.v1.notice;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * 공지 (specs/006-notices). 본문 이미지는 같은 트랜잭션에서 rich-text 헬퍼에 잇는다.
  * 임시 저장 공지도 잇는다 (게시 전에 이미지가 정리되지 않게).
- * 실시간 알림(US4)은 007-notifications 뒤에 publish에 붙인다 (research.md R9).
+ * 게시하면 NoticePublishedEvent를 내고, 커밋 뒤 NoticeRealtimeListener가 전체 알림으로 보낸다 (US4, 007 R4).
  */
 @Component
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class NoticeApplication {
 	private final NoticeService noticeService;
 	private final RichTextImageService richTextImageService;
 	private final CurrentActor currentActor;
+	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional(readOnly = true)
 	public Page<NoticeDto> getAdminPage(String keyword, NoticeStatus status, Pageable pageable) {
@@ -52,6 +54,9 @@ public class NoticeApplication {
 	public NoticeDto create(String title, String content, boolean pinned, boolean publish) {
 		NoticeDto notice = noticeService.create(title, content, pinned, publish);
 		richTextImageService.attach(Notice.OWNER_TYPE, notice.id(), notice.content());
+		if (publish) {
+			eventPublisher.publishEvent(new NoticePublishedEvent(notice.id(), notice.title()));
+		}
 		return notice;
 	}
 
@@ -64,7 +69,9 @@ public class NoticeApplication {
 
 	@Transactional
 	public NoticeDto publish(Long id) {
-		return noticeService.publish(id);
+		NoticeDto notice = noticeService.publish(id);
+		eventPublisher.publishEvent(new NoticePublishedEvent(notice.id(), notice.title()));
+		return notice;
 	}
 
 	@Transactional

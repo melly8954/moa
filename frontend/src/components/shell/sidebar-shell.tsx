@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { NotificationBell } from "@/components/notification/notification-bell"
+import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import {
   Sidebar,
@@ -22,6 +24,7 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { SITE } from "@/lib/site"
 import { HAS_LOCALE_CHOICE, LocaleMenu } from "./locale-menu"
 import { AccountMenu } from "./account-menu"
@@ -36,6 +39,8 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
   const menu = useMenu()
   const t = useTranslations()
   const title = screenTitle(menu, pathname)
+  // 좁은 폭은 사이드바가 서랍이라 계정 줄 벨이 숨는다. 머리에도 벨을 둔다 (moa 007 FR-005, 키트로 옮길 것)
+  const isMobile = useIsMobile()
   return (
     <SidebarProvider defaultOpen>
       <Sidebar side="left" collapsible="icon" variant="sidebar">
@@ -100,6 +105,10 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>
+            {/* 개인 알림 벨 (moa 007 US2, 키트로 옮길 것) */}
+            <SidebarMenuItem>
+              <NotificationBell showLabel trigger={<SidebarMenuButton tooltip={t("notification.bell")} />} />
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <ThemeMenu showLabel trigger={<SidebarMenuButton tooltip={t("shell.theme")} />} />
             </SidebarMenuItem>
@@ -122,6 +131,11 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
           <Separator orientation="vertical" className="mr-2 h-4" />
           {/* 위치(메뉴 이름)만 보인다. 화면 제목(h1)은 화면의 PageHeader가 둔다 */}
           {title && <span className="text-sm font-medium">{title.label}</span>}
+          {isMobile && (
+            <div className="ml-auto">
+              <NotificationBell trigger={<Button variant="ghost" size="icon" />} />
+            </div>
+          )}
         </header>
         <div className="flex min-w-0 flex-1 flex-col gap-(--page-gap) p-(--page-padding)">{children}</div>
       </SidebarInset>

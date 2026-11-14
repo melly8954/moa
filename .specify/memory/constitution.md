@@ -50,7 +50,7 @@ moa가 정하는 부분만 쓴다.
 ## 기술 제약
 
 - 모노레포다. 백엔드는 `backend/`, 프론트는 `frontend/`에 둔다.
-- 백엔드: Spring Boot, psw-dev-kit `springboot/v0.5.0` (admin 프리셋, rich-text). 적용 기록은 `backend/.psw-dev-kit`.
+- 백엔드: Spring Boot, psw-dev-kit `springboot/v0.5.0` (admin 프리셋, rich-text, websocket). 적용 기록은 `backend/.psw-dev-kit`.
 - 프론트: Next, psw-dev-kit `web-next/v0.5.0` (admin 프리셋, rich-text). 적용 기록은 `frontend/.psw-dev-kit`.
 - 키트 버전 태그는 키트를 적용하거나 올릴 때 이 절에 적는다.
 
@@ -69,4 +69,4 @@ moa가 정하는 부분만 쓴다.
   문구만 고치면 PATCH를 올린다.
 - 문서는 100줄 안팎으로 짧게 유지한다. 길어지면 원칙이 아닌 내용이 섞였는지 먼저 본다.
 
-**Version**: 1.1.3 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-14
+**Version**: 1.1.4 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-15

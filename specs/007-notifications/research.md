@@ -24,6 +24,7 @@ Technical Context에 미결은 없다. 아래는 키트와 moa 코드를 확인�
 
 - **Decision**: 보내기는 모두 DB 커밋 뒤에 한다. 공지 게시는 `NoticeApplication.publish`가 `NoticePublishedEvent(id, title)`를 내고, 개인 알림은 `NotificationApplication.notify`가 저장한 뒤 `NotificationCreatedEvent`를 낸다. `@TransactionalEventListener(phase = AFTER_COMMIT)` 리스너가 STOMP(`SimpMessagingTemplate`)와 웹 푸시로 보낸다. 웹 푸시는 느릴 수 있어 `@Async`로 보낸다. 골격에 `@EnableAsync`가 없으므로(키트 `Application.java`는 `@EnableScheduling`만) moa 설정 클래스 `AsyncConfig`에 `@EnableAsync`를 둔다 (키트 파일은 고치지 않는다)
 - **Rationale**: 키트 websocket HELPER 권장. 롤백된 공지·알림을 알리지 않는다. `006-notices` R9가 미룬 게시 이벤트를 여기서 정한다
+- **구현 때 정한 자리 (2026-11-15)**: 아키텍처 규칙(Application은 Controller·Scheduler만 부르고, 트랜잭션은 Application만)에 맞춰 리스너는 `api/application/v1/notice/NoticeRealtimeListener`, `api/application/v1/notification/NotificationRealtimeListener`·`NotificationPushListener`(REQUIRES_NEW)에, 정리기는 `api/scheduler/NotificationCleaner`에 둔다. `api/realtime/`에는 `AsyncConfig`만 있다
 - **Alternatives considered**: Application 안에서 바로 보내기. 롤백되면 이미 보낸 알림을 되돌릴 수 없다
 
 ## R5. 개인 알림을 보내는 쪽 (다른 기능)
@@ -34,7 +35,9 @@ Technical Context에 미결은 없다. 아래는 키트와 moa 코드를 확인�
 
 ## R6. 웹 푸시 보내기 (백엔드)
 
-- **Decision**: 웹 푸시 프로토콜(VAPID, 페이로드 암호화 aes128gcm)을 구현한 Java 라이브러리를 쓴다. 후보 `nl.martijndwars:web-push`(BouncyCastle 필요). 오래 갱신되지 않았을 수 있어 **구현 첫 작업으로** 최신 판과 Spring Boot 4·Java 21 호환을 확인하고(가짜 푸시 서버로 한 번 보내 보기), 맞지 않으면 다른 라이브러리로 바꾸고 이 절을 고친다. 보내는 코드는 `common/helper/webpush/`에 모아 나중에 키트 헬퍼로 옮긴다
+- **Decision**: 웹 푸시는 `dev.blanke.webpush:webpush:6.1.3`(`nl.martijndwars:web-push`를 이어받은 갈래, JDK `HttpClient`, 의존성은 `bcprov-jdk18on` 하나)을 쓴다. VAPID JWT 서명은 라이브러리가 꽂게 둔 `JwtFactory`를 프로젝트에 이미 있는 jjwt(ES256)로 구현한다. 인코딩은 `AES_128_GCM`. 보내는 코드는 `common/helper/webpush/`에 모아 나중에 키트 헬퍼로 옮긴다
+  - T001에서 확인(2026-11-15): 테스트 안 가짜 푸시 서버로 aes128gcm + `vapid t=…, k=…` 요청이 간다. BouncyCastle 키는 알고리즘 이름이 `ECDH`라 jjwt에 넘길 때 JDK `EC` 키로 바꾼다
+  - 버린 것: `nl.martijndwars:web-push` 5.1.2는 `jose4j` 0.7.9와 `bcprov-jdk15on` 1.70(알려진 취약점이 있는 판)을 runtime으로 끌고 오고, `send()` 반환형(Apache HttpClient 4)이 컴파일 경로에 없다
   - VAPID 키: 환경 변수 `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY`, `WEB_PUSH_SUBJECT`(`mailto:` 주소). 비어 있으면 웹 푸시를 끈다(구독 API는 "지원 안 함"을 돌려준다). 테스트는 테스트 안에서 키를 만든다
   - 푸시 서버가 404·410을 돌려주면 그 구독을 지운다 (만료된 구독)
 - **Rationale**: 암호화와 서명을 직접 짜면 틀리기 쉽다. 키는 원칙 VI에 따라 환경 변수로만

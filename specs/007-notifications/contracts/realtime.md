@@ -33,7 +33,7 @@
 | US1-AC1 | ADMIN 공지 게시 → `/topic/notices` 구독자가 {type, id, title} 받음 | STOMP 흉내로 메시지 → 토스트에 제목, "공지" 메뉴 점 |
 | US1-AC2 | 임시 저장·고치기 → 일정 시간 안에 아무것도 오지 않음 | |
 | US1-AC3 | 토큰 없이 연결 → 거절 | 로그아웃 화면은 연결하지 않음 |
-| US1-AC4 | | 토스트 누르면 `/notices/{id}` |
+| US1-AC4 | | 토스트의 "보기" 누르면 `/notices/{id}` |
 | US3-AC1 | `notify` → 그 사용자 `/user/queue/notifications`로 받음 | 메시지 → 토스트, 벨 숫자 하나 증가 |
 | US3-AC2 | 두 사용자 연결, 한 사람에게 `notify` → 다른 사람은 받지 않음 | |
 | US3-AC3 | 같은 사용자로 두 연결 → 둘 다 받음 | |
