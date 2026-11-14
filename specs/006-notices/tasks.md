@@ -140,6 +140,20 @@ description: "공지사항 (notices) 작업 목록"
 
 ---
 
+## Phase 8: 사용자 화면 결정 반영 (2026-11-14 FR-010 변경)
+
+**Purpose**: 사용자 목록을 번호·제목·게시일 표로, 새 공지 표시를 셸 "공지" 메뉴 옆 점으로 바꾼다 (spec.md FR-010, research.md R11·R12)
+
+- [ ] T050 [US2] backend 공개 목록 응답 `NoticeListResponse`와 `NoticeDto`(또는 목록 전용 DTO)에 `number`(게시 순번)를 더한다. `NoticeReader.findPublishedPage`에서 지우지 않은 게시 공지 중 `published_at`이 이르거나, 같으면 `id`가 작거나 같은 것의 수를 상관 부분 질의로 함께 읽는다 (research.md R11)
+- [ ] T051 [US2] backend/src/test/java/com/moa/api/NoticesAcceptanceTest.java의 US2-AC1을 바뀐 AC대로 고친다: 게시한 공지 넷과 지운 공지 하나에서 `number`가 게시 순번(지운 공지는 세지 않음)이고 고정 공지도 번호를 가지는지 본다 (원칙 V: 스펙이 먼저 바뀌었다)
+- [ ] T052 [US2] frontend/src/types/notice.ts의 `NoticeListItem`에 `number`를 더하고, frontend/src/app/(site)/notices/page.tsx 목록을 표(번호·제목·게시일)로 바꾼다. 고정 공지는 번호 자리에 고정 표시, 제목은 상세 링크. 좁은 폭에서 가로로 넘치지 않게 열 폭을 정한다 (contracts/notices-screens.md)
+- [ ] T053 [US3] frontend/src/components/shell/menu.ts의 메뉴 항목 타입에 배지(점) 자리를 더하고, frontend/src/components/shell/use-menu.ts가 "공지" 항목에 `GET /api/v1/notices/new`의 `hasNew`를 붙이게 한다. frontend/src/components/shell/sidebar-shell.tsx가 메뉴 옆에 점을 그린다(접으면 아이콘 위, 화면 낭독기용 "새 공지" 글자). 키트 셸 파일을 moa에서 먼저 고친다 (research.md R12)
+- [ ] T054 [US3] 첫 화면 안내문을 지운다: frontend/src/app/(main)/page.tsx에서 `NewNoticeAlert`를 빼고 frontend/src/components/notice/new-notice-alert.tsx는 새 공지 쿼리 키·hook만 남긴다. 쓰지 않는 문구(`notice.newNotice`, `notice.newNoticeLink`)를 지운다
+- [ ] T055 frontend/e2e/notices.spec.ts를 바꾼 화면대로 고친다: 사용자 목록 표(번호·고정 표시), 새 공지 점이 메뉴 옆에 보이고 목록을 열면 사라짐 (원칙 V: 스펙이 먼저 바뀌었다)
+- [ ] T056 backend/에서 `./gradlew spotlessApply`, `./gradlew build dbTest`, frontend/에서 `npm run check`, `npm run test:e2e`로 통과를 확인한다
+- [ ] T057 specs/006-notices/quickstart.md의 "화면 확인" 4·5번을 사람이 직접 확인한다
+- [ ] T058 메뉴 배지(R12)를 키트 web-next 골격의 세 셸(sidebar·dual·top)과 menu e2e로 옮기고, 새 태그가 나오면 moa 셸 파일을 그 태그와 맞춘다 (키트 작업, 나중)
+
 ## Dependencies & Execution Order
 
 - Setup: 백엔드(T001~T003 → T004)와 프론트(T005·T006 → T007·T008·T009 → T011)는 서로 기대지 않는다. T010은 둘 다 끝난 뒤

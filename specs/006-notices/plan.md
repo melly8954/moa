@@ -37,7 +37,7 @@ moa가 처음 직접 만드는 기능이다. 백엔드에 공지 엔터티와 �
 
 | 원칙 | 판정 | 근거 |
 |---|---|---|
-| I. 스펙이 먼저다 | 통과 | spec.md에 `[NEEDS CLARIFICATION]`이 없다. 사용자 화면의 위치는 FR-010대로 임시 위치를 두고 팀원과 맞춘다 (2026-11-14 사용자 결정, R7) |
+| I. 스펙이 먼저다 | 통과 | spec.md에 `[NEEDS CLARIFICATION]`이 없다. 사용자 화면의 위치·모양은 FR-010(2026-11-14 사용자 결정, R7·R11·R12) |
 | II. AC마다 테스트 하나 | 통과 | US1~US3의 AC 14개에 API 통합 테스트를 하나씩 둔다. US4-AC1은 007 뒤에 더한다 (R9). 핵심 흐름만 e2e |
 | III. 키트를 따른다 | 통과 | rich-text 헬퍼를 키트 그대로 얹고 `.psw-dev-kit`에 적는다. 계층·권한·감사 필드는 골격 규칙을 따른다. 키트 파일은 고치지 않는다 (R1, R8) |
 | IV. 기존 기능은 제자리에서 고친다 | 통과 | 메뉴 6번째는 `001-admin-menus` spec·data-model·contracts·테스트를 고친다. 새 폴더를 만들지 않는다 |
@@ -95,7 +95,7 @@ frontend/
 ├── src/lib/rich-text.ts  src/components/rich-text/      # 키트 그대로
 ├── src/components/notice/                          # 공지 폼, 새 공지 안내, 관리 목록 표
 ├── src/app/(main)/admin/notices/                   # 관리 목록, new, [id]
-├── src/app/(main)/page.tsx                         # 첫 화면에 새 공지 안내
+├── src/components/shell/{menu.ts,use-menu.ts,sidebar-shell.tsx}  # 메뉴 옆 새 공지 점 (R12, 키트로 옮길 것)
 ├── src/app/(site)/                                 # 로그인 없이 보는 화면 묶음 (layout)
 │   └── notices/                                    # 사용자 목록, [id] 상세
 ├── src/app/(dev)/dev/rich-text/                    # 키트 본보기 그대로

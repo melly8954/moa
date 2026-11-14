@@ -17,6 +17,7 @@ moa 마이그레이션 `V2_1__notices.sql`(테이블), `V2_2__notice_admin_menu.
 
 - 인덱스: 공개 목록용 `(status, deleted_at, pinned, published_at)`
 - 공개 목록 정렬: `pinned DESC, published_at DESC, id DESC` (FR-005, 고정끼리도 게시 최신순)
+- 게시 순번(`number`, 칸이 아니라 조회할 때 센다): 지우지 않은 게시 공지 중 `published_at`이 이르거나, 같으면 `id`가 작거나 같은 것의 수. 처음 게시한 공지가 1이고, 지우면 뒤 번호가 당겨진다 (FR-010, research R11)
 - 관리 목록 정렬: `updated_at DESC, id DESC`. 조건은 제목 글자(포함), 상태
 
 ### 상태 전이

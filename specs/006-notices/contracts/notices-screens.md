@@ -1,6 +1,6 @@
 # Contract: 공지 화면
 
-API는 [notices-api.md](./notices-api.md)를 쓴다. 사용자 화면의 위치·모양은 임시다. 팀원과 맞춘 뒤 고친다 (research R7, FR-010).
+API는 [notices-api.md](./notices-api.md)를 쓴다. 사용자 화면의 위치·모양은 FR-010을 따른다 (research R7, R11, R12).
 
 ## 관리자 (로그인, `NOTICE_MANAGE`)
 
@@ -20,7 +20,7 @@ API는 [notices-api.md](./notices-api.md)를 쓴다. 사용자 화면의 위치�
 
 | 경로 | 내용 |
 |---|---|
-| `/notices` | 공지 목록: 고정 표시, 제목, 게시 날짜. 비었으면 빈 결과 안내. 페이지 |
+| `/notices` | 공지 목록 표: 번호(게시 순번 `number`, 고정 공지는 고정 표시), 제목, 게시일. 제목을 누르면 상세. 비었으면 빈 결과 안내. 페이지 |
 | `/notices/[id]` | 제목, 게시 날짜, 본문(`RichTextView`). 없는 공지면 "없는 공지예요" 안내와 목록 링크 |
 
 - 로그인 상태면 `/notices`를 열 때 `PUT /api/v1/notices/seen`을 부르고 새 공지 상태를 다시 읽는다
@@ -28,4 +28,5 @@ API는 [notices-api.md](./notices-api.md)를 쓴다. 사용자 화면의 위치�
 ## 새 공지 표시 (로그인 뒤 셸)
 
 - 셸 메뉴(코드 메뉴 `menu.ts`)에 "공지"(`/notices`)를 모두에게 보인다
-- 첫 화면(`/`)에 `GET /api/v1/notices/new`가 `hasNew`면 "새 공지가 있어요" 안내와 공지 목록 링크
+- `GET /api/v1/notices/new`가 `hasNew`면 "공지" 메뉴 옆에 점을 보인다. 화면 낭독기에는 "새 공지"로 읽힌다. 사이드바를 접으면 아이콘 위에 점
+- 첫 화면 안내문은 두지 않는다
