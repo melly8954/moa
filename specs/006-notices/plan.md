@@ -107,6 +107,7 @@ frontend/
 
 **Structure Decision**: 백엔드는 골격 계층(controller → application → service → reader·writer)과 code 헬퍼의 모양을 따른다. 헬퍼 파일은 키트 태그에서 그대로 옮기고 패키지만 바꾼다.
 프론트의 사용자 공지 화면은 새 경로 묶음 `(site)`에 둔다. 로그인을 요구하지 않고, 로그인 상태면 새 공지 확인을 기록한다 (R7).
+2026-11-15 셸 나누기로 `(site)`는 사용자 셸 묶음 `(user)`로, 관리 화면은 `(admin)`으로 옮긴다. 새 공지 점은 사용자 셸 메뉴에만 붙는다. 이 변경의 작업은 `001-admin-menus` tasks Phase 7에 있다 (R7, R12).
 
 ## Complexity Tracking
 

@@ -9,7 +9,7 @@
 키트 websocket 헬퍼(`springboot/v0.5.0`)를 얹어 실시간 연결을 열고, 그 위에 두 갈래 알림을 만든다.
 전체 알림은 공지 게시 때 `/topic/notices`로 보내고(`006-notices` US4), 개인 알림은 `notifications` 테이블에 쌓은 뒤 `/user/queue/notifications`와 브라우저 알림(웹 푸시)으로 보낸다.
 다른 기능은 `NotificationApplication.notify(...)` 하나로 개인 알림을 보낸다.
-프론트는 로그인하면 실시간 연결을 열고, 토스트와 표시(공지 점, 계정 줄 벨)를 바꾸며, 알림 화면에서 브라우저 알림을 켜고 끈다.
+프론트는 로그인하면 실시간 연결을 열고, 토스트와 표시(공지 점, 계정 줄 벨)를 바꾸며, 설정 화면에서 브라우저 알림을 켜고 끈다(2026-11-15에 알림 화면에서 옮김).
 프론트 실시간 연결, 웹 푸시, 셸 벨은 키트에 없어 moa에서 먼저 만든다 ([research.md](./research.md) R1, R2, R6, R10).
 
 ## Technical Context
@@ -105,6 +105,7 @@ frontend/
 
 **Structure Decision**: 백엔드는 006과 같은 계층이다. 커밋 뒤 보내기(STOMP, 웹 푸시)는 `@TransactionalEventListener(AFTER_COMMIT)` 리스너에 모은다(키트 websocket HELPER 권장).
 프론트 실시간 연결은 루트 공급자에 두어 `(main)`과 `(site)` 화면 모두에서 로그인 상태면 연결한다.
+2026-11-15 셸 나누기로 경로 묶음이 `(admin)`·`(user)`·`(account)`가 된다. 연결은 루트 공급자라 그대로다. 벨은 두 셸에, 브라우저 알림 스위치는 `(account)/settings`로 간다. 이 변경의 작업은 `001-admin-menus` tasks Phase 7에 있다 (R10).
 
 ## Complexity Tracking
 
