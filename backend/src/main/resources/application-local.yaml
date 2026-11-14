@@ -19,7 +19,8 @@ springdoc:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:local-only-secret-change-me-0123456789abcdef}
+    # 기본값을 두지 않는다. backend/.env.local에 JWT_SECRET(32바이트 이상)을 넣는다 (backend/.env.example)
+    secret: ${JWT_SECRET}
   auth:
     refresh-cookie:
       secure: false

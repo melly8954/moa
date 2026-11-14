@@ -51,7 +51,7 @@
 
 | 용도 | 명령 |
 |---|---|
-| 로컬 실행 | `./gradlew bootRun` (local 프로필, Docker로 DB를 함께 띄운다. 시험 계정 `admin`·`user`) |
+| 로컬 실행 | `./gradlew bootRun` (local 프로필, Docker로 DB를 함께 띄운다. 시험 계정 `admin`·`user`). 처음 한 번 `backend/.env.local`에 `JWT_SECRET`을 넣는다 (`backend/.env.example`) |
 | 다른 프로필로 실행 | `SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun` (PowerShell: `$env:SPRING_PROFILES_ACTIVE="dev"; .\gradlew.bat bootRun`). 값은 실행 폴더의 `.env.<프로필>`(`backend/.env.example` 참고)이나 환경 변수로 준다 |
 | 전체 검사 | `./gradlew build` (포맷·lint·테스트. DB 테스트 제외) |
 | DB 테스트 (AC) | `./gradlew dbTest` (Docker 필요) |
