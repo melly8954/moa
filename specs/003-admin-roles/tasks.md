@@ -45,7 +45,7 @@ description: "운영자 역할 (admin-roles) 작업 목록"
 
 **Independent Test**: `./gradlew dbTest --tests "*AdminRolesAcceptanceTest"`에서 US1-AC1~AC3이 통과한다
 
-- [X] T006 [US1] `@DisplayName("US1-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 더한다. 운영자로 `GET /api/v1/menus/me`를 불러 200, 최상위 항목이 "관리" 하나, 하위 메뉴 이름이 "접속 이력" 하나임을 확인한다
+- [X] T006 [US1] `@DisplayName("US1-AC1 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 더한다. 운영자로 `GET /api/v1/menus/me`를 불러 200, 최상위 항목이 "접속 이력" 하나임을 확인한다 (메뉴 최상위 배치는 `001-admin-menus` FR-001)
 - [X] T007 [US1] `@DisplayName("US1-AC2 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 더한다. 운영자로 `GET /api/v1/admin/login-histories`를 불러 200임을 확인한다
 - [X] T008 [US1] `@DisplayName("US1-AC3 ...")` 테스트를 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 더한다. 운영자로 `GET /api/v1/admin/users`를 불러 403, `$.code` = `A005`임을 확인한다
 

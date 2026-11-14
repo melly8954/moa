@@ -14,6 +14,6 @@
 
 | AC | 호출 | 기대 |
 |---|---|---|
-| US1-AC1 | `GET /api/v1/menus/me` | 200. "관리" 그룹 하나, 하위 메뉴는 "접속 이력" 하나 |
+| US1-AC1 | `GET /api/v1/menus/me` | 200. 최상위 항목 "접속 이력" 하나 |
 | US1-AC2 | `GET /api/v1/admin/login-histories` | 200 |
 | US1-AC3 | `GET /api/v1/admin/users` | 403, `code` = `A005` |
