@@ -26,18 +26,22 @@ import { Switch } from "@/components/ui/switch"
 import { useFieldErrorText } from "@/i18n/field-error"
 import { useErrorMessages } from "@/lib/error-messages"
 import { type MenuFormInput, type MenuFormOutput, menuSchema } from "@/lib/schemas/menu"
-import type { AdminMenu } from "@/types/menu"
+import type { AdminMenu, MenuAudience } from "@/types/menu"
 
 // 메뉴 추가·수정 창. menu가 있으면 수정
 // 깊이는 2단계까지: 상위 메뉴로 고를 수 있는 것은 1단계 메뉴뿐이고, 하위 메뉴가 있는 메뉴는 상위를 바꿀 수 없다
+// moa: audience는 지금 탭의 대상. 새 1단계 메뉴는 이 대상으로 만들고, 하위 메뉴는 부모를 따른다 (FR-007)
+//   topLevel은 같은 대상의 1단계 메뉴만 받는다 (상위 메뉴 고르기)
 export function MenuDialog({
   menu,
+  audience,
   topLevel,
   open,
   onOpenChange,
   onSaved,
 }: {
   menu?: AdminMenu
+  audience: MenuAudience
   topLevel: AdminMenu[]
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -71,6 +75,7 @@ export function MenuDialog({
         icon: v.icon || undefined,
         sortOrder: v.sortOrder,
         permission: v.permission || undefined,
+        audience: menu?.audience ?? audience,
       }
       return editing
         ? api.v1.menu.admin.modify(menu.id, { ...body, enabled: v.enabled })
@@ -116,7 +121,12 @@ export function MenuDialog({
       <DialogContent className="max-h-[90svh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t(editing ? "edit" : "add")}</DialogTitle>
-          <DialogDescription>{t("dialogDescription")}</DialogDescription>
+          <DialogDescription>
+            {t("dialogDescription")}{" "}
+            {t("dialogAudience", {
+              name: t((menu?.audience ?? audience) === "USER" ? "audienceUser" : "audienceAdmin"),
+            })}
+          </DialogDescription>
         </DialogHeader>
         <form
           noValidate

@@ -11,6 +11,9 @@ export type MyMenu = {
   children: MyMenu[]
 }
 
+// 메뉴 대상 (moa, specs/001-admin-menus FR-007). ADMIN은 관리 셸, USER는 사용자 셸. 하위 메뉴는 부모를 따른다
+export type MenuAudience = "ADMIN" | "USER"
+
 // 관리 화면의 메뉴 (사용 안 함 포함)
 export type AdminMenu = {
   id: number
@@ -20,8 +23,9 @@ export type AdminMenu = {
   icon?: string | null
   sortOrder: number
   enabled: boolean
-  // 없으면 로그인한 사용자 모두
+  // 없으면 대상의 모두 (관리 메뉴는 ADMIN, 사용자 메뉴는 로그인하지 않은 사람까지)
   permission?: string | null
+  audience: MenuAudience
   children: AdminMenu[]
 }
 
@@ -32,6 +36,8 @@ export type MenuCreateRequest = {
   icon?: string
   sortOrder: number
   permission?: string
+  // 1단계 메뉴만 쓴다. 하위 메뉴는 부모를 따른다
+  audience?: MenuAudience
 }
 export type MenuModifyRequest = MenuCreateRequest & { enabled: boolean }
 export type MenuOrder = { id: number; parentId?: number | null; sortOrder: number }

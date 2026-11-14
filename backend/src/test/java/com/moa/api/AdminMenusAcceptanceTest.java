@@ -2,6 +2,8 @@ package com.moa.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.assertj.MockMvcTester.MockMvcRequestBuilder;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
+import com.jayway.jsonpath.JsonPath;
 import com.moa.support.AcceptanceTest;
 import com.moa.support.MenuSeed;
 
@@ -22,6 +25,7 @@ import com.moa.support.MenuSeed;
 class AdminMenusAcceptanceTest extends AcceptanceTest {
 
 	private static final String MY_MENUS = "/api/v1/menus/me";
+	private static final String USER_MENUS = "/api/v1/menus/user";
 	private static final String ADMIN_MENUS = "/api/v1/admin/menus";
 	private static final List<String> ADMIN_LIST_APIS = List.of(
 		"/api/v1/admin/users",
@@ -88,6 +92,70 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		for (String api : ADMIN_LIST_APIS) {
 			assertThat(mvc.get().uri(api)).as(api).hasStatus(401)
 				.bodyJson().extractingPath("$.code").isEqualTo("A001");
+		}
+	}
+
+	@Test
+	@DisplayName("US3-AC1 메뉴 관리에서 관리 메뉴와 사용자 메뉴(홈, 공지)가 대상으로 나뉘어 보인다")
+	void adminSeesMenusByAudience() {
+		MvcTestResult result = asAdmin(mvc.get().uri(ADMIN_MENUS));
+
+		assertThat(result).hasStatus(200);
+		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].name").asArray()
+			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "역할 관리", "공지 관리");
+		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'USER')].name").asArray()
+			.containsExactlyInAnyOrder("홈", "공지");
+	}
+
+	@Test
+	@DisplayName("US3-AC2 권한 없이 더한 사용자 메뉴는 일반 회원과 로그인하지 않은 사람의 사용자 셸에 보이고 관리 셸에는 없다")
+	void userMenuIsVisibleToEveryone() {
+		createMenu("이벤트", "/events", "USER");
+
+		for (MvcTestResult result : List.of(mvc.get().uri(USER_MENUS).exchange(), asUser(mvc.get().uri(USER_MENUS)))) {
+			assertThat(result).hasStatus(200);
+			assertThat(result).bodyJson().extractingPath("$[*].name").asArray()
+				.containsExactly("홈", "공지", "이벤트");
+		}
+		assertThat(asAdmin(mvc.get().uri(MY_MENUS))).bodyJson().extractingPath("$[*].name").asArray()
+			.doesNotContain("이벤트", "홈", "공지");
+	}
+
+	@Test
+	@DisplayName("US3-AC3 관리자가 사용자 메뉴를 끄면 사용자 셸에서 빠진다")
+	void disabledUserMenuIsHidden() {
+		Number id = createMenu("이벤트", "/events", "USER");
+
+		assertThat(asAdmin(mvc.put().uri(ADMIN_MENUS + "/" + id).contentType(MediaType.APPLICATION_JSON)
+			.content("{\"name\":\"이벤트\",\"path\":\"/events\",\"sortOrder\":30,\"enabled\":false}")))
+			.hasStatus(200);
+
+		assertThat(mvc.get().uri(USER_MENUS).exchange()).bodyJson().extractingPath("$[*].name").asArray()
+			.containsExactly("홈", "공지");
+	}
+
+	@Test
+	@DisplayName("US3-AC4 권한 없이 더한 관리 메뉴는 일반 회원에게 보이지 않는다")
+	void adminMenuWithoutPermissionIsHiddenFromUser() {
+		createMenu("운영 도구", "/admin/tools", "ADMIN");
+
+		assertThat(asUser(mvc.get().uri(MY_MENUS))).bodyJson().extractingPath("$.length()").isEqualTo(0);
+		assertThat(mvc.get().uri(USER_MENUS).exchange()).bodyJson().extractingPath("$[*].name").asArray()
+			.doesNotContain("운영 도구");
+		assertThat(asAdmin(mvc.get().uri(MY_MENUS))).bodyJson().extractingPath("$[*].name").asArray()
+			.contains("운영 도구");
+	}
+
+	/** 메뉴를 만들고 ID를 돌려준다 */
+	private Number createMenu(String name, String path, String audience) {
+		MvcTestResult result = asAdmin(mvc.post().uri(ADMIN_MENUS).contentType(MediaType.APPLICATION_JSON)
+			.content("{\"name\":\"%s\",\"path\":\"%s\",\"sortOrder\":30,\"audience\":\"%s\"}"
+				.formatted(name, path, audience)));
+		assertThat(result).hasStatus(201);
+		try {
+			return JsonPath.read(result.getResponse().getContentAsString(StandardCharsets.UTF_8), "$.id");
+		} catch (UnsupportedEncodingException ex) {
+			throw new IllegalStateException(ex);
 		}
 	}
 

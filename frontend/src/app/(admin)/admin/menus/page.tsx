@@ -12,28 +12,34 @@ import { PageHeader } from "@/components/kit/page-header"
 import { QueryState } from "@/components/kit/query-state"
 import { StatusText } from "@/components/kit/status-text"
 import { menuIcon } from "@/components/menu/icons"
+import { MY_MENUS_QUERY_KEY, USER_MENUS_QUERY_KEY } from "@/components/shell/use-menu"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useErrorMessages } from "@/lib/error-messages"
 import { cn } from "@/lib/utils"
-import type { AdminMenu } from "@/types/menu"
+import type { AdminMenu, MenuAudience } from "@/types/menu"
 import { MenuDialog } from "./menu-dialog"
 
 // 메뉴 관리 (menu 헬퍼, 권한 MENU_MANAGE). 메뉴 트리(2단계)와 메뉴마다 볼 때 필요한 권한
 // 메뉴를 숨겨도 API는 막히지 않는다 (API는 백엔드 권한이 막는다)
 // 순서: 같은 단계 안에서 위·아래로 옮기면 그 단계 전체 순서를 한 번에 저장한다
+// moa: 대상 탭(관리자 메뉴 / 사용자 메뉴). 탭마다 그 대상의 트리와 순서를 다룬다 (specs/001-admin-menus FR-007, research R11)
 export default function MenusPage() {
   const t = useTranslations("menuAdmin")
   const queryClient = useQueryClient()
   const { describeError } = useErrorMessages()
   const tree = useQuery({ queryKey: ["admin", "menus"], queryFn: api.v1.menu.admin.tree })
   const [editing, setEditing] = useState<{ menu?: AdminMenu } | null>(null)
+  const [audience, setAudience] = useState<MenuAudience>("ADMIN")
+  const ofAudience = (tree.data ?? []).filter((m) => m.audience === audience)
 
-  // 관리 화면과 셸 메뉴(내 메뉴)를 함께 새로 읽는다
+  // 관리 화면과 셸 메뉴(관리 메뉴, 사용자 메뉴)를 함께 새로 읽는다
   const refresh = () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ["admin", "menus"] }),
-      queryClient.invalidateQueries({ queryKey: ["me", "menus"] }),
+      queryClient.invalidateQueries({ queryKey: MY_MENUS_QUERY_KEY }),
+      queryClient.invalidateQueries({ queryKey: USER_MENUS_QUERY_KEY }),
     ])
 
   const run = useMutation({
@@ -77,7 +83,9 @@ export default function MenusPage() {
           </div>
         </TableCell>
         <TableCell className="font-mono text-xs">{menu.path ?? t("group")}</TableCell>
-        <TableCell className="font-mono text-xs">{menu.permission ?? t("everyone")}</TableCell>
+        <TableCell className="font-mono text-xs">
+          {menu.permission ?? t(menu.audience === "ADMIN" ? "adminOnly" : "everyone")}
+        </TableCell>
         <TableCell>
           <StatusText tone={menu.enabled ? "positive" : "neutral"}>{t(menu.enabled ? "inUse" : "notInUse")}</StatusText>
         </TableCell>
@@ -133,8 +141,14 @@ export default function MenusPage() {
           </Button>
         }
       />
-      <QueryState query={tree} isEmpty={(d) => d.length === 0} empty={t("empty")}>
-        {(menus) => (
+      <Tabs value={audience} onValueChange={(value) => setAudience(value as MenuAudience)}>
+        <TabsList aria-label={t("audience")}>
+          <TabsTrigger value="ADMIN">{t("audienceAdmin")}</TabsTrigger>
+          <TabsTrigger value="USER">{t("audienceUser")}</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <QueryState query={tree} isEmpty={(d) => !d.some((m) => m.audience === audience)} empty={t("empty")}>
+        {() => (
           <div className="rounded-lg border">
             <Table>
               <TableHeader>
@@ -149,8 +163,8 @@ export default function MenusPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {menus.flatMap((menu, i) => [
-                  row(menu, menus, i, false),
+                {ofAudience.flatMap((menu, i) => [
+                  row(menu, ofAudience, i, false),
                   ...menu.children.map((c, j) => row(c, menu.children, j, true)),
                 ])}
               </TableBody>
@@ -160,7 +174,8 @@ export default function MenusPage() {
       </QueryState>
       <MenuDialog
         menu={editing?.menu}
-        topLevel={tree.data ?? []}
+        audience={audience}
+        topLevel={ofAudience}
         open={editing !== null}
         onOpenChange={(open) => !open && setEditing(null)}
         onSaved={refresh}

@@ -2,9 +2,10 @@ import type { AdminMenu, MenuCreateRequest, MenuModifyRequest, MenuOrder, MyMenu
 import { http } from "./client"
 
 // 메뉴 (menu 헬퍼). api.v1.menu로 부른다
-//   mine: 내 메뉴 (로그인한 사용자) / admin: 메뉴 관리 화면 (MENU_MANAGE)
+//   mine: 내 관리 메뉴 (로그인한 사용자) / user: 사용자 셸 메뉴 (로그인 없이, moa) / admin: 메뉴 관리 화면 (MENU_MANAGE)
 export const menuApi = {
   mine: () => http.get<MyMenu[]>("/api/v1/menus/me").then((res) => res.data),
+  user: () => http.get<MyMenu[]>("/api/v1/menus/user").then((res) => res.data),
   admin: {
     tree: () => http.get<AdminMenu[]>("/api/v1/admin/menus").then((res) => res.data),
     create: (data: MenuCreateRequest) => http.post<AdminMenu>("/api/v1/admin/menus", data).then((res) => res.data),

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.moa.api.dto.menu.MenuAudience;
 import com.moa.api.dto.menu.MenuDto;
 import com.moa.api.dto.menu.MenuOrderDto;
 import com.moa.api.entity.menu.Menu;
@@ -38,37 +39,53 @@ public class MenuService {
 	}
 
 	/**
-	 * 사용 중이고 이 권한으로 볼 수 있는 메뉴 트리. 권한 키가 없는(null) 메뉴는 모두가 본다.
-	 * 경로가 없는 1단계 메뉴(그룹)는 보이는 자식이 없으면 뺀다.
+	 * 사용 중이고 이 대상·권한으로 볼 수 있는 메뉴 트리.
+	 * 권한 키가 없는(null) 메뉴는 관리 메뉴면 시스템 역할 ADMIN만, 사용자 메뉴면 로그인하지 않은 사람까지 모두 본다
+	 * (moa, specs/001-admin-menus FR-002·FR-007). 경로가 없는 1단계 메뉴(그룹)는 보이는 자식이 없으면 뺀다.
 	 */
-	public List<MenuDto> getVisibleTree(Set<String> permissions) {
+	public List<MenuDto> getVisibleTree(MenuAudience audience, Set<String> permissions, boolean admin) {
 		List<MenuDto> visible = tree(menuReader.findAll(), menu -> menu.isEnabled()
-			&& (menu.getPermission() == null || permissions.contains(menu.getPermission())));
+			&& menu.getAudience() == audience
+			&& (menu.getPermission() == null
+				? audience == MenuAudience.USER || admin
+				: permissions.contains(menu.getPermission())));
 		return visible.stream().filter(menu -> menu.path() != null || !menu.children().isEmpty()).toList();
 	}
 
 	/**
+	 * 하위 메뉴의 대상은 보낸 값과 상관없이 부모를 따른다. 1단계 메뉴의 대상을 비우면 관리 메뉴(ADMIN)다.
+	 *
 	 * @throws ServiceException 경로 형식이 틀리거나 등록되지 않은 권한이면 V001, 경로가 겹치면 R002, 부모가 없으면 R001, 3단계가 되면 B001
 	 */
-	public MenuDto create(Long parentId, String name, String path, String icon, int sortOrder, String permission) {
+	public MenuDto create(Long parentId, String name, String path, String icon, int sortOrder, String permission,
+		MenuAudience audience) {
 		String normalizedPath = checkPath(path, null);
 		String normalizedPermission = checkPermission(permission);
 		checkParent(null, parentId, false);
+		MenuAudience resolved = parentId != null ? require(parentId).getAudience()
+			: audience != null ? audience : MenuAudience.ADMIN;
 		return MenuDto.of(
-			menuWriter.save(new Menu(parentId, name, normalizedPath, icon, sortOrder, normalizedPermission)),
+			menuWriter.save(new Menu(parentId, name, normalizedPath, icon, sortOrder, normalizedPermission, resolved)),
 			List.of());
 	}
 
 	/**
+	 * 하위 메뉴의 대상은 부모를 따른다. 1단계 메뉴의 대상을 바꾸면 하위 메뉴도 함께 바뀐다. 대상을 비우면 그대로 둔다.
+	 *
 	 * @throws ServiceException 메뉴·부모가 없으면 R001, 경로·권한 V001, 경로 중복 R002, 3단계·자기 부모면 B001
 	 */
 	public MenuDto modify(Long id, Long parentId, String name, String path, String icon, int sortOrder,
-		boolean enabled, String permission) {
+		boolean enabled, String permission, MenuAudience audience) {
 		Menu menu = require(id);
 		String normalizedPath = checkPath(path, id);
 		String normalizedPermission = checkPermission(permission);
 		checkParent(id, parentId, menuReader.hasChildren(id));
-		menu.modify(parentId, name, normalizedPath, icon, sortOrder, enabled, normalizedPermission);
+		MenuAudience resolved = parentId != null ? require(parentId).getAudience()
+			: audience != null ? audience : menu.getAudience();
+		menu.modify(parentId, name, normalizedPath, icon, sortOrder, enabled, normalizedPermission, resolved);
+		menuReader.findAll().stream()
+			.filter(child -> id.equals(child.getParentId()))
+			.forEach(child -> child.followAudience(resolved));
 		return MenuDto.of(menu, List.of());
 	}
 
@@ -110,6 +127,8 @@ public class MenuService {
 			if (parent.getId().equals(menu.getId()) || parent.getParentId() != null) {
 				throw new ServiceException(ErrorCode.INVALID_STATE, "메뉴는 2단계까지만 둘 수 있습니다: " + menu.getId());
 			}
+			// 다른 대상의 부모 아래로 옮기면 부모의 대상을 따른다 (FR-007)
+			menu.followAudience(parent.getAudience());
 		}
 	}
 

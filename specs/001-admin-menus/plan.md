@@ -115,7 +115,7 @@ backend/src/test/java/com/moa/
 frontend/src/
 ├── api/menu.ts, types/menu.ts          # user(), audience
 ├── components/shell/{use-menu.ts, menu.ts}   # 사용자 셸은 /menus/user, 코드 메뉴 비움 (R11)
-├── components/menu/icons.ts            # house, megaphone
+├── components/menu/icons.ts            # megaphone (home은 이미 있다)
 └── app/(admin)/admin/menus/            # 대상 탭, 대화상자 (R11)
 frontend/e2e/{menu.spec.ts, support/api.ts}   # 사용자 메뉴 가로채기, 대상 탭
 ```

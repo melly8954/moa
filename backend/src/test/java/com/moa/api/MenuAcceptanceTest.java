@@ -35,7 +35,8 @@ class MenuAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("메뉴: 내 메뉴는 권한으로 거르고(권한 키가 없으면 모두, ADMIN은 전부), 보이는 하위 메뉴가 없는 그룹은 뺀다")
+	// moa: 권한 키가 없는 관리 메뉴는 ADMIN만 본다 (specs/001-admin-menus FR-002). 키트는 "로그인한 모두"다
+	@DisplayName("메뉴: 내 메뉴는 권한으로 거르고(권한 키가 없으면 ADMIN만, ADMIN은 전부), 보이는 하위 메뉴가 없는 그룹은 뺀다")
 	void myMenusByPermission() {
 		long group = create(null, "업무", null, 10, null);
 		create(group, "주문", "/orders", 10, null);
@@ -47,10 +48,7 @@ class MenuAcceptanceTest extends AcceptanceTest {
 		MvcTestResult admin = asAdmin(mvc.get().uri(MY_MENUS));
 
 		assertThat(user).hasStatus(200);
-		assertThat(user).bodyJson().extractingPath("$.length()").isEqualTo(2);
-		assertThat(user).bodyJson().extractingPath("$[0].children.length()").isEqualTo(1);
-		assertThat(user).bodyJson().extractingPath("$[0].children[0].path").isEqualTo("/orders");
-		assertThat(user).bodyJson().extractingPath("$[1].path").isEqualTo("/notices");
+		assertThat(user).bodyJson().extractingPath("$.length()").isEqualTo(0);
 		assertThat(admin).bodyJson().extractingPath("$.length()").isEqualTo(2);
 		assertThat(admin).bodyJson().extractingPath("$[0].children.length()").isEqualTo(2);
 	}
