@@ -54,7 +54,9 @@ test("사용자 공지: 로그인 없이 목록과 상세를 본다 (가로 넘�
   await expect(page.getByRole("row", { name: /서버 점검 안내/ })).not.toContainText("8")
   await expect(page.getByRole("row", { name: /이벤트 당첨자 발표/ })).toContainText("7")
   await expect(page.getByRole("row", { name: /이벤트 당첨자 발표/ })).toContainText("2026-11-13")
-  await expect(page.getByRole("link", { name: "로그인" })).toBeVisible()
+  // 사용자 셸 안에 있다: 사이드바(좁은 폭은 서랍 단추)와 로그인 단추 (001 FR-005, FR-010)
+  await expect(page.getByRole("button", { name: "Toggle Sidebar" }).first()).toBeVisible()
+  await expect(page.getByRole("link", { name: "로그인" }).first()).toBeVisible()
   await expectNoHorizontalOverflow(page)
   await expectNoSeriousA11yViolations(page)
 

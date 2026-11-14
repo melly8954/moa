@@ -50,14 +50,62 @@ test("메뉴 관리: 가로 넘침·접근성", async ({ page }) => {
   await expectNoSeriousA11yViolations(page)
 })
 
-test("셸은 코드 메뉴(홈) 다음에 서버 메뉴를 그린다 @wide", async ({ page }) => {
-  await mock(page)
+// 관리 셸·사용자 셸 (specs/001-admin-menus FR-001·FR-005·FR-006). 백엔드 대신 API를 가로챈다
+const SIX_ADMIN_MENUS = [
+  ["사용자 관리", "/admin/users", "users"],
+  ["메뉴 관리", "/admin/menus", "menu"],
+  ["코드 관리", "/admin/codes", "list"],
+  ["접속 이력", "/admin/login-histories", "history"],
+  ["역할 관리", "/admin/roles", "shield"],
+  ["공지 관리", "/admin/notices", "megaphone"],
+].map(([name, path, icon], i) => ({ id: i + 1, name, path, icon, children: [] }))
+
+async function signIn(page: Page, menus: unknown[]) {
+  await signedIn(page, { menus })
+  await page.route("**/api/v1/auth/login", (route) =>
+    route.fulfill({ json: { accessToken: "e2e-token", tokenType: "Bearer", expiresIn: 900 } }),
+  )
+  // 첫 화면의 목록 API는 빈 결과로 둔다
+  await page.route("**/api/v1/admin/**", (route) =>
+    route.fulfill({ json: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 } }),
+  )
+  await page.route("**/api/v1/notices/new", (route) => route.fulfill({ json: { hasNew: false } }))
+  await page.goto("/sign-in")
+  await page.getByLabel("아이디").fill("e2e")
+  await page.getByLabel("비밀번호").fill("e2e-pass")
+  await page.getByRole("button", { name: "로그인" }).click()
+}
+
+const menuLinks = (page: Page) => page.getByRole("navigation", { name: "메뉴" }).getByRole("link")
+
+test("US1-AC1 관리자는 로그인하면 첫 관리 메뉴 화면이 열리고 사이드바에 관리 메뉴 6개만 있다 @wide", async ({
+  page,
+}) => {
+  await signIn(page, SIX_ADMIN_MENUS)
+  await expect(page).toHaveURL(/\/admin\/users$/)
+  await expect(menuLinks(page)).toHaveText(SIX_ADMIN_MENUS.map((m) => m.name))
+  await expect(page.getByRole("link", { name: "홈", exact: true })).toHaveCount(0)
+  await expect(page.getByRole("link", { name: /^공지(, 새 공지)?$/ })).toHaveCount(0)
+})
+
+test("US2-AC1 일반 회원 사이드바에는 관리 메뉴가 없다 @wide", async ({ page }) => {
+  await signedIn(page)
+  await page.route("**/api/v1/notices/new", (route) => route.fulfill({ json: { hasNew: false } }))
   await page.goto("/")
-  await expect(page.getByRole("link", { name: "홈", exact: true }).first()).toBeVisible()
-  // 서버 메뉴는 코드 메뉴 다음에 최상위 링크로 보인다 (두 겹 사이드바형은 띠의 아이콘 링크, 이름은 aria-label)
-  const nav = page.getByRole("navigation")
-  await expect(nav.getByRole("link", { name: "사용자 관리", exact: true }).first()).toBeAttached()
-  await expect(nav.getByRole("link", { name: "메뉴 관리", exact: true }).first()).toBeAttached()
+  await expect(menuLinks(page)).toHaveText(["홈", "공지"])
+})
+
+test("US2-AC4 일반 회원은 로그인하면 사용자 셸 첫 화면이 열리고 사이드바에 홈, 공지가 있다 @wide", async ({ page }) => {
+  await signIn(page, [])
+  await expect(page).toHaveURL(/\/$/)
+  await expect(menuLinks(page)).toHaveText(["홈", "공지"])
+})
+
+test("관리자의 계정 화면(설정)은 관리 셸 안에 열린다 @wide", async ({ page }) => {
+  await signedIn(page, { menus: SIX_ADMIN_MENUS })
+  await page.goto("/settings")
+  await expect(page.getByRole("heading", { name: "설정" })).toBeVisible()
+  await expect(menuLinks(page)).toHaveText(SIX_ADMIN_MENUS.map((m) => m.name))
 })
 
 test("아래로 옮기면 그 단계 순서를 한 번에 보낸다", async ({ page }) => {

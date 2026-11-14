@@ -1,6 +1,6 @@
 "use client"
 
-import { KeyRound, LogOut, UserRound } from "lucide-react"
+import { KeyRound, LogOut, Settings, UserRound } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import {
@@ -13,10 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useMe } from "@/lib/me"
-import { PASSWORD_PATH } from "@/lib/next-path"
+import { PASSWORD_PATH, SETTINGS_PATH } from "@/lib/next-path"
 import { useSignOut } from "./use-sign-out"
 
-// 내 계정 메뉴: 이름·아이디, 비밀번호 변경, 로그아웃
+// 내 계정 메뉴: 이름·아이디, 설정, 비밀번호 변경, 로그아웃 (moa: 설정은 specs/001-admin-menus FR-005)
 // trigger: 셸마다 다른 버튼 모양. 버튼 안에는 사람 아이콘과 이름이 들어간다
 export function AccountMenu({ trigger, showName = true }: { trigger: React.ReactElement; showName?: boolean }) {
   const t = useTranslations("shell")
@@ -36,6 +36,10 @@ export function AccountMenu({ trigger, showName = true }: { trigger: React.React
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        <DropdownMenuItem render={<Link href={SETTINGS_PATH} />}>
+          <Settings />
+          {t("settings")}
+        </DropdownMenuItem>
         <DropdownMenuItem render={<Link href={PASSWORD_PATH} />}>
           <KeyRound />
           {t("changePassword")}

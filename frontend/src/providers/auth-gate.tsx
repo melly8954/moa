@@ -12,7 +12,7 @@ import { useMe } from "@/lib/me"
 import { PASSWORD_PATH, signInPath } from "@/lib/next-path"
 import { useAuthStore } from "@/stores/auth"
 
-// 로그인한 사용자만 보는 화면을 감싼다 ((main)/layout.tsx)
+// 로그인한 사용자만 보는 화면을 감싼다 ((admin)·(account) 레이아웃, (user)/(signed-in) 레이아웃)
 //   처음 열거나 새로고침하면 리프레시 토큰 쿠키로 액세스 토큰을 다시 받고, 내 정보(/users/me)를 읽는다
 //   받지 못하면 로그인 화면으로 보낸다. 지금 주소를 ?next=로 붙여 로그인 뒤 돌아온다 (로그아웃을 누른 때는 붙이지 않는다)
 //   쓰는 중에 재발급이 실패하면 안내를 띄우고 보낸다

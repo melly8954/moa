@@ -8,6 +8,7 @@ const publicRoutes = ["/sign-in"]
 const routes = [
   "/",
   "/account/password",
+  "/settings",
   // @helpers:routes
 ]
 const wideRoutes: string[] = []

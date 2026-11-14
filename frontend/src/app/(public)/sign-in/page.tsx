@@ -8,6 +8,8 @@ import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
+import { landingPath } from "@/components/shell/landing"
+import { MY_MENUS_QUERY_KEY } from "@/components/shell/use-menu"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -40,7 +42,17 @@ export default function SignInPage() {
       queryClient.clear()
       useAuthStore.getState().signIn(token.accessToken)
       // 로그인이 필요한 화면에서 왔으면 그 화면으로 돌아간다 (?next=, 같은 사이트 경로만)
-      router.replace(currentNextPath() ?? "/")
+      // 아니면 관리 메뉴가 있으면 관리 셸, 없으면 사용자 셸 첫 화면 (moa: specs/001-admin-menus FR-006)
+      const next = currentNextPath()
+      if (next) {
+        router.replace(next)
+        return
+      }
+      // 메뉴를 읽지 못하면 사용자 셸 첫 화면으로 간다 (권한은 화면마다 API가 막는다)
+      const menus = await queryClient
+        .fetchQuery({ queryKey: MY_MENUS_QUERY_KEY, queryFn: api.v1.menu.mine })
+        .catch(() => [])
+      router.replace(landingPath(menus))
     } catch (error) {
       const apiError = toApiError(error)
       // 서버 V001: 해당 칸만 오류로 표시하고 공통 문구를 보인다

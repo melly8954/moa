@@ -3,6 +3,8 @@
 
 export const SIGN_IN_PATH = "/sign-in"
 export const PASSWORD_PATH = "/account/password"
+// 설정 (moa: 브라우저 알림 켜기·끄기, specs/007-notifications FR-008)
+export const SETTINGS_PATH = "/settings"
 
 export function safeNextPath(value: string | null | undefined): string | undefined {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) return undefined

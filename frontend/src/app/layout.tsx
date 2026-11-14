@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: { default: SITE.name, template: `%s | ${SITE.name}` },
 }
 
-// 셸은 여기에 두지 않는다. 로그인 화면은 (public), 로그인 뒤 화면은 (main) 레이아웃이 감싼다
+// 셸은 여기에 두지 않는다. 로그인 화면은 (public), 로그인 뒤 화면은 (admin)·(user)·(account) 레이아웃이 셸로 감싼다 (moa: specs/001-admin-menus FR-005)
 // 언어는 쿠키에서 읽는다 (src/i18n/request.ts). suppressHydrationWarning: 화면 모드가 <html> 클래스를 바꾼다
 // 실시간 연결 주소(WS_URL)는 요청 때 읽어 넘긴다. 프론트 프록시는 WebSocket을 넘기지 못해 브라우저가 백엔드에 직접 붙는다 (moa 007 R2)
 export default async function RootLayout({ children }: LayoutProps<"/">) {

@@ -37,7 +37,9 @@
     "menu": "메뉴",
     "openMenu": "메뉴 열기",
     "signOut": "로그아웃",
+    "signIn": "로그인",
     "account": "내 계정",
+    "settings": "설정",
     "changePassword": "비밀번호 변경",
     "theme": "화면 모드",
     "themeLight": "밝게",
@@ -94,7 +96,7 @@
   },
   "home": {
     "title": "시작 화면",
-    "description": "화면은 src/app/(main)/<경로>/page.tsx에 만들고, 메뉴는 src/components/shell/menu.ts에 더한다.",
+    "description": "화면은 src/app/(user)/<경로>/page.tsx에 만들고, 메뉴는 src/components/shell/menu.ts에 더한다. 관리 화면은 src/app/(admin)/admin/에 두고 메뉴 관리로 더한다.",
     "body": "로그인했다."
   },
   "datePicker": {
@@ -408,8 +410,6 @@
     "empty": "게시한 공지가 없어요.",
     "notFound": "없는 공지예요.",
     "backToList": "공지 목록으로",
-    "signIn": "로그인",
-    "home": "처음으로",
     "actionsOf": "{title} 작업",
     "newBadge": "새 공지",
     "number": "번호"
@@ -433,5 +433,9 @@
     "pushOn": "브라우저 알림을 켰어요.",
     "pushOff": "브라우저 알림을 껐어요.",
     "open": "보기"
+  },
+  "settings": {
+    "title": "설정",
+    "description": "이 브라우저에서 받을 알림을 정한다"
   }
 }
