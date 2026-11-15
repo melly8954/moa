@@ -190,7 +190,7 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 - [X] T065 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*Menu*AcceptanceTest" --tests "*AdminRolesAcceptanceTest"`, frontend/에서 `npm run format`, `npm run check`를 돌린다. e2e와 dbTest 전체는 로컬에서 돌리지 않고 PR CI로 본다 (docs/git.md "빌드·테스트")
 - [X] T066 specs/README.md 기능 지도의 001 상태에서 "프로그램·공개 범위는 기획 중"을 지운다
-- [ ] T067 specs/001-admin-menus/quickstart.md "화면 확인" 3번을 사람이 직접 확인한다
+- [X] T067 specs/001-admin-menus/quickstart.md "화면 확인" 3번을 사람이 직접 확인한다
 
 ---
 
