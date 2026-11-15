@@ -59,8 +59,9 @@ async function mock(page: Page, role: "USER" | "ADMIN" = "USER") {
 }
 
 // moa: 행의 "관리" 메뉴 대신 아이디를 누르면 드로어가 열린다 (specs/002-admin-users FR-007)
+//   사이드바의 내 계정 메뉴도 이름이 아이디라서 목록 영역 안에서 찾는다 (목록이 뜨기를 기다리는 효과도 있다)
 const openUser = async (page: Page, loginId: string) => {
-  await page.getByRole("button", { name: loginId, exact: true }).click()
+  await page.getByRole("region", { name: "사용자 관리" }).getByRole("button", { name: loginId, exact: true }).click()
   return page.getByRole("dialog")
 }
 
