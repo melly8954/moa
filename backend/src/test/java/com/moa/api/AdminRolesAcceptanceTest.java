@@ -6,6 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.LongStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -123,42 +124,24 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US3-AC1 사용자별 역할 탭은 관리자와 역할이 있는 사용자만 보이고, 역할이 없는 사용자는 보이지 않는다")
-	void roleUsersShowAdminAndUsersWithRoles() {
-		testUsers.create(OPERATOR2_ID, "operator2", "operator123!", Role.USER);
+	@DisplayName("US3-AC3 역할 둘을 골라 지우면 둘 다 없어지고 구성원에게서도 빠진다. 다룰 수 없는 역할이 섞이면 아무것도 지우지 않는다(A005)")
+	void bulkDeleteRoles() {
+		Number codes = createRole("CODES", "코드 담당", "CODE_MANAGE");
+		Number roles = createRole("ROLES", "역할 담당", "ROLE_MANAGE");
+		giveRoles(OPERATOR_ID, securityRoleId, roles);
 
-		MvcTestResult result = asAdmin(mvc.get().uri(ROLES + "/users"));
+		// 운영자는 역할 관리·접속 이력만 가져 코드 담당(CODE_MANAGE)을 다룰 수 없다
+		assertThat(asOperator(mvc.post().uri(ROLES + "/bulk-delete").contentType(MediaType.APPLICATION_JSON)
+			.content("{\"ids\":[" + securityRoleId + "," + codes + "]}")))
+			.hasStatus(403).bodyJson().extractingPath("$.code").isEqualTo("A005");
+		assertThat(asAdmin(mvc.get().uri(ROLES))).bodyJson().extractingPath("$.length()").isEqualTo(3);
 
-		assertThat(result).hasStatus(200);
-		assertThat(result).bodyJson().extractingPath("$.content[*].loginId").asArray()
-			.containsExactly("admin", "operator");
-		assertThat(result).bodyJson().extractingPath("$.content[0].role").isEqualTo("ADMIN");
-		assertThat(result).bodyJson().extractingPath("$.content[1].accessRoles[*].name").asArray()
-			.containsExactly("보안 담당");
-	}
-
-	@Test
-	@DisplayName("US3-AC2 아이디로 검색하면 역할이 없는 사용자도 찾고 업무 역할은 비어 있다")
-	void searchFindsUsersWithoutRoles() {
-		testUsers.create(OPERATOR2_ID, "operator2", "operator123!", Role.USER);
-
-		MvcTestResult result = asAdmin(mvc.get().uri(ROLES + "/users").param("keyword", "operator2"));
-
-		assertThat(result).bodyJson().extractingPath("$.content[*].loginId").asArray().containsExactly("operator2");
-		assertThat(result).bodyJson().extractingPath("$.content[0].accessRoles.length()").isEqualTo(0);
-	}
-
-	@Test
-	@DisplayName("US3-AC3 검색한 운영자에게 역할을 주면 다음 요청부터 접속 이력을 쓰고 기본 목록에도 보인다")
-	void givenRoleAppliesOnNextRequest() {
-		testUsers.create(OPERATOR2_ID, "operator2", "operator123!", Role.USER);
-		assertThat(as(OPERATOR2_ID, mvc.get().uri(LOGIN_HISTORIES))).hasStatus(403);
-
-		giveRoles(OPERATOR2_ID, securityRoleId);
-
-		assertThat(as(OPERATOR2_ID, mvc.get().uri(LOGIN_HISTORIES))).hasStatus(200);
-		assertThat(asAdmin(mvc.get().uri(ROLES + "/users"))).bodyJson().extractingPath("$.content[*].loginId")
-			.asArray().containsExactly("admin", "operator", "operator2");
+		assertThat(asAdmin(mvc.post().uri(ROLES + "/bulk-delete").contentType(MediaType.APPLICATION_JSON)
+			.content("{\"ids\":[" + securityRoleId + "," + codes + "]}")))
+			.hasStatus(204);
+		assertThat(asAdmin(mvc.get().uri(ROLES))).bodyJson().extractingPath("$[*].code").asArray()
+			.containsExactly("ROLES");
+		assertThat(asOperator(mvc.get().uri(LOGIN_HISTORIES))).hasStatus(403);
 	}
 
 	@Test
@@ -167,61 +150,84 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 		assertThat(asAdmin(mvc.put().uri("/api/v1/admin/users/2/roles").contentType(MediaType.APPLICATION_JSON)
 			.content("{\"roleIds\":[" + securityRoleId + "]}")))
 			.hasStatus(409).bodyJson().extractingPath("$.code").isEqualTo("B001");
-		assertThat(addMember(securityRoleId, 2L)).hasStatus(409)
-			.bodyJson().extractingPath("$.code").isEqualTo("B001");
 	}
 
 	@Test
-	@DisplayName("US4-AC1 역할의 구성원을 열면 그 역할을 가진 운영자가 아이디와 이름으로 보인다")
-	void membersOfRole() {
+	@DisplayName("US4-AC1 검색하지 않은 구성원 탭은 구성원만 보이고 20명을 넘으면 쪽으로 나뉜다")
+	void membersArePaged() {
+		for (long id = 100; id < 120; id++) {
+			testUsers.create(id, "op" + id, "operator123!", Role.USER);
+		}
+		addMembers(securityRoleId, LongStream.range(100, 120).boxed().toList());
 		testUsers.create(OPERATOR2_ID, "operator2", "operator123!", Role.USER);
-		giveRoles(OPERATOR2_ID, securityRoleId);
 
-		MvcTestResult result = asAdmin(mvc.get().uri(ROLES + "/" + securityRoleId + "/members"));
+		MvcTestResult result = asAdmin(mvc.get().uri(ROLES + "/" + securityRoleId + "/members").param("size", "20"));
 
 		assertThat(result).hasStatus(200);
-		assertThat(result).bodyJson().extractingPath("$[*].loginId").asArray()
-			.containsExactly("operator", "operator2");
-		assertThat(result).bodyJson().extractingPath("$[0].name").isEqualTo("operator");
+		assertThat(result).bodyJson().extractingPath("$.totalElements").isEqualTo(21);
+		assertThat(result).bodyJson().extractingPath("$.content.length()").isEqualTo(20);
+		assertThat(result).bodyJson().extractingPath("$.content[*].member").asArray().containsOnly(true);
+		assertThat(result).bodyJson().extractingPath("$.content[*].loginId").asArray().doesNotContain("operator2");
 	}
 
 	@Test
-	@DisplayName("US4-AC2 다른 운영자를 구성원으로 더하면 구성원이 늘고 그 운영자는 다음 요청부터 접속 이력을 쓴다")
-	void addedMemberGetsPermission() {
+	@DisplayName("US4-AC2 검색 결과에 구성원 여부가 보이고, 구성원이 아닌 둘을 한꺼번에 더하면 다음 요청부터 접속 이력을 쓴다")
+	void searchAndAddMembers() {
 		testUsers.create(OPERATOR2_ID, "operator2", "operator123!", Role.USER);
 		testUsers.create(OPERATOR3_ID, "operator3", "operator123!", Role.USER);
-		giveRoles(OPERATOR2_ID, securityRoleId);
 
-		assertThat(addMember(securityRoleId, OPERATOR3_ID)).hasStatus(204);
-		assertThat(addMember(securityRoleId, OPERATOR3_ID)).as("이미 있으면 그대로 둔다").hasStatus(204);
+		MvcTestResult found = asAdmin(
+			mvc.get().uri(ROLES + "/" + securityRoleId + "/members").param("keyword", "operator"));
+		assertThat(found).bodyJson().extractingPath("$.content[*].loginId").asArray()
+			.containsExactly("operator", "operator2", "operator3");
+		assertThat(found).bodyJson().extractingPath("$.content[*].member").asArray().containsExactly(true, false,
+			false);
 
-		assertThat(asAdmin(mvc.get().uri(ROLES + "/" + securityRoleId + "/members"))).bodyJson()
-			.extractingPath("$.length()").isEqualTo(3);
+		assertThat(addMembers(securityRoleId, List.of(OPERATOR2_ID, OPERATOR3_ID, OPERATOR_ID))).hasStatus(204);
+		assertThat(as(OPERATOR2_ID, mvc.get().uri(LOGIN_HISTORIES))).hasStatus(200);
 		assertThat(as(OPERATOR3_ID, mvc.get().uri(LOGIN_HISTORIES))).hasStatus(200);
+		assertThat(asAdmin(mvc.get().uri(ROLES + "/" + securityRoleId + "/members"))).bodyJson()
+			.extractingPath("$.totalElements").isEqualTo(3);
 	}
 
 	@Test
-	@DisplayName("US4-AC3 구성원을 빼면 그 운영자는 다음 요청부터 접속 이력을 쓰지 못한다")
-	void removedMemberLosesPermission() {
-		assertThat(asAdmin(mvc.delete().uri(ROLES + "/" + securityRoleId + "/members/" + OPERATOR_ID)))
+	@DisplayName("US4-AC3 구성원 둘을 한꺼번에 빼면 다음 요청부터 접속 이력을 쓰지 못한다")
+	void removeMembers() {
+		testUsers.create(OPERATOR2_ID, "operator2", "operator123!", Role.USER);
+		addMembers(securityRoleId, List.of(OPERATOR2_ID));
+
+		assertThat(asAdmin(mvc.post().uri(ROLES + "/" + securityRoleId + "/members/remove")
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{\"userIds\":[" + OPERATOR_ID + "," + OPERATOR2_ID + "]}")))
 			.hasStatus(204);
 
 		assertThat(asOperator(mvc.get().uri(LOGIN_HISTORIES))).hasStatus(403)
 			.bodyJson().extractingPath("$.code").isEqualTo("A005");
+		assertThat(as(OPERATOR2_ID, mvc.get().uri(LOGIN_HISTORIES))).hasStatus(403);
 	}
 
 	@Test
-	@DisplayName("Edge 역할 관리 권한만 받은 운영자는 자기가 갖지 않은 권한의 역할에 구성원을 더할 수 없다(A005)")
+	@DisplayName("US4-AC4 관리자가 섞인 더하기는 아무도 더하지 않는다(B001)")
+	void addingAdminFailsWholly() {
+		testUsers.create(OPERATOR2_ID, "operator2", "operator123!", Role.USER);
+
+		assertThat(addMembers(securityRoleId, List.of(OPERATOR2_ID, 2L))).hasStatus(409)
+			.bodyJson().extractingPath("$.code").isEqualTo("B001");
+		assertThat(as(OPERATOR2_ID, mvc.get().uri(LOGIN_HISTORIES))).hasStatus(403);
+	}
+
+	@Test
+	@DisplayName("Edge 역할 관리 권한만 받은 운영자는 사용자를 찾을 수 있지만, 자기가 갖지 않은 권한의 역할에 구성원을 더할 수 없다(A005)")
 	void operatorCannotManageRoleBeyondOwnPermissions() {
 		testUsers.create(OPERATOR2_ID, "operator2", "operator123!", Role.USER);
 		Number codes = createRole("CODES", "코드 담당", "CODE_MANAGE");
 		Number roles = createRole("ROLES", "역할 담당", "ROLE_MANAGE");
 		giveRoles(OPERATOR_ID, securityRoleId, roles);
 
-		assertThat(asOperator(mvc.get().uri(ROLES + "/users"))).as("사용자 관리 권한 없이 사용자를 찾는다")
-			.hasStatus(200);
+		assertThat(asOperator(mvc.get().uri(ROLES + "/" + codes + "/members").param("keyword", "operator")))
+			.as("사용자 관리 권한 없이 사용자를 찾는다").hasStatus(200);
 		assertThat(asOperator(mvc.post().uri(ROLES + "/" + codes + "/members").contentType(MediaType.APPLICATION_JSON)
-			.content("{\"userId\":" + OPERATOR2_ID + "}")))
+			.content("{\"userIds\":[" + OPERATOR2_ID + "]}")))
 			.hasStatus(403).bodyJson().extractingPath("$.code").isEqualTo("A005");
 	}
 
@@ -241,9 +247,9 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 			.hasStatus2xxSuccessful();
 	}
 
-	private MvcTestResult addMember(Number roleId, long userId) {
+	private MvcTestResult addMembers(Number roleId, List<Long> userIds) {
 		return asAdmin(mvc.post().uri(ROLES + "/" + roleId + "/members").contentType(MediaType.APPLICATION_JSON)
-			.content("{\"userId\":" + userId + "}"));
+			.content("{\"userIds\":" + userIds + "}"));
 	}
 
 	private MvcTestResult as(long userId, MockMvcRequestBuilder request) {

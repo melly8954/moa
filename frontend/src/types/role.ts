@@ -1,5 +1,5 @@
 // 역할·권한 API의 응답·요청 (백엔드 rbac 헬퍼: PermissionResponse, RoleResponse, Role*Request)
-// moa: 권한 트리, 사용자별 역할, 구성원 (PermissionTreeResponse, RoleUserResponse. specs/003-admin-roles FR-004~FR-006)
+// moa: 권한 트리, 구성원 (PermissionTreeResponse, RoleMemberResponse. specs/003-admin-roles FR-004~FR-006)
 
 // 코드에 등록된 권한. group은 화면에서 묶을 이름
 export type Permission = { key: string; name: string; group: string }
@@ -35,12 +35,13 @@ export type PermissionTree = {
   unlisted: { programKey: string; name: string; permission: PermissionRef }[]
 }
 
-// 역할 관리에서 보는 사용자. role은 시스템 역할 (ADMIN은 업무 역할을 받지 않는다)
-export type RoleUser = {
+// 역할 드로어 "구성원" 탭의 사용자 (moa, specs/003-admin-roles FR-006). role은 시스템 역할 (ADMIN은 업무 역할을 받지 않는다)
+export type RoleMember = {
   id: number
   loginId: string
   name: string
   role: "USER" | "ADMIN"
-  accessRoles: { id: number; code: string; name: string }[]
+  // 이 역할의 구성원인가
+  member: boolean
 }
-export type RoleUserQuery = { keyword?: string }
+export type RoleMemberQuery = { keyword?: string }

@@ -16,7 +16,7 @@ import com.moa.api.dto.menu.MenuAudience;
 import com.moa.api.dto.menu.MenuDto;
 import com.moa.api.dto.role.AccessRoleDto;
 import com.moa.api.dto.role.PermissionTreeDto;
-import com.moa.api.dto.role.RoleUserDto;
+import com.moa.api.dto.role.RoleMemberDto;
 import com.moa.api.program.ProgramRegistry;
 import com.moa.api.service.menu.MenuService;
 import com.moa.api.service.role.AccessRoleService;
@@ -117,32 +117,32 @@ public class AccessRoleApplication {
 		accessRoleService.replaceRolesOfUser(actor, userId, roleIds);
 	}
 
-	/**
-	 * 사용자별 역할 (moa, FR-005). keyword가 없으면 업무 역할이 있는 사용자와 ADMIN, 있으면 아이디·이름으로 모든 사용자.
-	 */
-	@Transactional(readOnly = true)
-	public Page<RoleUserDto> getRoleUsers(String keyword, Pageable pageable) {
-		return roleUserService.getPage(auditProperties.systemActorId(), keyword, pageable);
-	}
-
-	/** 이 역할의 구성원, 아이디 순 (moa, FR-006). 없는 역할 R001 */
-	@Transactional(readOnly = true)
-	public List<RoleUserDto> getMembers(Long roleId) {
-		return roleUserService.getMembers(roleId);
-	}
-
-	/** 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, 대상이 ADMIN이면 B001 (moa, FR-006) */
+	/** 여러 역할을 한꺼번에 지운다 (moa, FR-005). 없는 역할 R001, 다룰 수 없는 역할 A005 (아무것도 지우지 않는다) */
 	@Transactional
-	public void addMember(AuthPrincipal actor, Long roleId, Long userId) {
-		roleUserService.requireNotAdmin(userService.find(userId).role());
-		accessRoleService.addMember(actor, roleId, userId);
+	public void deleteAll(AuthPrincipal actor, List<Long> ids) {
+		accessRoleService.deleteAll(actor, ids);
 	}
 
-	/** 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, 대상이 ADMIN이면 B001 (moa, FR-006) */
+	/** 역할 드로어 "구성원" 탭 (moa, FR-006). 없는 역할 R001 */
+	@Transactional(readOnly = true)
+	public Page<RoleMemberDto> getMembers(Long roleId, String keyword, Pageable pageable) {
+		return roleUserService.getMembers(auditProperties.systemActorId(), roleId, keyword, pageable);
+	}
+
+	/** 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, ADMIN이 섞이면 B001 (moa, FR-006). 하나라도 틀리면 아무도 더하지 않는다 */
 	@Transactional
-	public void removeMember(AuthPrincipal actor, Long roleId, Long userId) {
-		roleUserService.requireNotAdmin(userService.find(userId).role());
-		accessRoleService.removeMember(actor, roleId, userId);
+	public void addMembers(AuthPrincipal actor, Long roleId, List<Long> userIds) {
+		accessRoleService.requireExists(roleId);
+		roleUserService.requireTargets(auditProperties.systemActorId(), userIds);
+		accessRoleService.addMembers(actor, roleId, userIds);
+	}
+
+	/** 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, ADMIN이 섞이면 B001 (moa, FR-006). 하나라도 틀리면 아무도 빼지 않는다 */
+	@Transactional
+	public void removeMembers(AuthPrincipal actor, Long roleId, List<Long> userIds) {
+		accessRoleService.requireExists(roleId);
+		roleUserService.requireTargets(auditProperties.systemActorId(), userIds);
+		accessRoleService.removeMembers(actor, roleId, userIds);
 	}
 
 	/** 화면 메뉴는 프로그램의 권한, 묶음 메뉴는 하위 메뉴를 담는다. 없는 프로그램과 하위 메뉴 없는 묶음은 null */
