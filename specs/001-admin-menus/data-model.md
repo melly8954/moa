@@ -23,7 +23,7 @@
 | 열 | 형 | 값 | 설명 |
 |---|---|---|---|
 | `program_key` | `VARCHAR(50) NULL` | 프로그램 키, `MISSING` | 비면 묶음 메뉴(1단계에만). 등록되지 않은 키면 없는 프로그램 |
-| `visibility` | `VARCHAR(10) NULL` | `PUBLIC`, `MEMBER` | 사용자 메뉴의 공개 범위. 관리 메뉴는 비운다 |
+| `visibility` | `VARCHAR(10) NULL` | `PUBLIC`, `MEMBER` | 사용자 화면 메뉴의 공개 범위. 관리 메뉴와 묶음 메뉴는 비운다 |
 
 `V2_5`는 기존 메뉴의 `path`로 프로그램을 찾아 `program_key`를 채우고, 사용자 메뉴의 `visibility`를 `PUBLIC`으로 둔 뒤 `path`·`permission` 열을 지운다. 경로가 맞는 프로그램이 없으면 `MISSING`이다.
 

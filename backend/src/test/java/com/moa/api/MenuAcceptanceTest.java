@@ -18,7 +18,9 @@ import com.jayway.jsonpath.JsonPath;
 import com.moa.support.AcceptanceTest;
 
 /**
- * 메뉴 권한 (선택 헬퍼 menu)
+ * 메뉴 권한 (선택 헬퍼 menu).
+ * moa: 메뉴는 경로·권한 대신 등록된 프로그램을 가리킨다 (specs/001-admin-menus FR-008·FR-009).
+ * 경로 형식·겹침 검사는 없어지고, 프로그램·공개 범위 검사가 그 자리에 온다
  */
 class MenuAcceptanceTest extends AcceptanceTest {
 
@@ -35,14 +37,14 @@ class MenuAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	// moa: 권한 키가 없는 관리 메뉴는 ADMIN만 본다 (specs/001-admin-menus FR-002). 키트는 "로그인한 모두"다
-	@DisplayName("메뉴: 내 메뉴는 권한으로 거르고(권한 키가 없으면 ADMIN만, ADMIN은 전부), 보이는 하위 메뉴가 없는 그룹은 뺀다")
+	// moa: 관리 메뉴는 가리키는 프로그램의 권한으로 거른다 (specs/001-admin-menus FR-002). 키트는 메뉴의 권한 키다
+	@DisplayName("메뉴: 내 메뉴는 프로그램의 권한으로 거르고(ADMIN은 전부), 보이는 하위 메뉴가 없는 묶음 메뉴는 뺀다")
 	void myMenusByPermission() {
-		long group = create(null, "업무", null, 10, null);
-		create(group, "주문", "/orders", 10, null);
-		create(group, "정산", "/settlements", 20, "MENU_MANAGE");
-		create(null, "공지", "/notices", 20, null);
-		create(null, "관리", null, 30, "MENU_MANAGE");
+		long group = create(null, "업무", null, 10);
+		create(group, "코드", "ADMIN_CODES", 10);
+		create(group, "메뉴", "ADMIN_MENUS", 20);
+		create(null, "공지", "ADMIN_NOTICES", 20);
+		create(null, "빈 묶음", null, 30);
 
 		MvcTestResult user = asUser(mvc.get().uri(MY_MENUS));
 		MvcTestResult admin = asAdmin(mvc.get().uri(MY_MENUS));
@@ -56,47 +58,52 @@ class MenuAcceptanceTest extends AcceptanceTest {
 	@Test
 	@DisplayName("메뉴: 사용 안 함으로 바꾸면 내 메뉴에서 빠지고, 관리 트리에는 남는다")
 	void disabledHidden() {
-		long group = create(null, "업무", null, 10, null);
-		long orders = create(group, "주문", "/orders", 10, null);
+		long group = create(null, "업무", null, 10);
+		long codes = create(group, "코드", "ADMIN_CODES", 10);
 
-		assertThat(asAdmin(mvc.put().uri(ADMIN_MENUS + "/" + orders).contentType(MediaType.APPLICATION_JSON)
-			.content("{\"parentId\":" + group + ",\"name\":\"주문\",\"path\":\"/orders\",\"sortOrder\":10,"
+		assertThat(asAdmin(mvc.put().uri(ADMIN_MENUS + "/" + codes).contentType(MediaType.APPLICATION_JSON)
+			.content("{\"parentId\":" + group + ",\"name\":\"코드\",\"programKey\":\"ADMIN_CODES\",\"sortOrder\":10,"
 				+ "\"enabled\":false}")))
 			.hasStatus(200);
 
-		assertThat(asUser(mvc.get().uri(MY_MENUS))).bodyJson().extractingPath("$.length()").isEqualTo(0);
+		assertThat(asAdmin(mvc.get().uri(MY_MENUS))).bodyJson().extractingPath("$.length()").isEqualTo(0);
 		assertThat(asAdmin(mvc.get().uri(ADMIN_MENUS))).bodyJson().extractingPath("$[0].children[0].enabled")
 			.isEqualTo(false);
 	}
 
 	@Test
-	@DisplayName("메뉴: 경로는 /로 시작하는 내부 경로(V001)이고 겹치지 않는다(R002). 권한은 등록된 키만(V001)")
-	void pathRules() {
-		create(null, "주문", "/orders", 10, null);
+	// moa: 키트의 경로 규칙(V001·R002)은 프로그램 규칙으로 바뀌었다 (specs/001-admin-menus FR-009)
+	@DisplayName("메뉴: 프로그램은 등록된 키만(V001), 하위 메뉴는 프로그램이 있어야 하고(V001), 사용자 화면 메뉴는 공개 범위가 있어야 한다(V001)")
+	void programRules() {
+		long group = create(null, "업무", null, 10);
 
-		assertThat(post(null, "a", "orders")).hasStatus(400).bodyJson().extractingPath("$.code").isEqualTo("V001");
-		assertThat(post(null, "b", "https://evil.example.com")).bodyJson().extractingPath("$.code").isEqualTo("V001");
-		assertThat(post(null, "c", "//evil.example.com")).bodyJson().extractingPath("$.code").isEqualTo("V001");
-		assertThat(post(null, "d", "/orders")).hasStatus(409).bodyJson().extractingPath("$.code").isEqualTo("R002");
-		assertThat(asAdmin(mvc.post().uri(ADMIN_MENUS).contentType(MediaType.APPLICATION_JSON)
-			.content(json(null, "e", "/e", 10, "NO_SUCH_PERMISSION"))))
-			.hasStatus(400).bodyJson().extractingPath("$.code").isEqualTo("V001");
+		assertThat(post(json(null, "a", "NO_SUCH_PROGRAM", 10, null, null))).hasStatus(400)
+			.bodyJson().extractingPath("$.code").isEqualTo("V001");
+		assertThat(post(json(null, "b", "MISSING", 10, null, null))).hasStatus(400)
+			.bodyJson().extractingPath("$.code").isEqualTo("V001");
+		assertThat(post(json(group, "c", null, 10, null, null))).hasStatus(400)
+			.bodyJson().extractingPath("$.code").isEqualTo("V001");
+		assertThat(post(json(null, "d", "NOTICES", 10, "USER", null))).hasStatus(400)
+			.bodyJson().extractingPath("$.code").isEqualTo("V001");
+		assertThat(post(json(null, "e", "ADMIN_CODES", 10, null, null))).hasStatus(201);
+		assertThat(post(json(null, "f", "ADMIN_CODES", 20, null, null))).as("같은 프로그램을 여러 메뉴에 건다")
+			.hasStatus(201);
 	}
 
 	@Test
 	@DisplayName("메뉴: 2단계까지만 둔다. 3단계가 되는 부모, 자기 자신을 부모로, 하위가 있는 메뉴 지우기는 B001")
 	void depthAndDelete() {
-		long group = create(null, "업무", null, 10, null);
-		long orders = create(group, "주문", "/orders", 10, null);
+		long group = create(null, "업무", null, 10);
+		long codes = create(group, "코드", "ADMIN_CODES", 10);
 
-		assertThat(post(orders, "주문 상세", "/orders/detail")).hasStatus(409)
+		assertThat(post(json(codes, "코드 상세", "ADMIN_MENUS", 10, null, null))).hasStatus(409)
 			.bodyJson().extractingPath("$.code").isEqualTo("B001");
 		assertThat(asAdmin(mvc.put().uri(ADMIN_MENUS + "/" + group).contentType(MediaType.APPLICATION_JSON)
 			.content("{\"parentId\":" + group + ",\"name\":\"업무\",\"sortOrder\":10,\"enabled\":true}")))
 			.bodyJson().extractingPath("$.code").isEqualTo("B001");
 		assertThat(asAdmin(mvc.delete().uri(ADMIN_MENUS + "/" + group))).hasStatus(409)
 			.bodyJson().extractingPath("$.code").isEqualTo("B001");
-		assertThat(asAdmin(mvc.delete().uri(ADMIN_MENUS + "/" + orders))).hasStatus(204);
+		assertThat(asAdmin(mvc.delete().uri(ADMIN_MENUS + "/" + codes))).hasStatus(204);
 		assertThat(asAdmin(mvc.get().uri(ADMIN_MENUS))).bodyJson().extractingPath("$[0].children.length()")
 			.isEqualTo(0);
 	}
@@ -104,20 +111,35 @@ class MenuAcceptanceTest extends AcceptanceTest {
 	@Test
 	@DisplayName("메뉴: 순서를 한 번에 바꾸고, 하나라도 틀리면 아무것도 바꾸지 않는다")
 	void reorder() {
-		long group = create(null, "업무", null, 10, null);
-		long orders = create(group, "주문", "/orders", 10, null);
-		long returns = create(group, "반품", "/returns", 20, null);
+		long group = create(null, "업무", null, 10);
+		long codes = create(group, "코드", "ADMIN_CODES", 10);
+		long menus = create(group, "메뉴", "ADMIN_MENUS", 20);
 
-		assertThat(reorder("[{\"id\":" + orders + ",\"parentId\":" + group + ",\"sortOrder\":20},"
-			+ "{\"id\":" + returns + ",\"parentId\":" + group + ",\"sortOrder\":10}]")).hasStatus(204);
-		assertThat(asAdmin(mvc.get().uri(ADMIN_MENUS))).bodyJson().extractingPath("$[0].children[0].path")
-			.isEqualTo("/returns");
+		assertThat(reorder("[{\"id\":" + codes + ",\"parentId\":" + group + ",\"sortOrder\":20},"
+			+ "{\"id\":" + menus + ",\"parentId\":" + group + ",\"sortOrder\":10}]")).hasStatus(204);
+		assertThat(asAdmin(mvc.get().uri(ADMIN_MENUS))).bodyJson().extractingPath("$[0].children[0].name")
+			.isEqualTo("메뉴");
 
-		assertThat(reorder("[{\"id\":" + orders + ",\"parentId\":" + group + ",\"sortOrder\":5},"
-			+ "{\"id\":" + group + ",\"parentId\":" + returns + ",\"sortOrder\":10}]")).hasStatus(409)
+		assertThat(reorder("[{\"id\":" + codes + ",\"parentId\":" + group + ",\"sortOrder\":5},"
+			+ "{\"id\":" + group + ",\"parentId\":" + menus + ",\"sortOrder\":10}]")).hasStatus(409)
 			.bodyJson().extractingPath("$.code").isEqualTo("B001");
-		assertThat(asAdmin(mvc.get().uri(ADMIN_MENUS))).bodyJson().extractingPath("$[0].children[0].path")
-			.isEqualTo("/returns");
+		assertThat(asAdmin(mvc.get().uri(ADMIN_MENUS))).bodyJson().extractingPath("$[0].children[0].name")
+			.isEqualTo("메뉴");
+	}
+
+	@Test
+	// moa: 메뉴 대상은 프로그램의 대상이라 묶음 메뉴를 하위로, 다른 대상의 부모 아래로 옮기지 않는다 (specs/001-admin-menus FR-009)
+	@DisplayName("메뉴: 묶음 메뉴를 하위로 옮기거나 대상이 다른 부모 아래로 옮기면 B001")
+	void reorderKeepsProgramRules() {
+		long group = create(null, "업무", null, 10);
+		long other = create(null, "다른 묶음", null, 20);
+		long notices = ((Number)JsonPath.read(body(post(json(null, "공지", "NOTICES", 30, "USER", "PUBLIC"))), "$.id"))
+			.longValue();
+
+		assertThat(reorder("[{\"id\":" + other + ",\"parentId\":" + group + ",\"sortOrder\":10}]")).hasStatus(409)
+			.bodyJson().extractingPath("$.code").isEqualTo("B001");
+		assertThat(reorder("[{\"id\":" + notices + ",\"parentId\":" + group + ",\"sortOrder\":10}]")).hasStatus(409)
+			.bodyJson().extractingPath("$.code").isEqualTo("B001");
 	}
 
 	@Test
@@ -128,25 +150,25 @@ class MenuAcceptanceTest extends AcceptanceTest {
 		assertThat(mvc.get().uri(MY_MENUS)).hasStatus(401).bodyJson().extractingPath("$.code").isEqualTo("A001");
 	}
 
-	private long create(Long parentId, String name, String path, int sortOrder, String permission) {
-		MvcTestResult result = asAdmin(mvc.post().uri(ADMIN_MENUS).contentType(MediaType.APPLICATION_JSON)
-			.content(json(parentId, name, path, sortOrder, permission)));
+	private long create(Long parentId, String name, String programKey, int sortOrder) {
+		MvcTestResult result = post(json(parentId, name, programKey, sortOrder, null, null));
 		assertThat(result).hasStatus(201);
 		return ((Number)JsonPath.read(body(result), "$.id")).longValue();
 	}
 
-	private MvcTestResult post(Long parentId, String name, String path) {
-		return asAdmin(mvc.post().uri(ADMIN_MENUS).contentType(MediaType.APPLICATION_JSON)
-			.content(json(parentId, name, path, 10, null)));
+	private MvcTestResult post(String json) {
+		return asAdmin(mvc.post().uri(ADMIN_MENUS).contentType(MediaType.APPLICATION_JSON).content(json));
 	}
 
 	private MvcTestResult reorder(String json) {
 		return asAdmin(mvc.put().uri(ADMIN_MENUS + "/order").contentType(MediaType.APPLICATION_JSON).content(json));
 	}
 
-	private String json(Long parentId, String name, String path, int sortOrder, String permission) {
-		return "{\"parentId\":" + parentId + ",\"name\":\"" + name + "\",\"path\":" + quote(path)
-			+ ",\"sortOrder\":" + sortOrder + ",\"permission\":" + quote(permission) + "}";
+	private String json(Long parentId, String name, String programKey, int sortOrder, String audience,
+		String visibility) {
+		return "{\"parentId\":" + parentId + ",\"name\":\"" + name + "\",\"programKey\":" + quote(programKey)
+			+ ",\"sortOrder\":" + sortOrder + ",\"audience\":" + quote(audience) + ",\"visibility\":"
+			+ quote(visibility) + "}";
 	}
 
 	private String quote(String value) {

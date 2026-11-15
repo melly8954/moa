@@ -9,9 +9,5 @@ public interface MenuRepository extends SoftDeleteRepository<Menu, Long> {
 
 	List<Menu> findAllByOrderBySortOrderAscIdAsc();
 
-	boolean existsByPath(String path);
-
-	boolean existsByPathAndIdNot(String path, Long id);
-
 	boolean existsByParentId(Long parentId);
 }

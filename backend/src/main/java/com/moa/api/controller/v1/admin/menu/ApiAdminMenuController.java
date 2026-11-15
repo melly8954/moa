@@ -47,7 +47,7 @@ public class ApiAdminMenuController {
 	}
 
 	@Operation(summary = "메뉴 만들기",
-		description = "경로 형식·등록되지 않은 권한 V001, 경로 중복 R002, 없는 부모 R001, 3단계가 되는 부모 B001")
+		description = "등록되지 않았거나 대상이 다른 프로그램·공개 범위 V001, 없는 부모 R001, 3단계가 되는 부모 B001")
 	@PostMapping
 	public ResponseEntity<MenuTreeResponse> create(@Valid @RequestBody MenuCreateRequest request) {
 		return ResponseEntity.status(HttpStatus.CREATED)
@@ -55,14 +55,15 @@ public class ApiAdminMenuController {
 	}
 
 	@Operation(summary = "순서 한 번에 바꾸기",
-		description = "보낸 메뉴의 부모와 순서를 한 트랜잭션으로 바꾼다. 하나라도 틀리면 아무것도 바꾸지 않는다")
+		description = "보낸 메뉴의 부모와 순서를 한 트랜잭션으로 바꾼다. 하나라도 틀리면 아무것도 바꾸지 않는다. "
+			+ "묶음 메뉴를 하위로, 대상이 다른 부모 아래로 옮기면 B001")
 	@PutMapping("/order")
 	public ResponseEntity<Void> reorder(@RequestBody @NotEmpty List<@Valid MenuOrderRequest> request) {
 		menuApplication.reorder(request.stream().map(MenuOrderRequest::toDto).toList());
 		return ResponseEntity.noContent().build();
 	}
 
-	@Operation(summary = "메뉴 바꾸기", description = "없는 메뉴 R001, 그 밖의 오류는 만들기와 같다. 자기 자신을 부모로 B001")
+	@Operation(summary = "메뉴 바꾸기", description = "없는 메뉴 R001, 그 밖의 오류는 만들기와 같다. 자기 자신을 부모로, 하위 메뉴가 있는 메뉴의 대상 바꾸기 B001")
 	@PutMapping("/{id}")
 	public ResponseEntity<MenuTreeResponse> modify(@PathVariable Long id,
 		@Valid @RequestBody MenuModifyRequest request) {

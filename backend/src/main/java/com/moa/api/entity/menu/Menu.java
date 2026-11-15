@@ -3,6 +3,7 @@ package com.moa.api.entity.menu;
 import org.hibernate.annotations.SQLRestriction;
 
 import com.moa.api.dto.menu.MenuAudience;
+import com.moa.api.dto.menu.MenuVisibility;
 import com.moa.common.entity.SoftDeleteEntity;
 
 import jakarta.persistence.Column;
@@ -18,7 +19,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 메뉴 (선택 헬퍼 menu). 1단계(parentId 없음)는 그룹이거나 바로 가는 메뉴, 2단계는 그룹 아래 메뉴다.
+ * 메뉴 (선택 헬퍼 menu). 1단계(parentId 없음)는 묶음 메뉴이거나 화면 메뉴, 2단계는 묶음 아래 화면 메뉴다.
+ * 화면 메뉴는 프로그램을 가리킨다 (moa, specs/001-admin-menus FR-009).
  */
 @Getter
 @Entity
@@ -37,8 +39,9 @@ public class Menu extends SoftDeleteEntity {
 	@Column(nullable = false, length = 50)
 	private String name;
 
-	@Column(length = 200)
-	private String path;
+	/** 가리키는 프로그램 키 (moa, specs/001-admin-menus FR-009). null이면 묶음 메뉴다 */
+	@Column(name = "program_key", length = 50)
+	private String programKey;
 
 	@Column(length = 50)
 	private String icon;
@@ -49,42 +52,38 @@ public class Menu extends SoftDeleteEntity {
 	@Column(nullable = false)
 	private boolean enabled;
 
-	/** 볼 때 필요한 권한 키. null이면 대상의 모두 (관리 메뉴는 ADMIN, 사용자 메뉴는 로그인하지 않은 사람까지) */
-	@Column(length = 100)
-	private String permission;
-
 	/** 메뉴 대상 (moa, specs/001-admin-menus FR-007). 하위 메뉴는 부모와 같다 */
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 10)
 	private MenuAudience audience;
 
-	public Menu(Long parentId, String name, String path, String icon, int sortOrder, String permission,
-		MenuAudience audience) {
+	/** 사용자 메뉴의 공개 범위 (moa, FR-007). 관리 메뉴·묶음 메뉴는 null */
+	@Enumerated(EnumType.STRING)
+	@Column(length = 10)
+	private MenuVisibility visibility;
+
+	public Menu(Long parentId, String name, String programKey, String icon, int sortOrder, MenuAudience audience,
+		MenuVisibility visibility) {
 		this.parentId = parentId;
 		this.name = name;
-		this.path = path;
+		this.programKey = programKey;
 		this.icon = icon;
 		this.sortOrder = sortOrder;
 		this.enabled = true;
-		this.permission = permission;
 		this.audience = audience;
+		this.visibility = visibility;
 	}
 
-	public void modify(Long parentId, String name, String path, String icon, int sortOrder, boolean enabled,
-		String permission, MenuAudience audience) {
+	public void modify(Long parentId, String name, String programKey, String icon, int sortOrder, boolean enabled,
+		MenuAudience audience, MenuVisibility visibility) {
 		this.parentId = parentId;
 		this.name = name;
-		this.path = path;
+		this.programKey = programKey;
 		this.icon = icon;
 		this.sortOrder = sortOrder;
 		this.enabled = enabled;
-		this.permission = permission;
 		this.audience = audience;
-	}
-
-	/** 부모의 대상을 따른다 */
-	public void followAudience(MenuAudience audience) {
-		this.audience = audience;
+		this.visibility = visibility;
 	}
 
 	public void move(Long parentId, int sortOrder) {

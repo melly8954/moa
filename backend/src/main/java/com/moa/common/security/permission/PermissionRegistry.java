@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -33,6 +34,10 @@ public class PermissionRegistry {
 	/** 등록 순서를 지킨다 */
 	public Set<String> keys() {
 		return Collections.unmodifiableSet(definitions.keySet());
+	}
+
+	public Optional<PermissionDefinition> find(String key) {
+		return Optional.ofNullable(key == null ? null : definitions.get(key));
 	}
 
 	public boolean contains(String key) {
