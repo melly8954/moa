@@ -1,5 +1,6 @@
 package com.moa.api.repository.jpa.role;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,14 @@ import com.moa.api.entity.role.UserAccessRole;
 public interface UserAccessRoleRepository extends JpaRepository<UserAccessRole, Long> {
 
 	List<UserAccessRole> findAllByUserId(Long userId);
+
+	List<UserAccessRole> findAllByUserIdIn(Collection<Long> userIds);
+
+	boolean existsByUserIdAndAccessRoleId(Long userId, Long accessRoleId);
+
+	@Modifying(flushAutomatically = true, clearAutomatically = true)
+	@Query("delete from UserAccessRole u where u.userId = :userId and u.accessRoleId = :accessRoleId")
+	int deleteByUserIdAndAccessRoleId(Long userId, Long accessRoleId);
 
 	/** 역할별 사용자 수: [accessRoleId, count] */
 	@Query("select u.accessRoleId, count(u) from UserAccessRole u group by u.accessRoleId")

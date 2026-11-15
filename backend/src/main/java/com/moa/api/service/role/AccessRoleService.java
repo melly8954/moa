@@ -112,6 +112,31 @@ public class AccessRoleService {
 		accessRoleWriter.replaceRolesOfUser(userId, requested);
 	}
 
+	/**
+	 * 이 역할에 사용자 하나를 더한다 (moa, specs/003-admin-roles FR-006). 이미 있으면 그대로 둔다.
+	 * 사용자가 있는지와 ADMIN이 아닌지는 부르는 쪽이 본다.
+	 *
+	 * @throws ServiceException 없는 역할 R001, 다룰 수 없는 역할 A005
+	 */
+	public void addMember(AuthPrincipal actor, Long roleId, Long userId) {
+		AccessRole role = require(roleId);
+		checkManage(actor, dto(role, Map.of()));
+		if (!accessRoleReader.hasRole(userId, roleId)) {
+			accessRoleWriter.addRoleToUser(userId, roleId);
+		}
+	}
+
+	/**
+	 * 이 역할에서 사용자 하나를 뺀다 (moa, FR-006). 가지지 않았으면 아무것도 하지 않는다.
+	 *
+	 * @throws ServiceException 없는 역할 R001, 다룰 수 없는 역할 A005
+	 */
+	public void removeMember(AuthPrincipal actor, Long roleId, Long userId) {
+		AccessRole role = require(roleId);
+		checkManage(actor, dto(role, Map.of()));
+		accessRoleWriter.removeRoleFromUser(userId, roleId);
+	}
+
 	private AccessRole require(Long id) {
 		return accessRoleReader.find(id).orElseThrow(() -> new ServiceException(ErrorCode.NOT_FOUND));
 	}

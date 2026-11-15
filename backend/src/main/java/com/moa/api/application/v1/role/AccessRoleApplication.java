@@ -1,15 +1,28 @@
 package com.moa.api.application.v1.role;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.moa.api.application.v1.role.command.CreateAccessRoleCommand;
 import com.moa.api.application.v1.role.command.ModifyAccessRoleCommand;
+import com.moa.api.dto.menu.MenuAudience;
+import com.moa.api.dto.menu.MenuDto;
 import com.moa.api.dto.role.AccessRoleDto;
+import com.moa.api.dto.role.PermissionTreeDto;
+import com.moa.api.dto.role.RoleUserDto;
+import com.moa.api.program.ProgramRegistry;
+import com.moa.api.service.menu.MenuService;
 import com.moa.api.service.role.AccessRoleService;
+import com.moa.api.service.role.RoleUserService;
 import com.moa.api.service.user.UserService;
+import com.moa.common.audit.AuditProperties;
 import com.moa.common.security.AuthPrincipal;
 import com.moa.common.security.permission.PermissionDefinition;
 import com.moa.common.security.permission.PermissionRegistry;
@@ -18,18 +31,49 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 역할·권한 관리 (선택 헬퍼 rbac). actor는 요청한 사용자다 (권한 상승 검사에 쓴다).
+ * moa: 권한 트리, 사용자별 역할, 구성원 (specs/003-admin-roles FR-004~FR-008). 권한 트리는 menu 헬퍼의 메뉴와 프로그램을 읽는다.
  */
 @Component
 @RequiredArgsConstructor
 public class AccessRoleApplication {
 
 	private final AccessRoleService accessRoleService;
+	private final RoleUserService roleUserService;
 	private final UserService userService;
 	private final PermissionRegistry permissionRegistry;
+	private final MenuService menuService;
+	private final ProgramRegistry programRegistry;
+	private final AuditProperties auditProperties;
 
 	/** 코드에 등록된 권한 전부 (역할에 묶을 수 있는 것) */
 	public List<PermissionDefinition> getPermissions() {
 		return permissionRegistry.all();
+	}
+
+	/**
+	 * 역할 창에서 권한을 고르는 트리 (moa, FR-004). 관리 메뉴 트리(꺼진 메뉴 포함, 없는 프로그램을 가리키는 메뉴는 뺌)와
+	 * 어느 관리 메뉴도 가리키지 않는 관리 프로그램.
+	 */
+	@Transactional(readOnly = true)
+	public PermissionTreeDto getPermissionTree() {
+		List<MenuDto> adminMenus = menuService.getTree().stream()
+			.filter(menu -> menu.audience() == MenuAudience.ADMIN)
+			.toList();
+		Set<String> listed = new HashSet<>();
+		adminMenus.forEach(menu -> {
+			listed.add(menu.programKey());
+			menu.children().forEach(child -> listed.add(child.programKey()));
+		});
+		List<PermissionTreeDto.Node> nodes = adminMenus.stream()
+			.map(this::node)
+			.filter(Objects::nonNull)
+			.toList();
+		List<PermissionTreeDto.Unlisted> unlisted = programRegistry.of(MenuAudience.ADMIN).stream()
+			.filter(program -> !listed.contains(program.key()))
+			.map(program -> new PermissionTreeDto.Unlisted(program.key(), program.name(), program.permission(),
+				permissionName(program.permission())))
+			.toList();
+		return new PermissionTreeDto(nodes, unlisted);
 	}
 
 	@Transactional(readOnly = true)
@@ -66,10 +110,60 @@ public class AccessRoleApplication {
 		return accessRoleService.getRolesOfUser(userId);
 	}
 
-	/** 없는 사용자·역할이면 R001 */
+	/** 없는 사용자·역할이면 R001. moa: 대상이 ADMIN이면 B001 (specs/003-admin-roles Edge Cases) */
 	@Transactional
 	public void replaceRolesOfUser(AuthPrincipal actor, Long userId, List<Long> roleIds) {
-		userService.find(userId);
+		roleUserService.requireNotAdmin(userService.find(userId).role());
 		accessRoleService.replaceRolesOfUser(actor, userId, roleIds);
+	}
+
+	/**
+	 * 사용자별 역할 (moa, FR-005). keyword가 없으면 업무 역할이 있는 사용자와 ADMIN, 있으면 아이디·이름으로 모든 사용자.
+	 */
+	@Transactional(readOnly = true)
+	public Page<RoleUserDto> getRoleUsers(String keyword, Pageable pageable) {
+		return roleUserService.getPage(auditProperties.systemActorId(), keyword, pageable);
+	}
+
+	/** 이 역할의 구성원, 아이디 순 (moa, FR-006). 없는 역할 R001 */
+	@Transactional(readOnly = true)
+	public List<RoleUserDto> getMembers(Long roleId) {
+		return roleUserService.getMembers(roleId);
+	}
+
+	/** 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, 대상이 ADMIN이면 B001 (moa, FR-006) */
+	@Transactional
+	public void addMember(AuthPrincipal actor, Long roleId, Long userId) {
+		roleUserService.requireNotAdmin(userService.find(userId).role());
+		accessRoleService.addMember(actor, roleId, userId);
+	}
+
+	/** 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, 대상이 ADMIN이면 B001 (moa, FR-006) */
+	@Transactional
+	public void removeMember(AuthPrincipal actor, Long roleId, Long userId) {
+		roleUserService.requireNotAdmin(userService.find(userId).role());
+		accessRoleService.removeMember(actor, roleId, userId);
+	}
+
+	/** 화면 메뉴는 프로그램의 권한, 묶음 메뉴는 하위 메뉴를 담는다. 없는 프로그램과 하위 메뉴 없는 묶음은 null */
+	private PermissionTreeDto.Node node(MenuDto menu) {
+		if (menu.programKey() == null) {
+			List<PermissionTreeDto.Node> children = menu.children().stream()
+				.map(this::node)
+				.filter(Objects::nonNull)
+				.toList();
+			return children.isEmpty() ? null
+				: new PermissionTreeDto.Node(menu.id(), menu.name(), menu.enabled(), null, null, children);
+		}
+		if (menu.program() == null) {
+			return null;
+		}
+		String permission = menu.program().permission();
+		return new PermissionTreeDto.Node(menu.id(), menu.name(), menu.enabled(), permission,
+			permissionName(permission), List.of());
+	}
+
+	private String permissionName(String key) {
+		return permissionRegistry.find(key).map(PermissionDefinition::name).orElse(null);
 	}
 }
