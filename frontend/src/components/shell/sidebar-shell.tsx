@@ -1,6 +1,6 @@
 "use client"
 
-import { LogIn } from "lucide-react"
+import { LogIn, PanelLeft } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -25,20 +25,23 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { signInPath } from "@/lib/next-path"
+import { cn } from "@/lib/utils"
 import { SITE } from "@/lib/site"
 import { useAuthStore } from "@/stores/auth"
 import { HAS_LOCALE_CHOICE, LocaleMenu } from "./locale-menu"
 import { AccountMenu } from "./account-menu"
-import { isActive, type MenuItem, screenTitle } from "./menu"
+import { isActive, type MenuItem } from "./menu"
 import { ThemeMenu } from "./theme-menu"
 
 // 사이드바형 셸. 폭 768px 미만에서는 사이드바가 서랍(Sheet)으로 바뀐다
 // 설정: side left|right, collapsible icon|offcanvas|none, variant sidebar|floating|inset
 // moa: 메뉴와 로고 주소를 받아 관리 셸·사용자 셸이 함께 쓴다 (specs/001-admin-menus FR-005, research R5. 키트로 옮길 것)
 //   로그인하지 않았으면 계정 줄에 벨·계정 메뉴 대신 로그인 단추를 둔다 (사용자 셸의 공지 화면)
+//   본문 머리 줄은 좁은 폭(서랍)에서만 둔다. 넓은 폭의 접기 단추는 로고 줄에 있다 (001 FR-005, research R12. 키트로 옮길 것)
 export function SidebarShell({
   menu,
   homeHref,
@@ -50,7 +53,6 @@ export function SidebarShell({
 }) {
   const pathname = usePathname()
   const t = useTranslations()
-  const title = screenTitle(menu, pathname)
   const status = useAuthStore((s) => s.status)
   const signedIn = status === "signedIn"
   // 좁은 폭은 사이드바가 서랍이라 계정 줄 벨이 숨는다. 머리에도 벨을 둔다 (moa 007 FR-005, 키트로 옮길 것)
@@ -59,16 +61,7 @@ export function SidebarShell({
     <SidebarProvider defaultOpen>
       <Sidebar side="left" collapsible="icon" variant="sidebar">
         <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="lg" render={<Link href={homeHref} />}>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  {SITE.name.slice(0, 1).toUpperCase()}
-                </div>
-                <span className="truncate font-medium">{SITE.name}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <SidebarBrand homeHref={homeHref} />
         </SidebarHeader>
         <SidebarContent>
           {/* 메뉴 영역을 navigation으로 알린다 (다른 셸과 같다) */}
@@ -152,11 +145,13 @@ export function SidebarShell({
       </Sidebar>
       {/* min-w-0: 넓은 표가 본문을 늘리지 않고 표 안에서 가로로 넘기게 한다 */}
       <SidebarInset className="min-w-0">
-        <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b px-(--page-padding)">
+        {/* 좁은 폭만: 서랍 단추, 사이트 이름, 벨 또는 로그인. 화면 이름은 본문 제목(PageHeader)이 둔다 */}
+        <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b px-(--page-padding) md:hidden">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          {/* 위치(메뉴 이름)만 보인다. 화면 제목(h1)은 화면의 PageHeader가 둔다 */}
-          {title && <span className="text-sm font-medium">{title.label}</span>}
+          <Link href={homeHref} className="text-sm font-medium">
+            {SITE.name}
+          </Link>
           {isMobile && signedIn && (
             <div className="ml-auto">
               <NotificationBell trigger={<Button variant="ghost" size="icon" />} />
@@ -172,5 +167,51 @@ export function SidebarShell({
         <div className="flex min-w-0 flex-1 flex-col gap-(--page-gap) p-(--page-padding)">{children}</div>
       </SidebarInset>
     </SidebarProvider>
+  )
+}
+
+// 사이드바 로고 줄. 펼쳤을 때: 로고(첫 화면 링크)와 접기 단추. 아이콘만 남게 접었을 때: 로고 자리가 펼치기 단추
+//   (평소 로고 글자, 마우스를 올리거나 키보드 초점이 닿으면 펼치기 아이콘). 서랍(좁은 폭)에는 접기 단추가 없다
+function SidebarBrand({ homeHref }: { homeHref: string }) {
+  const t = useTranslations("shell")
+  const { state, isMobile, toggleSidebar } = useSidebar()
+  const initial = SITE.name.slice(0, 1).toUpperCase()
+  const logo =
+    "flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
+  if (state === "collapsed" && !isMobile) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            size="lg"
+            aria-label={t("expandSidebar")}
+            tooltip={t("expandSidebar")}
+            onClick={toggleSidebar}
+          >
+            <div className={cn(logo, "group-hover/menu-button:hidden group-focus-visible/menu-button:hidden")}>
+              {initial}
+            </div>
+            <div className="hidden size-8 items-center justify-center group-hover/menu-button:flex group-focus-visible/menu-button:flex">
+              <PanelLeft />
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
+  }
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem className="flex items-center gap-1">
+        <SidebarMenuButton size="lg" className="min-w-0 flex-1" render={<Link href={homeHref} />}>
+          <div className={logo}>{initial}</div>
+          <span className="truncate font-medium">{SITE.name}</span>
+        </SidebarMenuButton>
+        {!isMobile && (
+          <Button variant="ghost" size="icon-sm" aria-label={t("collapseSidebar")} onClick={toggleSidebar}>
+            <PanelLeft />
+          </Button>
+        )}
+      </SidebarMenuItem>
+    </SidebarMenu>
   )
 }

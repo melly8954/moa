@@ -156,9 +156,9 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 **Purpose**: 넓은 폭에서 본문 위 머리 줄을 없애고 접기 단추를 사이드바 로고 줄로 옮긴다 (research.md R12). 프론트만 고친다
 
-- [ ] T048 frontend/src/components/shell/sidebar-shell.tsx: 넓은 폭은 로고 줄 오른쪽에 접기 단추를 두고, 아이콘만 남게 접으면 로고 자리를 펼치기 단추(평소 로고 글자, 마우스·키보드 초점에서 펼치기 아이콘)로 바꾼다. 본문 머리 줄은 좁은 폭에서만 그리고, 화면 이름 대신 사이트 이름(로고 주소 링크)을 둔다. 단추 이름은 frontend/messages/ko.json `shell`에 둔다. `screenTitle`을 쓰는 곳이 없어지면 그대로 둘지 지울지 검사(lint)에 맞춘다
-- [ ] T049 frontend/e2e/menu.spec.ts에 `US1-AC3`(넓은 폭: 머리 줄 없음, 로고 줄 접기 → 접힘, 로고 자리 펼치기 → 펼침)을 더하고, 머리 줄 사이드바 단추를 찾던 frontend/e2e/notices.spec.ts·screens.spec.ts를 바뀐 만큼만 고친다 (원칙 V)
-- [ ] T050 frontend/에서 `npm run format`, `npm run check`, 바꾼 e2e 묶음(menu·notices·notifications·screens)을 돌린다. 전체 화면 검사는 PR CI로 본다
+- [X] T048 frontend/src/components/shell/sidebar-shell.tsx: 넓은 폭은 로고 줄 오른쪽에 접기 단추를 두고, 아이콘만 남게 접으면 로고 자리를 펼치기 단추(평소 로고 글자, 마우스·키보드 초점에서 펼치기 아이콘)로 바꾼다. 본문 머리 줄은 좁은 폭에서만 그리고, 화면 이름 대신 사이트 이름(로고 주소 링크)을 둔다. 단추 이름은 frontend/messages/ko.json `shell`에 둔다. `screenTitle`을 쓰는 곳이 없어지면 그대로 둘지 지울지 검사(lint)에 맞춘다
+- [X] T049 frontend/e2e/menu.spec.ts에 `US1-AC3`(넓은 폭: 머리 줄 없음, 로고 줄 접기 → 접힘, 로고 자리 펼치기 → 펼침)을 더하고, 머리 줄 사이드바 단추를 찾던 frontend/e2e/notices.spec.ts·screens.spec.ts를 바뀐 만큼만 고친다 (원칙 V)
+- [X] T050 frontend/에서 `npm run format`, `npm run check`, 바꾼 e2e 묶음(menu·notices·notifications·screens)을 돌린다. 전체 화면 검사는 PR CI로 본다
 - [ ] T051 specs/001-admin-menus/quickstart.md "화면 확인" 2번의 접기·펼치기를 사람이 직접 확인한다
 
 ---
