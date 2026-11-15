@@ -1,7 +1,9 @@
 package com.moa.api.service.menu;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -115,6 +117,34 @@ public class MenuService {
 	}
 
 	/**
+	 * 여러 메뉴의 사용 여부를 한 번에 바꾼다 (moa, specs/001-admin-menus FR-010). 하나라도 없으면 아무것도 바꾸지 않는다
+	 * (호출하는 Application의 트랜잭션이 롤백한다).
+	 *
+	 * @throws ServiceException 없는 메뉴 R001
+	 */
+	public void setEnabled(Collection<Long> ids, boolean enabled) {
+		requireAll(ids).forEach(menu -> menu.changeEnabled(enabled));
+	}
+
+	/**
+	 * 여러 메뉴를 한 번에 지운다 (moa, FR-010). 고른 것끼리 부모·자식이면 함께 지울 수 있다.
+	 * 고르지 않은 하위 메뉴가 남는 묶음이 하나라도 있으면 아무것도 지우지 않는다.
+	 *
+	 * @throws ServiceException 없는 메뉴 R001, 고르지 않은 하위 메뉴가 있는 묶음 B001
+	 */
+	public void deleteAll(Collection<Long> ids, Long actorId) {
+		List<Menu> targets = requireAll(ids);
+		Set<Long> chosen = targets.stream().map(Menu::getId).collect(Collectors.toSet());
+		boolean leavesChildren = menuReader.findAll().stream()
+			.anyMatch(menu -> menu.getParentId() != null && chosen.contains(menu.getParentId())
+				&& !chosen.contains(menu.getId()));
+		if (leavesChildren) {
+			throw new ServiceException(ErrorCode.INVALID_STATE, "하위 메뉴가 있는 묶음은 하위 메뉴와 함께 지우거나 하위 메뉴를 먼저 옮기세요.");
+		}
+		targets.forEach(menu -> menu.delete(actorId));
+	}
+
+	/**
 	 * 보낸 메뉴의 부모와 순서를 한 번에 바꾼다. 바꾼 뒤의 트리 전체를 검사하고, 틀리면 아무것도 반영하지 않는다
 	 * (호출하는 Application의 트랜잭션이 롤백한다).
 	 *
@@ -153,6 +183,21 @@ public class MenuService {
 
 	private Menu require(Long id) {
 		return menuReader.find(id).orElseThrow(() -> new ServiceException(ErrorCode.NOT_FOUND));
+	}
+
+	/** 보낸 ID가 모두 있어야 한다 (겹친 ID는 하나로 본다) */
+	private List<Menu> requireAll(Collection<Long> ids) {
+		Map<Long, Menu> menus = menuReader.findAll().stream()
+			.collect(Collectors.toMap(Menu::getId, menu -> menu));
+		List<Menu> found = new ArrayList<>();
+		for (Long id : new LinkedHashSet<>(ids)) {
+			Menu menu = menus.get(id);
+			if (menu == null) {
+				throw new ServiceException(ErrorCode.NOT_FOUND, "없는 메뉴입니다: " + id);
+			}
+			found.add(menu);
+		}
+		return found;
 	}
 
 	private boolean isVisible(Menu menu, Set<String> permissions, boolean signedIn) {

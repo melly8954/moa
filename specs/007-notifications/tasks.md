@@ -142,7 +142,7 @@ description: "알림 (notifications) 작업 목록"
 
 ## Phase 9: 목록 규칙 맞추기 (2026-11-15 FR-011)
 
-- [ ] T046 frontend/src/app/(account)/notifications/page.tsx의 쪽을 화면 상태에서 주소(`?page=`)로 옮기고 쪽 번호를 보인다 (업무 목록, 원칙 "목록"). e2e notifications.spec.ts의 쪽 넘기기 검사를 바뀐 만큼 고친다. `001-admin-menus` 구현 PR에서 함께 한다
+- [X] T046 frontend/src/app/(account)/notifications/page.tsx의 쪽을 화면 상태에서 주소(`?page=`)로 옮기고 쪽 번호를 보인다 (업무 목록, 원칙 "목록"). e2e notifications.spec.ts의 쪽 넘기기 검사를 바뀐 만큼 고친다. `001-admin-menus` 구현 PR에서 함께 한다
 
 ---
 

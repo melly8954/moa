@@ -53,17 +53,19 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC1 관리자는 관리 메뉴 6개를 최상위에서 정해진 순서로 본다")
+	@DisplayName("US1-AC1 관리자는 관리 메뉴 6개를 운영·설정 묶음 아래에서 정해진 순서로 본다")
 	void adminSeesMenusInOrder() {
 		MvcTestResult result = asAdmin(mvc.get().uri(MY_MENUS));
 
 		assertThat(result).hasStatus(200);
-		assertThat(result).bodyJson().extractingPath("$[*].name").asArray()
-			.containsExactly("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "역할 관리", "공지 관리");
-		assertThat(result).bodyJson().extractingPath("$[*].path").asArray()
-			.containsExactly("/admin/users", "/admin/menus", "/admin/codes", "/admin/login-histories", "/admin/roles",
-				"/admin/notices");
-		assertThat(result).bodyJson().extractingPath("$[*].children[*]").asArray().isEmpty();
+		assertThat(result).bodyJson().extractingPath("$[*].name").asArray().containsExactly("운영", "설정");
+		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
+			.containsExactly("사용자 관리", "공지 관리", "접속 이력");
+		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
+			.containsExactly("역할 관리", "메뉴 관리", "공통코드");
+		assertThat(result).bodyJson().extractingPath("$[*].children[*].path").asArray()
+			.containsExactly("/admin/users", "/admin/notices", "/admin/login-histories", "/admin/roles", "/admin/menus",
+				"/admin/codes");
 	}
 
 	@Test
@@ -113,7 +115,9 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 
 		assertThat(result).hasStatus(200);
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].name").asArray()
-			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "역할 관리", "공지 관리");
+			.containsExactlyInAnyOrder("운영", "설정");
+		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].children[*].name").asArray()
+			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "공통코드", "접속 이력", "역할 관리", "공지 관리");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'USER')].name").asArray()
 			.containsExactlyInAnyOrder("홈", "공지");
 	}
@@ -228,7 +232,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).bodyJson().extractingPath("$[?(@.name == '시스템')].children[*].path").asArray()
 			.containsExactly("/admin/codes");
 		assertThat(result).bodyJson().extractingPath("$[*].name").asArray()
-			.containsExactly("코드 관리", "시스템");
+			.containsExactly("설정", "시스템");
 	}
 
 	@Test
@@ -240,6 +244,51 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 			.doesNotContain("빈 묶음");
 		assertThat(asAdmin(mvc.get().uri(ADMIN_MENUS))).bodyJson().extractingPath("$[*].name").asArray()
 			.contains("빈 묶음");
+	}
+
+	@Test
+	@DisplayName("US5-AC3 접속 이력을 설정 묶음 안으로 옮기면 다음 조회부터 설정 아래에 보인다")
+	void moveMenuIntoAnotherGroup() {
+		long settings = menuId("설정");
+
+		assertThat(asAdmin(mvc.put().uri(ADMIN_MENUS + "/order").contentType(MediaType.APPLICATION_JSON)
+			.content("[{\"id\":" + menuId("접속 이력") + ",\"parentId\":" + settings + ",\"sortOrder\":40}]")))
+			.hasStatus(204);
+
+		MvcTestResult result = asAdmin(mvc.get().uri(MY_MENUS));
+		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
+			.containsExactly("사용자 관리", "공지 관리");
+		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
+			.containsExactly("역할 관리", "메뉴 관리", "공통코드", "접속 이력");
+	}
+
+	@Test
+	@DisplayName("US5-AC4 메뉴 둘을 골라 사용 안 함으로 바꾸면 둘 다 사이드바에서 빠진다")
+	void disableMenusAtOnce() {
+		assertThat(asAdmin(mvc.put().uri(ADMIN_MENUS + "/enabled").contentType(MediaType.APPLICATION_JSON)
+			.content("{\"ids\":[" + menuId("공지 관리") + "," + menuId("접속 이력") + "],\"enabled\":false}")))
+			.hasStatus(204);
+
+		assertThat(asAdmin(mvc.get().uri(MY_MENUS))).bodyJson().extractingPath("$[0].children[*].name").asArray()
+			.containsExactly("사용자 관리");
+	}
+
+	@Test
+	@DisplayName("US5-AC5 하위 메뉴가 있는 묶음과 다른 메뉴를 함께 지우려 하면 아무것도 지워지지 않는다(B001)")
+	void bulkDeleteKeepsGroupWithChildren() {
+		assertThat(asAdmin(mvc.post().uri(ADMIN_MENUS + "/bulk-delete").contentType(MediaType.APPLICATION_JSON)
+			.content("{\"ids\":[" + menuId("운영") + "," + menuId("메뉴 관리") + "]}")))
+			.hasStatus(409).bodyJson().extractingPath("$.code").isEqualTo("B001");
+
+		assertThat(asAdmin(mvc.get().uri(ADMIN_MENUS))).bodyJson().extractingPath("$..name").asArray()
+			.contains("운영", "메뉴 관리");
+	}
+
+	/** 메뉴 관리 트리에서 이름으로 메뉴 ID를 찾는다 */
+	private long menuId(String name) {
+		List<Number> ids = JsonPath.read(body(asAdmin(mvc.get().uri(ADMIN_MENUS))),
+			"$..[?(@.name == '" + name + "')].id");
+		return ids.getFirst().longValue();
 	}
 
 	/** 운영자 계정을 만들고, 이 권한만 묶은 역할을 준다 */

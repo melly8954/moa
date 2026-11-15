@@ -2,23 +2,25 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
 import { api } from "@/api"
 import { PageHeader } from "@/components/kit/page-header"
 import { QueryState } from "@/components/kit/query-state"
 import { NOTIFICATIONS_KEY, useOpenNotification, useReadAll } from "@/components/notification/use-notifications"
 import { Button } from "@/components/ui/button"
 import { formatDateTime } from "@/lib/format"
+import { useListSearch } from "@/lib/list-search"
 import { cn } from "@/lib/utils"
 
 const SIZE = 20
 
 // 알림 화면 (specs/007-notifications US2). 내 개인 알림 최신순, 모두 읽음. 브라우저 알림 켜기·끄기는 설정 화면 (FR-008)
 // 알림을 누르면 읽음 처리 뒤 관련 화면으로 간다
+// 업무 목록이라 쪽은 주소(?page=)에 둔다 (FR-011, 원칙 "목록")
 export default function NotificationsPage() {
   const t = useTranslations("notification")
   const tt = useTranslations("table")
-  const [page, setPage] = useState(0)
+  const search = useListSearch({ defaults: {}, size: SIZE })
+  const page = search.page - 1
   const openNotification = useOpenNotification()
   const readAll = useReadAll()
   const notifications = useQuery({
@@ -63,7 +65,12 @@ export default function NotificationsPage() {
             </ul>
             {data.totalPages > 1 && (
               <nav aria-label={tt("pagination")} className="flex items-center justify-center gap-2">
-                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => search.setPage(search.page - 1)}
+                >
                   {tt("previous")}
                 </Button>
                 <span className="text-sm">
@@ -73,7 +80,7 @@ export default function NotificationsPage() {
                   variant="outline"
                   size="sm"
                   disabled={page + 1 >= data.totalPages}
-                  onClick={() => setPage(page + 1)}
+                  onClick={() => search.setPage(search.page + 1)}
                 >
                   {tt("next")}
                 </Button>

@@ -53,7 +53,7 @@ export default function AdminNoticesPage() {
   return (
     <ListPage
       title={t("adminTitle")}
-      description={t("adminDescription")}
+      description={t.rich("adminDescription", { link: (chunks) => <Link href="/notices">{chunks}</Link> })}
       actions={
         <LinkButton href="/admin/notices/new">
           <Plus />

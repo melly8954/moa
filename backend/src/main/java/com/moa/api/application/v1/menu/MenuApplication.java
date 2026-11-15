@@ -69,6 +69,16 @@ public class MenuApplication {
 	}
 
 	@Transactional
+	public void setEnabled(List<Long> ids, boolean enabled) {
+		menuService.setEnabled(ids, enabled);
+	}
+
+	@Transactional
+	public void deleteAll(List<Long> ids) {
+		menuService.deleteAll(ids, currentActor.id());
+	}
+
+	@Transactional
 	public void reorder(List<MenuOrderDto> orders) {
 		menuService.reorder(orders);
 	}

@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.moa.api.application.v1.menu.MenuApplication;
 import com.moa.api.controller.v1.admin.menu.request.MenuCreateRequest;
+import com.moa.api.controller.v1.admin.menu.request.MenuEnabledRequest;
+import com.moa.api.controller.v1.admin.menu.request.MenuIdsRequest;
 import com.moa.api.controller.v1.admin.menu.request.MenuModifyRequest;
 import com.moa.api.controller.v1.admin.menu.request.MenuOrderRequest;
 import com.moa.api.controller.v1.admin.menu.response.MenuTreeResponse;
@@ -60,6 +62,23 @@ public class ApiAdminMenuController {
 	@PutMapping("/order")
 	public ResponseEntity<Void> reorder(@RequestBody @NotEmpty List<@Valid MenuOrderRequest> request) {
 		menuApplication.reorder(request.stream().map(MenuOrderRequest::toDto).toList());
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "사용 여부 한꺼번에 바꾸기",
+		description = "moa (specs/001-admin-menus FR-010): 한 트랜잭션. 없는 메뉴가 하나라도 있으면 R001, 아무것도 바꾸지 않는다")
+	@PutMapping("/enabled")
+	public ResponseEntity<Void> setEnabled(@Valid @RequestBody MenuEnabledRequest request) {
+		menuApplication.setEnabled(request.ids(), request.enabled());
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "한꺼번에 지우기",
+		description = "moa (FR-010): 소프트 삭제, 한 트랜잭션. 고른 것끼리 부모·자식이면 함께 지운다. "
+			+ "없는 메뉴 R001, 고르지 않은 하위 메뉴가 남는 묶음 B001 (아무것도 지우지 않는다)")
+	@PostMapping("/bulk-delete")
+	public ResponseEntity<Void> deleteAll(@Valid @RequestBody MenuIdsRequest request) {
+		menuApplication.deleteAll(request.ids());
 		return ResponseEntity.noContent().build();
 	}
 

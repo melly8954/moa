@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils"
 
 // 화면 머리: 제목(h1), 설명, 오른쪽 버튼(등록 등)
+// moa: 설명은 그 화면이 정하는 것과 앞뒤 화면 링크를 담는다 (specs/001-admin-menus FR-011). 링크는 t.rich로 넣는다
+//   description={t.rich("guide", { link: (chunks) => <Link href="/admin/roles">{chunks}</Link> })}
 // 셸 헤더는 위치(메뉴 이름)만 보이고, 화면 제목은 여기서 h1으로 둔다
 export function PageHeader({
   title,
@@ -9,7 +11,7 @@ export function PageHeader({
   className,
 }: {
   title: string
-  description?: string
+  description?: React.ReactNode
   actions?: React.ReactNode
   className?: string
 }) {
@@ -17,7 +19,11 @@ export function PageHeader({
     <div className={cn("flex flex-wrap items-end justify-between gap-3", className)}>
       <div className="flex min-w-0 flex-col gap-1">
         <h1 className="text-xl font-semibold">{title}</h1>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        {description && (
+          <p className="text-sm text-muted-foreground [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-4">
+            {description}
+          </p>
+        )}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>
@@ -36,7 +42,7 @@ export function ListPage({
   children,
 }: {
   title: string
-  description?: string
+  description?: React.ReactNode
   actions?: React.ReactNode
   search?: React.ReactNode
   children: React.ReactNode

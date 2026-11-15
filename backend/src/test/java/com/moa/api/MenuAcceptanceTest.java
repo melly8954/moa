@@ -143,6 +143,25 @@ class MenuAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
+	// moa: 일괄 처리 (specs/001-admin-menus FR-010)
+	@DisplayName("메뉴: 일괄 사용 여부·지우기는 없는 메뉴가 섞이면 R001로 아무것도 바꾸지 않고, 묶음은 하위 메뉴와 함께 지울 수 있다")
+	void bulkRules() {
+		long group = create(null, "업무", null, 10);
+		long codes = create(group, "코드", "ADMIN_CODES", 10);
+
+		assertThat(asAdmin(mvc.put().uri(ADMIN_MENUS + "/enabled").contentType(MediaType.APPLICATION_JSON)
+			.content("{\"ids\":[" + codes + ",999999],\"enabled\":false}")))
+			.hasStatus(404).bodyJson().extractingPath("$.code").isEqualTo("R001");
+		assertThat(asAdmin(mvc.get().uri(ADMIN_MENUS))).bodyJson().extractingPath("$[0].children[0].enabled")
+			.isEqualTo(true);
+
+		assertThat(asAdmin(mvc.post().uri(ADMIN_MENUS + "/bulk-delete").contentType(MediaType.APPLICATION_JSON)
+			.content("{\"ids\":[" + group + "," + codes + "]}")))
+			.hasStatus(204);
+		assertThat(asAdmin(mvc.get().uri(ADMIN_MENUS))).bodyJson().extractingPath("$.length()").isEqualTo(0);
+	}
+
+	@Test
 	@DisplayName("메뉴: 관리 API는 MENU_MANAGE 권한(A005), 내 메뉴는 로그인 필요(A001)")
 	void access() {
 		assertThat(asUser(mvc.get().uri(ADMIN_MENUS))).hasStatus(403)
