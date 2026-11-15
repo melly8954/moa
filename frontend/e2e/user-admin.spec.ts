@@ -15,6 +15,7 @@ const USERS = [
     passwordChangeRequired: false,
     hasPassword: true,
     createdAt: "2026-11-01T09:00:00+09:00",
+    accessRoles: [{ id: 1, name: "보안 담당" }],
   },
   {
     id: 1,
@@ -26,6 +27,7 @@ const USERS = [
     passwordChangeRequired: false,
     hasPassword: true,
     createdAt: "2026-10-01T09:00:00+09:00",
+    accessRoles: [],
   },
   {
     id: 3,
@@ -37,6 +39,7 @@ const USERS = [
     passwordChangeRequired: true,
     hasPassword: false,
     createdAt: "2026-11-02T09:00:00+09:00",
+    accessRoles: [],
   },
 ]
 
@@ -55,7 +58,12 @@ async function mock(page: Page, role: "USER" | "ADMIN" = "USER") {
   )
 }
 
-const actions = (page: Page, loginId: string) => page.getByRole("button", { name: `${loginId} 관리` })
+// moa: 행의 "관리" 메뉴 대신 아이디를 누르면 드로어가 열린다 (specs/002-admin-users FR-007)
+//   사이드바의 내 계정 메뉴도 이름이 아이디라서 목록 영역 안에서 찾는다 (목록이 뜨기를 기다리는 효과도 있다)
+const openUser = async (page: Page, loginId: string) => {
+  await page.getByRole("region", { name: "사용자 관리" }).getByRole("button", { name: loginId, exact: true }).click()
+  return page.getByRole("dialog")
+}
 
 test("사용자 관리: 가로 넘침·접근성", async ({ page }) => {
   await mock(page)
@@ -71,33 +79,47 @@ test("상태: 잠김이 먼저, 그다음 비밀번호 변경 전", async ({ pag
   await expect(page.getByRole("row", { name: /kim/ })).toContainText("잠김")
 })
 
-test("내 행은 역할·잠그기·삭제가 꺼져 있다", async ({ page }) => {
+test("US3-AC2 내 행 드로어는 역할·잠그기·삭제가 꺼져 있고 행의 관리 메뉴 단추는 없다", async ({ page }) => {
   await mock(page, "ADMIN")
   await page.goto("/admin/users")
-  await actions(page, "e2e").click()
-  await expect(page.getByRole("menuitem", { name: "잠그기" })).toHaveAttribute("aria-disabled", "true")
-  await expect(page.getByRole("menuitem", { name: "삭제" })).toHaveAttribute("aria-disabled", "true")
-  await expect(page.getByRole("menuitem", { name: "이름 바꾸기" })).not.toHaveAttribute("aria-disabled", "true")
+  await expect(page.getByRole("button", { name: /관리$/ })).toHaveCount(0)
+  const drawer = await openUser(page, "e2e")
+  await expect(drawer.getByRole("button", { name: "잠그기" })).toBeDisabled()
+  await expect(drawer.getByRole("button", { name: "삭제" })).toBeDisabled()
+  await expect(drawer.getByRole("button", { name: "이름 바꾸기" })).toBeEnabled()
   // moa: 업무 역할은 역할 관리에서만 준다 (specs/002-admin-users FR-005)
-  await expect(page.getByRole("menuitem", { name: "업무 역할" })).toHaveCount(0)
+  await expect(drawer.getByRole("button", { name: "업무 역할" })).toHaveCount(0)
+})
+
+test("US3-AC1·AC3 목록에 업무 역할 열이 있고, 드로어에서는 보기만 하며 역할 관리로 가는 링크가 있다 @wide", async ({
+  page,
+}) => {
+  await mock(page, "ADMIN")
+  await page.goto("/admin/users")
+  await expect(page.getByRole("cell", { name: "보안 담당", exact: true })).toBeVisible()
+  await expect(page.getByRole("cell", { name: "모든 권한", exact: true })).toBeVisible()
+  const drawer = await openUser(page, "e2e")
+  await expect(drawer.getByText("보안 담당")).toBeVisible()
+  await expect(drawer.getByRole("link", { name: "역할 관리" })).toHaveAttribute("href", "/admin/roles")
+  await expectNoSeriousA11yViolations(page)
 })
 
 test("내가 관리자가 아니면 관리자 행은 모두 꺼져 있다", async ({ page }) => {
-  await mock(page, "USER")
+  await mock(page)
   await page.goto("/admin/users")
-  await actions(page, "admin").click()
+  const drawer = await openUser(page, "admin")
   for (const name of ["이름 바꾸기", "잠그기", "비밀번호 초기화", "삭제"])
-    await expect(page.getByRole("menuitem", { name })).toHaveAttribute("aria-disabled", "true")
+    await expect(drawer.getByRole("button", { name })).toBeDisabled()
 })
 
 test("비밀번호 없는 계정은 초기화가 꺼져 있다", async ({ page }) => {
   await mock(page, "ADMIN")
   await page.goto("/admin/users")
-  await actions(page, "kim").click()
-  await expect(page.getByRole("menuitem", { name: "비밀번호 초기화" })).toHaveAttribute("aria-disabled", "true")
+  const drawer = await openUser(page, "kim")
+  await expect(drawer.getByRole("button", { name: "비밀번호 초기화" })).toBeDisabled()
 })
 
-test("만들면 임시 비밀번호를 한 번 보인다", async ({ page }) => {
+test("만들기도 드로어에서 하고 임시 비밀번호를 드로어 안에 한 번 보인다", async ({ page }) => {
   await mock(page, "ADMIN")
   await page.goto("/admin/users")
   await page.getByRole("button", { name: "사용자 만들기" }).click()
@@ -105,9 +127,9 @@ test("만들면 임시 비밀번호를 한 번 보인다", async ({ page }) => {
   await dialog.getByLabel("아이디").fill("new")
   await dialog.getByLabel("이름").fill("새 사용자")
   await dialog.getByRole("button", { name: "저장" }).click()
-  const shown = page.getByRole("dialog", { name: "임시 비밀번호" })
-  await expect(shown.getByLabel("임시 비밀번호")).toHaveValue("aB3$kP9mQ2xZ")
+  // moa: 만들기 드로어 안에 임시 비밀번호를 한 번 보인다 (specs/002-admin-users FR-007)
+  await expect(dialog.getByLabel("임시 비밀번호")).toHaveValue("aB3$kP9mQ2xZ")
   await expectNoSeriousA11yViolations(page)
-  await shown.getByRole("button", { name: "확인" }).click()
-  await expect(shown).toBeHidden()
+  await dialog.getByRole("button", { name: "확인" }).click()
+  await expect(dialog).toBeHidden()
 })

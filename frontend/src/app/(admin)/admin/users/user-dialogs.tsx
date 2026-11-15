@@ -24,16 +24,11 @@ import { Input } from "@/components/ui/input"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { useFieldErrorText } from "@/i18n/field-error"
 import { useErrorMessages } from "@/lib/error-messages"
-import {
-  type UserCreateInput,
-  userCreateSchema,
-  type UserRenameInput,
-  userRenameSchema,
-} from "@/lib/schemas/user-admin"
+import { type UserRenameInput, userRenameSchema } from "@/lib/schemas/user-admin"
 import type { Role } from "@/types/user"
 import type { AdminUser } from "@/types/user-admin"
 
-// 사용자 관리 화면의 창들: 만들기, 이름 바꾸기, 역할 바꾸기, 임시 비밀번호 보이기
+// 사용자 관리 화면의 창들: 이름 바꾸기, 역할 바꾸기, 임시 비밀번호 보이기 (만들기는 user-drawer.tsx의 드로어)
 
 export const ROLES: Role[] = ["USER", "ADMIN"]
 
@@ -54,7 +49,34 @@ export function useUserErrorText() {
   }
 }
 
-// 임시 비밀번호: 이 창에서만 보인다. 복사 버튼을 둔다
+// 임시 비밀번호: 이 창(또는 만들기 드로어)에서만 보인다. 복사 버튼을 둔다
+export function TemporaryPasswordPanel({ value, loginId }: { value: string; loginId: string }) {
+  const t = useTranslations("userAdmin")
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value)
+      toast.success(t("copied"))
+    } catch {
+      toast.error(t("copyFailed"))
+    }
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-muted-foreground">{t("temporaryPasswordDescription", { loginId })}</p>
+      <div className="flex items-center gap-2">
+        <Input readOnly value={value} aria-label={t("temporaryPassword")} className="font-mono" />
+        <Button variant="outline" onClick={() => void copy()}>
+          <Copy />
+          {t("copy")}
+        </Button>
+      </div>
+      <Alert>
+        <AlertDescription>{t("temporaryPasswordOnce")}</AlertDescription>
+      </Alert>
+    </div>
+  )
+}
+
 export function TemporaryPasswordDialog({
   value,
   loginId,
@@ -65,144 +87,17 @@ export function TemporaryPasswordDialog({
   onClose: () => void
 }) {
   const t = useTranslations("userAdmin")
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(value ?? "")
-      toast.success(t("copied"))
-    } catch {
-      toast.error(t("copyFailed"))
-    }
-  }
   return (
     <Dialog open={!!value} onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("temporaryPasswordTitle")}</DialogTitle>
-          <DialogDescription>{t("temporaryPasswordDescription", { loginId: loginId ?? "" })}</DialogDescription>
+          <DialogDescription className="sr-only">{t("temporaryPasswordTitle")}</DialogDescription>
         </DialogHeader>
-        <div className="flex items-center gap-2">
-          <Input readOnly value={value ?? ""} aria-label={t("temporaryPassword")} className="font-mono" />
-          <Button variant="outline" onClick={() => void copy()}>
-            <Copy />
-            {t("copy")}
-          </Button>
-        </div>
-        <Alert>
-          <AlertDescription>{t("temporaryPasswordOnce")}</AlertDescription>
-        </Alert>
+        <TemporaryPasswordPanel value={value ?? ""} loginId={loginId ?? ""} />
         <DialogFooter>
           <Button onClick={onClose}>{t("done")}</Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-export function CreateUserDialog({
-  open,
-  onOpenChange,
-  canGrantAdmin,
-  onCreated,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  // ADMIN 역할은 ADMIN만 줄 수 있다
-  canGrantAdmin: boolean
-  onCreated: (loginId: string, temporaryPassword: string) => void
-}) {
-  const t = useTranslations("userAdmin")
-  const fieldErrorText = useFieldErrorText()
-  const errorText = useUserErrorText()
-  const invalidate = useInvalidateUsers()
-  const [formError, setFormError] = useState<string>()
-  const form = useForm<UserCreateInput>({
-    resolver: zodResolver(userCreateSchema),
-    defaultValues: { loginId: "", name: "", role: "USER" },
-  })
-  const create = useMutation({
-    mutationFn: (values: UserCreateInput) => api.v1.userAdmin.create(values),
-    onSuccess: async (result) => {
-      await invalidate()
-      onOpenChange(false)
-      form.reset()
-      onCreated(result.user.loginId, result.temporaryPassword)
-    },
-    onError: (error) => {
-      const apiError = toApiError(error)
-      if (apiError.code === "R002") return form.setError("loginId", { message: "userAdmin.duplicate" })
-      for (const fieldError of apiError.fieldErrors)
-        form.setError(fieldError.field as keyof UserCreateInput, { message: "" })
-      setFormError(errorText(apiError))
-    },
-  })
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("create")}</DialogTitle>
-          <DialogDescription>{t("createDescription")}</DialogDescription>
-        </DialogHeader>
-        <form
-          noValidate
-          onSubmit={form.handleSubmit((values) => {
-            setFormError(undefined)
-            create.mutate(values)
-          })}
-        >
-          <FieldGroup>
-            {formError && (
-              <Alert variant="destructive">
-                <AlertDescription>{formError}</AlertDescription>
-              </Alert>
-            )}
-            {(["loginId", "name"] as const).map((name) => (
-              <Controller
-                key={name}
-                name={name}
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={`user-${name}`}>{t(name)}</FieldLabel>
-                    <Input
-                      {...field}
-                      id={`user-${name}`}
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={fieldState.invalid ? `user-${name}-error` : undefined}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError id={`user-${name}-error`} errors={fieldErrorText(fieldState.error)} />
-                    )}
-                  </Field>
-                )}
-              />
-            ))}
-            <Controller
-              name="role"
-              control={form.control}
-              render={({ field }) => (
-                <Field>
-                  <FieldLabel htmlFor="user-role">{t("role")}</FieldLabel>
-                  <NativeSelect id="user-role" value={field.value} onChange={field.onChange}>
-                    {ROLES.filter((r) => r !== "ADMIN" || canGrantAdmin).map((r) => (
-                      <NativeSelectOption key={r} value={r}>
-                        {t(`roles.${r}`)}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                </Field>
-              )}
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                {t("cancel")}
-              </Button>
-              <Button type="submit" disabled={create.isPending}>
-                {t("save")}
-              </Button>
-            </DialogFooter>
-          </FieldGroup>
-        </form>
       </DialogContent>
     </Dialog>
   )

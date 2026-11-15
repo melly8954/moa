@@ -341,7 +341,7 @@
   },
   "userAdmin": {
     "title": "사용자 관리",
-    "description": "사용자를 찾고, 만들고, 잠그고, 비밀번호를 초기화해요.",
+    "description": "계정을 만들고, 잠그고, 비밀번호를 초기화해요. 운영자가 쓸 관리 메뉴는 <link>역할 관리</link>에서 정해요.",
     "keyword": "검색어",
     "keywordPlaceholder": "아이디나 이름 일부",
     "loginId": "아이디",
@@ -395,7 +395,12 @@
     "loginIdRequired": "아이디를 입력해 주세요.",
     "loginIdPattern": "영문·숫자·점·밑줄·하이픈으로 3~50자를 적어 주세요.",
     "nameRequired": "이름을 입력해 주세요.",
-    "nameMax": "50자 이하로 입력해 주세요."
+    "nameMax": "50자 이하로 입력해 주세요.",
+    "accessRoles": "업무 역할",
+    "allPermissions": "모든 권한",
+    "noAccessRoles": "없음",
+    "accessRolesHint": "업무 역할은 <link>역할 관리</link>에서 줘요.",
+    "drawerDescription": "계정 정보를 보고, 이름·시스템 역할·잠금·비밀번호를 다뤄요."
   },
   "richText": {
     "toolbar": "서식 도구",

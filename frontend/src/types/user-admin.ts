@@ -14,6 +14,8 @@ export type AdminUser = {
   // false면 비밀번호로 로그인하지 않는 계정(소셜). 비밀번호 초기화를 할 수 없다
   hasPassword: boolean
   createdAt: string
+  // moa: 받은 업무 역할 (보기만, specs/002-admin-users FR-006). 목록·하나 조회에서만 온다. 관리자는 비어 있다(모든 권한)
+  accessRoles: { id: number; name: string }[]
 }
 
 // 모두 선택. locked는 "true"·"false"

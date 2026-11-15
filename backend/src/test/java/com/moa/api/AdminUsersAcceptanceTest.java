@@ -95,6 +95,36 @@ class AdminUsersAcceptanceTest extends AcceptanceTest {
 			.isEqualTo(true);
 	}
 
+	@Test
+	@DisplayName("US3-AC1 사용자 관리 목록에 업무 역할이 보인다 (역할을 받은 운영자는 그 역할, 없는 사용자와 관리자는 빈 목록)")
+	void listShowsAccessRoles() {
+		testUsers.create(1L, "system", null, Role.USER);
+		testUsers.create(2L, "admin", "admin1234!", Role.ADMIN);
+		testUsers.create(10L, "operator", "operator123!", Role.USER);
+		testUsers.create(11L, "member", "member1234!", Role.USER);
+		String admin = bearer(2L, "ADMIN");
+		MvcTestResult role = mvc.post().uri("/api/v1/admin/roles").header(HttpHeaders.AUTHORIZATION, admin)
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{\"code\":\"SECURITY\",\"name\":\"보안 담당\",\"permissions\":[\"LOGIN_HISTORY_READ\"]}")
+			.exchange();
+		Number roleId = JsonPath.read(body(role), "$.id");
+		assertThat(mvc.post().uri("/api/v1/admin/roles/" + roleId + "/members").header(HttpHeaders.AUTHORIZATION, admin)
+			.contentType(MediaType.APPLICATION_JSON).content("{\"userIds\":[10]}").exchange())
+			.hasStatus(204);
+
+		MvcTestResult result = mvc.get().uri(ADMIN_USERS).header(HttpHeaders.AUTHORIZATION, admin).exchange();
+
+		assertThat(result).hasStatus(200);
+		assertThat(result).bodyJson().extractingPath("$.content[?(@.loginId == 'operator')].accessRoles[*].name")
+			.asArray().containsExactly("보안 담당");
+		assertThat(result).bodyJson().extractingPath("$.content[?(@.loginId == 'member')].accessRoles[*]")
+			.asArray().isEmpty();
+		assertThat(result).bodyJson().extractingPath("$.content[?(@.loginId == 'admin')].accessRoles[*]")
+			.asArray().isEmpty();
+		assertThat(mvc.get().uri(ADMIN_USERS + "/10").header(HttpHeaders.AUTHORIZATION, admin).exchange())
+			.bodyJson().extractingPath("$.accessRoles[0].name").isEqualTo("보안 담당");
+	}
+
 	private MvcTestResult login(String loginId, String password) {
 		return mvc.post().uri(LOGIN).contentType(MediaType.APPLICATION_JSON)
 			.content("{\"loginId\":\"" + loginId + "\",\"password\":\"" + password + "\"}")
