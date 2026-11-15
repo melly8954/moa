@@ -98,6 +98,29 @@ test("US1-AC1 관리자는 로그인하면 첫 관리 메뉴 화면이 열리고
   await expect(page.getByRole("link", { name: /^공지(, 새 공지)?$/ })).toHaveCount(0)
 })
 
+test("US1-AC3 넓은 폭에는 머리 줄이 없고, 로고 줄 단추로 사이드바를 접고 로고 자리 단추로 다시 편다 @wide", async ({
+  page,
+}) => {
+  await signedIn(page, { menus: MY_MENUS })
+  await page.route("**/api/v1/admin/**", (route) =>
+    route.fulfill({ json: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 } }),
+  )
+  await page.goto("/admin/users")
+  await expect(menuLinks(page)).toHaveText(MY_MENUS.map((m) => m.name))
+  // 머리 줄(서랍 단추가 있는 줄)은 좁은 폭에만 있다 (FR-005). 사이드바 가장자리(Rail)도 이름이 같아 서랍 단추를 data-sidebar로 찾는다
+  await expect(page.locator('[data-sidebar="trigger"]')).toBeHidden()
+
+  await page.getByRole("button", { name: "사이드바 접기" }).click()
+  const expand = page.getByRole("button", { name: "사이드바 펼치기" })
+  await expect(expand).toBeVisible()
+  await expect(page.getByRole("button", { name: "사이드바 접기" })).toHaveCount(0)
+  await expectNoSeriousA11yViolations(page)
+
+  await expand.click()
+  await expect(page.getByRole("button", { name: "사이드바 접기" })).toBeVisible()
+  await expect(menuLinks(page).first()).toHaveText("사용자 관리")
+})
+
 test("US2-AC1 일반 회원 사이드바에는 관리 메뉴가 없다 @wide", async ({ page }) => {
   await signedIn(page)
   await page.route("**/api/v1/notices/new", (route) => route.fulfill({ json: { hasNew: false } }))

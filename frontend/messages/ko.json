@@ -47,7 +47,9 @@
     "themeSystem": "기기 설정",
     "language": "언어",
     "openPanel": "메뉴 목록 펼치기",
-    "closePanel": "메뉴 목록 접기"
+    "closePanel": "메뉴 목록 접기",
+    "collapseSidebar": "사이드바 접기",
+    "expandSidebar": "사이드바 펼치기"
   },
   "menu": {
     "home": "홈",
