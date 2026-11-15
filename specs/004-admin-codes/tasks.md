@@ -54,8 +54,31 @@ description: "공통코드 (admin-codes) 작업 목록"
 
 ---
 
+## Phase 5: 관리 화면 정리 (2026-11-15 FR-004~FR-007, US1 변경)
+
+**Purpose**: 그룹 코드 등록, 항목 코드 자동 순번, 트리 표·일괄 처리 (research.md R5~R8). `001-admin-menus` T071·T073 뒤에 한다
+
+**백엔드**
+
+- [ ] T006 backend/src/main/java/com/moa/api/codegroup/(또는 code 헬퍼 패키지)에 `CodeGroupDefinition`·`CodeGroupSource`·`CodeGroupRegistry`(시작 검사)를 만들고, backend/src/main/resources/db/migration/V2_7__code_groups_from_code.sql로 `code_groups`를 지운다. 코드 서비스·화면용 목록이 등록을 그룹 기준으로 쓰게 하고 그룹 만들기 API를 없앤다 (R5)
+- [ ] T007 항목 만들기에서 코드를 비우면 자동 순번(R6), `GET /admin/code-groups/tree`, `PUT .../codes/order`, `PUT .../codes/enabled`, `POST .../codes/bulk-delete`를 둔다 (R7)
+- [ ] T008 backend/src/test/java/com/moa/support/TestCodeGroups.java(테스트 전용 그룹 둘)와 backend/src/test/java/com/moa/api/AdminCodesAcceptanceTest.java의 US1-AC1~AC6을 R8대로 쓰고, 키트 CodeAcceptanceTest의 그룹 만들기 테스트를 지운다 (원칙 V)
+
+**프론트**
+
+- [ ] T009 frontend/src/app/(admin)/admin/codes/: 트리 표(그룹 행 접기·펴기, 체크 칸 없음, 항목 체크박스·손잡이·이름·코드·사용), 그룹마다 "항목 추가", 항목 드로어(이름, 사용, 만들 때만 코드), 일괄 줄(한 그룹 안에서만), 그룹 안 끌기, 빈 안내, 머리 안내(FR-007 문구). 메뉴 관리 부품을 같이 쓰게 나눈다. frontend/src/api·types의 code를 새 API에 맞춘다 (R7)
+- [ ] T010 frontend/e2e/code.spec.ts를 R8대로 고친다 (원칙 V)
+
+**마무리**
+
+- [ ] T011 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*Code*AcceptanceTest"`, frontend/에서 `npm run format`, `npm run check`. e2e와 dbTest 전체는 PR CI로 본다
+- [ ] T012 specs/004-admin-codes/quickstart.md "화면 확인"을 새 화면에 맞추고 사람이 확인한다 (시험 그룹은 local 프로필에서만 등록한다)
+
+---
+
 ## Dependencies & Execution Order
 
+- Phase 5: `001-admin-menus` T071·T073 → T006 → T007 → T008 → T009 → T010 → T011 → T012
 - T001 → T002 → T003 → T004, T005
 
 ## Parallel Example

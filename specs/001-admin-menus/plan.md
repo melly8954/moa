@@ -19,6 +19,8 @@ moa가 할 일은 키트 시드의 "관리" 그룹을 없애 메뉴를 최상위
 
 **프로그램과 공개 범위 (2026-11-15, FR-002·FR-007~FR-009)**: 메뉴에 걸 화면을 프로그램으로 코드에 등록하고, 메뉴는 경로·권한 대신 프로그램을 가리킨다. 사용자 메뉴는 권한 대신 공개 범위(`PUBLIC`·`MEMBER`)를 가진다. 셸이 쓰는 메뉴 API의 모양은 그대로다. 키트 menu 헬퍼(백엔드 등록·열·API, 메뉴 관리 화면)를 moa에서 먼저 고치고 키트로 옮긴다 ([research.md](./research.md) R13~R17).
 
+**관리 화면 정리 (2026-11-15, FR-001·FR-006·FR-008·FR-010~FR-012, US5)**: 관리 메뉴를 운영·설정 묶음으로 옮기는 마이그레이션, 메뉴 일괄 API 둘(사용 여부, 지우기), 메뉴 관리 화면을 트리 표·끌기·드로어·일괄 처리로 다시 짜고 프로그램 탭을 없앤다. 관리 화면이 함께 쓰는 드로어 부품과 머리 안내를 둔다. 끌기는 `@dnd-kit`을 들인다 ([research.md](./research.md) R18~R23). 역할·사용자·공통코드 화면은 각 스펙(003·002·004)에서 같은 틀로 바꾼다
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)
@@ -147,6 +149,26 @@ frontend/src/
 ├── api/menu.ts, types/menu.ts          # admin.programs(), Program
 └── app/(admin)/admin/menus/            # 프로그램 탭, 목록 열, 대화상자 (R16)
 frontend/e2e/{menu.spec.ts, screens.spec.ts, support/api.ts}
+```
+
+관리 화면 정리 (2026-11-15):
+
+```text
+backend/src/main/resources/db/migration/V2_6__admin_menu_groups.sql  # 운영·설정 묶음, 메뉴 옮기기, 공통코드 이름 (R18)
+backend/src/main/java/com/moa/api/
+├── program/CodePrograms.java                                   # 이름 "공통코드"
+├── service/menu/MenuService.java                               # setEnabled(ids), deleteAll(ids) (R19)
+├── application/v1/menu/MenuApplication.java
+└── controller/v1/admin/menu/{ApiAdminMenuController, request/MenuEnabledRequest, request/MenuIdsRequest}.java
+backend/src/test/java/com/moa/api/{AdminMenusAcceptanceTest, MenuAcceptanceTest, AdminRolesAcceptanceTest}.java
+frontend/
+├── package.json                                                # @dnd-kit/core, @dnd-kit/sortable (R20)
+├── src/components/kit/side-drawer.tsx                          # 공용 드로어 (R21)
+├── src/components/shell/landing.ts                             # 묶음 안 첫 화면 메뉴 (R18)
+├── src/app/(admin)/admin/menus/{page, menu-tree-table, menu-drawer, bulk-bar}.tsx  # 트리 표·드로어·일괄 줄 (R22)
+├── src/api/menu.ts, src/types/menu.ts                          # setEnabled, bulkDelete
+└── messages/ko.json                                            # menuAdmin 문구, 머리 안내
+frontend/e2e/{menu.spec.ts, auth.spec.ts}
 ```
 
 **Structure Decision**: 인수 테스트는 키트와 같은 `com.moa.api` 패키지에 둔다. 마이그레이션은 키트 것을 고치지 않고 moa 것을 하나 더한다. 셸 나누기는 프론트만 고치고, 키트 셸 파일을 고친 것은 키트로 옮길 목록에 올린다 (원칙 III).

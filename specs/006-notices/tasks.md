@@ -160,6 +160,12 @@ description: "공지사항 (notices) 작업 목록"
 
 ---
 
+## Phase 10: 관리 화면 정리 (2026-11-15 FR-011·FR-012)
+
+- [ ] T059 frontend/src/app/(admin)/admin/notices/의 머리 안내를 FR-012 문구로 바꾼다. 두 목록은 지금 쪽 나눔 그대로(FR-011). `001-admin-menus` T071 뒤, 그 구현 PR에서 함께 한다
+
+---
+
 ## Dependencies & Execution Order
 
 - Setup: 백엔드(T001~T003 → T004)와 프론트(T005·T006 → T007·T008·T009 → T011)는 서로 기대지 않는다. T010은 둘 다 끝난 뒤

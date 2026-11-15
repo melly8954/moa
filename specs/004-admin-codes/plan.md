@@ -9,6 +9,8 @@
 코드 그룹·코드 관리와 화면용 목록은 키트(`springboot/v0.3.1` code 헬퍼, `web-next/v0.3.0` code 헬퍼)에 이미 있다. 마이그레이션에 코드 그룹 시드가 없어 처음에는 비어 있고(FR-001), 캐시도 켜져 있지 않다(FR-003).
 moa가 할 일은 "관리자가 코드 관리를 열면 FR-001 표의 그룹이 보인다"를 AC 테스트로 고정하는 것이다. 운영 코드와 마이그레이션은 바꾸지 않는다 ([research.md](./research.md) R1).
 
+**관리 화면 정리 (2026-11-15, FR-004~FR-007, US1)**: 그룹을 코드로 등록하고(`CodeGroupSource`, `code_groups` 표 삭제), 항목 코드 자동 순번, 트리 조회·순서·일괄 API를 더한다. 화면은 메뉴 관리와 같은 트리 표·드로어·일괄 처리로 다시 짠다. `001-admin-menus` Phase 11의 부품을 쓴다 ([research.md](./research.md) R5~R8). 구현 브랜치는 `feat/004-code-console`. 키트 code 헬퍼를 moa에서 먼저 고치고 키트로 옮긴다
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)

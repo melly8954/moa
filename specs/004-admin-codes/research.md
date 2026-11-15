@@ -26,3 +26,31 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
 
 - **Decision**: `AdminCodesAcceptanceTest` 한 클래스에 `@DisplayName("US1-AC1 ...")` 형식으로 둔다
 - **Rationale**: 원칙 II의 형식이다. 스펙은 클래스 이름으로 구분한다
+
+## R5. 그룹을 코드로 등록하는 방법 (FR-004, 2026-11-15 관리 화면 정리)
+
+- **Decision**: 메뉴의 프로그램(`001` research R13)과 같은 모양으로 `CodeGroupSource` 빈이 `CodeGroupDefinition(groupCode, name, description, usedBy)`를 내고 `CodeGroupRegistry`가 모은다. 시작 검사(틀리면 시작 실패): 그룹 코드 형식 `[A-Z][A-Z0-9_]{0,49}`, 겹침, 이름·쓰는 곳 필수
+  - 등록이 그룹의 기준이다. `code_groups` 표는 쓰지 않으므로 moa 마이그레이션 `V2_7__code_groups_from_code.sql`이 지운다 (moa에는 그룹이 하나도 없다). 항목(`codes`)은 그대로 `group_code`로 그룹을 가리킨다
+  - 관리 API의 그룹 만들기(`POST /code-groups`)를 없앤다. 그룹 목록·화면용 목록(`GET /api/v1/codes/{groupCode}`)은 등록된 그룹만 다룬다(없는 그룹 R001)
+  - 등록에서 빠진 그룹의 항목은 남아 있지만 어디에도 보이지 않는다 (스펙 Edge Cases)
+- **Rationale**: 그룹은 그것을 읽는 기능의 코드와 함께 있어야 쓸모가 있다. 화면·DB에 두면 코드와 어긋날 수 있다
+- **Alternatives considered**: 시작할 때 등록을 `code_groups`에 맞춰 넣기(동기화). 두 곳이 기준이 되어 어긋날 때 무엇이 맞는지 흐려진다
+
+## R6. 항목 코드 자동 순번 (FR-006)
+
+- **Decision**: 코드를 비우고 만들면, 그 그룹의 지운 것까지 포함한 항목 중 숫자로만 된 코드의 가장 큰 값 + 1을 세 자리 이상으로 채운다(`001`). 지운 항목은 `@SQLRestriction` 밖이라 네이티브 쿼리로 센다. 같은 순간에 두 번 만들어 겹치면(유일 키) 한 번 다시 시도하고, 또 겹치면 R002
+- **Rationale**: 지운 순번을 다시 쓰면 예전에 저장된 값이 새 항목을 가리키게 된다
+
+## R7. 트리 표와 일괄 처리 (FR-005)
+
+- **Decision**:
+  - `GET /api/v1/admin/code-groups/tree`: 등록된 그룹마다 `groupCode`, `name`, `description`, `usedBy`, 항목(`code`, `name`, `sortOrder`, `enabled`, 사용 안 함 포함)
+  - `PUT /api/v1/admin/code-groups/{groupCode}/codes/order` (`[{code, sortOrder}]`): 그룹 안 순서 한꺼번에
+  - `PUT /api/v1/admin/code-groups/{groupCode}/codes/enabled` (`codes`, `enabled`), `POST /api/v1/admin/code-groups/{groupCode}/codes/bulk-delete` (`codes`): 한 트랜잭션, 하나라도 틀리면(없는 코드 R001) 아무것도 바꾸지 않는다
+  - 화면은 `001` R22의 메뉴 표와 같은 부품(트리 표, 손잡이, 일괄 줄, 드로어)을 쓴다. 그룹 행은 체크 칸이 없고 접고 편다. 항목 드로어: 이름, 사용, 코드(만들 때만 적을 수 있음, 비우면 자동). 그룹마다 "항목 추가" 줄
+  - 화면은 여러 그룹을 한 표에 두지만 일괄 처리는 한 그룹 안에서만 한다 (다른 그룹의 항목을 함께 고르면 일괄 줄이 "한 그룹씩 처리해요"로 안내)
+- **Rationale**: 메뉴 관리와 조작을 같게 한다(스펙 Assumptions). 코드는 그룹 안에서만 뜻이 있어 API도 그룹 단위다
+
+## R8. 무엇을 테스트하나 (US1)
+
+- **Decision**: 테스트에서만 등록하는 그룹 둘(`TestCodeGroups`)로 API 인수 테스트(`AdminCodesAcceptanceTest`): US1-AC1(트리 응답, 그룹 만들기 API 없음 405), US1-AC2(이름만 → `001`, 지운 뒤 다시 만들면 `002`), US1-AC3(이름·사용 바꾸기, 코드 바꾸기 없음), US1-AC4(`enabled` 둘 끄기 → 화면용 목록에서 빠짐), US1-AC5(`order`, 다른 그룹 코드는 R001), US1-AC6(등록 그룹 없음 → 빈 트리). 키트 `CodeAcceptanceTest`의 그룹 만들기 테스트는 없어진 동작이라 지운다 (원칙 V). e2e(`code.spec.ts`): 트리, 그룹 추가 단추 없음, 드로어(이름만), 일괄, 빈 안내, 머리 안내

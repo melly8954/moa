@@ -66,6 +66,12 @@ description: "접속 이력 (admin-login-history) 작업 목록"
 
 ---
 
+## Phase 6: 관리 화면 정리 (2026-11-15 FR-003·FR-004)
+
+- [ ] T011 frontend/src/app/(admin)/admin/login-histories/의 머리 안내를 FR-004 문구로 바꾼다(사용자 관리 링크). 목록은 지금 쪽 나눔 그대로(FR-003). `001-admin-menus` T071 뒤, 그 구현 PR에서 함께 한다
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 → T002 → T003 → T004 → T005·T006 → T007 → T008 → T009, T010

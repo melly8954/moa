@@ -194,10 +194,35 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 ---
 
+## Phase 11: 관리 화면 정리 (2026-11-15 FR-001·FR-006·FR-008·FR-010~FR-012, US5 변경)
+
+**Purpose**: 관리 메뉴를 운영·설정 묶음으로, 메뉴 관리를 트리 표·끌기·드로어·일괄 처리로, 공용 드로어와 머리 안내 (research.md R18~R23). 구현 브랜치는 `feat/001-menu-console`. 역할·사용자·공통코드 화면은 각 스펙에서 이 Phase의 부품을 쓴다
+
+**백엔드**
+
+- [ ] T068 backend/src/main/resources/db/migration/V2_6__admin_menu_groups.sql: 묶음 "운영"·"설정"을 넣고 최상위 관리 메뉴를 `program_key`로 찾아 그 아래로 옮기고(순서는 data-model.md 묶음 표), 이름 "코드 관리"를 "공통코드"로 바꾼다. backend/src/main/java/com/moa/api/program/CodePrograms.java 이름도 "공통코드" (R18)
+- [ ] T069 backend/src/main/java/com/moa/api/service/menu/MenuService.java에 `setEnabled(ids, enabled)`, `deleteAll(ids)`를 더하고(한 트랜잭션, 없는 메뉴 R001, 하위 있는 묶음 B001, 고른 것끼리 부모·자식이면 허용), application과 backend/src/main/java/com/moa/api/controller/v1/admin/menu/ApiAdminMenuController.java에 `PUT /api/v1/admin/menus/enabled`, `POST /api/v1/admin/menus/bulk-delete`를 둔다 (R19)
+- [ ] T070 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java: US1-AC1을 묶음 모양으로 고치고(원칙 V), US5-AC3~AC5를 contracts/admin-access.md "메뉴 일괄 처리" 표대로 더한다. backend/src/test/java/com/moa/api/MenuAcceptanceTest.java에 일괄 API 규칙(없는 ID R001, 부모·자식 함께 지우기 허용)을 더한다. backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java의 US1-AC1·US2-AC1 기대를 묶음 모양으로 고친다 (R23)
+
+**프론트**
+
+- [ ] T071 frontend/에 `@dnd-kit/core`·`@dnd-kit/sortable`을 들이고(정확한 버전), frontend/src/components/kit/side-drawer.tsx(오른쪽 sheet, 좁은 폭 화면 전체, 저장 안 한 변경 확인)를 만든다. `PageHeader` 머리 안내는 메시지 `t.rich`의 `<link>`로 링크를 둔다 (R20, R21)
+- [ ] T072 frontend/src/components/shell/landing.ts가 묶음 안의 첫 화면 메뉴로 가게 고친다 (FR-006)
+- [ ] T073 frontend/src/app/(admin)/admin/menus/: 프로그램 탭을 없애고, 트리 표(menu-tree-table.tsx: 체크박스·손잡이·이름·보이는 사람·사용, 행 단추 없음), 일괄 줄(bulk-bar.tsx: 사용·사용 안 함·묶음으로 옮기기·삭제, 확인), 메뉴 드로어(menu-drawer.tsx: 지금 menu-dialog.tsx 내용, 상위 메뉴 칸 없음, 새 메뉴는 묶음만 고름), 끌기(키보드 포함, 놓으면 `/order`, 실패하면 되돌림, 좁은 폭은 "옮기기" 메뉴)를 만든다. frontend/src/api/menu.ts에 `setEnabled`·`bulkDelete`, 메시지 `menuAdmin`과 머리 안내(FR-011 문구, 역할 관리 링크) (R20, R22)
+- [ ] T074 frontend/e2e/menu.spec.ts: US5-AC1~AC5(행 단추 없음, 드로어, 키보드로 옮기기 → `/order`, 일괄 줄, 하위 있는 묶음 삭제 안내), 프로그램 탭 없음, 머리 안내 링크, 좁은 폭 드로어 화면 전체. US1-AC1(`SIX_ADMIN_MENUS`)과 로그인 뒤 첫 화면을 묶음 모양으로 고친다 (원칙 V)
+
+**마무리**
+
+- [ ] T075 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*Menu*AcceptanceTest" --tests "*AdminRolesAcceptanceTest"`, frontend/에서 `npm run format`, `npm run check`. e2e와 dbTest 전체는 PR CI로 본다
+- [ ] T076 specs/001-admin-menus/quickstart.md "화면 확인"에 묶음 사이드바, 끌기, 드로어, 일괄 처리 절차를 더하고 사람이 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 → T002 → US1(T003, T004)·US2(T005~T007) → T008 → T009, T010
 - T011 → T012 → T013, T014 → T015 → T016
+- Phase 11: T068 → T069 → T070 → T071 → T072, T073 → T074 → T075 → T076. 002·003·004의 관리 화면 정리가 T071(드로어·머리 안내)에 기댄다
 - Phase 10: T052 → T053 → T054 → T055 → T056, T057 → T058 → T059, T060 → T061 → T062, T063 → T064 → T065 → T066, T067. 프론트 타입(T061)은 API 모양(T056·T057)이 정해지면 백엔드 테스트와 나란히 해도 된다. `003-admin-roles` Phase 5가 이 Phase에 기댄다
 - Phase 9: T048 → T049 → T050 → T051
 - Phase 8: T035 → T036 → T037 → T038 → T039, T040 → T041 → T042, T043 → T044 → T045 → T046, T047. 백엔드(T035~T040)와 프론트 타입(T041)은 API 모양이 정해지면 나란히 해도 된다
