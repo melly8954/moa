@@ -9,6 +9,8 @@
 첫 관리자 부트스트랩, 운영자 계정 만들기, 임시 비밀번호와 첫 로그인 변경 안내는 키트(`springboot/v0.3.1` user-admin 헬퍼와 골격, `web-next/v0.3.0` user-admin 헬퍼)에 이미 있다.
 moa가 할 일은 스펙의 두 흐름을 AC 테스트로 고정하는 것이다. 운영 코드와 마이그레이션은 바꾸지 않는다 ([research.md](./research.md) R1).
 
+**관리 화면 정리 (2026-11-15, FR-006~FR-008, US3)**: 사용자 관리 목록에 업무 역할 열을 더하고(응답에 `accessRoles`), 행의 "관리" 메뉴를 드로어로 옮기며 만들기도 드로어에서 한다. `001-admin-menus` Phase 11의 공용 드로어·머리 안내와 `003-admin-roles`의 업무 역할 조회를 쓴다 ([research.md](./research.md) R6~R8). 구현 브랜치는 `feat/002-user-console`
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)

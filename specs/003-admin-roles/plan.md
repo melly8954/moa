@@ -11,6 +11,8 @@ moa가 할 일은 "접속 이력만 보는 운영자" 흐름을 AC 테스트로 
 
 **메뉴 트리와 사용자 화면 (2026-11-15, FR-004~FR-008)**: 역할 창의 권한을 관리 메뉴 트리로 고르게 하고, 역할 관리에 사용자별 역할 탭과 역할별 구성원을 더한다. 역할 저장(권한 키 목록)과 권한 판정은 그대로다. 백엔드 API 다섯 개(트리, 사용자별 목록, 구성원 조회·더하기·빼기)와 화면을 더하고, 사용자 관리의 역할 주기를 뺀다. 테이블은 바뀌지 않는다. `001-admin-menus`의 프로그램(그 research R13~R15)에 기댄다. 키트 rbac 헬퍼를 moa에서 먼저 고치고 키트로 옮긴다 ([research.md](./research.md) R6~R11).
 
+**관리 화면 정리 (2026-11-15, FR-005~FR-007·FR-009, US3·US4)**: 역할 관리를 역할 목록 + 드로어(기본·메뉴 / 구성원)로 바꾸고 "사용자별 역할" 탭을 없앤다. 구성원은 검색·쪽 나눔·일괄 더하기·빼기 API로 바꾸고, 역할 일괄 지우기 API를 더한다. `001-admin-menus` Phase 11의 공용 드로어·머리 안내를 쓴다 ([research.md](./research.md) R12~R15)
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)
@@ -88,6 +90,22 @@ frontend/src/
 ├── app/(admin)/admin/users/user-extras.tsx                     # 역할 주기 빼기 (R9)
 └── components/role/user-roles.tsx                              # 사용자별 역할 탭으로 옮긴 뒤 지운다
 frontend/e2e/role.spec.ts                                       # 트리 체크, 사용자별 역할 탭, 구성원
+```
+
+관리 화면 정리 (2026-11-15):
+
+```text
+backend/src/main/java/com/moa/api/
+├── controller/v1/admin/role/ApiAdminRoleController.java   # bulk-delete, members 쪽 나눔·일괄 (R12, R13). roles/users 지움
+├── controller/v1/admin/role/{request,response}/**         # RoleIdsRequest, MemberIdsRequest, RoleMemberResponse
+├── service/role/{AccessRoleService, RoleUserService}.java # 일괄 지우기·더하기·빼기, 구성원 쪽, 업무 역할 조회 (R14)
+└── repository/reader/role/RoleUserReader.java             # 구성원·검색 쪽
+backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java
+frontend/src/
+├── api/role.ts, types/role.ts
+├── app/(admin)/admin/roles/{page, role-drawer, role-members, permission-tree}.tsx
+└── app/(admin)/admin/roles/{user-roles-tab, members-dialog, role-dialog}.tsx  # 지운다 (드로어로 옮김)
+frontend/e2e/role.spec.ts
 ```
 
 **Structure Decision**: 인수 테스트는 `com.moa.api`, 공유 지원 코드는 `com.moa.support`에 둔다. 처음 도입 때는 운영 코드, 프론트, 마이그레이션을 바꾸지 않았다. 메뉴 트리와 사용자 화면(2026-11-15)은 키트 rbac 헬퍼 파일 안에서 고치고, 키트로 옮길 목록에 올린다 (원칙 III).

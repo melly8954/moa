@@ -66,8 +66,22 @@ description: "관리자·운영자 계정 (admin-users) 작업 목록"
 
 ---
 
+## Phase 6: 관리 화면 정리 (2026-11-15 FR-006~FR-008, US3 변경)
+
+**Purpose**: 업무 역할 열과 사용자 드로어 (research.md R6~R8). `001-admin-menus` T071, `003-admin-roles` T024 뒤에 한다
+
+- [ ] T007 backend/src/main/java/com/moa/api/controller/v1/admin/user/response/UserAdminResponse.java에 `accessRoles`(`id`, `name`)를 더하고 backend/src/main/java/com/moa/api/application/v1/user/UserAdminApplication.java의 목록이 `RoleUserService`의 업무 역할 조회를 한 번 불러 붙인다 (R6)
+- [ ] T008 backend/src/test/java/com/moa/api/AdminUsersAcceptanceTest.java에 US3-AC1(목록 응답의 `accessRoles`)을 더한다
+- [ ] T009 frontend/src/app/(admin)/admin/users/: 업무 역할 열(ADMIN "모든 권한"), 행을 누르면 사용자 드로어(정보, 업무 역할 보기만 + 역할 관리 링크, 이름 바꾸기·시스템 역할·잠그기·초기화·삭제 단추, 막는 규칙 그대로), 만들기도 드로어(저장 직후 임시 비밀번호 한 번), 행 "관리" 메뉴 단추 없앰, user-extras 자리를 드로어 단추로. 머리 안내(FR-008 문구, 역할 관리 링크). frontend/src/types/user-admin.ts에 `accessRoles` (R7)
+- [ ] T010 frontend/e2e/user-admin.spec.ts를 R8대로 고친다 (원칙 V)
+- [ ] T011 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*AdminUsersAcceptanceTest" --tests "*UserAdminAcceptanceTest"`, frontend/에서 `npm run format`, `npm run check`. e2e와 dbTest 전체는 PR CI로 본다
+- [ ] T012 specs/002-admin-users/quickstart.md "화면 확인"에 드로어·업무 역할 열 절차를 더하고 사람이 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
+- Phase 6: `001-admin-menus` T071, `003-admin-roles` T024 → T007 → T008 → T009 → T010 → T011 → T012
 - T001 → US1(T002)·US2(T003) → T004 → T005, T006
 - US1과 US2는 서로 기대지 않는다
 - 같은 파일을 고치므로 병렬로 진행하지 않는다

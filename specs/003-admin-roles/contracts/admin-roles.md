@@ -12,7 +12,19 @@ US1은 키트 API를 moa의 AC에 맞춰 어떻게 확인하는지만 적는다.
 | US2-AC2 | `POST /api/v1/admin/roles` (`permissions` = `["LOGIN_HISTORY_READ"]`) | `GET /api/v1/admin/roles/{id}`의 `permissions`가 그것 하나, `GET /api/v1/admin/roles`의 그 역할 권한 수 1 |
 | US2-AC3 | 코드 관리 메뉴를 지운다 | `menus`에 코드 관리가 없고 `unlisted`에 `ADMIN_CODES`(권한 `CODE_MANAGE`) |
 
-## 사용자별 역할 (US3, 새로)
+## 관리 화면 정리 (2026-11-15, research R12·R13)
+
+아래 "사용자별 역할"과 "구성원"의 한 사람 API는 이 절의 API로 바뀐다.
+
+| AC | 호출 | 기대 |
+|---|---|---|
+| US3-AC3 | `POST /api/v1/admin/roles/bulk-delete` (`ids` 둘) | 204. 둘 다 없고 구성원에게서도 빠짐. 다룰 수 없는 역할이 섞이면 403 `A005`, 아무것도 안 지워짐 |
+| US4-AC1 | `GET /api/v1/admin/roles/{id}/members?size=20` (구성원 21명) | 200. `content` 20개, `totalElements` 21, 모두 `member` = true |
+| US4-AC2 | `GET .../members?keyword=op` → `POST .../members` (`userIds` 둘) | 검색 결과에 `member` 표시. 204, 두 사람 접속 이력 200 |
+| US4-AC3 | `POST .../members/remove` (`userIds` 둘) | 204. 두 사람 접속 이력 403 `A005` |
+| US4-AC4 | `POST .../members` (`userIds`에 관리자 포함) | 409 `B001`. 아무도 안 더해짐 |
+
+## 사용자별 역할 (US3, 새로 — 2026-11-15 관리 화면 정리로 없앰)
 
 `GET /api/v1/admin/roles/users?keyword=&page=&size=` — 페이지. 항목 `id`, `loginId`, `name`, `role`, `accessRoles`(`id`, `code`, `name`)
 

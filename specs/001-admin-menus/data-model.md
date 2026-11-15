@@ -3,6 +3,15 @@
 새 테이블은 없다. 키트 `menus` 테이블의 스키마는 `V1_7__menus.sql`이 기준이고, moa가 `audience` 열을 더한다 (2026-11-15, `V2_4__menu_audience.sql`, research R9).
 이어서 `program_key`·`visibility` 열을 더하고 `path`·`permission` 열을 지운다 (2026-11-15, `V2_5__menu_programs.sql`, research R14). 아래 처음 구성 표의 `path`·`permission`은 `V2_5` 전의 시드 값이고, `V2_5`가 이 값으로 프로그램을 찾는다.
 
+## 관리 메뉴 묶음 (FR-001, 2026-11-15, `V2_6__admin_menu_groups.sql`, research R18)
+
+| 묶음 | `icon` | `sort_order` | 하위 메뉴 (`program_key`, `sort_order`) |
+|---|---|---|---|
+| 운영 | `briefcase` | 10 | `ADMIN_USERS` 10, `ADMIN_NOTICES` 20, `ADMIN_LOGIN_HISTORIES` 30 |
+| 설정 | `settings` | 20 | `ADMIN_ROLES` 10, `ADMIN_MENUS` 20, `ADMIN_CODES` 30 (이름 "공통코드") |
+
+아래 "처음 구성" 표는 `V2_6` 전의 최상위 구성이다.
+
 ## 프로그램 (FR-008, 코드에 등록, research R13)
 
 테이블이 아니라 `ProgramSource` 빈이 낸다.

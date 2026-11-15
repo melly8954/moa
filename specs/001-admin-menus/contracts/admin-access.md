@@ -2,6 +2,15 @@
 
 키트 API를 moa의 AC에 맞춰 어떻게 확인하는지 적는다. 메뉴 대상(FR-007)으로 사용자 메뉴 API 하나와 메뉴 요청·응답의 `audience`가 더해진다. 프로그램(FR-008·FR-009)으로 프로그램 목록 API가 더해지고, 메뉴 요청·응답의 `path`·`permission`이 `programKey`·`visibility`로 바뀐다(research R15). 요청·응답 전체는 local 프로필의 `/v3/api-docs`가 기준이다.
 
+## 메뉴 일괄 처리 (새로, FR-010, research R19)
+
+| AC | 호출 | 기대 |
+|---|---|---|
+| US1-AC1 | ADMIN `GET /api/v1/menus/me` | 1단계 "운영"·"설정", 하위 이름이 data-model 묶음 표의 순서 |
+| US5-AC3 | `PUT /api/v1/admin/menus/order`로 "접속 이력"을 "설정" 아래로 | 204. 내 메뉴에서 "설정" 아래에 있다 |
+| US5-AC4 | `PUT /api/v1/admin/menus/enabled` (`ids` 둘, `enabled` false) | 204. 둘 다 내 메뉴에서 빠진다 |
+| US5-AC5 | `POST /api/v1/admin/menus/bulk-delete` (하위 있는 묶음 + 다른 메뉴) | 409, `code` = `B001`. 아무것도 지워지지 않는다 |
+
 ## 프로그램 (새로)
 
 `GET /api/v1/admin/programs` — 메뉴 관리 권한(`MENU_MANAGE`). 프로그램마다 `key`, `name`, `path`, `audience`, `permission`(`key`, `name`, 사용자 프로그램은 `null`), `signInRequired`
