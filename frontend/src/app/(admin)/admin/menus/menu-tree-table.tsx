@@ -20,7 +20,7 @@ import { GripVertical, type LucideIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { StatusText } from "@/components/kit/status-text"
 import { menuIcon } from "@/components/menu/icons"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
@@ -164,17 +164,17 @@ function SortableMenuRow({
         />
       </TableCell>
       <TableCell>
-        <Button
+        {/* 공용 Button은 스페이스 키를 먼저 처리해 끌기 키보드 센서가 받지 못한다. 손잡이는 맨 button으로 둔다 */}
+        <button
           ref={setActivatorNodeRef}
-          variant="ghost"
-          size="icon-sm"
-          className="cursor-grab touch-none"
+          type="button"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "cursor-grab touch-none")}
           aria-label={t("dragOf", { name: menu.name })}
           {...attributes}
           {...listeners}
         >
           <GripVertical />
-        </Button>
+        </button>
       </TableCell>
       <TableCell>
         <div className={cn("flex items-center gap-2", depth === 1 && "pl-6")}>

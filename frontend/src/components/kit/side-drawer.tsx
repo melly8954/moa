@@ -7,9 +7,27 @@ import { cn } from "@/lib/utils"
 
 // 관리 화면 드로어 (moa, specs/001-admin-menus FR-012, research R21). 목록에서 행을 누르면 오른쪽에서 열린다
 //   넓은 폭은 오른쪽에 너비 32rem, 좁은 폭(사이드바가 서랍이 되는 폭)은 화면 전체를 덮는다
-//   dirty가 true인 채로 닫으려 하면 닫을지 묻는다 (저장하지 않은 변경)
+//   dirty가 true인 채로 닫으려 하면 닫을지 묻는다 (저장하지 않은 변경). 드로어 안의 취소 단추는 useDrawerClose로 닫는다
 //   본문은 스크롤되고 footer(저장·취소 등)는 아래에 붙는다
 //   <SideDrawer open={!!editing} onOpenChange={…} title={…} dirty={form.formState.isDirty} footer={<Button>저장</Button>}>…</SideDrawer>
+// 드로어를 닫는 함수. 저장하지 않은 변경이 있으면 먼저 묻는다. 드로어 안의 "취소" 단추도 이것으로 닫는다
+//   const close = useDrawerClose(form.formState.isDirty, onOpenChange)
+export function useDrawerClose(dirty: boolean, onOpenChange: (open: boolean) => void) {
+  const t = useTranslations("unsaved")
+  return async () => {
+    if (dirty) {
+      const leave = await confirm({
+        title: t("title"),
+        description: t("description"),
+        confirmLabel: t("leave"),
+        cancelLabel: t("stay"),
+      })
+      if (!leave) return
+    }
+    onOpenChange(false)
+  }
+}
+
 export function SideDrawer({
   open,
   onOpenChange,
@@ -29,20 +47,8 @@ export function SideDrawer({
   children: React.ReactNode
   className?: string
 }) {
-  const t = useTranslations("unsaved")
-
-  const change = async (next: boolean) => {
-    if (!next && dirty) {
-      const leave = await confirm({
-        title: t("title"),
-        description: t("description"),
-        confirmLabel: t("leave"),
-        cancelLabel: t("stay"),
-      })
-      if (!leave) return
-    }
-    onOpenChange(next)
-  }
+  const close = useDrawerClose(dirty, onOpenChange)
+  const change = (next: boolean) => (next ? onOpenChange(true) : close())
 
   return (
     <Sheet open={open} onOpenChange={(next) => void change(next)}>

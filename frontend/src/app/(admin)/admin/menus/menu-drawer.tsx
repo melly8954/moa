@@ -8,7 +8,7 @@ import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
-import { SideDrawer } from "@/components/kit/side-drawer"
+import { SideDrawer, useDrawerClose } from "@/components/kit/side-drawer"
 import { MENU_ICONS } from "@/components/menu/icons"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -76,6 +76,7 @@ export function MenuDrawer({
       enabled: menu?.enabled ?? true,
     },
   })
+  const close = useDrawerClose(form.formState.isDirty, onOpenChange)
   const parentId = useWatch({ control: form.control, name: "parentId" })
   const kind = useWatch({ control: form.control, name: "kind" })
   const programKey = useWatch({ control: form.control, name: "programKey" })
@@ -135,7 +136,7 @@ export function MenuDrawer({
       dirty={form.formState.isDirty}
       footer={
         <>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => void close()}>
             {t("cancel")}
           </Button>
           <Button type="submit" form="menu-form" disabled={save.isPending}>

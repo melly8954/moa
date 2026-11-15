@@ -298,8 +298,12 @@ test("US5-AC3 키보드로 메뉴를 옮기면 바뀐 순서를 한 번에 보�
   await page.goto("/admin/menus")
   const handle = page.getByRole("button", { name: "코드 관리 옮기기" })
   await handle.focus()
+  // 키를 너무 빨리 누르면 끌기 센서가 집기 전에 다음 키를 받는다. 화면 낭독기 안내(live region)로 단계를 기다린다
+  const live = page.locator('[id^="DndLiveRegion"]')
   await page.keyboard.press("Space")
+  await expect(live).toContainText("옮기는 중")
   await page.keyboard.press("ArrowUp")
+  await expect(live).toContainText("메뉴 자리로")
   await page.keyboard.press("Space")
   // "코드 관리"가 "운영" 묶음의 "메뉴" 앞(두 번째)으로 들어간다
   await expect.poll(() => sent.order).toEqual(expect.arrayContaining([{ id: 3, parentId: 7, sortOrder: 20 }]))
