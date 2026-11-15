@@ -99,10 +99,10 @@ public class AccessRoleService {
 			checkManage(actor, dto(role, Map.of()));
 			roles.add(role);
 		}
-		for (AccessRole role : roles) {
-			role.delete(actor.userId());
-			accessRoleWriter.removeRoleFromUsers(role.getId());
-		}
+		// 모두 지운 뒤에 사용자에게서 뺀다. removeRoleFromUsers는 영속성 컨텍스트를 비우므로(clearAutomatically)
+		// 번갈아 하면 뒤의 역할이 분리돼 지운 표시가 저장되지 않는다
+		roles.forEach(role -> role.delete(actor.userId()));
+		roles.forEach(role -> accessRoleWriter.removeRoleFromUsers(role.getId()));
 	}
 
 	/** 이 사용자에게 준 역할 (지운 역할은 빠진다) */
