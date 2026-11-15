@@ -1,6 +1,31 @@
 # Data Model: 관리 메뉴와 접근 (admin-menus)
 
 새 테이블은 없다. 키트 `menus` 테이블의 스키마는 `V1_7__menus.sql`이 기준이고, moa가 `audience` 열을 더한다 (2026-11-15, `V2_4__menu_audience.sql`, research R9).
+이어서 `program_key`·`visibility` 열을 더하고 `path`·`permission` 열을 지운다 (2026-11-15, `V2_5__menu_programs.sql`, research R14). 아래 처음 구성 표의 `path`·`permission`은 `V2_5` 전의 시드 값이고, `V2_5`가 이 값으로 프로그램을 찾는다.
+
+## 프로그램 (FR-008, 코드에 등록, research R13)
+
+테이블이 아니라 `ProgramSource` 빈이 낸다.
+
+| `key` | 이름 | `path` | `audience` | `permission` | `signInRequired` |
+|---|---|---|---|---|---|
+| `ADMIN_USERS` | 사용자 관리 | `/admin/users` | `ADMIN` | `USER_MANAGE` | - |
+| `ADMIN_MENUS` | 메뉴 관리 | `/admin/menus` | `ADMIN` | `MENU_MANAGE` | - |
+| `ADMIN_CODES` | 코드 관리 | `/admin/codes` | `ADMIN` | `CODE_MANAGE` | - |
+| `ADMIN_LOGIN_HISTORIES` | 접속 이력 | `/admin/login-histories` | `ADMIN` | `LOGIN_HISTORY_READ` | - |
+| `ADMIN_ROLES` | 역할 관리 | `/admin/roles` | `ADMIN` | `ROLE_MANAGE` | - |
+| `ADMIN_NOTICES` | 공지 관리 | `/admin/notices` | `ADMIN` | `NOTICE_MANAGE` | - |
+| `HOME` | 홈 | `/` | `USER` | - | false |
+| `NOTICES` | 공지 | `/notices` | `USER` | - | false |
+
+## `menus.program_key`, `menus.visibility` (FR-007, FR-009)
+
+| 열 | 형 | 값 | 설명 |
+|---|---|---|---|
+| `program_key` | `VARCHAR(50) NULL` | 프로그램 키, `MISSING` | 비면 묶음 메뉴(1단계에만). 등록되지 않은 키면 없는 프로그램 |
+| `visibility` | `VARCHAR(10) NULL` | `PUBLIC`, `MEMBER` | 사용자 메뉴의 공개 범위. 관리 메뉴는 비운다 |
+
+`V2_5`는 기존 메뉴의 `path`로 프로그램을 찾아 `program_key`를 채우고, 사용자 메뉴의 `visibility`를 `PUBLIC`으로 둔 뒤 `path`·`permission` 열을 지운다. 경로가 맞는 프로그램이 없으면 `MISSING`이다.
 
 ## `menus.audience` (FR-007)
 
@@ -33,6 +58,7 @@ moa의 `V2__flat_admin_menus.sql`이 최상위로 옮긴 뒤 그룹을 지운다
 
 ## 규칙
 
-- 메뉴마다 권한이 있다. 권한이 있는 메뉴만 보인다 (키트 동작, 스펙 Edge Cases)
-- 권한 칸이 빈 메뉴: `ADMIN` 대상이면 시스템 역할 `ADMIN`만, `USER` 대상이면 로그인하지 않은 사람까지 모두 본다 (FR-002, FR-007)
+- 관리 메뉴는 가리키는 프로그램의 권한을 가진 사용자에게만 보인다. 묶음 메뉴는 보이는 하위 메뉴가 있을 때만 보인다 (FR-002)
+- 사용자 메뉴는 `PUBLIC`이면 로그인하지 않은 사람까지 모두, `MEMBER`면 로그인한 사용자에게만 보인다. 로그인이 필요한 프로그램은 `MEMBER`만 된다 (FR-007)
+- 없는 프로그램을 가리키는 메뉴는 보이지 않는다 (스펙 Edge Cases)
 - 이 표는 처음 배포할 때의 구성이다. 이후 변경은 메뉴 관리 화면에서 한다

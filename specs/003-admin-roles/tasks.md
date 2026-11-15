@@ -9,7 +9,7 @@ description: "운영자 역할 (admin-roles) 작업 목록"
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/admin-roles.md
 
-**Tests**: 원칙 II에 따라 AC마다 테스트를 하나 둔다. 동작은 키트에 이미 있으므로 이 기능의 작업은 테스트가 전부다 (research.md R1). 운영 코드, 프론트, 마이그레이션은 고치지 않는다.
+**Tests**: 원칙 II에 따라 AC마다 테스트를 하나 둔다. 동작은 키트에 이미 있으므로 이 기능의 작업은 테스트가 전부다 (research.md R1). 운영 코드, 프론트, 마이그레이션은 고치지 않는다. 단 Phase 5는 키트 rbac 헬퍼(백엔드·프론트)를 고친다(마이그레이션은 없다).
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -63,9 +63,37 @@ description: "운영자 역할 (admin-roles) 작업 목록"
 
 ---
 
+## Phase 5: 메뉴 트리와 사용자 화면 (2026-11-15 FR-004~FR-008 변경)
+
+**Purpose**: 역할 창에서 관리 메뉴를 체크해 권한을 묶고, 역할 관리에서 사용자별 역할과 구성원을 다룬다 (research.md R6~R11). `001-admin-menus` Phase 10(프로그램)이 끝난 뒤 한다. 구현 브랜치는 `feat/003-role-users`
+
+**백엔드**
+
+- [ ] T012 backend/src/main/java/com/moa/api/application/v1/role/AccessRoleApplication.java에 권한 트리 만들기(관리 메뉴 트리, 꺼진 메뉴 포함, 없는 프로그램 메뉴는 뺌, 메뉴에 없는 관리 프로그램)를 더하고 backend/src/main/java/com/moa/api/controller/v1/admin/role/ApiAdminRoleController.java에 `GET /api/v1/admin/roles/permission-tree`와 응답을 둔다 (R6)
+- [ ] T013 사용자별 역할 목록: backend/src/main/java/com/moa/api/repository/reader/에 업무 역할이 있거나 `ADMIN`인 사용자(시스템 계정 제외), 아이디·이름 검색, 아이디 순 페이지 조회를 더하고 `GET /api/v1/admin/roles/users`와 응답(`id`, `loginId`, `name`, `role`, `accessRoles`)을 둔다 (R7)
+- [ ] T014 구성원: backend/src/main/java/com/moa/api/service/role/AccessRoleService.java에 구성원 조회·더하기(있으면 그대로)·빼기를 더하고(`RoleGrantPolicy.canManage`로 `A005`, 대상이 `ADMIN`이면 `B001`, 없는 역할·사용자 `R001`), `replaceRolesOfUser`도 대상이 `ADMIN`이면 `B001`로 막는다. 컨트롤러에 `GET`·`POST /api/v1/admin/roles/{id}/members`, `DELETE /api/v1/admin/roles/{id}/members/{userId}`를 둔다 (R8)
+- [ ] T015 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java에 `US2-AC1`~`US4-AC3`과 Edge(관리자에게 역할 주기 `B001`, 다룰 수 없는 역할의 구성원 더하기 `A005`)를 contracts/admin-roles.md 표대로 더한다. 키트 rbac 테스트 중 `ADMIN`에게 업무 역할을 주는 것이 있으면 스펙이 바뀐 만큼만 고친다 (원칙 V)
+
+**프론트**
+
+- [ ] T016 frontend/src/types/role.ts, frontend/src/api/role.ts에 트리·사용자별 목록·구성원을 더한다. local 백엔드를 띄울 수 있으면 `npm run gen:api`로 생성 타입도 맞춘다
+- [ ] T017 frontend/src/app/(admin)/admin/roles/role-dialog.tsx의 권한 칸을 메뉴 트리 체크로 바꾼다(묶음 체크는 하위 모두, 같은 권한 노드는 함께, 꺼진 메뉴 표시, 키는 작은 글자, "메뉴에 없는 프로그램" 묶음) (R10)
+- [ ] T018 frontend/src/app/(admin)/admin/roles/page.tsx에 "역할"·"사용자별 역할" 탭을 두고, 역할 표에 "구성원" 단추와 members-dialog.tsx(목록, 빼기, 사용자 찾아 더하기)를, user-roles-tab.tsx(검색, 표, `ADMIN`은 "모든 권한", "역할 변경" 대화상자)를 만든다. 역할 체크 폼은 frontend/src/components/role/user-roles.tsx에서 옮긴다. 문구는 frontend/messages/ko.json `role` (R10)
+- [ ] T019 frontend/src/app/(admin)/admin/users/user-extras.tsx에서 업무 역할 메뉴와 대화상자를 빼고, 옮긴 뒤 쓰지 않는 frontend/src/components/role/user-roles.tsx를 지운다 (R9, `002-admin-users` FR-005)
+- [ ] T020 frontend/e2e/roles.spec.ts(없으면 만든다)에 역할 대화상자 트리 체크(키 입력 없음), 두 탭, 구성원 대화상자, 사용자 관리 "관리" 메뉴에 역할 항목 없음을 더한다. 사용자 관리의 역할 주기를 보던 e2e가 있으면 바뀐 만큼 고친다 (R11)
+
+**마무리**
+
+- [ ] T021 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*AdminRolesAcceptanceTest" --tests "*AccessRole*"`, frontend/에서 `npm run format`, `npm run check`, 바꾼 e2e 묶음(roles·users)을 돌린다. 전체 검사는 PR CI로 본다
+- [ ] T022 specs/README.md 기능 지도의 003 상태에서 "메뉴 트리·사용자 화면은 기획 중"을 지운다
+- [ ] T023 specs/003-admin-roles/quickstart.md "화면 확인" 2·3번을 사람이 직접 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 → T002·T003 → T004 → T005 → T006~T008 → T009 → T010, T011
+- Phase 5: `001-admin-menus` T052~T060 → T012 → T013, T014 → T015 → T016 → T017, T018 → T019 → T020 → T021 → T022, T023. T013·T014는 다른 파일이 섞이지 않으면 나란히 해도 된다
 - T002와 T003은 다른 파일이라 함께 진행할 수 있다
 - T004가 실패하면 T002를 되돌리고 T001부터 다시 본다. 001 테스트의 확인 내용을 고쳐 맞추지 않는다
 

@@ -17,6 +17,8 @@ moa가 할 일은 키트 시드의 "관리" 그룹을 없애 메뉴를 최상위
 
 **머리 줄 (2026-11-15, FR-005)**: 프론트 `SidebarShell`만 바꾼다. 넓은 폭의 본문 머리 줄을 없애고 접기 단추를 사이드바 로고 줄로 옮긴다. 좁은 폭 머리 줄은 남기고 화면 이름 대신 사이트 이름을 둔다 ([research.md](./research.md) R12).
 
+**프로그램과 공개 범위 (2026-11-15, FR-002·FR-007~FR-009)**: 메뉴에 걸 화면을 프로그램으로 코드에 등록하고, 메뉴는 경로·권한 대신 프로그램을 가리킨다. 사용자 메뉴는 권한 대신 공개 범위(`PUBLIC`·`MEMBER`)를 가진다. 셸이 쓰는 메뉴 API의 모양은 그대로다. 키트 menu 헬퍼(백엔드 등록·열·API, 메뉴 관리 화면)를 moa에서 먼저 고치고 키트로 옮긴다 ([research.md](./research.md) R13~R17).
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)
@@ -43,7 +45,7 @@ moa가 할 일은 키트 시드의 "관리" 그룹을 없애 메뉴를 최상위
 
 | 원칙 | 판정 | 근거 |
 |---|---|---|
-| I. 스펙이 먼저다 | 통과 | 새 동작을 만들지 않는다. 셸 나누기(2026-11-15)는 spec.md FR-005·FR-006을 먼저 고친 뒤 한다. spec.md에 `[NEEDS CLARIFICATION]`이 없다 |
+| I. 스펙이 먼저다 | 통과 | 새 동작을 만들지 않는다. 셸 나누기(2026-11-15)는 spec.md FR-005·FR-006을, 프로그램과 공개 범위(2026-11-15)는 FR-002·FR-007~FR-009를 먼저 고친 뒤 한다. spec.md에 `[NEEDS CLARIFICATION]`이 없다 |
 | II. AC마다 테스트 하나 | 통과 | US1-AC1~US2-AC3에 API 통합 테스트를 하나씩 둔다. 이름에 AC 번호를 적는다 |
 | III. 키트를 따른다 | 통과 | 키트 헬퍼와 시드를 그대로 쓰고, 메뉴 위치만 moa 마이그레이션으로 바꾼다 (원칙 III의 "메뉴 구성"). 스펙의 머리에 출처가 있다 |
 | IV. 기존 기능은 제자리에서 고친다 | 통과 | 새 기능 폴더를 만들지 않는다 |
@@ -120,6 +122,31 @@ frontend/src/
 ├── components/menu/icons.ts            # megaphone (home은 이미 있다)
 └── app/(admin)/admin/menus/            # 대상 탭, 대화상자 (R11)
 frontend/e2e/{menu.spec.ts, support/api.ts}   # 사용자 메뉴 가로채기, 대상 탭
+```
+
+프로그램과 공개 범위 (2026-11-15):
+
+```text
+backend/src/main/java/com/moa/common/program/                 # 새 패키지 (R13)
+├── ProgramDefinition.java, ProgramSource.java, ProgramRegistry.java
+└── ProgramRegistryCheck.java                                   # 시작 검사: 키·경로 겹침, 권한 등록
+backend/src/main/java/com/moa/api/program/                    # 프로그램을 내는 빈. 권한(api/permission)과 짝
+└── {MenuPrograms, UserPrograms, CodePrograms, LoginHistoryPrograms, RolePrograms, NoticePrograms, HomePrograms}.java
+backend/src/main/resources/db/migration/V2_5__menu_programs.sql  # program_key·visibility, path·permission 지움 (R14)
+backend/src/main/java/com/moa/api/
+├── entity/menu/{Menu.java, MenuVisibility.java}
+├── service/menu/MenuService.java                              # 보이는 트리, 만들기·고치기 검사 (R14, R15)
+├── application/v1/menu/** , controller/v1/admin/menu/**      # 요청·응답 programKey·visibility
+└── controller/v1/admin/program/ApiAdminProgramController.java # GET /admin/programs (메뉴 관리 권한)
+backend/src/test/java/com/moa/
+├── api/AdminMenusAcceptanceTest.java   # US3-AC2·AC4·AC5, US4-AC1~AC5 (R17)
+├── api/MenuAcceptanceTest.java         # 키트. 요청 모양이 바뀐 만큼
+├── support/MenuSeed.java               # V2_5도 읽는다
+└── support/TestPrograms.java           # 테스트에서만 등록하는 로그인 필요 프로그램
+frontend/src/
+├── api/{menu.ts, program.ts}, types/{menu.ts, program.ts}
+└── app/(admin)/admin/menus/            # 프로그램 탭, 목록 열, 대화상자 (R16)
+frontend/e2e/{menu.spec.ts, screens.spec.ts, support/api.ts}
 ```
 
 **Structure Decision**: 인수 테스트는 키트와 같은 `com.moa.api` 패키지에 둔다. 마이그레이션은 키트 것을 고치지 않고 moa 것을 하나 더한다. 셸 나누기는 프론트만 고치고, 키트 셸 파일을 고친 것은 키트로 옮길 목록에 올린다 (원칙 III).
