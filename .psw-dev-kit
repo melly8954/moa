@@ -1,4 +1,5 @@
 # psw-dev-kit 적용 기록 (CONTRACT.md 3절)
 template=git
-tag=git/v0.4.3
-applied=2026-11-14
+tag=git/v0.5.0
+options=spec-kit
+applied=2026-11-15
