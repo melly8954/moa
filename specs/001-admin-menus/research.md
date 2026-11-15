@@ -85,3 +85,50 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
 - **Decision**: 메뉴 관리 화면 위에 대상 탭(관리자 메뉴 / 사용자 메뉴)을 두고 탭마다 그 대상의 트리와 순서를 보인다. 만들기 대화상자는 지금 탭의 대상으로 만들고, 하위 메뉴는 부모 대상을 보여 주기만 한다. 사용자 셸(`useUserMenu`)은 코드 메뉴(`menu.ts`) 대신 `/menus/user`를 쓰고, 새 공지 점은 주소가 `/notices`인 항목에 붙인다(006 FR-010). `menu.ts`의 코드 메뉴 항목은 비운다
 - **Rationale**: 한 표에 두 대상을 섞으면 순서 바꾸기가 대상 사이를 넘나든다. 탭이면 지금 화면 모양을 그대로 두 번 쓴다
 - **키트로 옮길 것**: menu 헬퍼 백엔드(열, API 두 곳, 요청·응답)와 메뉴 관리 화면 탭, 셸의 사용자 메뉴
+
+## R13. 프로그램을 어디에 어떻게 등록하나 (FR-008, 2026-11-15)
+
+- **Decision**: 백엔드에 `ProgramSource` 빈을 두고, 빈마다 `ProgramDefinition(key, name, path, audience, permission, signInRequired)` 목록을 낸다. `ProgramRegistry`가 모은다. 권한의 `PermissionSource`·`PermissionRegistry`와 같은 모양이다
+  - 키는 영문 대문자·숫자·`_`로 쓴다 (예: `ADMIN_USERS`, `NOTICES`)
+  - 시작할 때 검사하고 어기면 시작이 실패한다: 키·경로가 겹치지 않는다, 관리 프로그램은 등록된 권한이 하나 있고 로그인 필요 여부가 없다, 사용자 프로그램은 권한이 없다
+  - 프로그램은 그 화면을 가진 쪽이 낸다: menu(메뉴 관리), user-admin(사용자 관리), code(코드 관리), login-history(접속 이력), rbac(역할 관리), 공지(공지 관리, 공지), moa(홈)
+- **Rationale**: 권한을 등록하는 방식과 같아 개발자가 따로 배울 것이 없다. 시작 검사로 오타와 등록 누락을 배포 전에 잡는다. 헬퍼마다 자기 프로그램을 내면, 키트에서 헬퍼를 빼도 프로그램 목록이 맞다
+- **Alternatives considered**: 프로그램을 DB 시드(마이그레이션)로 두기. 권한은 코드에 있는데 프로그램만 DB에 있으면 시작 검사를 할 수 없다. 프론트 라우트에서 뽑기: 메뉴를 거르는 것이 백엔드라 백엔드가 알아야 한다
+- **한계**: 프론트에 그 경로의 화면이 실제로 있는지는 백엔드가 모른다. e2e에서 프로그램 경로를 모두 열어 확인한다 (R17)
+
+## R14. 메뉴가 프로그램과 공개 범위를 어떻게 갖나 (FR-007, FR-009)
+
+- **Decision**: `menus`에 `program_key`(`VARCHAR(50) NULL`)와 `visibility`(`VARCHAR(10) NULL`, `PUBLIC`·`MEMBER`)를 더하고 `path`·`permission` 열을 지운다. moa 마이그레이션 `V2_5__menu_programs.sql`이 한다
+  - 기존 메뉴는 경로로 프로그램을 찾아 `program_key`를 채운다. 사용자 메뉴는 `visibility` = `PUBLIC`이다
+  - 경로가 어느 프로그램과도 맞지 않는 메뉴는 `program_key` = `MISSING`으로 두어 "없는 프로그램"으로 보이게 한다 (지금 시드에는 없다)
+  - 규칙: `program_key`가 없으면 묶음 메뉴이고 1단계에만 둔다(하위 메뉴는 화면 메뉴다). 관리 메뉴는 `visibility`가 없고, 사용자 메뉴는 반드시 있다. 로그인이 필요한 프로그램이면 `MEMBER`만 된다. 프로그램의 대상과 메뉴의 대상이 같아야 한다. 하위 메뉴는 부모 대상을 따르므로(R9), 부모의 대상을 바꿀 때 하위 메뉴 중 대상이 다른 프로그램이 있으면 막는다
+- **Rationale**: 경로와 권한을 메뉴에 복사해 두면 프로그램이 바뀔 때 두 곳이 어긋난다. 키로 가리키면 코드가 언제나 기준이다
+- **Alternatives considered**: `path`·`permission` 열을 남기고 프로그램 값을 복사해 두기. 두 곳이 어긋날 수 있다. 공개 범위를 권한 키처럼 쓰기(`MEMBER` 같은 가짜 권한): 권한의 뜻이 섞인다(R9와 같은 이유)
+
+## R15. 메뉴 API (FR-002, FR-007~FR-009)
+
+- **Decision**:
+  - `GET /api/v1/menus/me`, `GET /api/v1/menus/user`: 응답 모양은 그대로이고 `path`는 프로그램의 경로다. 관리 메뉴는 프로그램의 권한을 가졌을 때, 사용자 메뉴는 `PUBLIC`이면 모두에게, `MEMBER`면 로그인한 사용자에게 보인다. 묶음 메뉴는 보이는 하위 메뉴가 있을 때만, 없는 프로그램을 가리키는 메뉴는 보이지 않는다
+  - `GET /api/v1/admin/programs` (새로, 메뉴 관리 권한): 프로그램마다 `key`, `name`, `path`, `audience`, `permission`(`key`, `name`. 사용자 프로그램은 없음), `signInRequired`
+  - `GET /api/v1/admin/menus` 응답: `path`·`permission` 대신 `programKey`, `program`(`name`, `path`, `permissionName`, `signInRequired`. 없는 프로그램이면 비고 `missingProgram` = true), `visibility`
+  - `POST`·`PUT /api/v1/admin/menus` 요청: `path`·`permission` 대신 `programKey`(묶음 메뉴면 비운다), `visibility`(사용자 메뉴). 등록되지 않은 프로그램, 대상이 다른 프로그램, 로그인이 필요한 프로그램에 `PUBLIC`, 사용자 메뉴에 공개 범위가 없음, 하위 메뉴에 프로그램이 없음은 `V001`. 대상을 바꿀 때 하위 메뉴와 부딪히면 `B001`
+- **Rationale**: 셸이 쓰는 두 API의 모양을 그대로 두면 셸 코드(R6·R7·R11)는 바뀌지 않는다. 프로그램 API가 권한 이름까지 주므로, 메뉴 관리 권한만 받은 운영자도 권한 키 없이 화면을 쓴다(FR-009)
+- **Alternatives considered**: 권한 목록 API(`GET /api/v1/admin/permissions`, 역할 관리 권한)를 메뉴 관리 권한에도 열기. `@RequirePermission`은 키 하나만 받고, 프로그램 API가 권한 이름을 주면 따로 필요 없다
+
+## R16. 메뉴 관리 화면 (FR-008, FR-009, SC-006)
+
+- **Decision**:
+  - 탭: 관리자 메뉴 / 사용자 메뉴 / 프로그램. 프로그램 탭은 조회 전용 표다(이름, 경로, 대상, 필요한 권한 이름 또는 로그인 필요)
+  - 메뉴 목록의 "필요한 권한" 열을 "프로그램"(없는 프로그램이면 경고 표시)과 "보이는 사람"(관리 메뉴는 권한 이름, 사용자 메뉴는 비회원 포함·회원만, 묶음 메뉴는 "하위 메뉴를 따름")으로 바꾼다
+  - 대화상자: 종류(화면 메뉴 / 묶음 메뉴. 하위 메뉴는 화면 메뉴만), 프로그램 선택 상자(지금 탭 대상의 프로그램만, 이름과 경로), 고른 뒤 경로와 필요한 권한을 읽기 전용 글로 보인다. 사용자 메뉴면 공개 범위를 고르고, 로그인이 필요한 프로그램이면 "비회원 포함"을 끄고 이유를 보인다. 공개 범위 옆에 "사이드바에 보일지만 정한다"는 설명을 둔다. 경로·권한 입력 칸은 없앤다
+  - 문구는 frontend/messages/ko.json `menuAdmin`에 둔다
+- **Rationale**: 관리자가 고르는 것만 화면에 남기고, 코드가 정하는 값은 보여 주기만 한다
+- **키트로 옮길 것**: menu 헬퍼 백엔드(프로그램 등록, 열, API)와 메뉴 관리 화면, admin 프리셋 시드
+
+## R17. 무엇을 테스트하나 (US3, US4)
+
+- **Decision**:
+  - API 인수 테스트 `AdminMenusAcceptanceTest`: US3-AC2(`PUBLIC`), US3-AC4(코드 관리 프로그램을 가리키는 관리 메뉴를 더해도 역할 없는 `USER`의 `/menus/me`는 빈 목록), US3-AC5(`MEMBER`), US4-AC1(`/admin/programs`), US4-AC2(대상이 다른 프로그램은 `V001`, 응답에 프로그램 경로·권한 이름), US4-AC3(로그인이 필요한 프로그램에 `PUBLIC`은 `V001`), US4-AC4(묶음 아래 코드 관리 메뉴, 코드 관리 권한만 받은 운영자의 `/menus/me`), US4-AC5(하위 메뉴 없는 묶음은 `/menus/me`에 없음)
+  - 처음 등록하는 사용자 프로그램(홈, 공지)은 모두 로그인이 필요 없다. US3-AC5·US4-AC3은 테스트에서만 등록하는 로그인 필요 프로그램(테스트 설정의 `ProgramSource`)을 쓴다
+  - 화면은 e2e(`menu.spec.ts`): 대화상자에 경로·권한 입력이 없고 프로그램을 고른다, 로그인 필요 프로그램이면 "비회원 포함"이 꺼진다, 프로그램 탭. `screens.spec.ts`가 처음 등록한 프로그램 경로를 모두 연다
+  - 기존 US3-AC2(권한 없이 더한 사용자 메뉴)와 US3-AC4(권한 없이 더한 관리 메뉴), 키트 `MenuAcceptanceTest`의 요청 모양(`path`, `permission`)은 스펙이 바뀐 만큼만 고친다 (원칙 V)
