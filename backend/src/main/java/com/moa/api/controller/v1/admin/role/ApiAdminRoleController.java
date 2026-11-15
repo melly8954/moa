@@ -2,6 +2,7 @@ package com.moa.api.controller.v1.admin.role;
 
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,15 +12,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.moa.api.application.v1.role.AccessRoleApplication;
 import com.moa.api.controller.v1.admin.role.request.RoleCreateRequest;
+import com.moa.api.controller.v1.admin.role.request.RoleMemberAddRequest;
 import com.moa.api.controller.v1.admin.role.request.RoleModifyRequest;
 import com.moa.api.controller.v1.admin.role.request.UserRoleReplaceRequest;
 import com.moa.api.controller.v1.admin.role.response.PermissionResponse;
+import com.moa.api.controller.v1.admin.role.response.PermissionTreeResponse;
 import com.moa.api.controller.v1.admin.role.response.RoleResponse;
+import com.moa.api.controller.v1.admin.role.response.RoleUserResponse;
 import com.moa.api.permission.RolePermissions;
+import com.moa.common.response.PageResponse;
 import com.moa.common.security.AuthPrincipal;
 import com.moa.common.security.CurrentUser;
 import com.moa.common.security.permission.RequirePermission;
@@ -27,6 +33,9 @@ import com.moa.common.security.permission.RequirePermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -46,6 +55,25 @@ public class ApiAdminRoleController {
 	public ResponseEntity<List<PermissionResponse>> getPermissions() {
 		return ResponseEntity
 			.ok(accessRoleApplication.getPermissions().stream().map(PermissionResponse::from).toList());
+	}
+
+	@Operation(summary = "권한 트리",
+		description = "moa: 역할 창에서 권한을 고르는 관리 메뉴 트리(꺼진 메뉴 포함)와 메뉴에 없는 관리 프로그램 (specs/003-admin-roles FR-004)")
+	@GetMapping("/roles/permission-tree")
+	public ResponseEntity<PermissionTreeResponse> getPermissionTree() {
+		return ResponseEntity.ok(PermissionTreeResponse.from(accessRoleApplication.getPermissionTree()));
+	}
+
+	@Operation(summary = "사용자별 역할",
+		description = "moa: 아이디 순 페이징 (FR-005). keyword가 없으면 업무 역할이 있는 사용자와 ADMIN, "
+			+ "있으면 아이디·이름에 그 글자가 든 모든 사용자. 지운 사용자와 시스템 계정은 빠진다")
+	@GetMapping("/roles/users")
+	public ResponseEntity<PageResponse<RoleUserResponse>> getRoleUsers(
+		@RequestParam(required = false) @Size(max = 50) String keyword,
+		@RequestParam(defaultValue = "0") @Min(0) int page,
+		@RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+		return ResponseEntity.ok(PageResponse.from(
+			accessRoleApplication.getRoleUsers(keyword, PageRequest.of(page, size)), RoleUserResponse::from));
 	}
 
 	@Operation(summary = "역할 목록", description = "만든 순서대로")
@@ -83,6 +111,30 @@ public class ApiAdminRoleController {
 		return ResponseEntity.noContent().build();
 	}
 
+	@Operation(summary = "역할의 구성원", description = "moa: 아이디 순 (FR-006). 없는 역할 R001")
+	@GetMapping("/roles/{id}/members")
+	public ResponseEntity<List<RoleUserResponse>> getMembers(@PathVariable Long id) {
+		return ResponseEntity.ok(accessRoleApplication.getMembers(id).stream().map(RoleUserResponse::from).toList());
+	}
+
+	@Operation(summary = "구성원 더하기",
+		description = "moa: 이미 있으면 그대로 둔다 (FR-006). 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, 대상이 ADMIN이면 B001")
+	@PostMapping("/roles/{id}/members")
+	public ResponseEntity<Void> addMember(@CurrentUser AuthPrincipal actor, @PathVariable Long id,
+		@Valid @RequestBody RoleMemberAddRequest request) {
+		accessRoleApplication.addMember(actor, id, request.userId());
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "구성원 빼기",
+		description = "moa: 가지지 않았으면 아무것도 하지 않는다 (FR-006). 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, 대상이 ADMIN이면 B001")
+	@DeleteMapping("/roles/{id}/members/{userId}")
+	public ResponseEntity<Void> removeMember(@CurrentUser AuthPrincipal actor, @PathVariable Long id,
+		@PathVariable Long userId) {
+		accessRoleApplication.removeMember(actor, id, userId);
+		return ResponseEntity.noContent().build();
+	}
+
 	@Operation(summary = "사용자의 역할", description = "없는 사용자 R001")
 	@GetMapping("/users/{userId}/roles")
 	public ResponseEntity<List<RoleResponse>> getRolesOfUser(@PathVariable Long userId) {
@@ -91,7 +143,8 @@ public class ApiAdminRoleController {
 	}
 
 	@Operation(summary = "사용자의 역할 바꾸기",
-		description = "보낸 역할로 통째로 바꾼다. 다음 요청부터 바로 반영된다. 없는 사용자·역할 R001, 주거나 빼는 역할을 다룰 수 없으면 A005")
+		description = "보낸 역할로 통째로 바꾼다. 다음 요청부터 바로 반영된다. 없는 사용자·역할 R001, 주거나 빼는 역할을 다룰 수 없으면 A005. "
+			+ "moa: 대상이 ADMIN이면 B001")
 	@PutMapping("/users/{userId}/roles")
 	public ResponseEntity<Void> replaceRolesOfUser(@CurrentUser AuthPrincipal actor, @PathVariable Long userId,
 		@Valid @RequestBody UserRoleReplaceRequest request) {

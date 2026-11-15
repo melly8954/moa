@@ -1,5 +1,6 @@
 package com.moa.api.repository.reader.role;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +44,19 @@ public class AccessRoleReader {
 	/** 이 사용자에게 준 역할 ID (지운 역할이 남아 있을 수 있다) */
 	public List<Long> findRoleIdsOfUser(Long userId) {
 		return userAccessRoleRepository.findAllByUserId(userId).stream().map(UserAccessRole::getAccessRoleId).toList();
+	}
+
+	/** 사용자 ID → 그 사용자에게 준 역할 ID (moa, specs/003-admin-roles FR-005) */
+	public Map<Long, List<Long>> findRoleIdsOfUsers(Collection<Long> userIds) {
+		Map<Long, List<Long>> roleIds = new HashMap<>();
+		for (UserAccessRole given : userAccessRoleRepository.findAllByUserIdIn(userIds)) {
+			roleIds.computeIfAbsent(given.getUserId(), key -> new ArrayList<>()).add(given.getAccessRoleId());
+		}
+		return roleIds;
+	}
+
+	public boolean hasRole(Long userId, Long roleId) {
+		return userAccessRoleRepository.existsByUserIdAndAccessRoleId(userId, roleId);
 	}
 
 	public List<String> findPermissionsOfUser(Long userId) {

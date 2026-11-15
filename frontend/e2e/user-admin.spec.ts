@@ -78,6 +78,8 @@ test("내 행은 역할·잠그기·삭제가 꺼져 있다", async ({ page }) =
   await expect(page.getByRole("menuitem", { name: "잠그기" })).toHaveAttribute("aria-disabled", "true")
   await expect(page.getByRole("menuitem", { name: "삭제" })).toHaveAttribute("aria-disabled", "true")
   await expect(page.getByRole("menuitem", { name: "이름 바꾸기" })).not.toHaveAttribute("aria-disabled", "true")
+  // moa: 업무 역할은 역할 관리에서만 준다 (specs/002-admin-users FR-005)
+  await expect(page.getByRole("menuitem", { name: "업무 역할" })).toHaveCount(0)
 })
 
 test("내가 관리자가 아니면 관리자 행은 모두 꺼져 있다", async ({ page }) => {

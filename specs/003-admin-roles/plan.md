@@ -77,16 +77,17 @@ backend/src/main/java/com/moa/api/
 ├── controller/v1/admin/role/ApiAdminRoleController.java        # permission-tree, roles/users, members (R6~R8)
 ├── controller/v1/admin/role/{request,response}/**              # 트리·사용자·구성원 응답, 구성원 더하기 요청
 ├── application/v1/role/AccessRoleApplication.java              # 메뉴 트리와 프로그램을 읽어 권한 트리를 만든다 (R6)
-├── service/role/AccessRoleService.java                         # 구성원 더하기·빼기, ADMIN 대상 B001 (R7, R8)
-└── repository/reader/role/AccessRoleReader.java, reader/user/** # 역할 있는 사용자·ADMIN, 검색, 구성원
+├── service/role/AccessRoleService.java                         # 구성원 더하기·빼기 (권한 상승 방지) (R8)
+├── service/role/RoleUserService.java                            # 사용자별 역할·구성원 조회, ADMIN 대상 B001 (R7, R8)
+└── repository/reader/role/{AccessRoleReader, RoleUserReader}.java # 역할 있는 사용자·ADMIN, 검색, 구성원
 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java # US2-AC1~US4-AC3 (R11)
 frontend/src/
 ├── api/role.ts, types/role.ts                                  # 트리, 사용자별, 구성원
 ├── app/(admin)/admin/roles/page.tsx                            # 두 탭 (R10)
-├── app/(admin)/admin/roles/{role-dialog, members-dialog, user-roles-tab}.tsx
+├── app/(admin)/admin/roles/{role-dialog, permission-tree, members-dialog, user-roles-tab}.tsx
 ├── app/(admin)/admin/users/user-extras.tsx                     # 역할 주기 빼기 (R9)
 └── components/role/user-roles.tsx                              # 사용자별 역할 탭으로 옮긴 뒤 지운다
-frontend/e2e/roles.spec.ts                                      # 트리 체크, 두 탭, 구성원
+frontend/e2e/role.spec.ts                                       # 트리 체크, 사용자별 역할 탭, 구성원
 ```
 
 **Structure Decision**: 인수 테스트는 `com.moa.api`, 공유 지원 코드는 `com.moa.support`에 둔다. 처음 도입 때는 운영 코드, 프론트, 마이그레이션을 바꾸지 않았다. 메뉴 트리와 사용자 화면(2026-11-15)은 키트 rbac 헬퍼 파일 안에서 고치고, 키트로 옮길 목록에 올린다 (원칙 III).

@@ -10,7 +10,6 @@ import { api } from "@/api"
 import { toApiError } from "@/api/error"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -19,15 +18,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field"
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { useFieldErrorText } from "@/i18n/field-error"
 import { useErrorMessages } from "@/lib/error-messages"
 import { type RoleInput, roleSchema } from "@/lib/schemas/role"
-import type { Permission, Role } from "@/types/role"
+import type { Role } from "@/types/role"
+import { PermissionTreePicker } from "./permission-tree"
 
 // 역할 추가·수정 창. role이 있으면 수정(코드는 바꾸지 않는다)
 // 권한은 묶음(group)별 체크 목록이다. 내가 가진 권한 밖을 다루면 서버가 A005로 막는다
+// moa: 권한은 관리 메뉴 트리로 고른다. 키를 입력하거나 키 목록에서 고르지 않는다 (specs/003-admin-roles FR-004)
 export function RoleDialog({
   role,
   open,
@@ -42,7 +43,11 @@ export function RoleDialog({
   const fieldErrorText = useFieldErrorText()
   const { describeError } = useErrorMessages()
   const editing = !!role
-  const permissions = useQuery({ queryKey: ["admin", "permissions"], queryFn: api.v1.role.permissions, enabled: open })
+  const tree = useQuery({
+    queryKey: ["admin", "roles", "permission-tree"],
+    queryFn: api.v1.role.permissionTree,
+    enabled: open,
+  })
   const [formError, setFormError] = useState<string>()
   const form = useForm<RoleInput>({
     resolver: zodResolver(roleSchema),
@@ -72,10 +77,6 @@ export function RoleDialog({
       setFormError(apiError.code === "A005" ? t("grantDenied") : describeError(apiError).message)
     },
   })
-
-  // 권한을 묶음별로
-  const groups = new Map<string, Permission[]>()
-  for (const p of permissions.data ?? []) groups.set(p.group, [...(groups.get(p.group) ?? []), p])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -122,31 +123,13 @@ export function RoleDialog({
             <Controller
               name="permissions"
               control={form.control}
-              render={({ field }) => (
-                <FieldSet>
-                  <FieldLegend variant="label">{t("permissions")}</FieldLegend>
-                  {[...groups].map(([group, list]) => (
-                    <div key={group} className="flex flex-col gap-2">
-                      <p className="text-sm font-medium text-muted-foreground">{group}</p>
-                      {list.map((p) => (
-                        <Field key={p.key} orientation="horizontal">
-                          <Checkbox
-                            id={`permission-${p.key}`}
-                            aria-label={p.name}
-                            checked={field.value.includes(p.key)}
-                            onCheckedChange={(checked) =>
-                              field.onChange(checked ? [...field.value, p.key] : field.value.filter((k) => k !== p.key))
-                            }
-                          />
-                          <FieldLabel htmlFor={`permission-${p.key}`} className="font-normal">
-                            {p.name} <span className="font-mono text-xs text-muted-foreground">{p.key}</span>
-                          </FieldLabel>
-                        </Field>
-                      ))}
-                    </div>
-                  ))}
-                </FieldSet>
-              )}
+              render={({ field }) =>
+                tree.data ? (
+                  <PermissionTreePicker tree={tree.data} value={field.value} onChange={field.onChange} />
+                ) : (
+                  <></>
+                )
+              }
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

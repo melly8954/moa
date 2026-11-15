@@ -21,7 +21,7 @@ US1은 키트 API를 moa의 AC에 맞춰 어떻게 확인하는지만 적는다.
 | US3-AC1 | `keyword` 없음 (운영자 A는 역할 있음, B는 없음) | 관리자와 A만. A의 `accessRoles`에 그 역할 |
 | US3-AC2 | `keyword` = B의 아이디 | B가 있고 `accessRoles`는 빈 목록 |
 | US3-AC3 | `PUT /api/v1/admin/users/{B}/roles` 뒤 B로 `GET /api/v1/admin/login-histories` | 200. `keyword` 없는 목록에 B가 있다 |
-| Edge | `PUT /api/v1/admin/users/{관리자}/roles` | 400, `code` = `B001` |
+| Edge | `PUT /api/v1/admin/users/{관리자}/roles`, `POST .../members` (관리자) | 409, `code` = `B001` |
 
 ## 구성원 (US4, 새로)
 
