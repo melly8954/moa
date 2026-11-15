@@ -86,7 +86,7 @@ description: "운영자 역할 (admin-roles) 작업 목록"
 
 - [X] T021 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*AdminRolesAcceptanceTest" --tests "*RbacAcceptanceTest" --tests "*Menu*AcceptanceTest"`, frontend/에서 `npm run format`, `npm run check`를 돌린다. e2e와 dbTest 전체는 로컬에서 돌리지 않고 PR CI로 본다 (docs/git.md "빌드·테스트")
 - [X] T022 specs/README.md 기능 지도의 003 상태에서 "메뉴 트리·사용자 화면은 기획 중"을 지운다
-- [ ] T023 specs/003-admin-roles/quickstart.md "화면 확인" 2·3번을 사람이 직접 확인한다
+- [X] T023 specs/003-admin-roles/quickstart.md "화면 확인" 2·3번을 사람이 직접 확인한다
 
 ---
 
