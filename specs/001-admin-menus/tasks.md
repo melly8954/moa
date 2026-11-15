@@ -152,10 +152,22 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 ---
 
+## Phase 9: 넓은 폭 머리 줄 없애기 (2026-11-15 FR-005 변경)
+
+**Purpose**: 넓은 폭에서 본문 위 머리 줄을 없애고 접기 단추를 사이드바 로고 줄로 옮긴다 (research.md R12). 프론트만 고친다
+
+- [ ] T048 frontend/src/components/shell/sidebar-shell.tsx: 넓은 폭은 로고 줄 오른쪽에 접기 단추를 두고, 아이콘만 남게 접으면 로고 자리를 펼치기 단추(평소 로고 글자, 마우스·키보드 초점에서 펼치기 아이콘)로 바꾼다. 본문 머리 줄은 좁은 폭에서만 그리고, 화면 이름 대신 사이트 이름(로고 주소 링크)을 둔다. 단추 이름은 frontend/messages/ko.json `shell`에 둔다. `screenTitle`을 쓰는 곳이 없어지면 그대로 둘지 지울지 검사(lint)에 맞춘다
+- [ ] T049 frontend/e2e/menu.spec.ts에 `US1-AC3`(넓은 폭: 머리 줄 없음, 로고 줄 접기 → 접힘, 로고 자리 펼치기 → 펼침)을 더하고, 머리 줄 사이드바 단추를 찾던 frontend/e2e/notices.spec.ts·screens.spec.ts를 바뀐 만큼만 고친다 (원칙 V)
+- [ ] T050 frontend/에서 `npm run format`, `npm run check`, 바꾼 e2e 묶음(menu·notices·notifications·screens)을 돌린다. 전체 화면 검사는 PR CI로 본다
+- [ ] T051 specs/001-admin-menus/quickstart.md "화면 확인" 2번의 접기·펼치기를 사람이 직접 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 → T002 → US1(T003, T004)·US2(T005~T007) → T008 → T009, T010
 - T011 → T012 → T013, T014 → T015 → T016
+- Phase 9: T048 → T049 → T050 → T051
 - Phase 8: T035 → T036 → T037 → T038 → T039, T040 → T041 → T042, T043 → T044 → T045 → T046, T047. 백엔드(T035~T040)와 프론트 타입(T041)은 API 모양이 정해지면 나란히 해도 된다
 - Phase 7: T017 → T018 → T019 → T022~T026 → T027 → T028~T031 → T032 → T033, T034. T020·T021은 T017과 함께 해도 된다. T027은 T020에 기댄다
 - US1과 US2는 서로 기대지 않는다. 둘 다 T002에 기댄다
