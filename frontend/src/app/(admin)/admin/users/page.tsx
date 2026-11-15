@@ -1,7 +1,8 @@
 "use client"
 
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query"
-import { MoreHorizontal, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -10,21 +11,13 @@ import { confirm } from "@/components/kit/confirm-dialog"
 import { type Column, DataTable } from "@/components/kit/data-table"
 import { ListPage } from "@/components/kit/page-header"
 import { ChoiceFilter, KeywordFilter, SearchField, SearchPanel, SearchRow } from "@/components/kit/search-panel"
-import { StatusText } from "@/components/kit/status-text"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { useListSearch } from "@/lib/list-search"
 import { useMe } from "@/lib/me"
 import type { AdminUser } from "@/types/user-admin"
+import { CreateUserDrawer, UserDrawer, UserStatus } from "./user-drawer"
 import { UserExtraDialogs, useUserExtraActions } from "./user-extras"
 import {
-  CreateUserDialog,
   RenameDialog,
   RoleChangeDialog,
   ROLES,
@@ -34,6 +27,9 @@ import {
 } from "./user-dialogs"
 
 // 사용자 관리 (user-admin 헬퍼, 권한 USER_MANAGE)
+// moa: 관리 화면 정리 (specs/002-admin-users FR-006~FR-008, research R6·R7)
+//   목록에 업무 역할 열(보기만, 관리자는 "모든 권한"). 아이디를 누르면 드로어에서 다룬다 (행의 "관리" 메뉴는 없앴다)
+//   만들기도 드로어에서 하고 임시 비밀번호를 드로어 안에 한 번 보인다
 // 막는 것 (서버도 막는다. 화면은 버튼을 끈다)
 //   - 내 행: 역할 바꾸기·잠그기·삭제 (B001)
 //   - 내가 ADMIN이 아니면 ADMIN 행 전체, ADMIN 역할 주기 (A005)
@@ -54,6 +50,7 @@ export default function UsersPage() {
   const errorText = useUserErrorText()
   const extraActions = useUserExtraActions()
   const [creating, setCreating] = useState(false)
+  const [openId, setOpenId] = useState<number>()
   const [renaming, setRenaming] = useState<AdminUser>()
   const [changingRole, setChangingRole] = useState<AdminUser>()
   const [password, setPassword] = useState<{ loginId: string; value: string }>()
@@ -99,79 +96,43 @@ export default function UsersPage() {
     if (!ok) return
     run.mutate(async () => {
       await api.v1.userAdmin.remove(u.id)
+      setOpenId(undefined)
       toast.success(t("removed"))
     })
   }
 
   const columns: Column<AdminUser>[] = [
-    { key: "loginId", header: t("loginId") },
+    {
+      key: "loginId",
+      header: t("loginId"),
+      cell: (u) => (
+        <button type="button" className="text-left underline-offset-4 hover:underline" onClick={() => setOpenId(u.id)}>
+          {u.loginId}
+        </button>
+      ),
+    },
     { key: "name", header: t("name") },
     { key: "role", header: t("role"), kind: "status", cell: (u) => t(`roles.${u.role}`) },
     {
-      key: "status",
-      header: t("status"),
-      kind: "status",
+      key: "accessRoles",
+      header: t("accessRoles"),
       cell: (u) =>
-        u.locked ? (
-          <StatusText tone="negative">{t("statusLocked")}</StatusText>
-        ) : u.passwordChangeRequired ? (
-          <StatusText tone="neutral">{t("statusPasswordPending")}</StatusText>
+        u.role === "ADMIN" ? (
+          <span className="text-muted-foreground">{t("allPermissions")}</span>
         ) : (
-          <StatusText tone="positive">{t("statusActive")}</StatusText>
+          u.accessRoles.map((r) => r.name).join(", ")
         ),
     },
+    { key: "status", header: t("status"), kind: "status", cell: (u) => <UserStatus user={u} /> },
     { key: "createdAt", header: t("createdAt"), kind: "datetime" },
-    {
-      key: "actions",
-      header: t("actions"),
-      kind: "actions",
-      cell: (u) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={<Button variant="ghost" size="icon-sm" aria-label={t("actionsOf", { loginId: u.loginId })} />}
-          >
-            <MoreHorizontal />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem disabled={protectedRow(u)} onClick={() => setRenaming(u)}>
-              {t("rename")}
-            </DropdownMenuItem>
-            <DropdownMenuItem disabled={protectedRow(u) || isSelf(u) || !iAmAdmin} onClick={() => setChangingRole(u)}>
-              {t("changeRole")}
-            </DropdownMenuItem>
-            <DropdownMenuItem disabled={protectedRow(u) || isSelf(u)} onClick={() => void toggleLock(u)}>
-              {t(u.locked ? "unlock" : "lock")}
-            </DropdownMenuItem>
-            <DropdownMenuItem disabled={protectedRow(u) || !u.hasPassword} onClick={() => void resetPassword(u)}>
-              {t("resetPassword")}
-            </DropdownMenuItem>
-            {extraActions.map((action) => (
-              <DropdownMenuItem
-                key={action.key}
-                disabled={protectedRow(u) || action.disabled?.(u)}
-                onClick={() => action.onSelect(u)}
-              >
-                {action.label}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              disabled={protectedRow(u) || isSelf(u)}
-              onClick={() => void remove(u)}
-            >
-              {t("remove")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
   ]
+  // 드로어는 목록의 최신 값을 본다 (바꾸면 목록을 다시 읽는다)
+  const opened = users.data?.content.find((u) => u.id === openId)
 
   return (
     <ListPage
       title={t("title")}
-      description={t("description")}
+      description={t.rich("description", { link: (chunks) => <Link href="/admin/roles">{chunks}</Link> })}
       actions={
         <Button onClick={() => setCreating(true)}>
           <Plus />
@@ -201,11 +162,19 @@ export default function UsersPage() {
       }
     >
       <DataTable caption={t("title")} columns={columns} query={users} search={search} rowKey={(u) => u.id} />
-      <CreateUserDialog
-        open={creating}
-        onOpenChange={setCreating}
-        canGrantAdmin={iAmAdmin}
-        onCreated={(loginId, value) => setPassword({ loginId, value })}
+      <CreateUserDrawer open={creating} onOpenChange={setCreating} canGrantAdmin={iAmAdmin} />
+      <UserDrawer
+        user={opened}
+        onClose={() => setOpenId(undefined)}
+        protectedRow={!!opened && protectedRow(opened)}
+        isSelf={!!opened && isSelf(opened)}
+        iAmAdmin={iAmAdmin}
+        extraActions={extraActions}
+        onRename={() => opened && setRenaming(opened)}
+        onChangeRole={() => opened && setChangingRole(opened)}
+        onToggleLock={() => opened && void toggleLock(opened)}
+        onResetPassword={() => opened && void resetPassword(opened)}
+        onRemove={() => opened && void remove(opened)}
       />
       <RenameDialog user={renaming} onClose={() => setRenaming(undefined)} />
       <RoleChangeDialog user={changingRole} onClose={() => setChangingRole(undefined)} />

@@ -1,10 +1,12 @@
 package com.moa.api.controller.v1.admin.user.response;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
 import com.moa.api.dto.user.UserAdminDto;
+import com.moa.api.dto.user.UserAdminRowDto;
 import com.moa.common.response.ApiTimes;
 import com.moa.common.security.Role;
 
@@ -20,11 +22,28 @@ public record UserAdminResponse(
 	@Schema(description = "잠근 시각 (시간대 포함). 잠기지 않았으면 없다") @Nullable OffsetDateTime lockedAt,
 	@Schema(description = "임시 비밀번호를 받아 아직 바꾸지 않았다") boolean passwordChangeRequired,
 	@Schema(description = "비밀번호로 로그인하는 계정인지. false(소셜)면 비밀번호 초기화를 할 수 없다") boolean hasPassword,
-	@Schema(description = "만든 시각 (시간대 포함)") OffsetDateTime createdAt) {
+	@Schema(description = "만든 시각 (시간대 포함)") OffsetDateTime createdAt,
+	@Schema(description = "moa: 받은 업무 역할 (보기만, specs/002-admin-users FR-006). 목록·하나 조회에서만 채우고 "
+		+ "바꾸기 응답에서는 비어 있다. 관리자(ADMIN)는 모든 권한을 가져 비어 있다") List<AccessRoleRef> accessRoles) {
 
 	public static UserAdminResponse from(UserAdminDto user) {
+		return of(user, List.of());
+	}
+
+	public static UserAdminResponse from(UserAdminRowDto row) {
+		return of(row.user(),
+			row.accessRoles().stream().map(role -> new AccessRoleRef(role.id(), role.name())).toList());
+	}
+
+	private static UserAdminResponse of(UserAdminDto user, List<AccessRoleRef> accessRoles) {
 		return new UserAdminResponse(user.id(), user.loginId(), user.name(), user.role(), user.locked(),
 			ApiTimes.of(user.lockedAt()), user.passwordChangeRequired(), user.hasPassword(),
-			ApiTimes.of(user.createdAt()));
+			ApiTimes.of(user.createdAt()), accessRoles);
+	}
+
+	@Schema(description = "업무 역할")
+	public record AccessRoleRef(
+		@Schema(description = "역할 ID") Long id,
+		@Schema(description = "이름", example = "보안 담당") String name) {
 	}
 }
