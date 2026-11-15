@@ -15,6 +15,8 @@ moa가 할 일은 키트 시드의 "관리" 그룹을 없애 메뉴를 최상위
 
 **메뉴 대상 (2026-11-15, FR-007)**: 메뉴에 대상(`ADMIN`·`USER`)을 더해 사용자 셸 메뉴도 메뉴 관리에서 다룬다. 키트 menu 헬퍼(백엔드 열·API, 메뉴 관리 화면)를 moa에서 먼저 고치고 키트로 옮긴다 ([research.md](./research.md) R9~R11).
 
+**머리 줄 (2026-11-15, FR-005)**: 프론트 `SidebarShell`만 바꾼다. 넓은 폭의 본문 머리 줄을 없애고 접기 단추를 사이드바 로고 줄로 옮긴다. 좁은 폭 머리 줄은 남기고 화면 이름 대신 사이트 이름을 둔다 ([research.md](./research.md) R12).
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)
