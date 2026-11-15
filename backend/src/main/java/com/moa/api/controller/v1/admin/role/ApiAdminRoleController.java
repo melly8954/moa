@@ -17,13 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.moa.api.application.v1.role.AccessRoleApplication;
 import com.moa.api.controller.v1.admin.role.request.RoleCreateRequest;
-import com.moa.api.controller.v1.admin.role.request.RoleMemberAddRequest;
+import com.moa.api.controller.v1.admin.role.request.RoleIdsRequest;
+import com.moa.api.controller.v1.admin.role.request.RoleMembersRequest;
 import com.moa.api.controller.v1.admin.role.request.RoleModifyRequest;
 import com.moa.api.controller.v1.admin.role.request.UserRoleReplaceRequest;
 import com.moa.api.controller.v1.admin.role.response.PermissionResponse;
 import com.moa.api.controller.v1.admin.role.response.PermissionTreeResponse;
+import com.moa.api.controller.v1.admin.role.response.RoleMemberResponse;
 import com.moa.api.controller.v1.admin.role.response.RoleResponse;
-import com.moa.api.controller.v1.admin.role.response.RoleUserResponse;
 import com.moa.api.permission.RolePermissions;
 import com.moa.common.response.PageResponse;
 import com.moa.common.security.AuthPrincipal;
@@ -64,18 +65,6 @@ public class ApiAdminRoleController {
 		return ResponseEntity.ok(PermissionTreeResponse.from(accessRoleApplication.getPermissionTree()));
 	}
 
-	@Operation(summary = "사용자별 역할",
-		description = "moa: 아이디 순 페이징 (FR-005). keyword가 없으면 업무 역할이 있는 사용자와 ADMIN, "
-			+ "있으면 아이디·이름에 그 글자가 든 모든 사용자. 지운 사용자와 시스템 계정은 빠진다")
-	@GetMapping("/roles/users")
-	public ResponseEntity<PageResponse<RoleUserResponse>> getRoleUsers(
-		@RequestParam(required = false) @Size(max = 50) String keyword,
-		@RequestParam(defaultValue = "0") @Min(0) int page,
-		@RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
-		return ResponseEntity.ok(PageResponse.from(
-			accessRoleApplication.getRoleUsers(keyword, PageRequest.of(page, size)), RoleUserResponse::from));
-	}
-
 	@Operation(summary = "역할 목록", description = "만든 순서대로")
 	@GetMapping("/roles")
 	public ResponseEntity<List<RoleResponse>> getRoles() {
@@ -104,6 +93,15 @@ public class ApiAdminRoleController {
 		return ResponseEntity.ok(RoleResponse.from(accessRoleApplication.modify(actor, request.toCommand(id))));
 	}
 
+	@Operation(summary = "한꺼번에 지우기",
+		description = "moa (specs/003-admin-roles FR-005): 한 트랜잭션. 없는 역할 R001, 다룰 수 없는 역할 A005가 하나라도 있으면 아무것도 지우지 않는다")
+	@PostMapping("/roles/bulk-delete")
+	public ResponseEntity<Void> deleteAll(@CurrentUser AuthPrincipal actor,
+		@Valid @RequestBody RoleIdsRequest request) {
+		accessRoleApplication.deleteAll(actor, request.ids());
+		return ResponseEntity.noContent().build();
+	}
+
 	@Operation(summary = "역할 지우기", description = "소프트 삭제. 이 역할을 가진 사용자에게서도 빠진다. 없으면 R001, 다룰 수 없는 역할 A005")
 	@DeleteMapping("/roles/{id}")
 	public ResponseEntity<Void> delete(@CurrentUser AuthPrincipal actor, @PathVariable Long id) {
@@ -111,27 +109,35 @@ public class ApiAdminRoleController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@Operation(summary = "역할의 구성원", description = "moa: 아이디 순 (FR-006). 없는 역할 R001")
+	@Operation(summary = "역할의 구성원",
+		description = "moa (FR-006): 아이디 순 쪽. keyword가 없으면 구성원만, 있으면 아이디·이름으로 모든 사용자와 구성원 여부. "
+			+ "지운 사용자·시스템 계정은 빠진다. 없는 역할 R001")
 	@GetMapping("/roles/{id}/members")
-	public ResponseEntity<List<RoleUserResponse>> getMembers(@PathVariable Long id) {
-		return ResponseEntity.ok(accessRoleApplication.getMembers(id).stream().map(RoleUserResponse::from).toList());
+	public ResponseEntity<PageResponse<RoleMemberResponse>> getMembers(@PathVariable Long id,
+		@RequestParam(required = false) @Size(max = 50) String keyword,
+		@RequestParam(defaultValue = "0") @Min(0) int page,
+		@RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+		return ResponseEntity.ok(PageResponse.from(
+			accessRoleApplication.getMembers(id, keyword, PageRequest.of(page, size)), RoleMemberResponse::from));
 	}
 
 	@Operation(summary = "구성원 더하기",
-		description = "moa: 이미 있으면 그대로 둔다 (FR-006). 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, 대상이 ADMIN이면 B001")
+		description = "moa (FR-006): 한 트랜잭션. 이미 구성원이면 그대로. 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, "
+			+ "ADMIN이 섞이면 B001 (아무도 더하지 않는다)")
 	@PostMapping("/roles/{id}/members")
-	public ResponseEntity<Void> addMember(@CurrentUser AuthPrincipal actor, @PathVariable Long id,
-		@Valid @RequestBody RoleMemberAddRequest request) {
-		accessRoleApplication.addMember(actor, id, request.userId());
+	public ResponseEntity<Void> addMembers(@CurrentUser AuthPrincipal actor, @PathVariable Long id,
+		@Valid @RequestBody RoleMembersRequest request) {
+		accessRoleApplication.addMembers(actor, id, request.userIds());
 		return ResponseEntity.noContent().build();
 	}
 
 	@Operation(summary = "구성원 빼기",
-		description = "moa: 가지지 않았으면 아무것도 하지 않는다 (FR-006). 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, 대상이 ADMIN이면 B001")
-	@DeleteMapping("/roles/{id}/members/{userId}")
-	public ResponseEntity<Void> removeMember(@CurrentUser AuthPrincipal actor, @PathVariable Long id,
-		@PathVariable Long userId) {
-		accessRoleApplication.removeMember(actor, id, userId);
+		description = "moa (FR-006): 한 트랜잭션. 구성원이 아니면 그대로. 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, "
+			+ "ADMIN이 섞이면 B001 (아무도 빼지 않는다)")
+	@PostMapping("/roles/{id}/members/remove")
+	public ResponseEntity<Void> removeMembers(@CurrentUser AuthPrincipal actor, @PathVariable Long id,
+		@Valid @RequestBody RoleMembersRequest request) {
+		accessRoleApplication.removeMembers(actor, id, request.userIds());
 		return ResponseEntity.noContent().build();
 	}
 

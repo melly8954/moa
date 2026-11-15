@@ -34,19 +34,15 @@ const PERMISSION_TREE = {
     { programKey: "ADMIN_NOTICES", name: "공지 관리", permission: { key: "NOTICE_MANAGE", name: "공지 관리" } },
   ],
 }
-const user = (
-  id: number,
-  loginId: string,
-  role: "USER" | "ADMIN",
-  accessRoles: { id: number; code: string; name: string }[] = [],
-) => ({
+// 구성원 탭의 사용자 (moa, specs/003-admin-roles FR-006)
+const member = (id: number, loginId: string, role: "USER" | "ADMIN", isMember: boolean) => ({
   id,
   loginId,
   name: loginId,
   role,
-  accessRoles,
+  member: isMember,
 })
-const page = <T>(content: T[]) => ({ content, page: 0, size: 20, totalElements: content.length, totalPages: 1 })
+const page_ = <T>(content: T[]) => ({ content, page: 0, size: 20, totalElements: content.length, totalPages: 1 })
 const ROLES = [
   {
     id: 1,
@@ -56,9 +52,12 @@ const ROLES = [
     permissions: ["CODE_MANAGE"],
     userCount: 3,
   },
+  { id: 2, code: "SECURITY", name: "보안 담당", description: null, permissions: [], userCount: 0 },
 ]
 
-async function mock(page: Page, onSave?: (body: unknown) => { status: number; json: unknown }) {
+type Sent = { bulkDelete?: unknown; add?: unknown; remove?: unknown }
+
+async function mock(page: Page, onSave?: (body: unknown) => { status: number; json: unknown }, sent: Sent = {}) {
   await signedIn(page, { permissions: ["ROLE_MANAGE"] })
   await page.route("**/api/v1/admin/roles/permission-tree", (route) => route.fulfill({ json: PERMISSION_TREE }))
   await page.route("**/api/v1/admin/roles", (route) => {
@@ -67,6 +66,31 @@ async function mock(page: Page, onSave?: (body: unknown) => { status: number; js
       return route.fulfill(reply)
     }
     return route.fulfill({ json: ROLES })
+  })
+  await page.route("**/api/v1/admin/roles/bulk-delete", (route) => {
+    sent.bulkDelete = route.request().postDataJSON()
+    return route.fulfill({ status: 204 })
+  })
+  // 구성원 탭: 검색어가 없으면 구성원만, 있으면 찾은 사람 모두와 구성원 여부
+  await page.route("**/api/v1/admin/roles/1/members**", (route) => {
+    const request = route.request()
+    if (request.method() === "POST") {
+      if (request.url().endsWith("/remove")) sent.remove = request.postDataJSON()
+      else sent.add = request.postDataJSON()
+      return route.fulfill({ status: 204 })
+    }
+    const keyword = new URL(request.url()).searchParams.get("keyword")
+    return route.fulfill({
+      json: page_(
+        keyword
+          ? [
+              member(10, "operator", "USER", true),
+              member(11, "operator2", "USER", false),
+              member(2, "admin", "ADMIN", false),
+            ]
+          : [member(10, "operator", "USER", true)],
+      ),
+    })
   })
 }
 
@@ -78,7 +102,9 @@ test("역할 관리: 가로 넘침·접근성", async ({ page }) => {
   await expectNoSeriousA11yViolations(page)
 })
 
-test("US2-AC1 역할 추가: 관리 메뉴 트리를 체크하면 그 메뉴의 권한을 보낸다 (키 입력 없음)", async ({ page }) => {
+test("US2-AC1 역할 추가: 관리 메뉴 트리를 체크하면 그 메뉴의 권한을 보내고, 저장하면 구성원 탭이 열린다 (키 입력 없음)", async ({
+  page,
+}) => {
   let sent: unknown
   await mock(page, (body) => {
     sent = body
@@ -86,94 +112,100 @@ test("US2-AC1 역할 추가: 관리 메뉴 트리를 체크하면 그 메뉴의 
   })
   await page.goto("/admin/roles")
   await page.getByRole("button", { name: "역할 추가" }).click()
-  const dialog = page.getByRole("dialog")
-  await dialog.getByLabel("역할 코드").fill("VIEWER")
-  await dialog.getByLabel("이름").fill("조회 담당")
-  await expect(dialog.getByText("메뉴에 없는 프로그램")).toBeVisible()
-  await expect(dialog.getByText("꺼짐")).toBeVisible()
-  await dialog.getByRole("checkbox", { name: /^코드 관리/ }).click()
+  const drawer = page.getByRole("dialog")
+  // 새 역할은 저장 전에 구성원 탭이 없다
+  await expect(drawer.getByRole("tab", { name: "구성원" })).toHaveCount(0)
+  await drawer.getByLabel("역할 코드").fill("VIEWER")
+  await drawer.getByLabel("이름").fill("조회 담당")
+  await expect(drawer.getByText("메뉴에 없는 프로그램")).toBeVisible()
+  await expect(drawer.getByText("꺼짐")).toBeVisible()
+  await drawer.getByRole("checkbox", { name: /^코드 관리/ }).click()
   // 묶음 메뉴를 체크하면 하위 메뉴가 모두 체크된다
-  await dialog.getByRole("checkbox", { name: /^시스템/ }).click()
-  await expect(dialog.getByRole("checkbox", { name: /^역할/ })).toBeChecked()
+  await drawer.getByRole("checkbox", { name: /^시스템/ }).click()
+  await expect(drawer.getByRole("checkbox", { name: /^역할/ })).toBeChecked()
   await expectNoSeriousA11yViolations(page)
-  await dialog.getByRole("button", { name: "저장" }).click()
-  await expect(dialog).toBeHidden()
-  expect(sent).toEqual({ code: "VIEWER", name: "조회 담당", permissions: ["CODE_MANAGE", "ROLE_MANAGE"] })
+  await drawer.getByRole("button", { name: "저장" }).click()
+  await expect
+    .poll(() => sent)
+    .toEqual({ code: "VIEWER", name: "조회 담당", permissions: ["CODE_MANAGE", "ROLE_MANAGE"] })
+  await expect(page.getByRole("dialog").getByRole("tab", { name: "구성원", selected: true })).toBeVisible()
 })
 
 test("내 권한 밖이면(A005) 그렇게 알린다", async ({ page }) => {
   await mock(page, () => ({ status: 403, json: { code: "A005", message: "", timestamp: "", path: "" } }))
   await page.goto("/admin/roles")
   await page.getByRole("button", { name: "역할 추가" }).click()
-  const dialog = page.getByRole("dialog")
-  await dialog.getByLabel("역할 코드").fill("SUPER")
-  await dialog.getByLabel("이름").fill("최고")
-  await dialog.getByRole("button", { name: "저장" }).click()
-  await expect(dialog.getByText("내가 가진 권한 밖의 권한은 다룰 수 없어요.")).toBeVisible()
+  const drawer = page.getByRole("dialog")
+  await drawer.getByLabel("역할 코드").fill("SUPER")
+  await drawer.getByLabel("이름").fill("최고")
+  await drawer.getByRole("button", { name: "저장" }).click()
+  await expect(drawer.getByText("내가 가진 권한 밖의 권한은 다룰 수 없어요.")).toBeVisible()
 })
 
-test("삭제는 사용자 수를 알리고 되묻는다", async ({ page }) => {
+test("US3-AC1·AC2 역할 목록은 탭과 행 단추가 없고, 검색 칸으로 화면에서 거른다 @wide", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/roles")
-  await page.getByRole("button", { name: "운영 매니저 삭제" }).click()
+  await expect(page.getByRole("tab")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: /삭제$|수정$|구성원$/ })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "보안 담당", exact: true })).toBeVisible()
+  await page.getByLabel("역할 찾기").fill("매니저")
+  await expect(page.getByRole("button", { name: "운영 매니저", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "보안 담당", exact: true })).toHaveCount(0)
+})
+
+test("US3-AC3 둘을 골라 지우면 사용자 수를 알리고 되물은 뒤 한꺼번에 보낸다", async ({ page }) => {
+  const sent: Sent = {}
+  await mock(page, undefined, sent)
+  await page.goto("/admin/roles")
+  await page.getByRole("checkbox", { name: "모두 고르기" }).click()
+  await page.getByRole("toolbar", { name: "고른 역할 처리" }).getByRole("button", { name: "삭제" }).click()
   await expect(page.getByRole("alertdialog")).toContainText("3명")
-  await page.getByRole("button", { name: "취소" }).click()
+  await page.getByRole("alertdialog").getByRole("button", { name: "삭제" }).click()
+  await expect.poll(() => sent.bulkDelete).toEqual({ ids: [1, 2] })
 })
 
-test("US3-AC1 사용자별 역할 탭: 관리자는 '모든 권한', 운영자는 받은 역할이 보이고 그 자리에서 바꾼다 @wide", async ({
-  page: p,
+test("FR-009 머리 설명에 메뉴 관리로 가는 링크가 있다", async ({ page }) => {
+  await mock(page)
+  await page.goto("/admin/roles")
+  await expect(page.getByRole("link", { name: "메뉴 관리", exact: true }).last()).toHaveAttribute(
+    "href",
+    "/admin/menus",
+  )
+})
+
+test("US4-AC1·AC2·AC4 구성원 탭: 검색하면 구성원 여부가 보이고, 체크해 한꺼번에 더하며, 관리자는 체크할 수 없다 @wide", async ({
+  page,
 }) => {
-  let sent: unknown
-  await mock(p)
-  await p.route("**/api/v1/admin/roles/users**", (route) =>
-    route.fulfill({
-      json: page([
-        user(2, "admin", "ADMIN"),
-        user(10, "operator", "USER", [{ id: 1, code: "MANAGER", name: "운영 매니저" }]),
-      ]),
-    }),
-  )
-  await p.route("**/api/v1/admin/users/10/roles", (route) => {
-    sent = route.request().postDataJSON()
-    return route.fulfill({ status: 204 })
-  })
-  await p.goto("/admin/roles")
-  await p.getByRole("tab", { name: "사용자별 역할" }).click()
-  await expect(p.getByRole("cell", { name: "모든 권한", exact: true })).toBeVisible()
-  await expect(p.getByRole("button", { name: "admin 역할 변경" })).toHaveCount(0)
-  await expect(p.getByRole("cell", { name: "운영 매니저", exact: true })).toBeVisible()
-  await expectNoSeriousA11yViolations(p)
+  const sent: Sent = {}
+  await mock(page, undefined, sent)
+  await page.goto("/admin/roles")
+  await page.getByRole("button", { name: "운영 매니저", exact: true }).click()
+  const drawer = page.getByRole("dialog")
+  await drawer.getByRole("tab", { name: "구성원" }).click()
+  // 검색하지 않으면 구성원만
+  await expect(drawer.getByRole("cell", { name: "operator", exact: true }).first()).toBeVisible()
+  await expect(drawer.getByRole("cell", { name: "operator2", exact: true })).toHaveCount(0)
 
-  await p.getByRole("button", { name: "operator 역할 변경" }).click()
-  const dialog = p.getByRole("dialog")
-  await dialog.getByRole("checkbox", { name: /운영 매니저/ }).click()
-  await dialog.getByRole("button", { name: "저장" }).click()
-  await expect.poll(() => sent).toEqual({ roleIds: [] })
+  await drawer.getByLabel("사용자 찾기").fill("op")
+  await drawer.getByRole("button", { name: "찾기" }).click()
+  await expect(drawer.getByRole("cell", { name: "operator2", exact: true }).first()).toBeVisible()
+  await expect(drawer.getByRole("checkbox", { name: "admin 고르기" })).toBeDisabled()
+  await expect(drawer.getByRole("cell", { name: "모든 권한" })).toBeVisible()
+  await expectNoSeriousA11yViolations(page)
+
+  await drawer.getByRole("checkbox", { name: "operator2 고르기" }).click()
+  await drawer.getByRole("toolbar", { name: "고른 사람 처리" }).getByRole("button", { name: "더하기" }).click()
+  await expect.poll(() => sent.add).toEqual({ userIds: [11] })
 })
 
-test("US4-AC2 구성원: 역할의 구성원을 보고, 사용자를 찾아 더한다 @wide", async ({ page: p }) => {
-  let added: unknown
-  await mock(p)
-  await p.route("**/api/v1/admin/roles/1/members", (route) => {
-    if (route.request().method() === "POST") {
-      added = route.request().postDataJSON()
-      return route.fulfill({ status: 204 })
-    }
-    return route.fulfill({ json: [user(10, "operator", "USER")] })
-  })
-  await p.route("**/api/v1/admin/roles/users**", (route) =>
-    route.fulfill({
-      json: page([user(10, "operator", "USER"), user(11, "operator2", "USER"), user(2, "admin", "ADMIN")]),
-    }),
-  )
-  await p.goto("/admin/roles")
-  await p.getByRole("button", { name: "운영 매니저 구성원" }).click()
-  const dialog = p.getByRole("dialog")
-  await expect(dialog.getByRole("cell", { name: "operator", exact: true }).first()).toBeVisible()
-  await dialog.getByLabel("사용자 찾기").fill("operator")
-  await dialog.getByRole("button", { name: "찾기" }).click()
-  await expect(dialog.getByText("이미 구성원")).toBeVisible()
-  await expect(dialog.getByRole("button", { name: "admin 더하기" })).toHaveCount(0)
-  await dialog.getByRole("button", { name: "operator2 더하기" }).click()
-  await expect.poll(() => added).toEqual({ userId: 11 })
+test("US4-AC3 구성원을 골라 한꺼번에 뺀다", async ({ page }) => {
+  const sent: Sent = {}
+  await mock(page, undefined, sent)
+  await page.goto("/admin/roles")
+  await page.getByRole("button", { name: "운영 매니저", exact: true }).click()
+  const drawer = page.getByRole("dialog")
+  await drawer.getByRole("tab", { name: "구성원" }).click()
+  await drawer.getByRole("checkbox", { name: "operator 고르기" }).click()
+  await drawer.getByRole("toolbar", { name: "고른 사람 처리" }).getByRole("button", { name: "빼기" }).click()
+  await expect.poll(() => sent.remove).toEqual({ userIds: [10] })
 })

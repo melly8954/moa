@@ -1,5 +1,6 @@
 package com.moa.api.service.role;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -85,6 +86,25 @@ public class AccessRoleService {
 		accessRoleWriter.removeRoleFromUsers(id);
 	}
 
+	/**
+	 * 여러 역할을 한꺼번에 지운다 (moa, specs/003-admin-roles FR-005). 하나라도 없거나 다룰 수 없으면 아무것도 지우지 않는다
+	 * (호출하는 Application의 트랜잭션이 롤백한다). 지운 역할은 사용자들에게서도 빠진다.
+	 *
+	 * @throws ServiceException 없는 역할 R001, 다룰 수 없는 역할 A005
+	 */
+	public void deleteAll(AuthPrincipal actor, Collection<Long> ids) {
+		List<AccessRole> roles = new ArrayList<>();
+		for (Long id : new LinkedHashSet<>(ids)) {
+			AccessRole role = require(id);
+			checkManage(actor, dto(role, Map.of()));
+			roles.add(role);
+		}
+		// 모두 지운 뒤에 사용자에게서 뺀다. removeRoleFromUsers는 영속성 컨텍스트를 비우므로(clearAutomatically)
+		// 번갈아 하면 뒤의 역할이 분리돼 지운 표시가 저장되지 않는다
+		roles.forEach(role -> role.delete(actor.userId()));
+		roles.forEach(role -> accessRoleWriter.removeRoleFromUsers(role.getId()));
+	}
+
 	/** 이 사용자에게 준 역할 (지운 역할은 빠진다) */
 	public List<AccessRoleDto> getRolesOfUser(Long userId) {
 		Map<Long, Long> counts = accessRoleReader.countUsersByRole();
@@ -113,28 +133,37 @@ public class AccessRoleService {
 	}
 
 	/**
-	 * 이 역할에 사용자 하나를 더한다 (moa, specs/003-admin-roles FR-006). 이미 있으면 그대로 둔다.
+	 * 이 역할에 여러 사용자를 더한다 (moa, specs/003-admin-roles FR-006). 이미 구성원이면 그대로 둔다.
 	 * 사용자가 있는지와 ADMIN이 아닌지는 부르는 쪽이 본다.
 	 *
 	 * @throws ServiceException 없는 역할 R001, 다룰 수 없는 역할 A005
 	 */
-	public void addMember(AuthPrincipal actor, Long roleId, Long userId) {
+	public void addMembers(AuthPrincipal actor, Long roleId, Collection<Long> userIds) {
 		AccessRole role = require(roleId);
 		checkManage(actor, dto(role, Map.of()));
-		if (!accessRoleReader.hasRole(userId, roleId)) {
-			accessRoleWriter.addRoleToUser(userId, roleId);
+		for (Long userId : new LinkedHashSet<>(userIds)) {
+			if (!accessRoleReader.hasRole(userId, roleId)) {
+				accessRoleWriter.addRoleToUser(userId, roleId);
+			}
 		}
 	}
 
 	/**
-	 * 이 역할에서 사용자 하나를 뺀다 (moa, FR-006). 가지지 않았으면 아무것도 하지 않는다.
+	 * 이 역할에서 여러 사용자를 뺀다 (moa, FR-006). 구성원이 아니면 그대로 둔다.
 	 *
 	 * @throws ServiceException 없는 역할 R001, 다룰 수 없는 역할 A005
 	 */
-	public void removeMember(AuthPrincipal actor, Long roleId, Long userId) {
+	public void removeMembers(AuthPrincipal actor, Long roleId, Collection<Long> userIds) {
 		AccessRole role = require(roleId);
 		checkManage(actor, dto(role, Map.of()));
-		accessRoleWriter.removeRoleFromUser(userId, roleId);
+		new LinkedHashSet<>(userIds).forEach(userId -> accessRoleWriter.removeRoleFromUser(userId, roleId));
+	}
+
+	/**
+	 * @throws ServiceException 없는 역할 R001
+	 */
+	public void requireExists(Long roleId) {
+		require(roleId);
 	}
 
 	private AccessRole require(Long id) {

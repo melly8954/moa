@@ -96,20 +96,20 @@ description: "운영자 역할 (admin-roles) 작업 목록"
 
 **백엔드**
 
-- [ ] T024 backend/src/main/java/com/moa/api/service/role/AccessRoleService.java에 `deleteAll(actor, ids)`(한 트랜잭션, R001·A005면 아무것도 안 지움), `addMembers`·`removeMembers(actor, roleId, userIds)`를 더하고, backend/src/main/java/com/moa/api/service/role/RoleUserService.java에 구성원 쪽(검색 없으면 구성원만, 있으면 전체 + `member`), ADMIN 섞이면 B001, 사용자 ID 목록 → 업무 역할(002용)을 둔다 (R12~R14)
-- [ ] T025 backend/src/main/java/com/moa/api/controller/v1/admin/role/ApiAdminRoleController.java: `POST /roles/bulk-delete`, `GET /roles/{id}/members`(쪽), `POST /roles/{id}/members`(`userIds`), `POST /roles/{id}/members/remove`(`userIds`)를 두고 `GET /roles/users`와 한 사람 구성원 API를 지운다. 요청·응답 레코드를 맞춘다
-- [ ] T026 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java: US3-AC3, US4-AC1~AC4를 contracts/admin-roles.md "관리 화면 정리" 표대로 쓰고, 옛 US3(사용자별 역할)·한 사람 구성원 테스트를 지운다 (원칙 V)
+- [X] T024 backend/src/main/java/com/moa/api/service/role/AccessRoleService.java에 `deleteAll(actor, ids)`(한 트랜잭션, R001·A005면 아무것도 안 지움), `addMembers`·`removeMembers(actor, roleId, userIds)`를 더하고, backend/src/main/java/com/moa/api/service/role/RoleUserService.java에 구성원 쪽(검색 없으면 구성원만, 있으면 전체 + `member`), ADMIN 섞이면 B001, 사용자 ID 목록 → 업무 역할(002용)을 둔다 (R12~R14)
+- [X] T025 backend/src/main/java/com/moa/api/controller/v1/admin/role/ApiAdminRoleController.java: `POST /roles/bulk-delete`, `GET /roles/{id}/members`(쪽), `POST /roles/{id}/members`(`userIds`), `POST /roles/{id}/members/remove`(`userIds`)를 두고 `GET /roles/users`와 한 사람 구성원 API를 지운다. 요청·응답 레코드를 맞춘다
+- [X] T026 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java: US3-AC3, US4-AC1~AC4를 contracts/admin-roles.md "관리 화면 정리" 표대로 쓰고, 옛 US3(사용자별 역할)·한 사람 구성원 테스트를 지운다 (원칙 V)
 
 **프론트**
 
-- [ ] T027 frontend/src/api/role.ts, frontend/src/types/role.ts를 새 API에 맞춘다 (`bulkDelete`, `members(id, {keyword, page, size})`, `addMembers`, `removeMembers`. `users` 지움)
-- [ ] T028 frontend/src/app/(admin)/admin/roles/page.tsx: 탭 없이 검색 칸(화면 거르기) + 역할 표(체크박스·이름·코드·권한 수·구성원 수, 행 단추 없음) + 일괄 줄(삭제, 확인) + "역할 추가". 머리 안내(FR-009 문구, 메뉴 관리 링크)
-- [ ] T029 frontend/src/app/(admin)/admin/roles/role-drawer.tsx(공용 드로어, 탭 "기본·메뉴"·"구성원", 새 역할은 저장 뒤 구성원 탭)와 role-members.tsx(검색, 표, 쪽 번호, 일괄 더하기·빼기, ADMIN 체크 꺼짐)를 만들고 user-roles-tab.tsx·members-dialog.tsx·role-dialog.tsx를 지운다 (R12, R13)
-- [ ] T030 frontend/e2e/role.spec.ts를 R15대로 고친다 (탭 없음, 거르기, 드로어 트리, 새 역할 저장 뒤 구성원 탭, 일괄 더하기, ADMIN 체크 꺼짐, 머리 안내)
+- [X] T027 frontend/src/api/role.ts, frontend/src/types/role.ts를 새 API에 맞춘다 (`bulkDelete`, `members(id, {keyword, page, size})`, `addMembers`, `removeMembers`. `users` 지움)
+- [X] T028 frontend/src/app/(admin)/admin/roles/page.tsx: 탭 없이 검색 칸(화면 거르기) + 역할 표(체크박스·이름·코드·권한 수·구성원 수, 행 단추 없음) + 일괄 줄(삭제, 확인) + "역할 추가". 머리 안내(FR-009 문구, 메뉴 관리 링크)
+- [X] T029 frontend/src/app/(admin)/admin/roles/role-drawer.tsx(공용 드로어, 탭 "기본·메뉴"·"구성원", 새 역할은 저장 뒤 구성원 탭)와 role-members.tsx(검색, 표, 쪽 번호, 일괄 더하기·빼기, ADMIN 체크 꺼짐)를 만들고 user-roles-tab.tsx·members-dialog.tsx·role-dialog.tsx를 지운다 (R12, R13)
+- [X] T030 frontend/e2e/role.spec.ts를 R15대로 고친다 (탭 없음, 거르기, 드로어 트리, 새 역할 저장 뒤 구성원 탭, 일괄 더하기, ADMIN 체크 꺼짐, 머리 안내)
 
 **마무리**
 
-- [ ] T031 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*AdminRolesAcceptanceTest" --tests "*RbacAcceptanceTest"`, frontend/에서 `npm run format`, `npm run check`. e2e와 dbTest 전체는 PR CI로 본다
+- [X] T031 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*AdminRolesAcceptanceTest" --tests "*RbacAcceptanceTest"`, frontend/에서 `npm run format`, `npm run check`. e2e와 dbTest 전체는 PR CI로 본다
 - [ ] T032 specs/003-admin-roles/quickstart.md "화면 확인"을 드로어·구성원 일괄로 고치고 사람이 확인한다
 
 ---
