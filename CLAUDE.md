@@ -10,6 +10,7 @@
 | `.specify/memory/constitution.md` | 프로젝트 원칙. 모든 작업에 적용된다. 이 문서와 충돌하면 원칙을 따른다 |
 | `specs/README.md` | 도메인·기능 지도. 무엇이 키트에서 왔고 무엇을 moa가 만드는지 |
 | `docs/git.md` | git 규칙 (흐름, 브랜치·커밋·태그, 검사). psw-dev-kit `git` 템플릿 |
+| `docs/spec-numbers.md` | 스펙 번호 예약과 겹침 검사. psw-dev-kit `git` 템플릿(`--spec-kit`) |
 | `specs/<번호>-<이름>/` | 기능 스펙 (spec·plan·tasks 등). 첫 `/speckit-specify` 때 생긴다 |
 
 - 작업 전에 해당 기능의 스펙과 원칙 문서만 읽는다. `specs/` 전체를 한꺼번에 읽지 않는다
@@ -24,7 +25,7 @@
 → /speckit-implement → (/speckit-converge) → 구현 PR
 ```
 
-- 새 스펙은 번호를 먼저 예약하고, `/speckit-specify`에 예약한 번호를 명시한다 (`specs/README.md` "스펙 번호")
+- 새 스펙은 번호를 먼저 예약하고, `/speckit-specify`에 예약한 번호를 명시한다 (`docs/spec-numbers.md`, 예약 줄은 `specs/README.md` 도메인 표)
 - 기존 기능을 바꿀 때는 새 스펙 폴더를 만들지 않고 그 기능의 spec.md를 고친다
 - 키트에서 온 기능도 도입할 때 스펙을 만들고, 머리에 출처(태그·헬퍼)를 적는다
 - 스펙 작업 브랜치는 `docs/<이름>`, 구현 브랜치는 `feat/<스펙 번호>-<이름>`이다. spec·plan·tasks를 먼저 PR로 병합한 뒤 구현 브랜치를 딴다
@@ -32,13 +33,6 @@
 ## git
 
 @docs/git.md
-
-- 브랜치 정리 (psw-gongbu와 같다, 키트 `git` 템플릿으로 옮길 것)
-  - 작업 브랜치 → `dev` PR을 병합하면 그 작업 브랜치를 원격과 로컬에서 함께 지운다
-    - 원격: `git push origin --delete <브랜치>`
-    - 로컬: `git checkout dev && git pull --ff-only && git branch -d <브랜치>`
-  - `dev` → `main` 병합에서는 아무 브랜치도 지우지 않는다
-  - 저장소 설정 "Automatically delete head branches"는 끈다. 켜 두면 `dev` → `main` 병합 때 head인 `dev`가 지워질 수 있다
 
 ## 작업 기록
 

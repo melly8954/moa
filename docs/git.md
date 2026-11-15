@@ -11,6 +11,12 @@ psw-dev-kit `git` 템플릿에서 온 파일이다. 여기서 고치지 않는�
 - 병합은 머지 커밋만 쓴다. squash·rebase 병합은 쓰지 않는다
 - PR 전에 자잘한 커밋(오타 수정, 다시 시도)은 브랜치 안에서 합친다
 - push와 PR 병합은 사용자가 요청할 때만 한다
+- 브랜치 정리
+  - 작업 브랜치 → `dev` PR을 병합하면 그 작업 브랜치를 원격과 로컬에서 함께 지운다
+    - 원격: `git push origin --delete <브랜치>`
+    - 로컬: `git checkout dev && git pull --ff-only && git branch -d <브랜치>`
+  - `dev` → `main` 병합에서는 아무 브랜치도 지우지 않는다
+  - 저장소 설정 "Automatically delete head branches"는 끈다. 켜 두면 `dev` → `main` 병합 때 head인 `dev`가 지워질 수 있다
 
 ## 태그
 
@@ -69,10 +75,11 @@ Co-Authored-By: ...
 - 저장소마다 다른 값은 `.githooks/` 아래 설정 파일에 둔다. 키트에서 복사되지 않으므로 다시 적용해도 남는다
   - `commit-types`: 종류 목록 (예: `feat|fix|build`). 커밋과 브랜치가 함께 쓴다
   - `branch-rules`: 기준 브랜치, 직접 push를 막는 브랜치, 태그 이름 (기본 `base=main dev`, `protected=main dev`, `tag-pattern=^(release/)?v[0-9]+\.[0-9]+\.[0-9]+$`)
+- Spec Kit을 쓰는 저장소(키트 `--spec-kit`로 적용)는 스펙 번호 겹침도 검사한다: `docs/spec-numbers.md`
 
 ### 빌드·테스트 (앱 CI)
 
-앱 템플릿의 CI(백엔드 `backend-ci`, 프론트 `frontend-ci`)가 돈다. 빠른 검사는 매번, 무거운 검사는 한 번만 돈다.
+키트 앱 템플릿의 CI(백엔드 `backend-ci`, 프론트 `frontend-ci`)가 돈다. 빠른 검사는 매번, 무거운 검사는 한 번만 돈다.
 
 | 검사 | 작업 브랜치 → `dev` PR | `dev` push, `dev` → `main` PR, `main` push |
 |---|---|---|
@@ -83,4 +90,3 @@ Co-Authored-By: ...
 - PR 전에 로컬에서 무거운 검사 전체를 돌리지 않는다. PR CI가 같은 검사를 돈다. 사용자가 요청할 때만 돌린다
   - 로컬에서는 빠른 검사와 바꾼 기능의 테스트 한 묶음만 한다 (예: 백엔드 `./gradlew build`와 `dbTest --tests "*<기능>AcceptanceTest"`, 프론트 `npm run check`)
   - 무거운 검사는 PR CI 결과로 확인하고, 실패하면 그때 고친다
-- moa: 이 절은 moa에서 먼저 더했다. 키트 `git` 템플릿으로 옮긴 뒤 다시 적용하면 이 줄은 빠진다
