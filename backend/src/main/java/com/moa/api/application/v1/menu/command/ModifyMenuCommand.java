@@ -1,8 +1,9 @@
 package com.moa.api.application.v1.menu.command;
 
 import com.moa.api.dto.menu.MenuAudience;
+import com.moa.api.dto.menu.MenuVisibility;
 
-/** permission이 null이면 로그인한 사용자 모두가 본다 */
-public record ModifyMenuCommand(Long id, Long parentId, String name, String path, String icon, int sortOrder,
-	boolean enabled, String permission, MenuAudience audience) {
+/** programKey가 null이면 묶음 메뉴. audience가 null이면 그대로 둔다 */
+public record ModifyMenuCommand(Long id, Long parentId, String name, String programKey, String icon, int sortOrder,
+	boolean enabled, MenuAudience audience, MenuVisibility visibility) {
 }

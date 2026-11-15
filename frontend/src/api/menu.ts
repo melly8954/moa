@@ -1,4 +1,4 @@
-import type { AdminMenu, MenuCreateRequest, MenuModifyRequest, MenuOrder, MyMenu } from "@/types/menu"
+import type { AdminMenu, MenuCreateRequest, MenuModifyRequest, MenuOrder, MyMenu, Program } from "@/types/menu"
 import { http } from "./client"
 
 // 메뉴 (menu 헬퍼). api.v1.menu로 부른다
@@ -8,6 +8,8 @@ export const menuApi = {
   user: () => http.get<MyMenu[]>("/api/v1/menus/user").then((res) => res.data),
   admin: {
     tree: () => http.get<AdminMenu[]>("/api/v1/admin/menus").then((res) => res.data),
+    // moa: 메뉴에 걸 수 있는 프로그램 (조회만, specs/001-admin-menus FR-008)
+    programs: () => http.get<Program[]>("/api/v1/admin/programs").then((res) => res.data),
     create: (data: MenuCreateRequest) => http.post<AdminMenu>("/api/v1/admin/menus", data).then((res) => res.data),
     modify: (id: number, data: MenuModifyRequest) =>
       http.put<AdminMenu>(`/api/v1/admin/menus/${id}`, data).then((res) => res.data),

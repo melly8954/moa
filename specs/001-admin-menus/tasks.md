@@ -169,27 +169,27 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 **백엔드**
 
-- [ ] T052 backend/src/main/java/com/moa/common/program/에 `ProgramDefinition`(key, name, path, audience, permission, signInRequired), `ProgramSource`, `ProgramRegistry`, 시작 검사 `ProgramRegistryCheck`(키·경로 겹침, 관리 프로그램은 등록된 권한 필수·로그인 필요 여부 없음, 사용자 프로그램은 권한 없음. 어기면 시작 실패)를 만든다. 모양은 `common/security/permission`의 권한 등록을 따른다 (R13)
-- [ ] T053 backend/src/main/java/com/moa/api/program/에 data-model.md 프로그램 표의 8개를 내는 `ProgramSource` 빈을 화면 주인별로 만든다(MenuPrograms, UserPrograms, CodePrograms, LoginHistoryPrograms, RolePrograms, NoticePrograms, HomePrograms). 권한 키는 `api/permission`의 상수를 쓴다
-- [ ] T054 backend/src/main/resources/db/migration/V2_5__menu_programs.sql: `menus`에 `program_key VARCHAR(50) NULL`, `visibility VARCHAR(10) NULL`을 더하고, 기존 메뉴의 `path`로 data-model.md 표의 키를 채운다(맞는 것이 없으면 `MISSING`, 경로 없는 묶음 메뉴는 비움). `audience` = `USER`인 메뉴는 `visibility` = `PUBLIC`. 그 뒤 `path`·`permission` 열을 지운다. backend/src/test/java/com/moa/support/MenuSeed.java가 V2_5까지 반영된 처음 구성을 되돌리게 고친다 (R14)
-- [ ] T055 backend/src/main/java/com/moa/api/entity/menu/Menu.java에서 `path`·`permission`을 `programKey`·`visibility`로 바꾸고 `MenuVisibility`(`PUBLIC`·`MEMBER`)를 더한다. backend/src/main/java/com/moa/api/service/menu/MenuService.java의 보이는 트리(관리 메뉴는 프로그램 권한, 사용자 메뉴는 공개 범위와 로그인 여부, 묶음은 보이는 하위 메뉴가 있을 때, 없는 프로그램은 뺌)와 만들기·고치기 검사(등록된 프로그램, 같은 대상, 로그인 필요 프로그램은 `MEMBER`만, 사용자 메뉴는 공개 범위 필수, 하위 메뉴는 프로그램 필수는 `V001`, 대상 바꾸기가 하위 메뉴와 부딪히면 `B001`)를 고친다. 경로 형식·겹침 검사는 지운다 (R14, R15)
-- [ ] T056 메뉴 API의 요청·응답을 고친다: backend/src/main/java/com/moa/api/controller/v1/admin/menu/request/{MenuCreateRequest, MenuModifyRequest}.java는 `path`·`permission` 대신 `programKey`·`visibility`, response/MenuTreeResponse.java는 `programKey`, `program`, `missingProgram`, `visibility`. 내 메뉴·사용자 메뉴 응답(`MyMenuResponse`)의 `path`는 프로그램 경로로 채우고 모양은 그대로 둔다. application/v1/menu의 명령도 맞춘다 (R15)
-- [ ] T057 backend/src/main/java/com/moa/api/controller/v1/admin/program/ApiAdminProgramController.java에 `GET /api/v1/admin/programs`(`@RequirePermission(MenuPermissions.MANAGE)`, 응답 `key`, `name`, `path`, `audience`, `permission`(`key`, `name`), `signInRequired`)를 만든다 (R15)
-- [ ] T058 backend/src/test/java/com/moa/support/TestPrograms.java에 테스트에서만 등록하는 로그인 필요 사용자 프로그램(예: `TEST_MEMBER_ONLY`, `/test-member-only`)을 `ProgramSource`로 둔다 (R17)
-- [ ] T059 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java: US3-AC2(`PUBLIC`)·US3-AC4(`ADMIN_CODES` 관리 메뉴)를 바뀐 스펙대로 고치고(원칙 V), `US3-AC5`, `US4-AC1`~`US4-AC5`를 contracts/admin-access.md 표대로 더한다
-- [ ] T060 backend/src/test/java/com/moa/api/MenuAcceptanceTest.java(키트)에서 요청의 `path`·`permission`을 `programKey`·`visibility`로 바꾸고, 경로 형식·겹침처럼 없어진 동작을 보는 테스트는 지운다. 남은 테스트의 확인 내용은 스펙이 바뀐 만큼만 고친다 (원칙 V)
+- [X] T052 backend/src/main/java/com/moa/api/program/에 `ProgramDefinition`(key, name, path, audience, permission, signInRequired), `ProgramSource`, `ProgramRegistry`(시작 검사: 키·경로 겹침, 관리 프로그램은 등록된 권한 필수·로그인 필요 여부 없음, 사용자 프로그램은 권한 없음. 어기면 시작 실패)를 만든다. 모양은 `common/security/permission`의 권한 등록을 따른다 (R13)
+- [X] T053 backend/src/main/java/com/moa/api/program/에 data-model.md 프로그램 표의 8개를 내는 `ProgramSource` 빈을 화면 주인별로 만든다(MenuPrograms, UserPrograms, CodePrograms, LoginHistoryPrograms, RolePrograms, NoticePrograms, HomePrograms). 권한 키는 `api/permission`의 상수를 쓴다
+- [X] T054 backend/src/main/resources/db/migration/V2_5__menu_programs.sql: `menus`에 `program_key VARCHAR(50) NULL`, `visibility VARCHAR(10) NULL`을 더하고, 기존 메뉴의 `path`로 data-model.md 표의 키를 채운다(맞는 것이 없으면 `MISSING`, 경로 없는 묶음 메뉴는 비움). `audience` = `USER`인 메뉴는 `visibility` = `PUBLIC`. 그 뒤 `path`·`permission` 열을 지운다. backend/src/test/java/com/moa/support/MenuSeed.java가 V2_5까지 반영된 처음 구성을 되돌리게 고친다 (R14)
+- [X] T055 backend/src/main/java/com/moa/api/entity/menu/Menu.java에서 `path`·`permission`을 `programKey`·`visibility`로 바꾸고 `MenuVisibility`(`PUBLIC`·`MEMBER`)를 더한다. backend/src/main/java/com/moa/api/service/menu/MenuService.java의 보이는 트리(관리 메뉴는 프로그램 권한, 사용자 메뉴는 공개 범위와 로그인 여부, 묶음은 보이는 하위 메뉴가 있을 때, 없는 프로그램은 뺌)와 만들기·고치기 검사(등록된 프로그램, 같은 대상, 로그인 필요 프로그램은 `MEMBER`만, 사용자 메뉴는 공개 범위 필수, 하위 메뉴는 프로그램 필수는 `V001`, 대상 바꾸기가 하위 메뉴와 부딪히면 `B001`)를 고친다. 경로 형식·겹침 검사는 지운다 (R14, R15)
+- [X] T056 메뉴 API의 요청·응답을 고친다: backend/src/main/java/com/moa/api/controller/v1/admin/menu/request/{MenuCreateRequest, MenuModifyRequest}.java는 `path`·`permission` 대신 `programKey`·`visibility`, response/MenuTreeResponse.java는 `programKey`, `program`, `missingProgram`, `visibility`. 내 메뉴·사용자 메뉴 응답(`MyMenuResponse`)의 `path`는 프로그램 경로로 채우고 모양은 그대로 둔다. application/v1/menu의 명령도 맞춘다 (R15)
+- [X] T057 backend/src/main/java/com/moa/api/controller/v1/admin/program/ApiAdminProgramController.java에 `GET /api/v1/admin/programs`(`@RequirePermission(MenuPermissions.MANAGE)`, 응답 `key`, `name`, `path`, `audience`, `permission`(`key`, `name`), `signInRequired`)를 만든다 (R15)
+- [X] T058 backend/src/test/java/com/moa/support/TestPrograms.java에 테스트에서만 등록하는 로그인 필요 사용자 프로그램(예: `TEST_MEMBER_ONLY`, `/test-member-only`)을 `ProgramSource`로 둔다 (R17)
+- [X] T059 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java: US3-AC2(`PUBLIC`)·US3-AC4(`ADMIN_CODES` 관리 메뉴)를 바뀐 스펙대로 고치고(원칙 V), `US3-AC5`, `US4-AC1`~`US4-AC5`를 contracts/admin-access.md 표대로 더한다
+- [X] T060 backend/src/test/java/com/moa/api/MenuAcceptanceTest.java(키트)에서 요청의 `path`·`permission`을 `programKey`·`visibility`로 바꾸고, 경로 형식·겹침처럼 없어진 동작을 보는 테스트는 지운다. 남은 테스트의 확인 내용은 스펙이 바뀐 만큼만 고친다 (원칙 V)
 
 **프론트**
 
-- [ ] T061 frontend/src/types/{menu.ts, program.ts}, frontend/src/api/{menu.ts, program.ts}를 바뀐 API에 맞춘다. local 백엔드를 띄울 수 있으면 `npm run gen:api`로 생성 타입도 맞춘다
-- [ ] T062 frontend/src/app/(admin)/admin/menus/page.tsx에 "프로그램" 탭(조회 전용 표: 이름, 경로, 대상, 필요한 권한 이름 또는 로그인 필요)을 더하고, 메뉴 목록의 "필요한 권한" 열을 "프로그램"(없는 프로그램이면 경고 표시)·"보이는 사람"으로 바꾼다 (R16)
-- [ ] T063 frontend/src/app/(admin)/admin/menus/menu-dialog.tsx에서 경로·권한 입력을 없애고 종류(화면 메뉴 / 묶음 메뉴), 프로그램 선택 상자(지금 탭 대상만), 고른 프로그램의 경로·필요한 권한(읽기 전용), 사용자 메뉴의 공개 범위(로그인 필요 프로그램이면 "비회원 포함"을 끄고 이유를 보인다)를 둔다. frontend/src/lib/schemas/menu.ts와 frontend/messages/ko.json `menuAdmin` 문구를 맞춘다 (R16)
-- [ ] T064 frontend/e2e/menu.spec.ts에 대화상자(경로·권한 입력 없음, 프로그램 선택, 로그인 필요 프로그램의 "비회원 포함" 꺼짐)와 프로그램 탭 검사를 더하고, 경로를 입력하던 검사는 바뀐 만큼 고친다. frontend/e2e/support/api.ts의 가로채기 응답을 새 모양으로 맞춘다. frontend/e2e/screens.spec.ts가 처음 등록한 프로그램 경로를 모두 여는지 확인한다 (R17)
+- [X] T061 frontend/src/types/menu.ts(`Program` 포함), frontend/src/api/menu.ts(`admin.programs`)를 바뀐 API에 맞춘다. local 백엔드를 띄울 수 있으면 `npm run gen:api`로 생성 타입도 맞춘다
+- [X] T062 frontend/src/app/(admin)/admin/menus/page.tsx에 "프로그램" 탭(조회 전용 표: 이름, 경로, 대상, 필요한 권한 이름 또는 로그인 필요)을 더하고, 메뉴 목록의 "필요한 권한" 열을 "프로그램"(없는 프로그램이면 경고 표시)·"보이는 사람"으로 바꾼다 (R16)
+- [X] T063 frontend/src/app/(admin)/admin/menus/menu-dialog.tsx에서 경로·권한 입력을 없애고 종류(화면 메뉴 / 묶음 메뉴), 프로그램 선택 상자(지금 탭 대상만), 고른 프로그램의 경로·필요한 권한(읽기 전용), 사용자 메뉴의 공개 범위(로그인 필요 프로그램이면 "비회원 포함"을 끄고 이유를 보인다)를 둔다. frontend/src/lib/schemas/menu.ts와 frontend/messages/ko.json `menuAdmin` 문구를 맞춘다 (R16)
+- [X] T064 frontend/e2e/menu.spec.ts에 대화상자(경로·권한 입력 없음, 프로그램 선택, 로그인 필요 프로그램의 "비회원 포함" 꺼짐)와 프로그램 탭 검사를 더하고, 경로를 입력하던 검사는 바뀐 만큼 고친다. frontend/e2e/support/api.ts의 가로채기 응답을 새 모양으로 맞춘다. frontend/e2e/screens.spec.ts가 처음 등록한 프로그램 경로를 모두 여는지 확인한다 (R17)
 
 **마무리**
 
-- [ ] T065 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*Menu*AcceptanceTest" --tests "*AdminRolesAcceptanceTest"`, frontend/에서 `npm run format`, `npm run check`, 바꾼 e2e 묶음(menu·screens·notices)을 돌린다. 전체 검사는 PR CI로 본다
-- [ ] T066 specs/README.md 기능 지도의 001 상태에서 "프로그램·공개 범위는 기획 중"을 지운다
+- [X] T065 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*Menu*AcceptanceTest" --tests "*AdminRolesAcceptanceTest"`, frontend/에서 `npm run format`, `npm run check`를 돌린다. e2e와 dbTest 전체는 로컬에서 돌리지 않고 PR CI로 본다 (docs/git.md "빌드·테스트")
+- [X] T066 specs/README.md 기능 지도의 001 상태에서 "프로그램·공개 범위는 기획 중"을 지운다
 - [ ] T067 specs/001-admin-menus/quickstart.md "화면 확인" 3번을 사람이 직접 확인한다
 
 ---

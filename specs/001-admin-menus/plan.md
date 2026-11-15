@@ -127,11 +127,11 @@ frontend/e2e/{menu.spec.ts, support/api.ts}   # 사용자 메뉴 가로채기, �
 프로그램과 공개 범위 (2026-11-15):
 
 ```text
-backend/src/main/java/com/moa/common/program/                 # 새 패키지 (R13)
-├── ProgramDefinition.java, ProgramSource.java, ProgramRegistry.java
-└── ProgramRegistryCheck.java                                   # 시작 검사: 키·경로 겹침, 권한 등록
-backend/src/main/java/com/moa/api/program/                    # 프로그램을 내는 빈. 권한(api/permission)과 짝
+backend/src/main/java/com/moa/api/program/                    # 새 패키지 (R13). menu 헬퍼가 갖는다
+├── ProgramDefinition.java, ProgramSource.java
+├── ProgramRegistry.java                                        # 모으고 시작할 때 검사: 키 형식, 키·경로 겹침, 권한 등록
 └── {MenuPrograms, UserPrograms, CodePrograms, LoginHistoryPrograms, RolePrograms, NoticePrograms, HomePrograms}.java
+backend/src/main/java/com/moa/common/security/permission/PermissionRegistry.java  # find(key): 권한 이름을 보이려고
 backend/src/main/resources/db/migration/V2_5__menu_programs.sql  # program_key·visibility, path·permission 지움 (R14)
 backend/src/main/java/com/moa/api/
 ├── entity/menu/{Menu.java, MenuVisibility.java}
@@ -144,7 +144,7 @@ backend/src/test/java/com/moa/
 ├── support/MenuSeed.java               # V2_5도 읽는다
 └── support/TestPrograms.java           # 테스트에서만 등록하는 로그인 필요 프로그램
 frontend/src/
-├── api/{menu.ts, program.ts}, types/{menu.ts, program.ts}
+├── api/menu.ts, types/menu.ts          # admin.programs(), Program
 └── app/(admin)/admin/menus/            # 프로그램 탭, 목록 열, 대화상자 (R16)
 frontend/e2e/{menu.spec.ts, screens.spec.ts, support/api.ts}
 ```

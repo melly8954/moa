@@ -25,12 +25,6 @@ public class MenuReader {
 		return menuRepository.findById(id);
 	}
 
-	/** excludeId가 있으면 그 메뉴는 빼고 본다 (바꾸기) */
-	public boolean existsPath(String path, Long excludeId) {
-		return excludeId == null ? menuRepository.existsByPath(path)
-			: menuRepository.existsByPathAndIdNot(path, excludeId);
-	}
-
 	public boolean hasChildren(Long id) {
 		return menuRepository.existsByParentId(id);
 	}
