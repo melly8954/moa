@@ -61,6 +61,8 @@
 | API 타입 만들기 | `npm run gen:api` (local 프로필 백엔드가 떠 있어야 한다) |
 | 포맷 적용 | `npm run format` |
 
-- 화면 검사와 DB 테스트를 언제 돌리는지는 `docs/git.md` "빌드·테스트 (앱 CI)"를 따른다 (PR 전 로컬에서는 빠른 검사만)
+- 화면 검사와 DB 테스트를 언제 돌리는지는 `docs/git.md` "빌드·테스트 (앱 CI)"를 따르되, moa는 그보다 좁힌다 (키트 `git` 템플릿으로 옮길 것)
+  - 로컬에서는 빠른 검사(`./gradlew build`, `npm run check`)만 돌린다. 인수 테스트(`dbTest`)와 화면 검사(e2e)는 바꾼 기능의 묶음이라도 로컬에서 돌리지 않고 PR CI로 본다. 사용자가 요청할 때만 로컬에서 돌린다
+  - 구현은 기능 코드(백엔드·프론트)를 먼저 끝내고, 테스트 작성·수정은 PR 직전 마지막에 한다. tasks.md도 테스트 작업을 맨 끝에 둔다
 
 - 키트 사용법은 psw-dev-kit `springboot/v0.5.0`의 `backend/springboot/README.md`, `web-next/v0.5.0`의 `frontend/web/next/README.md`를 본다
