@@ -14,6 +14,6 @@ public class CodePrograms implements ProgramSource {
 
 	@Override
 	public List<ProgramDefinition> programs() {
-		return List.of(ProgramDefinition.admin("ADMIN_CODES", "코드 관리", "/admin/codes", CodePermissions.MANAGE));
+		return List.of(ProgramDefinition.admin("ADMIN_CODES", "공통코드", "/admin/codes", CodePermissions.MANAGE));
 	}
 }

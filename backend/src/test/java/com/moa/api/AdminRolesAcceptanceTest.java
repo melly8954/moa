@@ -64,7 +64,8 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 		MvcTestResult result = asOperator(mvc.get().uri("/api/v1/menus/me"));
 
 		assertThat(result).hasStatus(200);
-		assertThat(result).bodyJson().extractingPath("$[*].name").asArray()
+		assertThat(result).bodyJson().extractingPath("$[*].name").asArray().containsExactly("운영");
+		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
 			.containsExactly("접속 이력");
 	}
 
@@ -87,12 +88,13 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 		MvcTestResult result = asAdmin(mvc.get().uri(ROLES + "/permission-tree"));
 
 		assertThat(result).hasStatus(200);
-		assertThat(result).bodyJson().extractingPath("$.menus[*].name").asArray()
-			.containsExactly("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "역할 관리", "공지 관리");
-		assertThat(result).bodyJson().extractingPath("$.menus[*].permission.key").asArray()
-			.containsExactly("USER_MANAGE", "MENU_MANAGE", "CODE_MANAGE", "LOGIN_HISTORY_READ", "ROLE_MANAGE",
-				"NOTICE_MANAGE");
-		assertThat(result).bodyJson().extractingPath("$.menus[3].permission.name").isEqualTo("접속 이력 조회");
+		assertThat(result).bodyJson().extractingPath("$.menus[*].name").asArray().containsExactly("운영", "설정");
+		assertThat(result).bodyJson().extractingPath("$.menus[*].children[*].name").asArray()
+			.containsExactly("사용자 관리", "공지 관리", "접속 이력", "역할 관리", "메뉴 관리", "공통코드");
+		assertThat(result).bodyJson().extractingPath("$.menus[*].children[*].permission.key").asArray()
+			.containsExactly("USER_MANAGE", "NOTICE_MANAGE", "LOGIN_HISTORY_READ", "ROLE_MANAGE", "MENU_MANAGE",
+				"CODE_MANAGE");
+		assertThat(result).bodyJson().extractingPath("$.menus[0].children[2].permission.name").isEqualTo("접속 이력 조회");
 		assertThat(result).bodyJson().extractingPath("$.unlisted.length()").isEqualTo(0);
 	}
 
@@ -106,15 +108,15 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US2-AC3 코드 관리 메뉴를 지우면 코드 관리는 '메뉴에 없는 프로그램'으로 고를 수 있다")
+	@DisplayName("US2-AC3 공통코드 메뉴를 지우면 공통코드는 '메뉴에 없는 프로그램'으로 고를 수 있다")
 	void deletedMenuProgramIsUnlisted() {
 		Number codeMenuId = JsonPath.<List<Number>>read(body(asAdmin(mvc.get().uri("/api/v1/admin/menus"))),
-			"$[?(@.name == '코드 관리')].id").getFirst();
+			"$..[?(@.name == '공통코드')].id").getFirst();
 		assertThat(asAdmin(mvc.delete().uri("/api/v1/admin/menus/" + codeMenuId))).hasStatus(204);
 
 		MvcTestResult result = asAdmin(mvc.get().uri(ROLES + "/permission-tree"));
 
-		assertThat(result).bodyJson().extractingPath("$.menus[*].name").asArray().doesNotContain("코드 관리");
+		assertThat(result).bodyJson().extractingPath("$.menus..name").asArray().doesNotContain("공통코드");
 		assertThat(result).bodyJson().extractingPath("$.unlisted[*].programKey").asArray()
 			.containsExactly("ADMIN_CODES");
 		assertThat(result).bodyJson().extractingPath("$.unlisted[0].permission.key").isEqualTo("CODE_MANAGE");

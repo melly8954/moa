@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { api } from "@/api"
@@ -61,7 +62,7 @@ export default function LoginHistoriesPage() {
   return (
     <ListPage
       title={t("title")}
-      description={t("description")}
+      description={t.rich("description", { link: (chunks) => <Link href="/admin/users">{chunks}</Link> })}
       search={
         <SearchPanel search={search}>
           <SearchRow>

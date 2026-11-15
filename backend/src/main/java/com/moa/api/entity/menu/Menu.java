@@ -86,6 +86,10 @@ public class Menu extends SoftDeleteEntity {
 		this.visibility = visibility;
 	}
 
+	public void changeEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
 	public void move(Long parentId, int sortOrder) {
 		this.parentId = parentId;
 		this.sortOrder = sortOrder;

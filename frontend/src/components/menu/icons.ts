@@ -1,5 +1,6 @@
 import {
   Bell,
+  BriefcaseBusiness,
   ChartColumn,
   ClipboardList,
   FileText,
@@ -39,6 +40,8 @@ export const MENU_ICONS: Record<string, LucideIcon> = {
   cart: ShoppingCart,
   // moa: 사용자 메뉴 "공지" (specs/001-admin-menus FR-007)
   megaphone: Megaphone,
+  // moa: 관리 메뉴 묶음 "운영" (specs/001-admin-menus FR-001)
+  briefcase: BriefcaseBusiness,
 }
 
 // 모르는 이름이면 아이콘 없음 (셸이 이름 첫 글자를 보인다)
