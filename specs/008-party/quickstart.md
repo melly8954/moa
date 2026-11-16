@@ -4,22 +4,17 @@
 
 ## 자동 검증
 
-Docker가 떠 있어야 한다. `backend/`에서 실행한다 (Windows는 `.\gradlew.bat`).
+로컬에서는 빠른 검사만 돌린다. `backend/`에서 `./gradlew build`(포맷, lint, ArchitectureTest, 단위 테스트), `frontend/`에서 `npm run check`(포맷, lint, 타입, 문구 검사, 단위 테스트)다 (Windows는 `.\gradlew.bat`).
+
+인수 테스트와 e2e는 PR CI(`backend-ci`의 `db-test`, `frontend-ci`의 `e2e`)가 돌린다 (`CLAUDE.md`). 사용자가 요청할 때만 로컬에서 돌리고, 그때는 Docker가 떠 있어야 한다.
 
 ```bash
-./gradlew build                                   # 포맷, lint, ArchitectureTest, 단위 테스트
-./gradlew dbTest --tests "*Party*"                # US1~US10의 API 통합 테스트와 실시간 통합 테스트
+./gradlew dbTest --tests "*Party*"                    # US1~US10의 API 통합 테스트와 실시간 통합 테스트
 ./gradlew dbTest --tests "*AdminCodesAcceptanceTest"  # 004 FR-001 표에 더한 코드 그룹
+npm run test:e2e -- e2e/party.spec.ts                 # spec.md "e2e로 확인할 흐름" 3개
 ```
 
 기대: 이름이 `US<n>-AC<m>`인 테스트가 spec.md의 AC 67개와 하나씩 맞고 모두 통과한다.
-
-`frontend/`에서 실행한다.
-
-```bash
-npm run check                                     # 포맷, lint, 타입, 문구 검사, 단위 테스트
-npm run test:e2e -- e2e/party.spec.ts             # spec.md "e2e로 확인할 흐름" 3개
-```
 
 ## 화면 확인
 

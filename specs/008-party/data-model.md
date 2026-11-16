@@ -1,6 +1,6 @@
 # Data Model: 파티 (party)
 
-새 테이블 6개를 `V2_6__parties.sql`에 만든다. 공통코드 시드는 `V2_6_1__party_codes.sql`에 넣는다 (research.md R7, R8).
+새 테이블 6개를 `V2_7__parties.sql`에 만든다. 공통코드 시드는 `V2_7_1__party_codes.sql`에 넣는다 (research.md R7, R8).
 모든 테이블에 `created_at`, `updated_at`, `created_by`, `updated_by`가 있다 (`BaseEntity`). 아래 표에서는 생략한다.
 
 ## parties (파티)
