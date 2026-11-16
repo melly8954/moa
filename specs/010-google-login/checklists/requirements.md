@@ -31,11 +31,11 @@
 
 ## Notes
 
-- [NEEDS CLARIFICATION] 13곳(질문 11개. Edge Cases의 기존 계정·관리자 줄은 FR-006·FR-007을 다시 가리킴)이 남아 있다. 스킬 기본 제한(3개)보다 원칙 I("정해지지 않은 동작은 추측으로 정하지 않고 남긴 뒤 묻는다")과 사용자 지시를 따라 모두 남겼다
-  - 출처: 키트 oauth 헬퍼 사용 여부
-  - FR-004 회원 정보 모델, FR-005 표시 이름, FR-006 기존 계정 연결, FR-007 관리자·운영자 허용
-  - US1-AC3 가입 때 추가 입력, US2-AC3 비밀번호 변경 메뉴, US3-AC3 설정 없을 때 단추, US4-AC1 접속 이력 표시
-  - Edge Cases: 구글 정보 변경 반영, 삭제된 회원의 재가입
-- FR-004~FR-007은 질문이 풀려야 수용 기준을 붙일 수 있다 ("All functional requirements have clear acceptance criteria" 미통과의 이유)
+- [NEEDS CLARIFICATION] 12곳이 남아 있다 (2026-11-16 clarify 뒤). 스킬 기본 제한(3개)보다 원칙 I("정해지지 않은 동작은 추측으로 정하지 않고 남긴 뒤 묻는다")과 사용자 지시를 따라 모두 남겼다
+  - 팀 확인 필요: 출처(키트 oauth 헬퍼 유무, FR-006 연결·해제 지원 — 담당: 키트 담당/팀 리더), FR-004 회원 정보 모델(담당: 팀 회의), FR-007 관리자·운영자 계정(담당: 팀 회의)
+  - 아직 묻지 않음: FR-005 닉네임 규칙, FR-005 닉네임 없는 기존 회원의 표시 이름, US1-AC3 약관·개인정보 동의, US2-AC3 비밀번호 변경 메뉴, US3-AC3 설정 없을 때 단추, US4-AC1 접속 이력 표시, Edge Cases 저장한 구글 이메일·이름 반영, Edge Cases 삭제된 회원의 재가입
+  - Edge Cases의 관리자·운영자 줄은 FR-007을 다시 가리킨다
+- clarify로 정해진 것: FR-006 연결·해제(C), FR-005 닉네임 입력과 입력 전 이탈 처리, 웹만(앱 나중)
+- FR-004·FR-007은 팀 확인이 끝나야 수용 기준을 붙일 수 있다 ("All functional requirements have clear acceptance criteria" 미통과의 이유)
 - "키트 `users`", "`/sign-in`" 같은 이름은 기존 스펙과 경계를 잇기 위한 참조로 두었다
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
