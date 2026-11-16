@@ -50,7 +50,11 @@ moa는 그룹을 코드로 등록하고 관리 화면을 메뉴 관리와 같은
 
   | 코드 그룹 | 쓰는 기능 | 초기 코드 |
   |---|---|---|
-  | (아직 없음) | | |
+  | `GAME` | `008-party` | `008-party` spec.md FR-002 표 |
+  | `LOL_MODE`, `LOL_POSITION`, `LOL_TIER` | `008-party` | 같은 표 |
+  | `OVERWATCH_MODE`, `OVERWATCH_POSITION`, `OVERWATCH_TIER` | `008-party` | 같은 표 |
+  | `VALORANT_MODE`, `VALORANT_POSITION`, `VALORANT_TIER` | `008-party` | 같은 표 |
+  | `PUBG_MODE`, `PUBG_TIER` | `008-party` | 같은 표 |
 
 - **FR-002**: 기능이 코드 그룹을 새로 쓰면 그 기능의 스펙에 그룹(코드, 이름, 설명, 쓰는 곳)과 초기 코드를 적고, 코드에 그룹을 등록하고, FR-001 표에 한 줄 더한다(MUST)
 - **FR-003**: 공통코드는 캐시 없이 쓴다. 백오피스 기반은 프리셋 밖 헬퍼(redis)를 쓰지 않기 때문이다
