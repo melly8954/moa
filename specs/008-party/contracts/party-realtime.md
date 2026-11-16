@@ -4,9 +4,10 @@
 
 ## 연결
 
-- 주소: `{NEXT_PUBLIC_WS_URL}`. 백엔드 경로는 `/ws`이고 `PublicPaths`로 연다 (research.md R3, R4)
-- `CONNECT` 프레임에 `Authorization: Bearer <액세스 토큰>`을 싣는다. 토큰이 없거나 틀리면 ERROR 프레임을 보내고 연결을 닫는다
-- 연결이 끊기면 클라이언트는 다시 잇는다. 이을 때마다 지금 액세스 토큰을 쓰고, 이은 뒤 `GET /parties/{id}/messages?after={마지막 id}`로 빠진 메시지를 채우고 파티 화면을 다시 불러온다 (FR-018)
+알림과 같은 연결 하나를 쓴다. 연결·인증·다시 잇기는 `007-notifications` contracts/realtime.md "연결"을 따른다 (research.md R1, R4).
+
+- 주소 `ws(s)://<백엔드>/ws`(프론트 서버 환경 변수 `WS_URL`), CONNECT 헤더 `Authorization: Bearer <액세스 토큰>`
+- 끊기면 `RealtimeProvider`가 5초 뒤 다시 잇는다. 파티 화면은 다시 이은 뒤 `GET /parties/{id}/messages?after={마지막 id}`로 빠진 메시지를 채우고 파티 화면을 다시 불러온다 (FR-018, research.md R5)
 
 ## 구독 주소
 
@@ -15,7 +16,9 @@
 | `/topic/parties/{id}` | 그 파티의 지금 멤버. 아니면 ERROR 프레임 | 채팅 메시지, 파티 변화 |
 | `/user/queue/parties` | 본인 | 나에게만 오는 일 (내보내짐, 방장에게 오는 신청 변화) |
 
-멤버가 아니게 된 회원(나감, 내보내짐)의 `/topic/parties/{id}` 구독은 서버가 끊는다.
+- 경로 이름은 007 규칙(`/topic/<기능>`, `/user/queue/<기능>`)을 따른다
+- 멤버가 아니게 된 회원(나감, 내보내짐)의 `/topic/parties/{id}` 구독은 서버가 끊는다
+- 화면은 멤버일 때만 `/topic/parties/{id}`를 구독한다. 막힌 구독이 알림과 함께 쓰는 연결을 끊을 수 있기 때문이다 (research.md R3)
 
 ## 이벤트
 
@@ -32,5 +35,5 @@
 
 ## 확인 방법
 
-- 구독 권한과 이벤트 전달은 실제 서버를 띄우는 실시간 통합 테스트에서 STOMP 클라이언트로 확인한다 (plan.md Testing)
+- 구독 권한과 이벤트 전달은 기존 `RealtimeAcceptanceTest`를 상속한 `PartyRealtimeAcceptanceTest`에서 STOMP 클라이언트로 확인한다 (plan.md Testing)
 - 화면 e2e는 Playwright `page.routeWebSocket`으로 가짜 서버를 둔다
