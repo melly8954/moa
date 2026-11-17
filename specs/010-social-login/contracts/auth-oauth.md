@@ -78,7 +78,7 @@
   ```json
   { "nickname": "string", "agreements": [ { "type": "SERVICE", "version": "string" }, { "type": "PRIVACY", "version": "string" } ] }
   ```
-  - `nickname`: 자리표시 검증 2~20자 (data-model)
+  - `nickname`: 잠정 규칙(data-model, `009-mypage` FR-003과 같음) — 앞뒤 공백 제거 뒤 2~12자, 한글·영문·숫자·`_`만, 예약어 금지는 V00x. 다른 회원과 겹치면(대소문자 무시) 409로 막는다. 중복 오류 코드는 구현 때 009와 같은 코드로 맞춘다
   - `agreements`: 필수 두 종류가 모두 있고 버전이 `GET /api/v1/terms`의 현재 버전과 같아야 한다
 - 처리: 가입 확인(R12·R13)을 다시 한 뒤 한 트랜잭션으로 회원·연결·약관 동의 2행
 - 200 기존 `POST /api/v1/auth/login`과 같은 응답 모양(`AuthRefreshResponse`) + 리프레시 쿠키. `oauth_signup` 쿠키 지움. 성공 이력
