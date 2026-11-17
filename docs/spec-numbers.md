@@ -25,7 +25,7 @@ Spec Kit은 새 스펙 번호를 로컬 `specs/` 폴더의 가장 큰 번호 + 1
   - 예약 줄(`` `008` ``)이 둘
   - 예약 줄과 그 번호의 스펙 하나가 함께 있는 것은 괜찮다
   - 표는 `specs/README.md`에서 `|`로 시작하는 줄의 백틱 안 번호만 본다. 파일이 없으면 폴더만 본다. `specs/`가 없으면 통과한다
-- CI: `.github/workflows/specs.yml`이 `dev`·`main`으로 가는 PR과 push에서 돌린다 (job 이름 `spec-numbers`)
+- CI: `.github/workflows/spec-numbers.yml`이 `dev`·`main`으로 가는 PR과 `dev` push에서 돌린다 (job 이름 `spec-numbers`, ruleset 필수 검사)
 - 필수 검사로 건다: 저장소 Settings → Branches(또는 Rules)의 `dev`·`main` 규칙에서 "Require status checks to pass before merging"에 `spec-numbers`를 더한다
   - 걸지 않으면 검사가 실패해도 병합 단추가 열려 있다
   - GitHub Free 비공개 저장소는 규칙을 걸 수 없다. 그때는 PR에서 검사 결과를 보고 병합한다

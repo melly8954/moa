@@ -1,0 +1,48 @@
+# git 규칙 검사 (docs/git.md): 커밋 메시지, 브랜치 이름과 병합 방향
+#   main·dev로 가는 PR에서만 돈다. main·dev는 ruleset이 직접 push를 막아 PR로만 커밋이 들어오므로 push에서 다시 보지 않는다
+#   태그는 여기서 보지 않는다. 자동 태그는 tag.yml이 달기 전에 검사하고, 손으로 올리는 태그는 pre-push hook이 검사한다
+name: git
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+# 같은 PR에 새 커밋이 오면 앞선 실행을 취소한다
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: PR 커밋의 메시지 검사
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          failed=0
+          for c in $(git rev-list --no-merges "$BASE..$HEAD"); do
+            echo "::group::$(git log -1 --format='%h %s' "$c")"
+            bash scripts/check-commit-msg.sh --commit "$c" || failed=1
+            echo "::endgroup::"
+          done
+          exit $failed
+
+  branch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: PR 브랜치 이름과 병합 방향 검사
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: bash scripts/check-branch.sh --pr "$HEAD_REF" "$BASE_REF"
