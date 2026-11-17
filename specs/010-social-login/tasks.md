@@ -5,7 +5,7 @@ description: "구글 소셜 로그인 (google-login) 작업 목록"
 
 # Tasks: 구글 소셜 로그인 (google-login)
 
-**Input**: `specs/010-google-login/`의 설계 문서
+**Input**: `specs/010-social-login/`의 설계 문서
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/auth-oauth.md, contracts/users-me-and-screens.md, quickstart.md
 
@@ -28,7 +28,7 @@ description: "구글 소셜 로그인 (google-login) 작업 목록"
 - [ ] T001 구현 직전 dev 최신을 다시 확인한다: `git fetch` 뒤 `origin/dev`의 backend/src/main/resources/db/migration 최신 버전(계획 때 `V2_6` → 새 파일 `V2_7`)과 B/common/exception/ErrorCode.java의 최신 A 코드(계획 때 `A007` → 새 코드 `A008`~`A013`)를 확인한다. 다르면 이 tasks.md, data-model.md, contracts/auth-oauth.md의 번호를 먼저 고친다
 - [ ] T002 키트 oauth 헬퍼 상태를 팀(키트 담당/팀 리더)에게 확인한다 (사람이 한다, research R2). 있으면: 헬퍼를 얹는 작업으로 T011~T013을 바꾸고, 헬퍼 구조가 data-model.md와 다르면 data-model.md·T005~T008을 헬퍼에 맞춘다. 없으면: 아래 작업대로 moa가 직접 만든다
 - [ ] T003 [P] [공용] backend/.env.example에 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` 이름과 설명 주석만 더한다(값 없음, 원칙 VI). 구현 전에 바꿀 내용을 보고하고 승인받는다
-- [ ] T004 [P] [공용] backend/src/main/resources/application.yaml에 `# moa: 구글 로그인 (specs/010-google-login)` 문서로 `app.oauth.google.client-id: ${GOOGLE_CLIENT_ID:}`, `client-secret: ${GOOGLE_CLIENT_SECRET:}`, `redirect-uri: ${GOOGLE_REDIRECT_URI:}`을 더한다 (research R10). 구현 전에 바꿀 내용을 보고하고 승인받는다
+- [ ] T004 [P] [공용] backend/src/main/resources/application.yaml에 `# moa: 구글 로그인 (specs/010-social-login)` 문서로 `app.oauth.google.client-id: ${GOOGLE_CLIENT_ID:}`, `client-secret: ${GOOGLE_CLIENT_SECRET:}`, `redirect-uri: ${GOOGLE_REDIRECT_URI:}`을 더한다 (research R10). 구현 전에 바꿀 내용을 보고하고 승인받는다
 
 **Checkpoint**: 번호와 헬퍼 방향이 정해졌다
 
@@ -40,7 +40,7 @@ description: "구글 소셜 로그인 (google-login) 작업 목록"
 
 **⚠️ CRITICAL**: US1~US5 모두 이 단계에 기댄다
 
-- [ ] T005 [공용] backend/src/main/resources/db/migration/V2_7__user_social_accounts.sql을 만든다 (data-model.md, 잠정 B): `user_social_accounts(id BIGINT PK AUTO_INCREMENT, user_id BIGINT NOT NULL, provider VARCHAR(20) NOT NULL, subject VARCHAR(255) NOT NULL, email VARCHAR(255) NULL, email_verified BOOLEAN NOT NULL, display_name VARCHAR(100) NULL, created_at DATETIME(6) NOT NULL)`, `UNIQUE (provider, subject)`, `UNIQUE (user_id, provider)`, `KEY (user_id)`, 머리 주석 `-- moa: 구글 로그인. 스펙 specs/010-google-login (data-model.md)`. 번호는 T001 결과를 따른다. 구현 전에 바꿀 내용을 보고하고 승인받는다
+- [ ] T005 [공용] backend/src/main/resources/db/migration/V2_7__user_social_accounts.sql을 만든다 (data-model.md, 잠정 B): `user_social_accounts(id BIGINT PK AUTO_INCREMENT, user_id BIGINT NOT NULL, provider VARCHAR(20) NOT NULL, subject VARCHAR(255) NOT NULL, email VARCHAR(255) NULL, email_verified BOOLEAN NOT NULL, display_name VARCHAR(100) NULL, created_at DATETIME(6) NOT NULL)`, `UNIQUE (provider, subject)`, `UNIQUE (user_id, provider)`, `KEY (user_id)`, 머리 주석 `-- moa: 구글 로그인. 스펙 specs/010-social-login (data-model.md)`. 번호는 T001 결과를 따른다. 구현 전에 바꿀 내용을 보고하고 승인받는다
 - [ ] T006 [P] B/api/entity/user/SocialProvider.java(enum `GOOGLE`)와 B/api/entity/user/UserSocialAccount.java(엔터티, 위 칸 그대로, 생성 뒤 email·display_name을 바꾸는 메서드를 두지 않는다 — "구글에서 바뀌어도 고치지 않는다")를 만든다
 - [ ] T007 [P] B/api/repository/jpa/user/UserSocialAccountRepository.java, B/api/repository/reader/user/UserSocialAccountReader.java(`findByProviderAndSubject`, `findAllByUserId`, `existsByUserId`), B/api/repository/writer/user/UserSocialAccountWriter.java(저장, 회원·공급자로 지우기)를 기존 user reader/writer 모양대로 만든다
 - [ ] T008 [P] [공용] B/common/exception/ErrorCode.java에 contracts/auth-oauth.md 표의 코드 6개를 더한다: `OAUTH_PROVIDER_DISABLED`(A008, 404), `OAUTH_FAILED`(A009, 400), `SOCIAL_LINK_NOT_ALLOWED`(A010, 403), `SOCIAL_MEMBER_ROLE_NOT_ALLOWED`(A011, 409), `SOCIAL_ACCOUNT_IN_USE`(A012, 409), `SOCIAL_UNLINK_LAST_METHOD`(A013, 409). 번호는 T001 결과를 따른다. 구현 전에 바꿀 내용을 보고하고 승인받는다
@@ -146,7 +146,7 @@ description: "구글 소셜 로그인 (google-login) 작업 목록"
 
 - [ ] T047 backend/에서 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build` (DB 테스트 제외)
 - [ ] T048 frontend/에서 `npm run gen:api`(local 백엔드 실행 중)로 `src/types/schema.d.ts`를 다시 만들고, T016·T026·T042의 손으로 쓴 타입을 생성 타입으로 바꾼 뒤 `npm run format`, `npm run check`
-- [ ] T049 specs/010-google-login/quickstart.md "수동 확인" 1~12를 사람이 직접 수행한다. 구글 OAuth 클라이언트 만들기와 `.env.local` 값 넣기도 사람이 한다 (원칙 VI)
+- [ ] T049 specs/010-social-login/quickstart.md "수동 확인" 1~12를 사람이 직접 수행한다. 구글 OAuth 클라이언트 만들기와 `.env.local` 값 넣기도 사람이 한다 (원칙 VI)
 - [ ] T050 spec "나중에 고칠 곳" 목록(002 FR-004·FR-007·가정, 003 업무 역할, 008 가정·FR-027 — 팀 공유 필요(담당: 008-party 담당), 005, README 경계)을 PR 설명에 적어 각 담당에게 알린다 (사람이 한다. 이 기능에서 그 스펙들을 고치지 않는다)
 - [ ] T051 키트로 옮길 것을 PR 설명에 적는다: user-admin·rbac 서비스의 구글 회원 막기(T023·T024), 셸 계정 메뉴 숨김(T033), 공급자 클라이언트(헬퍼가 없을 때, T010~T013) (원칙 III)
 

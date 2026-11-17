@@ -1,8 +1,8 @@
 # Implementation Plan: 구글 소셜 로그인 (google-login)
 
-**Branch**: `feat/010-google-login` (문서는 `docs/010-google-login`) | **Date**: 2026-11-17 | **Spec**: [spec.md](./spec.md)
+**Branch**: `feat/010-social-login` (문서는 `docs/010-google-login`) | **Date**: 2026-11-17 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `specs/010-google-login/spec.md`
+**Input**: Feature specification from `specs/010-social-login/spec.md`
 
 ## Summary
 
@@ -49,7 +49,7 @@ Phase 1 뒤 재확인: data-model·contracts가 위 표와 어긋나지 않는�
 ### Documentation (this feature)
 
 ```text
-specs/010-google-login/
+specs/010-social-login/
 ├── spec.md
 ├── plan.md              # 이 파일
 ├── research.md          # R1 서버 경유 결정 ~ R10 설정
