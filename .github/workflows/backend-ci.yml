@@ -1,11 +1,11 @@
 # 백엔드 기본 CI. 포맷(Spotless), lint(Checkstyle), 테스트(ArchUnit 등)와 DB 테스트(AC 테스트, Testcontainers)를 확인한다.
 # 브랜치 흐름은 작업 브랜치 → dev → main이다 (docs/git.md). 작업 브랜치 푸시는 PR에서 확인한다.
-#   build:   main·dev 푸시와 두 브랜치로 가는 PR에서 모두 돈다 (포맷·lint·단위·아키텍처 테스트)
-#   db-test: 작업 브랜치 → dev PR에서만 한 번 돈다. dev 푸시, dev → main PR, main 푸시는 같은 내용이라 건너뛴다
+#   build:   main·dev로 가는 PR과 dev 푸시에서 돈다 (포맷·lint·단위·아키텍처 테스트)
+#            dev 푸시는 따로 통과한 PR들이 합쳐져 깨진 것을 병합 직후에 잡는다. main 푸시는 dev → main PR과 같은 내용이라 돌지 않는다
+#   db-test: 작업 브랜치 → dev PR에서만 한 번 돈다. dev 푸시, dev → main PR은 같은 내용이라 건너뛴다
 #            (frontend-ci의 e2e와 같은 규칙. 합친 뒤 깨지는 것은 대부분 build가 잡는다)
 #
 # 키트 ci.yml을 backend/ 하위 폴더에 맞춰 루트로 옮겼다 (키트 README "CI").
-# db-test 분리는 moa에서 먼저 했다. 키트 springboot 템플릿으로 옮길 것
 name: backend-ci
 
 on:
@@ -13,8 +13,16 @@ on:
     branches: [main, dev]
     paths: ['backend/**', '.github/workflows/backend-ci.yml']
   push:
-    branches: [main, dev]
+    branches: [dev]
     paths: ['backend/**', '.github/workflows/backend-ci.yml']
+
+permissions:
+  contents: read
+
+# 같은 PR에 새 커밋이 오면 앞선 실행을 취소한다. dev push는 병합마다 결과를 남기려고 취소하지 않는다
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
   run:
@@ -23,6 +31,7 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -43,6 +52,7 @@ jobs:
   db-test:
     if: github.base_ref == 'dev'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6

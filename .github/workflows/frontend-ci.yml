@@ -1,7 +1,8 @@
 # 프론트 기본 CI. check는 전체 검사(포맷·lint·타입·색 검사·문구 검사·단위 테스트), e2e는 화면 검사(Playwright: 반응형·접근성)다.
 # 브랜치 흐름은 작업 브랜치 → dev → main이다 (docs/git.md).
-#   check: main·dev 푸시와 두 브랜치로 가는 PR에서 모두 돈다
-#   e2e:   작업 브랜치 → dev PR에서만 한 번 돈다. dev 푸시, dev → main PR, main 푸시는 같은 내용이라 건너뛴다
+#   check: main·dev로 가는 PR과 dev 푸시에서 돈다
+#          dev 푸시는 따로 통과한 PR들이 합쳐져 깨진 것을 병합 직후에 잡는다. main 푸시는 dev → main PR과 같은 내용이라 돌지 않는다
+#   e2e:   작업 브랜치 → dev PR에서만 한 번 돈다. dev 푸시, dev → main PR은 같은 내용이라 건너뛴다
 #          합친 뒤의 결과는 e2e로 다시 보지 않는다 (합쳐서 깨지는 것은 대부분 check가 잡는다)
 # e2e처럼 무거운 job을 더하면 같은 조건을 건다: if: github.base_ref == 'dev'
 #
@@ -13,8 +14,16 @@ on:
     branches: [main, dev]
     paths: ['frontend/**', '.github/workflows/frontend-ci.yml']
   push:
-    branches: [main, dev]
+    branches: [dev]
     paths: ['frontend/**', '.github/workflows/frontend-ci.yml']
+
+permissions:
+  contents: read
+
+# 같은 PR에 새 커밋이 오면 앞선 실행을 취소한다. dev push는 병합마다 결과를 남기려고 취소하지 않는다
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
   run:
@@ -23,9 +32,10 @@ defaults:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -36,9 +46,11 @@ jobs:
   e2e:
     if: github.base_ref == 'dev'
     runs-on: ubuntu-latest
+    # 웹 서버 기동 대기만 5분이다 (playwright.config.ts webServer.timeout)
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -52,4 +64,7 @@ jobs:
         with:
           name: playwright-report
           # upload-artifact는 working-directory를 따르지 않는다
-          path: frontend/playwright-report
+          # playwright-report: HTML 보고서, test-results: 재시도 때 남긴 trace(화면 기록)
+          path: |
+            frontend/playwright-report
+            frontend/test-results
