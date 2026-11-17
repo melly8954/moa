@@ -49,7 +49,8 @@ test("검색어 칸에서 Enter로 조회하고, 결과가 없으면 '조건에 
 
 test("초기화는 기본값으로 되돌리고 바로 조회한다", async ({ page }) => {
   await open(page, "?status=STOPPED&grade=%EA%B3%A8%EB%93%9C&page=2")
-  await page.getByRole("button", { name: "초기화" }).click()
+  // 빈 결과면 표 안의 "조건 초기화"도 함께 보인다. 검색 영역의 버튼을 누른다
+  await page.getByRole("button", { name: "초기화", exact: true }).click()
   await expect(page).toHaveURL(/\/dev\/list$/)
   await expect(page.getByText("총 87건")).toBeVisible()
   await expect(page.getByLabel("등급")).toHaveValue("")
@@ -151,7 +152,8 @@ test("행 선택과 확인 창", async ({ page }) => {
   await open(page)
   await page.getByRole("checkbox", { name: "이 쪽 모두 선택" }).click()
   await page.getByRole("button", { name: "선택 삭제" }).click()
-  await expect(page.getByRole("alertdialog", { name: "20명을 지울까요?" })).toBeVisible()
+  // 기본 10개씩이라 이 쪽 모두 = 10명
+  await expect(page.getByRole("alertdialog", { name: "10명을 지울까요?" })).toBeVisible()
   await page.getByRole("button", { name: "취소" }).click()
   await expect(page.getByRole("alertdialog")).toBeHidden()
 })
