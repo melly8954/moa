@@ -1,12 +1,22 @@
 "use client"
 
 import type { UseQueryResult } from "@tanstack/react-query"
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  RotateCcw,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useEffect } from "react"
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader } from "@/components/ui/empty"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -28,6 +38,11 @@ import type { PageResponse } from "@/types/api"
 //   text(기본) 내용만큼 넓어지고 --col-text-max를 넘으면 말줄임
 // 셀을 따로 그리지 않으면 kind에 맞춰 형식을 입힌다 (date·datetime·number)
 // 좁은 화면에서는 표 안에서 가로로 넘긴다 (화면 전체는 넘치지 않는다)
+//
+// 높이와 쪽 (moa 011-list-screen, 키트로 옮길 것)
+//   본문은 데이터·빈 결과·로딩·오류 모두 --table-row-height × min(쪽 크기, 10)을 확보해 아래 줄이 움직이지 않는다
+//   주소의 쪽이 전체 쪽 수를 넘으면 마지막 쪽으로 바꾼다 (방문 기록 없이)
+//   조건이 걸린 빈 결과에는 "조건 초기화"를 둔다 (검색 영역의 초기화와 같다)
 
 export type ColumnKind = "text" | "number" | "date" | "datetime" | "status" | "actions"
 
@@ -78,7 +93,7 @@ export function DataTable<T>({
   query: Pick<UseQueryResult<PageResponse<T>>, "data" | "error" | "isPending" | "isError" | "refetch">
   search: Pick<
     ListSearch<Record<string, string>>,
-    "page" | "size" | "sort" | "isFiltered" | "setPage" | "setSize" | "setSort"
+    "page" | "size" | "sort" | "isFiltered" | "reset" | "setPage" | "setSize" | "setSort"
   >
   rowKey: (row: T) => Id
   // 행 선택: 고른 id 목록과 바꾸는 함수. 주면 맨 앞에 선택 칸이 생긴다 (이 쪽 안에서만 고른다)
@@ -91,6 +106,17 @@ export function DataTable<T>({
   const rows = query.data?.content ?? []
   const totalPages = Math.max(1, query.data?.totalPages ?? 1)
   const colSpan = columns.length + (selection ? 1 : 0)
+  // 확보할 본문 줄 수
+  const minRows = Math.min(search.size, 10)
+  const bodyHeight = `calc(var(--table-row-height) * ${minRows})`
+
+  // 넘친 쪽 바로잡기: 지금 쪽의 응답(이전 쪽 응답이 남아 있을 수 있다)으로 전체 쪽 수를 안 뒤에만
+  const data = query.data
+  useEffect(() => {
+    if (!data || data.page !== search.page - 1) return
+    const last = Math.max(1, data.totalPages)
+    if (search.page > last) search.setPage(last, { replace: true })
+  }, [data, search])
 
   const rowIds = rows.map(rowKey)
   const selectedOnPage = selection ? rowIds.filter((id) => selection.selected.includes(id)) : []
@@ -110,8 +136,8 @@ export function DataTable<T>({
 
   let body: React.ReactNode
   if (query.isPending) {
-    body = Array.from({ length: Math.min(search.size, 10) }, (_, i) => (
-      <TableRow key={i}>
+    body = Array.from({ length: minRows }, (_, i) => (
+      <TableRow key={i} className="h-(--table-row-height)">
         <TableCell colSpan={colSpan}>
           <Skeleton className="h-5 w-full" />
         </TableCell>
@@ -120,8 +146,8 @@ export function DataTable<T>({
   } else if (query.isError) {
     const { message, traceId } = describeError(query.error)
     body = (
-      <TableRow>
-        <TableCell colSpan={colSpan} className="whitespace-normal">
+      <TableRow className="hover:bg-transparent">
+        <TableCell colSpan={colSpan} className="whitespace-normal" style={{ height: bodyHeight }}>
           <Alert variant="destructive" role="alert">
             <AlertDescription>
               {message}
@@ -138,12 +164,20 @@ export function DataTable<T>({
     )
   } else if (rows.length === 0) {
     body = (
-      <TableRow>
-        <TableCell colSpan={colSpan} className="whitespace-normal">
+      <TableRow className="hover:bg-transparent">
+        <TableCell colSpan={colSpan} className="whitespace-normal" style={{ height: bodyHeight }}>
           <Empty>
             <EmptyHeader>
               <EmptyDescription>{search.isFiltered ? t("noResults") : t("empty")}</EmptyDescription>
             </EmptyHeader>
+            {search.isFiltered && (
+              <EmptyContent>
+                <Button variant="outline" size="sm" onClick={search.reset}>
+                  <RotateCcw />
+                  {t("resetFilters")}
+                </Button>
+              </EmptyContent>
+            )}
           </Empty>
         </TableCell>
       </TableRow>
@@ -153,7 +187,7 @@ export function DataTable<T>({
       const id = rowIds[index]
       const selected = selection?.selected.includes(id) ?? false
       return (
-        <TableRow key={id} data-state={selected ? "selected" : undefined}>
+        <TableRow key={id} className="h-(--table-row-height)" data-state={selected ? "selected" : undefined}>
           {selection && (
             <TableCell className="w-(--col-select)">
               <Checkbox
@@ -191,6 +225,8 @@ export function DataTable<T>({
           aria-label={caption}
           tabIndex={0}
           className="relative w-full overflow-x-auto rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          // 머리 한 줄 + 본문 minRows줄 + 머리 아래 선(1px)
+          style={{ minHeight: `calc(var(--table-row-height) * ${minRows + 1} + 1px)` }}
         >
           <table data-slot="table" className="w-full caption-bottom text-sm">
             {caption && <caption className="sr-only">{caption}</caption>}
@@ -257,7 +293,8 @@ export function DataTable<T>({
   )
 }
 
-// 쪽 이동: 총 건수, 쪽 크기, 이전·번호(최대 5개)·다음
+// 쪽 이동 줄: 총 건수 | 처음·이전·번호(최대 5개)·다음·마지막 | 쪽 크기
+//   넓은 화면은 세 칸(1fr auto 1fr)이라 쪽 이동이 늘 가운데다. 좁은 화면은 쪽 이동이 위 줄, 건수·쪽 크기가 아래 줄
 function Pager({
   page,
   totalPages,
@@ -277,23 +314,22 @@ function Pager({
   const first = Math.max(1, Math.min(page - 2, totalPages - 4))
   const pages = Array.from({ length: Math.min(5, totalPages) }, (_, i) => first + i)
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        {total !== undefined && <span>{t("total", { count: formatNumber(total) })}</span>}
-        <NativeSelect
-          size="sm"
-          aria-label={t("pageSize")}
-          value={String(size)}
-          onChange={(e) => onSize(Number(e.target.value) as PageSize)}
-        >
-          {PAGE_SIZES.map((option) => (
-            <NativeSelectOption key={option} value={option}>
-              {t("perPage", { size: option })}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-      </div>
-      <nav aria-label={t("pagination")} className="flex items-center gap-1">
+    <div className="grid grid-cols-2 items-center gap-2 text-sm sm:grid-cols-[1fr_auto_1fr]">
+      <span className="row-start-2 text-muted-foreground sm:col-start-1 sm:row-start-1">
+        {total !== undefined &&
+          t.rich("total", {
+            count: formatNumber(total),
+            // 숫자만 강조
+            b: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
+          })}
+      </span>
+      <nav
+        aria-label={t("pagination")}
+        className="col-span-2 flex items-center gap-1 justify-self-center sm:col-span-1 sm:col-start-2 sm:row-start-1"
+      >
+        <Button variant="ghost" size="icon-sm" aria-label={t("first")} disabled={page <= 1} onClick={() => onPage(1)}>
+          <ChevronsLeft />
+        </Button>
         <Button
           variant="ghost"
           size="icon-sm"
@@ -324,7 +360,29 @@ function Pager({
         >
           <ChevronRight />
         </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t("last")}
+          disabled={page >= totalPages}
+          onClick={() => onPage(totalPages)}
+        >
+          <ChevronsRight />
+        </Button>
       </nav>
+      <NativeSelect
+        size="sm"
+        aria-label={t("pageSize")}
+        value={String(size)}
+        onChange={(e) => onSize(Number(e.target.value) as PageSize)}
+        className="row-start-2 justify-self-end sm:col-start-3 sm:row-start-1"
+      >
+        {PAGE_SIZES.map((option) => (
+          <NativeSelectOption key={option} value={option}>
+            {t("perPage", { size: option })}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>
     </div>
   )
 }

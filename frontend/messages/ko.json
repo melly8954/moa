@@ -119,7 +119,7 @@
     "all": "전체"
   },
   "table": {
-    "total": "총 {count}건",
+    "total": "총 <b>{count}</b>건",
     "pageSize": "한 쪽에 보일 개수",
     "perPage": "{size}개씩",
     "empty": "아직 등록된 내용이 없어요.",
@@ -127,8 +127,11 @@
     "selectAll": "이 쪽 모두 선택",
     "selectRow": "{row} 선택",
     "pagination": "쪽 이동",
+    "first": "첫 쪽",
     "previous": "이전 쪽",
     "next": "다음 쪽",
+    "last": "마지막 쪽",
+    "resetFilters": "조건 초기화",
     "page": "{page}쪽",
     "retry": "다시 시도",
     "traceId": "문의 번호: {traceId}"
