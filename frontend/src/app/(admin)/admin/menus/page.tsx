@@ -8,6 +8,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
+import { BulkToolbar } from "@/components/kit/bulk-toolbar"
 import { confirm } from "@/components/kit/confirm-dialog"
 import { PageHeader } from "@/components/kit/page-header"
 import { QueryState } from "@/components/kit/query-state"
@@ -130,13 +131,7 @@ export default function MenusPage() {
         </TabsList>
       </Tabs>
       {selected.length > 0 && (
-        <div
-          role="toolbar"
-          aria-label={t("bulkToolbar")}
-          className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted px-3 py-2"
-        >
-          <span className="text-sm font-medium">{t("bulkSelected", { count: selected.length })}</span>
-          <span className="flex-1" />
+        <BulkToolbar label={t("bulkToolbar")} selected={t("bulkSelected", { count: selected.length })}>
           <Button size="sm" variant="outline" disabled={run.isPending} onClick={() => setEnabled(true)}>
             {t("inUse")}
           </Button>
@@ -161,7 +156,7 @@ export default function MenusPage() {
           <Button size="sm" variant="outline" disabled={run.isPending} onClick={() => void remove()}>
             {t("remove")}
           </Button>
-        </div>
+        </BulkToolbar>
       )}
       <QueryState query={tree} isEmpty={(d) => !d.some((m) => m.audience === audience)} empty={t("empty")}>
         {() => (
