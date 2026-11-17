@@ -9,26 +9,28 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import com.moa.support.AcceptanceTest;
+import com.moa.support.TestCodeGroups;
 
 /**
- * 공통코드 (선택 헬퍼 code)
+ * 공통코드 (선택 헬퍼 code). moa: 그룹은 코드에 등록하므로 그룹 만들기 대신 시험 그룹(TestCodeGroups)을 쓴다
+ * (specs/004-admin-codes research R8)
  */
 class CodeAcceptanceTest extends AcceptanceTest {
 
 	private static final String GROUPS = "/api/v1/admin/code-groups";
-	private static final String ADMIN_CODES = GROUPS + "/ORDER_STATUS/codes";
+	private static final String GROUP = TestCodeGroups.GENRE;
+	private static final String ADMIN_CODES = GROUPS + "/" + GROUP + "/codes";
 
 	@Test
 	@DisplayName("공통코드: 사용자는 사용하는 코드만 정렬 순서대로 본다. includeDisabled면 사용 안 함도, 지운 코드는 빼고")
 	void createAndRead() {
-		post(GROUPS, "{\"groupCode\":\"ORDER_STATUS\",\"name\":\"주문 상태\"}");
 		post(ADMIN_CODES, "{\"code\":\"PAID\",\"name\":\"결제 완료\",\"sortOrder\":20}");
 		post(ADMIN_CODES, "{\"code\":\"READY\",\"name\":\"주문 접수\",\"sortOrder\":10}");
 		assertThat(admin(mvc.put().uri(ADMIN_CODES + "/PAID")
 			.contentType(MediaType.APPLICATION_JSON)
 			.content("{\"name\":\"결제 완료\",\"sortOrder\":20,\"enabled\":false}"))).hasStatus(200);
 
-		MvcTestResult codes = mvc.get().uri("/api/v1/codes/ORDER_STATUS")
+		MvcTestResult codes = mvc.get().uri("/api/v1/codes/" + GROUP)
 			.header(HttpHeaders.AUTHORIZATION, bearer(3L, "USER")).exchange();
 
 		assertThat(codes).hasStatus(200);
@@ -36,7 +38,7 @@ class CodeAcceptanceTest extends AcceptanceTest {
 		assertThat(codes).bodyJson().extractingPath("$[0].code").isEqualTo("READY");
 		assertThat(admin(mvc.get().uri(ADMIN_CODES))).bodyJson().extractingPath("$.length()").isEqualTo(2);
 
-		MvcTestResult all = mvc.get().uri("/api/v1/codes/ORDER_STATUS?includeDisabled=true")
+		MvcTestResult all = mvc.get().uri("/api/v1/codes/" + GROUP + "?includeDisabled=true")
 			.header(HttpHeaders.AUTHORIZATION, bearer(3L, "USER")).exchange();
 		assertThat(all).hasStatus(200);
 		assertThat(all).bodyJson().extractingPath("$.length()").isEqualTo(2);
@@ -44,7 +46,7 @@ class CodeAcceptanceTest extends AcceptanceTest {
 		assertThat(all).bodyJson().extractingPath("$[1].enabled").isEqualTo(false);
 
 		assertThat(admin(mvc.delete().uri(ADMIN_CODES + "/PAID"))).hasStatus(204);
-		assertThat(mvc.get().uri("/api/v1/codes/ORDER_STATUS?includeDisabled=true")
+		assertThat(mvc.get().uri("/api/v1/codes/" + GROUP + "?includeDisabled=true")
 			.header(HttpHeaders.AUTHORIZATION, bearer(3L, "USER"))).bodyJson().extractingPath("$.length()")
 			.isEqualTo(1);
 	}
@@ -52,7 +54,6 @@ class CodeAcceptanceTest extends AcceptanceTest {
 	@Test
 	@DisplayName("공통코드: 같은 코드는 R002, 없는 그룹은 R001, 지운 코드는 다시 만들 수 있다")
 	void duplicateAndDelete() {
-		post(GROUPS, "{\"groupCode\":\"ORDER_STATUS\",\"name\":\"주문 상태\"}");
 		post(ADMIN_CODES, "{\"code\":\"PAID\",\"name\":\"결제 완료\",\"sortOrder\":10}");
 
 		assertThat(post(ADMIN_CODES, "{\"code\":\"PAID\",\"name\":\"중복\",\"sortOrder\":10}"))
