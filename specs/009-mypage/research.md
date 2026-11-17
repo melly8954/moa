@@ -1,0 +1,153 @@
+# Research: 마이페이지 (009)
+
+스펙: [spec.md](./spec.md). 각 항목은 결정 / 이유 / 검토한 대안 순서다.
+**"잠정"** 표시는 spec의 열린 질문(팀 확인 대기)에 기댄 부분이다. 맨 아래 "열린 질문의 처리"에 확정 뒤 바꿀 자리를 모았다.
+`010-social-login`(PR #54, 병합 전)은 `origin/docs/010-google-login`의 문서를 읽기만 해서 경계를 맞췄다.
+
+## R1. 화면 경로와 묶음 (FR-001, FR-015)
+
+- **결정**: 마이페이지는 `/account/profile`이다. 키트 계정 화면 묶음 `frontend/src/app/(account)/`에 둔다(`/account/password`와 같은 묶음). 이 묶음의 `layout.tsx`가 `AuthGate`(로그인 확인, 로그인 뒤 돌아오기)와 `AccountShell`(사용자에 맞는 셸)을 이미 하므로 US1-AC2를 따로 만들지 않는다. 계정 메뉴로 여는 계정 화면이라 프로그램으로 등록하지 않는다(`001-admin-menus` FR-008)
+- **이유**: 기존 계정 화면과 같은 틀·같은 보호를 그대로 쓴다. 경로 상수는 `lib/next-path.ts`의 `PASSWORD_PATH`·`SETTINGS_PATH` 옆에 `PROFILE_PATH`로 둔다
+- **대안**: `/mypage` — 계정 화면 묶음 밖이 되어 `AuthGate`·셸 처리를 다시 해야 한다. `/settings` 안에 넣기 — spec FR-002가 프로필과 로그인 방식(010의 계정 설정)을 나눈다
+
+## R2. 관리자·운영자 막기 (FR-016)
+
+- **결정**
+  - "관리자·운영자 계정" = 시스템 역할 `ADMIN`이거나 업무 역할(rbac)을 하나라도 가진 계정. `010-social-login` FR-007·research R7과 같은 정의다
+  - 판단은 서비스 한 곳 `MemberActivityPolicy.isManagerAccount(userId)`에 둔다. 010이 같은 판단(`SocialAccountService.isManagerAccount`)을 계획했으므로 먼저 구현하는 쪽이 이 클래스로 만들고 다른 쪽이 가져다 쓴다 (R11)
+  - 서버: 마이페이지 API 전부(프로필·닉네임·게임 정보)가 관리자·운영자면 403 `MYPAGE_NOT_ALLOWED`(A201)
+  - 프론트: `GET /api/v1/users/me`에 `mypageAllowed`(관리자·운영자면 거짓)를 더한다. 계정 메뉴는 거짓이면 "마이페이지"를 숨기고(US1-AC6), `/account/profile`은 거짓이면 기존 권한 없음 화면을 보인다(US1-AC7, `001-admin-menus` FR-003)
+- **이유**: 서버에서 막아야 주소·API 직접 호출도 막힌다(SC-006). 화면은 서버가 준 값으로 보이기만 정한다(010 R9과 같은 방식)
+- **대안**: 프론트가 `role`과 `/users/me/permissions`로 판단 — 업무 역할 판단 규칙이 프론트에 생겨 서버와 어긋날 수 있다
+
+## R3. 프로필 저장 위치 (Key Entities)
+
+- **결정**: 키트 `users`는 구조를 바꾸지 않는다. 닉네임은 `users.name` 그대로(`User.rename` 사용). 나머지 프로필은 1:1 새 테이블 `user_profiles`, 플레이 가능 시간대는 `user_profile_play_times`, 게임 정보는 `user_game_profiles`
+  - `user_profiles` 행을 만드는 때는 R14. 행이 없으면 기본값(기본 아바타, 빈 값, 비공개)으로 응답한다
+  - 닉네임 변경 시각(`nickname_changed_at`)과 닉네임 정규화 값(`nickname_key`, R4)도 `user_profiles`에 둔다
+- **이유**: 키트 골격 테이블(`users`)을 넓히면 키트를 다시 적용할 때 충돌하고 공용 파일이 늘어난다. 010도 `users`를 바꾸지 않고 별도 테이블을 둔다(010 data-model). 닉네임은 이미 여러 기능이 `name`으로 보이고 있어(`008-party` FR-027) 칸을 옮기지 않는다
+- **대안**: `users`에 칸 추가 — 위 이유. 프로필을 JSON 한 칸에 — 공통코드 검증·조회가 어렵다
+
+## R4. 닉네임 규칙과 중복 (FR-003, 잠정)
+
+- **결정**
+  - 규칙은 한 곳 `NicknamePolicy`에 둔다: 앞뒤 공백 제거 → 2~12자 → 한글(완성형)·영문·숫자·`_`만(`^[가-힣A-Za-z0-9_]{2,12}$`) → 예약어 아님 → 다른 회원과 겹치지 않음
+  - 예약어(대소문자 무시, 같으면 막음): `admin`, `administrator`, `root`, `system`, `moa`, `운영자`, `관리자`, `운영팀`, `관리팀`. 목록은 `NicknamePolicy` 안의 상수다 (잠정, 팀 확인 때 함께 본다)
+  - 중복은 두 겹으로 막는다
+    1. 서비스: `users.name`과 대소문자 무시로 비교하고 자기 자신은 뺀다. 삭제된 회원(soft delete)은 비교에서 뺀다(`@SQLRestriction`). 프로필 행이 없는 회원의 이름도 여기서 막힌다(R14)
+    2. DB: `user_profiles.nickname_key` = 닉네임의 앞뒤 공백 제거 + 소문자(`toLowerCase(Locale.ROOT)`), 유일 제약 `uk_user_profiles_nickname_key`. 정규화는 앱이 해서 DB 정렬 규칙에 기대지 않는다. null은 여럿 둘 수 있다. 같은 순간 두 사람이 같은 닉네임으로 바꾸면 늦은 쪽이 제약 위반이다
+  - 닉네임을 바꿀 때 `users.name`(`User.rename`)과 `nickname_key`를 같은 트랜잭션에서 함께 바꾼다. 키트 `users`는 고치지 않는다
+  - 길이·글자 오류와 예약어는 V001(칸 오류), 중복은 409 `NICKNAME_IN_USE`(B201). 유일 제약 위반(`DataIntegrityViolationException`)도 B201로 바꾼다
+- **이유**: 키트 `users.name`에 유일 제약을 걸면 키트 테이블을 바꾸고, 규칙 이전의 기존 이름(시드·관리자)이 겹치면 마이그레이션이 실패한다(spec Edge Cases "규칙 이전 이름"). 정규화 칸을 1:1 프로필 쪽에 두면 키트를 건드리지 않고 DB에서 막는다. 010 가입도 같은 `NicknamePolicy`와 B201을 쓰도록 맞춘다(010 contracts가 "중복 코드는 009와 맞춘다"고 적어 둠)
+- **대안**: 서비스 검사만 두기(이전 계획) — 동시 변경·동시 가입 틈이 남는다. 닉네임 전용 테이블 — 프로필 행과 1:1이라 칸 하나로 충분하다
+
+## R5. 닉네임 변경 제한 (FR-004, 잠정)
+
+- **결정**: `user_profiles.nickname_changed_at`이 비어 있으면 가입 뒤 첫 변경이라 바로 바꾼다(US2-AC6). 값이 있으면 그 시각 + 30일 전에는 409 `NICKNAME_CHANGE_TOO_SOON`(B202)과 다시 바꿀 수 있는 시각(`availableAt`)을 돌려준다(US2-AC4). 바꾸면 지금 시각을 적는다. 같은 값으로 저장하면 아무것도 바꾸지 않고 시각도 그대로다(Edge Cases)
+  - 30일은 `ProfileProperties.nicknameCooldown`(기본 `30d`) 설정 값 하나다
+- **이유**: 가입 때 닉네임을 정하는 010은 이 칸을 건드리지 않으므로 "가입 뒤 첫 변경"을 따로 기록하지 않아도 된다. 관리자의 드로어 이름 바꾸기(`002-admin-users` FR-007)는 이 제한을 받지 않는다(spec "나중에 고칠 곳" 002)
+- **대안**: 변경 이력 테이블 — 지금 필요한 것은 마지막 시각 하나다
+
+## R6. 나이·성별 (FR-007)
+
+- **결정**
+  - 출생 연도 `birth_year`(SMALLINT, 1900~올해). 미래 연도는 V001. 응답에는 `birthYear`와 계산한 `age`(올해 − 출생 연도, spec 가정)를 함께 준다
+  - 성별은 enum `Gender`: `MALE`, `FEMALE`, `UNDISCLOSED`(밝히지 않음). spec이 "정해 둔 목록"이라 공통코드로 두지 않는다
+  - 공개 여부는 칸 하나 `age_gender_public`(잠정, 팀 기획안 토글 하나). 기본 거짓
+  - 만 14세 미만은 이번에 막지 않는다(잠정 답 없음, 010과 함께 정함). 출생 연도 범위만 검사한다
+- **이유**: 나이를 저장하면 해마다 틀린다(spec Clarifications). 개별 공개로 정해지면 칸 하나를 둘로 나누면 된다(마이그레이션 하나)
+- **대안**: 생년월일 — spec은 연도만 받는다
+
+## R7. 디스코드 태그 (FR-008)
+
+- **결정**: `discord_tag` VARCHAR(32), 검증 `^(?!.*\.\.)[a-z0-9_.]{2,32}$`. 저장 전에 앞뒤 공백만 지우고 대소문자는 바꾸지 않는다(대문자는 형식 오류, US3-AC4). 공개 범위 enum `DiscordVisibility`: `PRIVATE`(기본), `FRIENDS`(친구·팔로워만, 잠정), `MEMBERS`(전체 회원)
+- **이유**: spec이 새 사용자명 형식을 입력 규칙으로 정했다. 대문자를 조용히 소문자로 바꾸면 회원이 잘못 적은 것을 모른다
+- **친구·팔로워(잠정)**: 정의는 친구·팔로우 기능이 정한다. 이번에는 값만 저장하고, 다른 회원에게 보이는 API를 만들지 않으므로(R9) 판단 코드도 두지 않는다
+
+## R8. 게임 정보 (FR-010, FR-011)
+
+- **결정**
+  - `user_game_profiles`: 회원·게임마다 한 행(유일 `(user_id, game_code)`), 랭크 코드·포지션 코드·게임 아이디(50자) 선택
+  - 검증: 게임은 `GAME` 그룹의 켜진 코드, 랭크는 `<게임>_TIER`, 포지션은 `<게임>_POSITION`의 켜진 코드. 포지션 그룹이 없는 게임(`PUBG`)에 포지션을 보내면 V001. 공통코드 조회는 키트 code 헬퍼의 서비스(`CodeService`)를 쓴다
+  - 쓰지 않게 된 코드(Edge Cases): 이미 저장된 값은 그대로 응답한다(이름은 `includeDisabled`로 찾음). 새로 저장하거나 고칠 때는 켜진 코드만 받는다
+  - 최대 3개: 추가 때 같은 트랜잭션에서 회원의 `user_profiles` 행을 잠그고(`SELECT … FOR UPDATE`, 없으면 만든 뒤) 개수를 센다. 3개면 409 `GAME_PROFILE_LIMIT`(B203). 같은 게임이 있으면 409 `GAME_PROFILE_DUPLICATED`(B204)
+  - 응답에 `count`·`max`(3)를 함께 준다(US5-AC9의 "1/3")
+- **전적 사이트 링크**: 서버의 `GameStatsLinks`가 게임 코드별 주소 틀로 `statsUrl`을 만든다. 게임 아이디는 URL 인코딩한다(Edge Cases). 처음 틀(잠정, 구현 때 주소를 다시 확인한다):
+  | 게임 | 틀 |
+  |---|---|
+  | `LOL` | `https://www.op.gg/summoners/kr/{id}` (Riot ID `이름#태그`는 `#`을 `-`로 바꿔 넣는다) |
+  | `VALORANT` | `https://tracker.gg/valorant/profile/riot/{id}/overview` (`#`은 인코딩) |
+  | `OVERWATCH` | `https://www.overbuff.com/players/{id}` (`#`은 `-`) |
+  | `PUBG` | `https://pubg.op.gg/user/{id}` |
+  틀이 없는 게임은 `statsUrl`이 `null`이다(US5-AC6)
+- **이유**: 링크 규칙을 서버 한 곳에 두면 다른 회원 프로필 화면(나중)과 파티 화면도 같은 링크를 쓴다. 회원이 바꾸지 않는 값이라 공통코드가 아니다(spec FR-011)
+- **대안**: 링크 틀을 공통코드 설명 칸에 — 관리자가 바꿀 수 있게 되는데 spec은 moa가 정한다
+
+## R9. 다른 회원이 보는 범위 (FR-013, 잠정)
+
+- **결정**: 이번에 다른 회원 프로필을 보는 API·화면을 만들지 않는다(spec FR-013 "보이는 규칙만 정함"). 규칙은 `ProfileVisibility.view(profile, viewer)` 한 곳에 두어 나중 기능이 그대로 쓴다: 로그인하지 않으면 없음, 나이·성별은 `age_gender_public`일 때만, 디스코드 태그는 `MEMBERS`일 때만(`FRIENDS`는 친구 기능 전까지 아무에게도 안 보임, spec Edge Cases), 나머지는 모두. 단위 테스트로 규칙만 확인한다
+- **이유**: spec에 다른 회원 프로필 화면의 AC가 없다(원칙 I). 그러나 공개 여부를 저장하는 이 기능이 규칙의 주인이라 규칙 자체는 여기 둔다
+- **대안**: `GET /api/v1/users/{id}/profile`을 지금 만들기 — 쓰는 화면이 없고 AC도 없다
+
+## R10. 아바타 (FR-009)
+
+- **결정**: 기본 아바타는 코드의 enum `DefaultAvatar`(키 목록)와 프론트 정적 이미지 `frontend/public/avatars/<키>.svg`로 둔다. 처음 목록(잠정, 그림은 구현 전에 정함): `default`, `cat`, `dog`, `fox`, `bear`, `rabbit`, `penguin`, `robot`. `GET /api/v1/profile/avatars`가 키 목록을 준다. 저장할 때 목록 밖이면 V001. 저장된 키가 목록에서 빠졌으면 응답에서 `default`로 바꿔 준다(Edge Cases)
+- **이유**: spec이 "moa가 정해 둔 묶음, 회원이 더하거나 올릴 수 없다"고 정했다. 업로드가 없으므로 파일 저장소 헬퍼가 필요 없다
+- **대안**: 공통코드로 아바타 목록 — 관리자가 키를 더해도 이미지가 없으면 깨진다
+
+## R11. 010과 함께 고치는 곳 (경계)
+
+| 겹치는 곳 | 010 계획 | 009 계획 | 맞추는 방법 |
+|---|---|---|---|
+| `UserGetResponse` / 프론트 `Me` | `hasPassword`, `socialAccounts`, `socialLinkAllowed` | `avatar`, `mypageAllowed` | 칸만 더하므로 나중에 병합하는 쪽이 앞쪽 칸을 그대로 두고 더한다 |
+| 관리자·운영자 판단 | `SocialAccountService.isManagerAccount` | `MemberActivityPolicy.isManagerAccount` | 먼저 구현하는 쪽이 `MemberActivityPolicy`로 만들고 다른 쪽이 쓴다. `socialLinkAllowed`와 `mypageAllowed`는 같은 값이다 |
+| 닉네임 규칙·중복 코드 | 가입 검증(잠정 같은 규칙), 중복 409 "009와 맞춤" | `NicknamePolicy`, B201 | 010 가입도 `NicknamePolicy`와 B201을 쓴다 |
+| 가입 때 프로필 행 | (없음) | 가입 트랜잭션에서 `user_profiles` 행과 `nickname_key`를 만든다 | R14 |
+| `account-menu.tsx` | `hasPassword` 거짓이면 "비밀번호 변경" 숨김 | 닉네임·아바타, `loginId` 숨김, "마이페이지" 항목 | 같은 파일. 나중 쪽이 앞의 변경을 지키고 더한다. 항목 순서는 마이페이지, 설정, 비밀번호 변경, 로그아웃 |
+| 마이그레이션 번호 | `V2_7__social_login.sql` → `V2_8`로 옮김 | `V2_9`, `V2_9_1` | R12 |
+
+## R12. 마이그레이션 번호
+
+- **결정**: `V2_9__user_profiles.sql`(테이블 3개), `V2_9_1__play_time_codes.sql`(공통코드 `PLAY_TIME` 시드)
+- **이유**
+  - dev의 마지막은 `V2_6__admin_menu_groups.sql`이다
+  - `008-party`가 `V2_7__parties.sql`·`V2_7_1__party_codes.sql`을, `010-social-login`이 `V2_7__social_login.sql`을 계획해 두 계획이 `V2_7`에서 겹쳤다 (008 R8, 010 data-model). 008 설계가 먼저 병합되어(PR #52·#53) `V2_7`은 008이 쓰고, **010은 V2_8로 옮김(같은 날 010 브랜치에서 수정)**
+  - 009는 그 뒤 `V2_9`를 쓴다. moa는 `V2` 대역에서 차례 번호를 쓰고(008 R8), 데이터 시드는 `_1`로 나눈다(008의 `V2_7_1` 방식)
+- **주의**: Flyway는 `outOfOrder` 설정이 없어 기본값(거짓)이다(`application.yaml`). 어떤 환경에 `V2_9`가 먼저 들어간 뒤 `V2_7`·`V2_8`이 들어오면 검증에서 실패한다. 그래서 병합 순서는 008 → 010 → 009가 안전하다. 009가 먼저 구현에 들어가면 implement 시작 때(tasks T001) dev의 마지막 번호를 다시 보고 차례 번호로 옮긴다
+- **대안**: `V2_7_2` 같은 사이 번호 — 008·010이 옮길 때 다시 꼬인다
+
+## R13. 공통코드 `PLAY_TIME` (FR-012)과 게임 코드 의존
+
+- **결정**
+  - 새 그룹 `PLAY_TIME`(이름 "플레이 가능 시간대", 설명 "마이페이지 플레이 가능 시간대 선택지", 쓰는 곳 `009-mypage`). 시드 코드는 data-model "공통코드 시드" 표
+  - 그룹 등록 방식은 `008-party` R7과 같다: `004-admin-codes` FR-004("그룹은 개발자가 코드에 등록")가 먼저 구현되면 그 방식으로 그룹을 등록하고 시드 SQL에는 코드만 넣는다. 아니면 시드 SQL에 그룹과 코드를 넣고 004가 옮긴다
+  - `GAME`, `<게임>_TIER`, `<게임>_POSITION`은 **008의 시드(`V2_7_1__party_codes.sql`)를 쓴다**. 009는 같은 코드를 다시 넣지 않는다. 008이 구현되기 전에 009를 구현하면 그 시드를 009가 가져올지 tasks T001에서 정한다
+  - 테스트에서 `DatabaseCleaner`가 시드를 지우므로 008이 둘 `CodeSeed` 지원 코드에 `PLAY_TIME`을 더한다
+- **이유**: 같은 코드를 두 기능이 넣으면 유일 제약에 걸리거나 순서가 어긋난다. 004 FR-002가 "새 그룹을 쓰는 기능이 스펙에 그룹과 초기 코드를 적고 004 FR-001 표에 더한다"고 정한다 → 004 표 갱신은 spec "나중에 고칠 곳"
+
+## R14. 프로필 행을 만드는 때와 010 경계 (FR-003, R4)
+
+- **결정**: 프로필 행은 닉네임을 정하는 때 만든다. 처음 마이페이지에 들어올 때(GET)는 만들지 않는다
+  - `010-social-login` 가입: 가입 트랜잭션에서 `users` 행과 함께 `user_profiles` 행(`nickname_key`)을 만든다. 겹치면 유일 제약 위반 → B201. 만드는 일은 009 서비스(`NicknameService`) 한 곳에 두고 010 가입이 부른다
+  - 기존 회원: `V2_9`가 삭제되지 않은 모든 `users`에 행을 만들고 `nickname_key`를 채운다. 규칙 이전 이름끼리 정규화 값이 겹치면 id가 가장 작은 하나만 값을 갖고 나머지는 null이다(`ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(name)) ORDER BY id)`, MariaDB 11.4)
+  - 키트가 계정을 만드는 경로(첫 관리자 `UserService.bootstrapAdmin`, 관리자의 계정 만들기 `UserAdminService.create`)는 고치지 않는다. 이 계정은 행 없이 남는다. 대부분 관리자·운영자라 마이페이지를 쓰지 않고(FR-016), 업무 역할이 없는 회원이면 마이페이지에서 처음 저장할 때 행을 만든다(R8의 "없으면 만든 뒤"와 같은 자리)
+  - 그래서 행이 없거나 `nickname_key`가 null인 회원이 있다. 그 이름은 서비스 검사(R4의 1)가 막고, 유일 제약은 행이 있는 회원끼리의 동시 변경을 막는다
+  - 관리자 이름 바꾸기(`002-admin-users` FR-007, `UserAdminService.rename`): 프로필 행이 있으면 `nickname_key`도 같은 트랜잭션에서 바꾸고, 겹치면 B201이다 [공용]. 규칙(2~12자 등)과 변경 제한(R5)은 받지 않는다. 002 스펙 갱신은 spec "나중에 고칠 곳" 002에 더한다
+  - 탈퇴(soft delete)한 회원의 `nickname_key`를 비우는 일은 회원 탈퇴 스펙이 정한다(spec 가정). 그 전까지 탈퇴 회원의 닉네임은 DB에서 막힌 채로 남는다
+- **010과의 경계**
+  - 009가 먼저 병합되면: 010 구현이 가입 때 행 만들기를 처음부터 넣는다
+  - 010이 먼저 병합되면: 그 사이 가입한 회원은 `V2_9`의 채우기가 덮는다. 009 구현 PR에서 010 가입 서비스에 행 만들기를 더한다 [공용]
+  - 010 문서(spec FR-005, data-model)에 이 결정을 적는 일은 010 브랜치에서 한다. 이번에 010 브랜치는 건드리지 않는다
+- **이유**: 닉네임이 처음 정해지는 때는 가입이고, 같은 닉네임 경쟁도 가입 때 가장 많다. 첫 마이페이지 진입 때 만들면 GET이 쓰기가 되고, 진입 전까지는 이름이 유일 제약 밖에 있다. 기존 회원은 마이그레이션이 한 번에 채운다
+- **대안**: 처음 마이페이지 진입 때 만들기 — 위 이유. 키트가 계정을 만드는 경로 전부에서 만들기 — 키트 코드 여러 곳을 고치는데, 그 경로로 생기는 계정은 대부분 마이페이지를 쓰지 않는다
+
+## 열린 질문의 처리 (spec [NEEDS CLARIFICATION] 6곳, 모두 팀 확인 대기)
+
+| 열린 질문 | 잠정으로 설계한 것 | 확정 뒤 바꿀 자리 |
+|---|---|---|
+| FR-003 닉네임 규칙 | R4: 2~12자, 한글·영문·숫자·`_`, 예약어, 대소문자 무시 중복(`nickname_key` 유일) | `NicknamePolicy` 한 곳과 프론트 zod 규칙, 010 가입. 대소문자를 구별하기로 하면 `nickname_key` 정규화 규칙과 채우기도 |
+| FR-004 변경 제한 | R5: 첫 변경 바로, 그 뒤 30일 | `ProfileProperties.nicknameCooldown`과 첫 변경 판단 |
+| FR-007 만 14세 미만 | R6: 막지 않음, 출생 연도 1900~올해 | 010 가입 흐름과 함께 정함. 막기로 하면 출생 연도 검증과 가입 화면 |
+| FR-007 나이·성별 공개 개별 | R6: 칸 하나 `age_gender_public` | 칸 둘로 나누는 마이그레이션 하나, 응답·폼 |
+| FR-013 친구·팔로워 정의 | R7·R9: `FRIENDS` 값만 저장, 지금은 아무에게도 안 보임 | `ProfileVisibility`의 `FRIENDS` 판단 (친구 기능이 생길 때) |
+| FR-013 보기 범위 | R9: 규칙만 `ProfileVisibility`에, 보는 API 없음 | `ProfileVisibility`와 그 규칙을 쓰는 화면 |
