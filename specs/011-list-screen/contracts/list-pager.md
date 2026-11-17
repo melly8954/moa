@@ -60,4 +60,4 @@ N = min(쪽 크기, 10), 한 줄 높이 = `--table-row-height`(2.5rem).
 | `first` | 첫 쪽 |
 | `last` | 마지막 쪽 |
 | `resetFilters` | 조건 초기화 |
-| `total` (고침) | 총 `<count>{count}</count>`건. 숫자 강조용 태그 |
+| `total` (고침) | 총 `<b>{count}</b>`건. 숫자 강조용 태그 |

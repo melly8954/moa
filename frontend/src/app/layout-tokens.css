@@ -29,4 +29,6 @@
   --col-number: 7rem;
   --col-status: 7rem;
   --col-actions: 7rem;
+  /* 표 한 줄 높이 (머리 h-10과 같다). 목록 표는 빈 결과·로딩·오류에도 이 높이 × 쪽 크기(최대 10줄)를 확보한다 */
+  --table-row-height: 2.5rem;
 }
