@@ -2,10 +2,11 @@
 
 import { useQueryClient } from "@tanstack/react-query"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/api"
 import { QueryState } from "@/components/kit/query-state"
+import { fetchLandingPath } from "@/components/shell/landing"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useErrorMessages } from "@/lib/error-messages"
 import { useMe } from "@/lib/me"
@@ -16,6 +17,7 @@ import { useAuthStore } from "@/stores/auth"
 //   처음 열거나 새로고침하면 리프레시 토큰 쿠키로 액세스 토큰을 다시 받고, 내 정보(/users/me)를 읽는다
 //   받지 못하면 로그인 화면으로 보낸다. 지금 주소를 ?next=로 붙여 로그인 뒤 돌아온다 (로그아웃을 누른 때는 붙이지 않는다)
 //   쓰는 중에 재발급이 실패하면 안내를 띄우고 보낸다
+//   첫 화면(/)을 열어 로그인이 이어지면 로그인 화면에서 로그인한 때처럼 첫 화면을 정한다 (관리 메뉴가 있으면 관리 셸, specs/001-admin-menus FR-006)
 //   임시 비밀번호를 받은 사용자(passwordChangeRequired)는 비밀번호 변경 화면에만 둔다
 // 화면을 가릴 뿐이다. API 권한은 백엔드가 막는다
 export function AuthGate({ children }: { children: React.ReactNode }) {
@@ -26,10 +28,21 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const { errorMessage } = useErrorMessages()
   const me = useMe()
   const mustChangePassword = me.data?.passwordChangeRequired === true && pathname !== PASSWORD_PATH
+  // 첫 화면(/)에서 로그인을 이어 받는 중이면 첫 화면을 정할 때까지 화면을 가린다
+  const [landing, setLanding] = useState(() => pathname === "/" && useAuthStore.getState().status === "unknown")
 
   useEffect(() => {
     if (status === "unknown") {
-      api.v1.auth.refresh().catch(() => useAuthStore.getState().signOut())
+      const fromHome = window.location.pathname === "/"
+      api.v1.auth
+        .refresh()
+        .then(async () => {
+          if (!fromHome) return
+          const path = await fetchLandingPath(queryClient)
+          if (path === "/") setLanding(false)
+          else router.replace(path)
+        })
+        .catch(() => useAuthStore.getState().signOut())
     } else if (status === "expired") {
       toast.info(errorMessage("A003"))
       useAuthStore.getState().signOut()
@@ -50,7 +63,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       <Skeleton className="h-32 w-full" />
     </div>
   )
-  if (status !== "signedIn" || mustChangePassword) return waiting
+  if (status !== "signedIn" || mustChangePassword || landing) return waiting
   return (
     <QueryState query={me} loading={waiting} wrapError={(alert) => <div className="p-(--page-padding)">{alert}</div>}>
       {() => children}
