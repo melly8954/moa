@@ -214,7 +214,7 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 **마무리**
 
 - [X] T075 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, `./gradlew dbTest --tests "*Menu*AcceptanceTest" --tests "*AdminRolesAcceptanceTest"`, frontend/에서 `npm run format`, `npm run check`. e2e와 dbTest 전체는 PR CI로 본다
-- [ ] T076 specs/001-admin-menus/quickstart.md "화면 확인"에 묶음 사이드바, 끌기, 드로어, 일괄 처리 절차를 더하고 사람이 확인한다
+- [ ] T076 specs/001-admin-menus/quickstart.md "화면 확인"에 묶음 사이드바, 끌기, 드로어, 일괄 처리 절차를 더하고 사람이 확인한다. 절차는 3번에 더했다(2026-11-18), 사람 확인 남음
 
 ---
 
@@ -234,7 +234,7 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 **마무리**
 
 - [X] T080 frontend/에서 `npm run format`, `npm run check`. e2e는 PR CI로 본다
-- [ ] T081 specs/001-admin-menus/quickstart.md "화면 확인" 2번에 묶음 펴기·접기(새로 고침 유지, 아이콘 모드)를 더하고 사람이 확인한다
+- [ ] T081 specs/001-admin-menus/quickstart.md "화면 확인" 2번에 묶음 펴기·접기(새로 고침 유지, 아이콘 모드)를 더하고 사람이 확인한다. 절차는 더했다(2026-11-18), 사람 확인 남음
 
 ---
 
