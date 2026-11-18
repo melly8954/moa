@@ -9,7 +9,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.moa.api.application.v1.code.command.CreateCodeCommand;
+import com.moa.api.application.v1.code.command.CreateCodeGroupCommand;
 import com.moa.api.application.v1.code.command.ModifyCodeCommand;
+import com.moa.api.application.v1.code.command.ModifyCodeGroupCommand;
 import com.moa.api.dto.code.CodeDto;
 import com.moa.api.dto.code.CodeGroupDto;
 import com.moa.api.dto.code.CodeGroupTreeDto;
@@ -49,10 +51,29 @@ public class CodeApplication {
 		return codeService.getGroups();
 	}
 
-	/** moa: 등록된 그룹마다 항목 (specs/004-admin-codes FR-005) */
+	/** moa: 그룹마다 항목 (specs/004-admin-codes FR-005) */
 	@Transactional(readOnly = true)
 	public List<CodeGroupTreeDto> getTree() {
 		return codeService.getTree();
+	}
+
+	/** moa: 관리자가 만드는 일반 그룹 (FR-004) */
+	@Transactional
+	public CodeGroupDto createGroup(CreateCodeGroupCommand command) {
+		return codeService.createGroup(command.groupCode(), command.name(), command.description(), command.usedBy());
+	}
+
+	/** moa: 그룹 이름·설명·쓰는 곳 (FR-004) */
+	@Transactional
+	public CodeGroupDto modifyGroup(ModifyCodeGroupCommand command) {
+		return codeService.modifyGroup(command.groupCode(), command.name(), command.description(), command.usedBy());
+	}
+
+	/** moa: 그룹과 항목을 함께 지운다. 시스템 그룹은 B001 (FR-004·FR-008) */
+	@Transactional
+	@CacheEvict(value = CACHE, key = "#groupCode")
+	public void deleteGroup(String groupCode) {
+		codeService.deleteGroup(groupCode, currentActor.id());
 	}
 
 	@Transactional

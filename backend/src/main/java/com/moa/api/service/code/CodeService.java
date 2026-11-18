@@ -11,13 +11,12 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.moa.api.codegroup.CodeGroupDefinition;
-import com.moa.api.codegroup.CodeGroupRegistry;
 import com.moa.api.dto.code.CodeDto;
 import com.moa.api.dto.code.CodeGroupDto;
 import com.moa.api.dto.code.CodeGroupTreeDto;
 import com.moa.api.dto.code.CodeOrderDto;
 import com.moa.api.entity.code.Code;
+import com.moa.api.entity.code.CodeGroup;
 import com.moa.api.repository.reader.code.CodeReader;
 import com.moa.api.repository.writer.code.CodeWriter;
 import com.moa.common.exception.ErrorCode;
@@ -26,7 +25,8 @@ import com.moa.common.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 공통코드. moa: 그룹은 코드에 등록한다 (CodeGroupRegistry, specs/004-admin-codes FR-004). 등록되지 않은 그룹은 R001
+ * 공통코드. moa: 그룹은 DB(code_groups)에 두고 관리자가 다룬다. 시스템 그룹은 지울 수 없다
+ * (specs/004-admin-codes FR-004·FR-008). 없는 그룹은 R001
  */
 @Service
 @RequiredArgsConstructor
@@ -37,28 +37,67 @@ public class CodeService {
 
 	private final CodeReader codeReader;
 	private final CodeWriter codeWriter;
-	private final CodeGroupRegistry codeGroupRegistry;
 
+	/** moa: 만든 순서 */
 	public List<CodeGroupDto> getGroups() {
-		return codeGroupRegistry.all().stream().map(CodeGroupDto::from).toList();
+		return codeReader.findGroups().stream().map(CodeGroupDto::from).toList();
 	}
 
-	/** moa: 등록된 그룹마다 항목(사용 안 함 포함). 트리 표 (FR-005) */
+	/** moa: 그룹마다 항목(사용 안 함 포함). 트리 표 (FR-005) */
 	public List<CodeGroupTreeDto> getTree() {
-		List<CodeGroupDefinition> groups = codeGroupRegistry.all();
-		Map<String, List<CodeDto>> codes = codeReader.findCodes(groups.stream().map(CodeGroupDefinition::groupCode)
+		List<CodeGroup> groups = codeReader.findGroups();
+		Map<String, List<CodeDto>> codes = codeReader.findCodes(groups.stream().map(CodeGroup::getGroupCode)
 			.toList()).stream()
 			.map(CodeDto::from)
 			.collect(Collectors.groupingBy(CodeDto::groupCode));
 		return groups.stream()
 			.map(group -> new CodeGroupTreeDto(CodeGroupDto.from(group),
-				codes.getOrDefault(group.groupCode(), List.of())))
+				codes.getOrDefault(group.getGroupCode(), List.of())))
 			.toList();
 	}
 
 	/**
+	 * moa: 관리자가 일반 그룹을 만든다 (FR-004)
+	 *
+	 * @throws ServiceException 지우지 않은 그룹(시스템 그룹 포함)과 그룹 코드가 겹치면 R002
+	 */
+	public CodeGroupDto createGroup(String groupCode, String name, @Nullable String description,
+		@Nullable String usedBy) {
+		if (codeReader.existsGroup(groupCode)) {
+			throw new ServiceException(ErrorCode.DUPLICATE_RESOURCE, "이미 있는 그룹 코드입니다: " + groupCode);
+		}
+		return CodeGroupDto.from(codeWriter.save(new CodeGroup(groupCode, name, description, usedBy)));
+	}
+
+	/**
+	 * moa: 그룹 이름·설명·쓰는 곳 (FR-004). 시스템 그룹도 고칠 수 있다
+	 *
+	 * @throws ServiceException 그룹이 없으면 R001
+	 */
+	public CodeGroupDto modifyGroup(String groupCode, String name, @Nullable String description,
+		@Nullable String usedBy) {
+		CodeGroup group = requireGroup(groupCode);
+		group.modify(name, description, usedBy);
+		return CodeGroupDto.from(group);
+	}
+
+	/**
+	 * moa: 그룹과 그 항목을 함께 지운다 (FR-004, US1-AC9)
+	 *
+	 * @throws ServiceException 그룹이 없으면 R001, 시스템 그룹이면 B001
+	 */
+	public void deleteGroup(String groupCode, Long actorId) {
+		CodeGroup group = requireGroup(groupCode);
+		if (group.isSystem()) {
+			throw new ServiceException(ErrorCode.INVALID_STATE, "기능이 쓰는 그룹이라 지울 수 없습니다: " + groupCode);
+		}
+		codeReader.findCodes(groupCode).forEach(code -> code.delete(actorId));
+		group.delete(actorId);
+	}
+
+	/**
 	 * @param includeDisabled 사용 안 함 코드도 넣을지 (관리 화면)
-	 * @throws ServiceException 등록된 그룹이 아니면 R001
+	 * @throws ServiceException 그룹이 없으면 R001
 	 */
 	public List<CodeDto> getCodes(String groupCode, boolean includeDisabled) {
 		requireGroup(groupCode);
@@ -69,7 +108,7 @@ public class CodeService {
 	/**
 	 * moa: 코드를 비우면 그룹 안의 자동 순번(지운 것까지 센 숫자 코드 + 1, 세 자리 이상), 순서를 비우면 그룹 맨 뒤 (FR-006, R6)
 	 *
-	 * @throws ServiceException 등록된 그룹이 아니면 R001, 그룹 안에 같은 코드가 있으면 R002
+	 * @throws ServiceException 그룹이 없으면 R001, 그룹 안에 같은 코드가 있으면 R002
 	 */
 	public CodeDto createCode(String groupCode, @Nullable String code, String name, @Nullable Integer sortOrder) {
 		requireGroup(groupCode);
@@ -105,7 +144,7 @@ public class CodeService {
 	 * moa: 한 그룹 안의 여러 항목을 한 번에 켜고 끈다 (FR-005). 하나라도 없으면 아무것도 바꾸지 않는다
 	 * (호출하는 Application의 트랜잭션이 롤백한다).
 	 *
-	 * @throws ServiceException 등록된 그룹이 아니거나 그룹에 없는 코드 R001
+	 * @throws ServiceException 그룹이 없거나 그룹에 없는 코드 R001
 	 */
 	public void setEnabled(String groupCode, Collection<String> codes, boolean enabled) {
 		requireAll(groupCode, codes).forEach(code -> code.changeEnabled(enabled));
@@ -114,7 +153,7 @@ public class CodeService {
 	/**
 	 * moa: 한 그룹 안의 여러 항목을 한 번에 지운다 (FR-005). 하나라도 없으면 아무것도 지우지 않는다
 	 *
-	 * @throws ServiceException 등록된 그룹이 아니거나 그룹에 없는 코드 R001
+	 * @throws ServiceException 그룹이 없거나 그룹에 없는 코드 R001
 	 */
 	public void deleteAll(String groupCode, Collection<String> codes, Long actorId) {
 		requireAll(groupCode, codes).forEach(code -> code.delete(actorId));
@@ -123,7 +162,7 @@ public class CodeService {
 	/**
 	 * moa: 한 그룹 안의 순서를 한 번에 바꾼다 (FR-005). 다른 그룹의 코드가 섞이면 아무것도 바꾸지 않는다
 	 *
-	 * @throws ServiceException 등록된 그룹이 아니거나 그룹에 없는 코드 R001
+	 * @throws ServiceException 그룹이 없거나 그룹에 없는 코드 R001
 	 */
 	public void reorder(String groupCode, List<CodeOrderDto> orders) {
 		Map<String, Code> codes = requireAll(groupCode, orders.stream().map(CodeOrderDto::code).toList()).stream()
@@ -131,10 +170,8 @@ public class CodeService {
 		orders.forEach(order -> codes.get(order.code()).changeSortOrder(order.sortOrder()));
 	}
 
-	private void requireGroup(String groupCode) {
-		if (!codeGroupRegistry.contains(groupCode)) {
-			throw new ServiceException(ErrorCode.NOT_FOUND);
-		}
+	private CodeGroup requireGroup(String groupCode) {
+		return codeReader.findGroup(groupCode).orElseThrow(() -> new ServiceException(ErrorCode.NOT_FOUND));
 	}
 
 	private Code requireCode(String groupCode, String code) {

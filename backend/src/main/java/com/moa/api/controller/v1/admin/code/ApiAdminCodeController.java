@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.moa.api.application.v1.code.CodeApplication;
 import com.moa.api.controller.v1.admin.code.request.CodeCreateRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeEnabledRequest;
+import com.moa.api.controller.v1.admin.code.request.CodeGroupCreateRequest;
+import com.moa.api.controller.v1.admin.code.request.CodeGroupModifyRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeModifyRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeOrderRequest;
 import com.moa.api.controller.v1.admin.code.request.CodesRequest;
@@ -49,9 +51,29 @@ public class ApiAdminCodeController {
 		return ResponseEntity.ok(codeApplication.getGroups().stream().map(CodeGroupListResponse::from).toList());
 	}
 
-	// moa: 그룹은 코드에 등록한다 (specs/004-admin-codes FR-004). 그룹 만들기 API는 없앴다
+	@Operation(summary = "코드 그룹 만들기",
+		description = "moa: 일반 그룹(system=false)으로 만든다. 그룹 코드가 겹치면 R002 (specs/004-admin-codes FR-004)")
+	@PostMapping("/code-groups")
+	public ResponseEntity<CodeGroupListResponse> createGroup(@Valid @RequestBody CodeGroupCreateRequest request) {
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(CodeGroupListResponse.from(codeApplication.createGroup(request.toCommand())));
+	}
 
-	@Operation(summary = "moa: 공통코드 트리", description = "등록된 그룹마다 항목(사용 안 함 포함, 정렬 순서대로)")
+	@Operation(summary = "moa: 코드 그룹 바꾸기", description = "이름, 설명, 쓰는 곳. 그룹 코드와 시스템 여부는 바꾸지 않는다")
+	@PutMapping("/code-groups/{groupCode}")
+	public ResponseEntity<CodeGroupListResponse> modifyGroup(@PathVariable String groupCode,
+		@Valid @RequestBody CodeGroupModifyRequest request) {
+		return ResponseEntity.ok(CodeGroupListResponse.from(codeApplication.modifyGroup(request.toCommand(groupCode))));
+	}
+
+	@Operation(summary = "moa: 코드 그룹 지우기", description = "그룹과 항목을 함께 소프트 삭제한다. 시스템 그룹은 B001 (FR-008)")
+	@DeleteMapping("/code-groups/{groupCode}")
+	public ResponseEntity<Void> deleteGroup(@PathVariable String groupCode) {
+		codeApplication.deleteGroup(groupCode);
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "moa: 공통코드 트리", description = "그룹마다(만든 순서) 항목(사용 안 함 포함, 정렬 순서대로)")
 	@GetMapping("/code-groups/tree")
 	public ResponseEntity<List<CodeGroupTreeResponse>> getTree() {
 		return ResponseEntity.ok(codeApplication.getTree().stream().map(CodeGroupTreeResponse::from).toList());

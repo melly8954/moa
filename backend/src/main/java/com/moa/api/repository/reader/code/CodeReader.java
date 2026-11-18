@@ -7,18 +7,34 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 import com.moa.api.entity.code.Code;
+import com.moa.api.entity.code.CodeGroup;
+import com.moa.api.repository.jpa.code.CodeGroupRepository;
 import com.moa.api.repository.jpa.code.CodeRepository;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * 공통코드 항목. 그룹은 DB가 아니라 코드에 등록한다 (moa, CodeGroupRegistry)
+ * 공통코드 그룹과 항목 (moa: 그룹은 DB의 code_groups, specs/004-admin-codes FR-004)
  */
 @Component
 @RequiredArgsConstructor
 public class CodeReader {
 
+	private final CodeGroupRepository codeGroupRepository;
 	private final CodeRepository codeRepository;
+
+	/** moa: 만든 순서 */
+	public List<CodeGroup> findGroups() {
+		return codeGroupRepository.findAllByOrderByIdAsc();
+	}
+
+	public Optional<CodeGroup> findGroup(String groupCode) {
+		return codeGroupRepository.findByGroupCode(groupCode);
+	}
+
+	public boolean existsGroup(String groupCode) {
+		return codeGroupRepository.existsByGroupCode(groupCode);
+	}
 
 	public boolean existsCode(String groupCode, String code) {
 		return codeRepository.existsByGroupCodeAndCode(groupCode, code);
