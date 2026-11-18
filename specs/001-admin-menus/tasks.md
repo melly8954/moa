@@ -224,16 +224,16 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 **프론트**
 
-- [ ] T077 frontend/src/components/shell/에 묶음 펴짐 상태 훅(예: `use-open-menus.ts`: `localStorage` `moa:sidebar-open-menus`, `useSyncExternalStore`, try/catch, 같은 탭 리스너 + `storage` 이벤트)을 만든다 (R24)
-- [ ] T078 frontend/src/components/shell/sidebar-shell.tsx: 묶음 행을 토글로(`aria-expanded`·`aria-controls`·오른쪽 `ChevronRight` `rotate-90`), 펴짐 = 저장값 ?? 지금 화면이 그 안인가, 화면이 바뀌면 지금 화면 묶음에 저장값이 없을 때 `true`로 적는다, 접힌 하위 목록은 그리지 않는다. 아이콘만 남게 접혔을 때 묶음을 누르면 사이드바를 펼치고 그 묶음을 편다. 머리 `border-b`, 바닥 `border-t`, 앱 이름 `font-semibold`. "키트로 옮길 것" 주석을 단다 (R24)
+- [X] T077 frontend/src/components/shell/에 묶음 펴짐 상태 훅(예: `use-open-menus.ts`: `localStorage` `moa:sidebar-open-menus`, `useSyncExternalStore`, try/catch, 같은 탭 리스너 + `storage` 이벤트)을 만든다 (R24)
+- [X] T078 frontend/src/components/shell/sidebar-shell.tsx: 묶음 행을 토글로(`aria-expanded`·`aria-controls`·오른쪽 `ChevronRight` `rotate-90`), 펴짐 = 저장값 ?? 지금 화면이 그 안인가, 화면이 바뀌면 지금 화면 묶음에 저장값이 없을 때 `true`로 적는다, 접힌 하위 목록은 그리지 않는다. 아이콘만 남게 접혔을 때 묶음을 누르면 사이드바를 펼치고 그 묶음을 편다. 머리 `border-b`, 바닥 `border-t`, 앱 이름 `font-semibold`. "키트로 옮길 것" 주석을 단다 (R24)
 
 **테스트**
 
-- [ ] T079 frontend/e2e/menu.spec.ts: US1-AC1을 묶음 펴짐 규칙대로 고치고(원칙 V), US1-AC4~AC8(펴기·접기 새로 고침 유지, 저장소 없이 하위 주소로 들어가면 그 묶음만 펴짐, 직접 접은 것이 먼저, 아이콘 모드 묶음 누르기, 다른 묶음 화면으로 옮겨도 지나온 묶음이 펴진 채)을 더한다. 사이드바 하위 링크를 세던 US1-AC3·frontend/e2e/notifications.spec.ts 등은 펴짐 규칙대로 고친다
+- [X] T079 frontend/e2e/menu.spec.ts: US1-AC1을 묶음 펴짐 규칙대로 고치고(원칙 V), US1-AC4~AC8(펴기·접기 새로 고침 유지, 저장소 없이 하위 주소로 들어가면 그 묶음만 펴짐, 직접 접은 것이 먼저, 아이콘 모드 묶음 누르기, 다른 묶음 화면으로 옮겨도 지나온 묶음이 펴진 채)을 더한다. 사이드바 하위 링크를 세던 US1-AC3·frontend/e2e/notifications.spec.ts 등은 펴짐 규칙대로 고친다
 
 **마무리**
 
-- [ ] T080 frontend/에서 `npm run format`, `npm run check`. e2e는 PR CI로 본다
+- [X] T080 frontend/에서 `npm run format`, `npm run check`. e2e는 PR CI로 본다
 - [ ] T081 specs/001-admin-menus/quickstart.md "화면 확인" 2번에 묶음 펴기·접기(새로 고침 유지, 아이콘 모드)를 더하고 사람이 확인한다
 
 ---
