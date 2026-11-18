@@ -218,10 +218,31 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 ---
 
+## Phase 12: 사이드바 묶음 펴기·접기 (2026-11-18 FR-005 변경, US1-AC4~AC7)
+
+**Purpose**: 묶음 메뉴를 펴고 접고, 상태를 브라우저에 기억하고, 사이드바 영역 사이에 선을 둔다 (research.md R24). 프론트만 고친다. 구현 브랜치는 `feat/001-sidebar-accordion`
+
+**프론트**
+
+- [ ] T077 frontend/src/components/shell/에 묶음 펴짐 상태 훅(예: `use-open-menus.ts`: `localStorage` `moa:sidebar-open-menus`, `useSyncExternalStore`, try/catch, 같은 탭 리스너 + `storage` 이벤트)을 만든다 (R24)
+- [ ] T078 frontend/src/components/shell/sidebar-shell.tsx: 묶음 행을 토글로(`aria-expanded`·`aria-controls`·오른쪽 `ChevronRight` `rotate-90`), 펴짐 = 저장값 ?? 지금 화면이 그 안인가, 접힌 하위 목록은 그리지 않는다. 아이콘만 남게 접혔을 때 묶음을 누르면 사이드바를 펼치고 그 묶음을 편다. 머리 `border-b`, 바닥 `border-t`, 앱 이름 `font-semibold`. "키트로 옮길 것" 주석을 단다 (R24)
+
+**테스트**
+
+- [ ] T079 frontend/e2e/menu.spec.ts: US1-AC1을 묶음 펴짐 규칙대로 고치고(원칙 V), US1-AC4~AC7(펴기·접기 새로 고침 유지, 저장소 없이 하위 주소로 들어가면 그 묶음만 펴짐, 직접 접은 것이 먼저, 아이콘 모드 묶음 누르기)을 더한다. 사이드바 하위 링크를 세던 US1-AC3·frontend/e2e/notifications.spec.ts 등은 펴짐 규칙대로 고친다
+
+**마무리**
+
+- [ ] T080 frontend/에서 `npm run format`, `npm run check`. e2e는 PR CI로 본다
+- [ ] T081 specs/001-admin-menus/quickstart.md "화면 확인" 2번에 묶음 펴기·접기(새로 고침 유지, 아이콘 모드)를 더하고 사람이 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 → T002 → US1(T003, T004)·US2(T005~T007) → T008 → T009, T010
 - T011 → T012 → T013, T014 → T015 → T016
+- Phase 12: T077 → T078 → T079 → T080 → T081
 - Phase 11: T068 → T069 → T070 → T071 → T072, T073 → T074 → T075 → T076. 002·003·004의 관리 화면 정리가 T071(드로어·머리 안내)에 기댄다
 - Phase 10: T052 → T053 → T054 → T055 → T056, T057 → T058 → T059, T060 → T061 → T062, T063 → T064 → T065 → T066, T067. 프론트 타입(T061)은 API 모양(T056·T057)이 정해지면 백엔드 테스트와 나란히 해도 된다. `003-admin-roles` Phase 5가 이 Phase에 기댄다
 - Phase 9: T048 → T049 → T050 → T051
