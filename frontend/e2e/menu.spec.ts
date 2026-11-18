@@ -175,12 +175,13 @@ const menuGroup = (page: Page, name: string) =>
   page.getByRole("navigation", { name: "메뉴" }).getByRole("button", { name, exact: true })
 const OPS_NAMES = SIX_ADMIN_MENUS[0].children.map((m) => m.name)
 
-// 관리 화면의 목록 API는 비운다 (사이드바만 본다)
+// 관리 화면의 API는 비운다 (사이드바만 본다). 공통코드는 목록이 아니라 그룹 트리(배열)를 받는다
 async function adminShell(page: Page) {
   await signedIn(page, { menus: SIX_ADMIN_MENUS })
   await page.route("**/api/v1/admin/**", (route) =>
     route.fulfill({ json: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 } }),
   )
+  await page.route("**/api/v1/admin/code-groups/tree", (route) => route.fulfill({ json: [] }))
 }
 
 test("US1-AC1 관리자는 로그인하면 첫 관리 메뉴 화면이 열리고 사이드바에 운영·설정 묶음 아래 관리 메뉴 6개만 있다 @wide", async ({
