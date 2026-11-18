@@ -70,7 +70,7 @@ description: "파티 (party) 작업 목록"
   - spec.md FR-002 표의 그룹 12개(`GAME`, `LOL_MODE`, `LOL_POSITION`, `LOL_TIER`, `OVERWATCH_MODE`, `OVERWATCH_POSITION`, `OVERWATCH_TIER`, `VALORANT_MODE`, `VALORANT_POSITION`, `VALORANT_TIER`, `PUBG_MODE`, `PUBG_TIER`)와 코드를 `code_groups`, `codes`에 id를 고정해 INSERT한다
   - `created_by`·`updated_by`는 1이고, 정렬 순서는 표의 순서다. 티어는 낮은 것부터 10, 20, 30…으로 매긴다
   - 컬럼은 `V1_4__codes.sql`을 따른다
-  - 004의 "그룹은 코드에 등록" 변경이 먼저 들어왔으면 그 방식을 따른다 (research.md R7 "004와 맞출 것")
+  - 그룹은 `system` = true(시스템 그룹)로 넣는다. `code_groups`와 `system` 열은 004 그룹 관리(004 tasks.md Phase 6)가 만든다 (research.md R7 "004와 맞출 것")
 
 ---
 

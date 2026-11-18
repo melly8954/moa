@@ -21,7 +21,7 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 시스템 | 관리 메뉴 구성과 접근 제한, 관리 셸·사용자 셸 | 키트 menu | `001-admin-menus` | 구현됨 |
 | 회원 | 첫 관리자, 운영자 계정 | 키트 user-admin, 골격 부트스트랩 | `002-admin-users` | 구현됨 |
 | 시스템 | 운영자 역할 | 키트 rbac | `003-admin-roles` | 구현됨 |
-| 시스템 | 공통코드 | 키트 code | `004-admin-codes` | 구현됨 |
+| 시스템 | 공통코드 | 키트 code | `004-admin-codes` | 구현됨. 그룹 관리(관리자가 그룹 추가·수정·삭제, 시스템 그룹 잠금, 2026-11-18)는 구현 전 |
 | 시스템 | 접속 이력 | 키트 login-history | `005-admin-login-history` | 구현됨 |
 | 공지 | 공지사항 (관리 화면과 사용자 목록·상세) | moa | `006-notices` | 구현됨 |
 | 알림 | 알림 (실시간 전달, 개인 알림함, 브라우저 알림) | moa, 키트 websocket | `007-notifications` | 구현됨. 개인 알림을 보내는 기능은 각 기능이 `NotificationApplication.notify`로 붙는다 |
