@@ -182,11 +182,12 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
   - e2e(`menu.spec.ts`): US5-AC1(행 단추 없음, 트리), US5-AC2(드로어), US5-AC3(키보드로 옮기기 → `/order` 요청), US5-AC4·AC5(일괄 줄), 프로그램 탭 없음, 머리 안내 링크, 좁은 폭 드로어가 화면 전체
   - 처음 구성이 바뀌므로 `AdminRolesAcceptanceTest` US1-AC1·US2-AC1, e2e `SIX_ADMIN_MENUS`를 묶음 모양으로 고친다 (원칙 V)
 
-## R24. 사이드바 묶음 펴기·접기 (FR-005, US1-AC4~AC7)
+## R24. 사이드바 묶음 펴기·접기 (FR-005, US1-AC4~AC8)
 
 - **Decision**: `components/shell/sidebar-shell.tsx`에서 묶음 메뉴(`children`이 있는 메뉴)의 하위 목록을 펴고 접는다
   - 상태: `localStorage` 키 `moa:sidebar-open-menus`에 `{ 메뉴key: boolean }`. 메뉴 key는 서버 메뉴 id(`menu-<id>`)라 이름을 바꿔도 유지된다
   - 펴짐 = `state[key] ?? isActive(묶음, pathname)`. 직접 펴거나 접은 값이 자동 펴기보다 먼저다
+  - 자동으로 펴진 묶음 기억: `pathname`이 바뀔 때(effect) 지금 화면이 있는 묶음에 저장값이 없으면 `true`를 저장소에 쓰고 구독자에게 알린다. React 상태를 effect에서 바꾸지 않으므로 lint에 걸리지 않는다. 다른 묶음 화면으로 옮겨도 지나온 묶음이 접히지 않는다 (US1-AC8)
   - 읽기는 `useSyncExternalStore(subscribe, read, () => "{}")`. 서버 렌더는 저장값 없이(자동 펴기만) 그리고 브라우저에서 맞춘다. effect 안 setState는 lint에 걸려 쓰지 않는다. 읽기·쓰기는 try/catch로 감싸 저장소를 못 쓰면 기억만 하지 않는다. 같은 탭 구독자에게는 리스너 집합으로, 다른 탭은 `storage` 이벤트로 알린다
   - 묶음 행(`SidebarMenuButton`, 링크 없음)이 토글이다: `aria-expanded`, `aria-controls`(하위 목록 id), 오른쪽 `ChevronRight`(펴지면 `rotate-90`). 접힌 하위 목록은 그리지 않는다(DOM에 없다)
   - 아이콘만 남게 접혔을 때(`state === "collapsed"`, 넓은 폭) 묶음을 누르면 `setOpen(true)`와 그 묶음 펴기를 함께 한다
@@ -194,5 +195,5 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
   - 새 문구 없음: 묶음 이름이 단추 이름이고 펴짐은 `aria-expanded`가 알린다
 - **Rationale**: 묶음 행은 링크가 아니라 할 일이 없었다. 행 전체를 토글로 쓰면 화살표 단추를 따로 두지 않아도 되고 누를 자리가 넓다
 - **Alternatives considered**: UI `Collapsible`로 감싸기(접힌 내용을 DOM에 남겨 상태 계산과 테스트 기대가 gongbu와 달라진다), 서버에 저장하기(기기마다 달라도 되는 화면 상태다)
-- **테스트**: e2e(`menu.spec.ts`) US1-AC4~AC7. 하위 링크 수를 세던 US1-AC1·US1-AC3, `notifications.spec.ts`의 사이드바 링크 기대는 펴짐 규칙대로 고친다 (원칙 V). 접힌 하위 링크는 0개를 기대한다
+- **테스트**: e2e(`menu.spec.ts`) US1-AC4~AC8. 하위 링크 수를 세던 US1-AC1·US1-AC3, `notifications.spec.ts`의 사이드바 링크 기대는 펴짐 규칙대로 고친다 (원칙 V). 접힌 하위 링크는 0개를 기대한다
 - **키트로 옮길 것**: 묶음 펴기·접기와 경계선
