@@ -40,10 +40,13 @@ export function AccountMenu({ trigger, showName = true }: { trigger: React.React
           <Settings />
           {t("settings")}
         </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href={PASSWORD_PATH} />}>
-          <KeyRound />
-          {t("changePassword")}
-        </DropdownMenuItem>
+        {/* moa: 비밀번호 없는 계정(소셜)에는 보이지 않는다 (specs/010-social-login US2-AC3) */}
+        {me?.hasPassword && (
+          <DropdownMenuItem render={<Link href={PASSWORD_PATH} />}>
+            <KeyRound />
+            {t("changePassword")}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={() => void signOut()}>
           <LogOut />
           {t("signOut")}

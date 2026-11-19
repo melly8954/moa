@@ -4,7 +4,10 @@ import { describe, expect, it, vi } from "vitest"
 import SignInPage from "@/app/(public)/sign-in/page"
 import { renderWithIntl } from "../intl"
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }) }))
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}))
 
 describe("로그인 화면", () => {
   it("비운 채 제출하면 칸마다 오류를 보이고 서버에 보내지 않는다", async () => {

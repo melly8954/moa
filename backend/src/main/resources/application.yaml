@@ -98,3 +98,16 @@ app:
     private-key: ${WEB_PUSH_PRIVATE_KEY:}
     # 푸시 서버가 연락할 운영자 주소 (mailto:...)
     subject: ${WEB_PUSH_SUBJECT:}
+---
+# moa: 소셜 로그인 (specs/010-social-login). 제공자 설정과 현재 약관 버전
+app:
+  oauth:
+    google:
+      # 셋 중 하나라도 비면 구글을 끈다 (단추 숨김, 시작·콜백 A008)
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}
+      redirect-uri: ${GOOGLE_REDIRECT_URI:}
+  terms:
+    # 가입 때 동의받는 약관 버전. 비밀 값이 아니다. 문안은 frontend/src/content/terms/에 버전마다 둔다 (잠정 draft, 배포 전 실제 버전으로)
+    service-version: draft
+    privacy-version: draft

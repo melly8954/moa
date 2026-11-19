@@ -7,6 +7,7 @@
 ## R1. 서버 경유 방식 (OAuth 2.0 인가 코드 + PKCE) — 2026-11-17 팀 결정
 
 - **결정**: 프론트는 백엔드 주소로 이동만 한다. 백엔드가 제공자(구글, 디스코드) 인가 화면으로 보내고, 제공자 콜백을 받아 인가 코드를 토큰으로 바꾼다. 제공자 토큰과 client secret은 백엔드에만 둔다. 콜백에서 회원을 찾거나 가입 대기로 보내고, 아이디·비밀번호 로그인과 같은 moa JWT·리프레시 쿠키를 발급한 뒤 프론트로 돌려보낸다. 계정 설정의 연결(FR-006)도 같은 흐름을 쓴다. 경로는 제공자를 경로 변수로 받는다(`/api/v1/auth/oauth/{provider}/…`). 콜백 경로는 공용 `SecurityConfig`를 고치지 않고 `PublicPaths` 빈으로 연다
+- **구현 때 바꿈 (2026-11-19)**: `PublicPaths` 빈 대신 OAuth·약관 컨트롤러 클래스에 `@PermitAll`을 붙여 연다. 이유: 콜백·가입도 컨트롤러 메서드이고 키트 `PublicPaths` 주석이 "컨트롤러 API는 `@PermitAll`"로 정한다. `@PermitAll`이면 감사 행위자도 시스템 계정이 된다(가입 때 `created_by`). `SecurityConfig`는 여전히 고치지 않는다
 - **이유**
   - 제공자 토큰·client secret이 브라우저에 나오지 않는다 (원칙 VI)
   - 로그인 결과가 기존 로그인과 같은 토큰 체계(`AuthTokenService.issue`, `RefreshTokenTransport`)로 끝나 로그아웃·갱신·접속 이력을 따로 만들지 않는다 (FR-012). `AuthTokenApplication` 주석도 "소셜 로그인은 인증 뒤 `issue`를 부른다"고 둔다
@@ -27,6 +28,7 @@
 - **디스코드**: OIDC가 아니다(ID 토큰 없음, nonce 없음). scope `identify email`, 인가 `https://discord.com/oauth2/authorize`, 토큰 `https://discord.com/api/oauth2/token`(client secret + PKCE verifier), 받은 액세스 토큰으로 `GET https://discord.com/api/users/@me`를 불러 `id`(subject), `email`, `verified`(이메일 인증), `global_name`(없으면 `username`)을 얻는다. 액세스 토큰은 이 호출에만 쓰고 저장하지 않는다
   - **확인 필요**: 디스코드의 PKCE 지원 여부를 구현 전에 확인한다 (tasks T002). 지원하지 않으면 PKCE 없이 state만 쓰는 것을 팀에 다시 묻는다 (팀 결정 "둘 다 PKCE"와 다르므로 임의로 바꾸지 않는다)
 - **헬퍼가 없을 때 (moa 직접)**: 같은 경계를 moa가 만든다. Spring `RestClient`, Jackson으로 새 의존성 없음. 나중에 헬퍼가 생기면 클라이언트를 바꾸고 키트로 옮긴다 (원칙 III)
+- **구현 때 바꿈 (2026-11-19)**: `SocialProvider`·`TermsType` enum은 data-model의 `api/entity/user`가 아니라 `common/security/oauth`·`common/terms`에 둔다. 이유: 아키텍처 규칙(`ArchitectureTest`)상 컨트롤러가 `api.entity`에 의존할 수 없고, 제공자 경계(`common`)의 `OAuthIdentity`·쿠키도 제공자 값을 써야 한다. 엔터티는 `common`의 enum을 쓴다
 
 ## R3. state·PKCE·nonce 보관 — 서명한 짧은 쿠키 (팀 확인 후 바뀔 수 있음)
 
@@ -61,6 +63,7 @@
   - 연결 시작(R6)과 콜백에서 이 계정이면 막는다 (A010)
   - 소셜 회원(외부 계정 연결이 하나라도 있는 회원, 제공자 상관없음)에게 `ADMIN`을 주는 `UserAdminService.changeRole`, 업무 역할을 주는 `RoleUserService`(`requireNotAdmin`·`requireTargets`)에서 막는다 (A011)
 - **이유**: 막는 지점을 기존 역할 변경 서비스 안에 두면 화면·API 어디서 오든 같은 규칙이다
+- **구현 때 바꿈 (2026-11-19)**: 관리자·운영자 판단(`isManagerAccount`)은 US5(연결)를 만들 때 둔다. 이유: US1~US3에서 쓰는 곳이 없고, 업무 역할은 role 도메인이라 아키텍처 규칙상 `service/user`의 `SocialAccountService`가 읽을 수 없다. US5 때 Application이 user·role 서비스를 조합하는 자리로 정한다. 소셜 회원에게 역할 주기 막기(US1-AC6)는 US1의 T026·T027에서 한다. T027의 업무 역할 막기는 `RoleUserService`(role 도메인)가 소셜 연결을 읽을 수 없어 `AccessRoleApplication`(`replaceRolesOfUser`는 역할을 줄 때만, `addMembers`)에서 `SocialAccountService.requireNoSocialMembers`를 부른다. 역할 빼기는 막지 않는다
 - **영향**: `002-admin-users` FR-007·`003-admin-roles`에 막는 규칙이 더해진다. 스펙 "나중에 고칠 곳"에 적어 두었고 이번에는 그 스펙을 고치지 않는다
 
 ## R8. 접속 이력 (FR-008)
@@ -126,10 +129,12 @@
   - 010 마이그레이션이 `user_profiles`를 최소형으로 만든다: `user_id` BIGINT PK, `nickname_key` VARCHAR(50) NOT NULL, `nickname_tag` CHAR(4) NOT NULL, `created_at`·`updated_at`, 유일 `uk_user_profiles_nickname_tag (nickname_key, nickname_tag)`. 009가 나머지 칸을 더한다 (data-model)
   - 같은 마이그레이션이 기존 회원을 채운다: 삭제되지 않은 모든 `users`에 행, `nickname_key` = `LOWER(TRIM(name))`, `nickname_tag` = `LPAD(ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(name)) ORDER BY id), 4, '0')`
   - 010 구현이 `NicknamePolicy`(규칙)와 `NicknameTags`(`assign(key)`, `keepOrAssign(newKey, currentTag)`)를 `api/service/user/`에 만든다. 009는 그대로 쓴다
+  - `NicknamePolicy`의 정규화 순서는 NFC 변환 → 앞뒤 공백 제거 → (키만) `toLowerCase(Locale.ROOT)`다. 분해형 한글(macOS 등에서 자모가 나뉘어 들어온 입력)이 완성형과 다른 키·다른 글자로 취급되어 같은 닉네임이 다른 태그 공간에 들어가거나 `^[가-힣…]` 검사에 걸리는 것을 막는다 (2026-11-19)
   - 가입(`signUp`)은 회원·외부 계정 연결·약관 동의와 같은 트랜잭션에서 `user_profiles` 행을 만든다. 태그는 `NicknameTags.assign`
   - 동시에 같은 태그를 고르면 `uk_user_profiles_nickname_tag` 위반이다. 가입 트랜잭션을 처음부터 다시 한다(최대 3번, 태그만 새로). 그래도면 B201. `(provider, subject)` 위반(같은 소셜 계정 동시 가입)은 다시 하지 않고 A012
   - 태그가 다 찬 닉네임은 409 `NICKNAME_TAGS_EXHAUSTED`(B201). 가입 대기 쿠키는 지우지 않아 닉네임 화면에서 다른 닉네임으로 다시 낸다 (US1-AC14)
   - 관리자 이름 바꾸기(`UserAdminService.rename`, 키트 user-admin, `002-admin-users` FR-007)가 `nickname_key`를 바꾸고 태그를 `keepOrAssign`으로 맞춘다. 010이 테이블을 만들고 같은 파일(소셜 회원 역할 막기, FR-007)을 이미 고치므로 010이 한다. 행이 없는 회원(키트 경로로 만든 계정)은 그대로 둔다
+    - **구현 때 바꿈 (2026-11-19)**: 행이 있는 회원은 이름 바꾸기에도 `NicknamePolicy` 검사를 한다(어긋나면 V001, 칸 `name`). 행이 없는 회원(관리자 등)은 키트 규칙만 따른다. 재시도는 두지 않고, 같은 닉네임으로 동시에 바뀌어 태그 유일 제약에 걸리면 R002(409, "다시 시도")로 돌려준다
   - 가입 응답·`/users/me`에 태그를 더하지 않는다. 태그를 보이는 화면(마이페이지 머리)은 009가 만든다
 - **이유**: 가입 때 닉네임이 처음 정해지므로 태그도 그때 정해야 `닉네임#태그`가 곧바로 고유하다. 010이 009보다 먼저 구현되므로 테이블과 규칙을 010이 만들고, 이름이 바뀌는 다른 길(관리자 이름 바꾸기)도 같은 때 맞춰야 키·태그가 어긋나지 않는다
 - **대안**: 009가 테이블을 만들고 010은 기다리기 — 010이 먼저 구현 중이라 가입 때 태그를 줄 수 없다. 키트 `users`에 태그 칸 — 키트 테이블을 바꾼다 (원칙 III)

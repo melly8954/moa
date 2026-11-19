@@ -10,6 +10,8 @@ export type Me = {
   role: Role
   // 임시 비밀번호를 받아 바꿔야 한다. true면 AuthGate가 비밀번호 변경 화면으로 보낸다
   passwordChangeRequired: boolean
+  // moa: false면 비밀번호 없는 계정(소셜). 계정 메뉴에 비밀번호 변경을 보이지 않는다 (specs/010-social-login US2-AC3)
+  hasPassword: boolean
 }
 
 export type MyPermissions = { permissions: string[] }
