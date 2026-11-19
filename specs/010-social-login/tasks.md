@@ -94,10 +94,10 @@ description: "소셜 로그인 (social-login) 작업 목록"
 
 **Independent Test**: quickstart 12·13 — 다시 로그인해도 회원 수가 그대로, 계정 메뉴에 비밀번호 변경이 없다
 
-- [ ] T034 [US2] SocialLoginApplication 콜백 LOGIN 분기: 연결된 회원이 있으면 잠김(`isLocked`)은 `/sign-in?oauthError=locked`(A007), 아니면 `AuthTokenApplication.issue` → `RefreshTokenTransport.write` → `/auth/oauth/done?next=…` (FR-003, US2-AC1·AC2, US5-AC2). 이미 연결된 회원의 로그인에는 가입 확인(T017)을 하지 않는다 — **US1에서 먼저 만듦**: 콜백의 연결된 회원 로그인·잠김(locked) 갈래 (SocialLoginApplication.logIn)
-- [ ] T035 [US2] [공용] `GET /api/v1/users/me` 응답(B/.../UserGetResponse.java)에 `hasPassword`(boolean)를 더한다 (contracts/users-me-and-screens.md). 구현 전에 바꿀 내용을 보고하고 승인받는다
-- [ ] T036 [P] [US2] frontend/src/types/user.ts `Me`에 `hasPassword`를 더한다
-- [ ] T037 [US2] [공용] frontend/src/components/shell/account-menu.tsx: `useMe()`의 `hasPassword`가 거짓이면 "비밀번호 변경" 항목을 숨긴다 (US2-AC3). 두 셸이 함께 쓰는 키트 셸 파일이다. 구현 전에 바꿀 내용을 보고하고 승인받는다
+- [x] T034 [US2] SocialLoginApplication 콜백 LOGIN 분기: 연결된 회원이 있으면 잠김(`isLocked`)은 `/sign-in?oauthError=locked`(A007), 아니면 `AuthTokenApplication.issue` → `RefreshTokenTransport.write` → `/auth/oauth/done?next=…` (FR-003, US2-AC1·AC2, US5-AC2). 이미 연결된 회원의 로그인에는 가입 확인(T017)을 하지 않는다 — **US1에서 먼저 만듦**: 콜백의 연결된 회원 로그인·잠김(locked) 갈래 (SocialLoginApplication.logIn)
+- [x] T035 [US2] [공용] `GET /api/v1/users/me` 응답(B/.../UserGetResponse.java)에 `hasPassword`(boolean)를 더한다 (contracts/users-me-and-screens.md). 구현 전에 바꿀 내용을 보고하고 승인받는다
+- [x] T036 [P] [US2] frontend/src/types/user.ts `Me`에 `hasPassword`를 더한다
+- [x] T037 [US2] [공용] frontend/src/components/shell/account-menu.tsx: `useMe()`의 `hasPassword`가 거짓이면 "비밀번호 변경" 항목을 숨긴다 (US2-AC3). 두 셸이 함께 쓰는 키트 셸 파일이다. 구현 전에 바꿀 내용을 보고하고 승인받는다
 
 **Checkpoint**: 가입한 소셜 회원이 다시 들어온다
 
@@ -109,9 +109,9 @@ description: "소셜 로그인 (social-login) 작업 목록"
 
 **Independent Test**: quickstart 1·21 — 설정이 없는 제공자의 단추만 없고, 취소하면 안내 없이 로그인 화면이다
 
-- [ ] T038 [US3] SocialLoginApplication: `error=access_denied`는 아무것도 하지 않고 LOGIN `/sign-in`·LINK `/settings`로, state 불일치·만료·제공자 불일치·교환·확인 실패는 LOGIN `/sign-in?oauthError=failed`·LINK `/settings?socialLink=failed&provider=…`로 보낸다. 쿠키가 없을 때 모드는 LOGIN으로 본다 (US3-AC1·AC2, contracts 콜백 표) — **US1에서 먼저 만듦**: LOGIN 쪽 취소·실패 이동 (LINK는 US5)
-- [ ] T039 [US3] 설정 없음: 제공자마다 `OAuthProperties`의 `enabled()`가 거짓이면 authorize·callback·link가 A008 또는 `/sign-in?oauthError=disabled` (US3-AC3). 한 제공자가 꺼져도 다른 제공자는 그대로 — **US1에서 먼저 만듦**: authorize·callback의 설정 없음 → oauthError=disabled (link는 US5)
-- [ ] T040 [US3] [공용] frontend/src/app/(public)/sign-in/page.tsx: `oauthError`(`failed`·`locked`·`disabled`·`emailUnverified`·`emailInUse`·`rejoinBlocked`)면 폼 위에 문구를 보이고, 쿼리가 없으면 아무것도 보이지 않는다. T028과 같은 키트 파일이고 문구는 T032의 ko.json 변경에 함께 넣는다. 구현 전에 바꿀 내용을 보고하고 승인받는다
+- [x] T038 [US3] SocialLoginApplication: `error=access_denied`는 아무것도 하지 않고 LOGIN `/sign-in`·LINK `/settings`로, state 불일치·만료·제공자 불일치·교환·확인 실패는 LOGIN `/sign-in?oauthError=failed`·LINK `/settings?socialLink=failed&provider=…`로 보낸다. 쿠키가 없을 때 모드는 LOGIN으로 본다 (US3-AC1·AC2, contracts 콜백 표) — **US1에서 먼저 만듦**: LOGIN 쪽 취소·실패 이동 (LINK는 US5) (LINK 쪽은 US5)
+- [x] T039 [US3] 설정 없음: 제공자마다 `OAuthProperties`의 `enabled()`가 거짓이면 authorize·callback·link가 A008 또는 `/sign-in?oauthError=disabled` (US3-AC3). 한 제공자가 꺼져도 다른 제공자는 그대로 — **US1에서 먼저 만듦**: authorize·callback의 설정 없음 → oauthError=disabled (link는 US5) (link는 US5)
+- [x] T040 [US3] [공용] frontend/src/app/(public)/sign-in/page.tsx: `oauthError`(`failed`·`locked`·`disabled`·`emailUnverified`·`emailInUse`·`rejoinBlocked`)면 폼 위에 문구를 보이고, 쿼리가 없으면 아무것도 보이지 않는다. T028과 같은 키트 파일이고 문구는 T032의 ko.json 변경에 함께 넣는다. 구현 전에 바꿀 내용을 보고하고 승인받는다 — **이번 구현**: 새 components/auth/oauth-error-alert.tsx(useSearchParams)를 <Suspense>로 감싸 넣음. rejoinBlocked는 FR-015 미룸이라 뺌
 
 **Checkpoint**: 실패하거나 막혀도 원인을 알 수 있다
 

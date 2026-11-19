@@ -4,10 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
+import { OAuthErrorAlert } from "@/components/auth/oauth-error-alert"
 import { fetchLandingPath } from "@/components/shell/landing"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -74,6 +75,10 @@ export default function SignInPage() {
       <CardContent>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
+            {/* moa: 소셜 로그인 실패 안내 (?oauthError=, specs/010-social-login US3) */}
+            <Suspense fallback={null}>
+              <OAuthErrorAlert />
+            </Suspense>
             {formError && (
               <Alert variant="destructive">
                 <AlertDescription>{formError}</AlertDescription>
