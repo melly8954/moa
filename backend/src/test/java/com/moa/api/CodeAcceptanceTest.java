@@ -2,6 +2,7 @@ package com.moa.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -9,17 +10,20 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import com.moa.support.AcceptanceTest;
-import com.moa.support.TestCodeGroups;
 
 /**
- * 공통코드 (선택 헬퍼 code). moa: 그룹은 코드에 등록하므로 그룹 만들기 대신 시험 그룹(TestCodeGroups)을 쓴다
- * (specs/004-admin-codes research R8)
+ * 공통코드 (선택 헬퍼 code). 그룹을 API로 만들고 시작한다 (moa: specs/004-admin-codes research R10)
  */
 class CodeAcceptanceTest extends AcceptanceTest {
 
 	private static final String GROUPS = "/api/v1/admin/code-groups";
-	private static final String GROUP = TestCodeGroups.GENRE;
+	private static final String GROUP = "ORDER_STATUS";
 	private static final String ADMIN_CODES = GROUPS + "/" + GROUP + "/codes";
+
+	@BeforeEach
+	void createGroup() {
+		assertThat(post(GROUPS, "{\"groupCode\":\"" + GROUP + "\",\"name\":\"주문 상태\"}")).hasStatus(201);
+	}
 
 	@Test
 	@DisplayName("공통코드: 사용자는 사용하는 코드만 정렬 순서대로 본다. includeDisabled면 사용 안 함도, 지운 코드는 빼고")

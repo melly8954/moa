@@ -3,7 +3,7 @@ import { signedIn } from "./support/api"
 import { expectNoHorizontalOverflow, expectNoSeriousA11yViolations } from "./support/layout"
 
 // 공통코드 (code 헬퍼). 백엔드 대신 API를 가로챈다
-// moa: 그룹은 코드에 등록하고 화면은 그룹 > 항목 트리 표다 (specs/004-admin-codes FR-004~FR-007, US1, research R8)
+// moa: 화면은 그룹 > 항목 트리 표다. 그룹도 관리자가 다루고 시스템 그룹은 지울 수 없다 (specs/004-admin-codes FR-004~FR-008, US1, research R10)
 
 const TREE = [
   {
@@ -11,6 +11,7 @@ const TREE = [
     name: "게임 장르",
     description: null,
     usedBy: "게임 등록 화면",
+    system: true,
     codes: [
       { code: "001", name: "FPS", sortOrder: 0, enabled: true },
       { code: "002", name: "RPG", sortOrder: 1, enabled: true },
@@ -21,16 +22,42 @@ const TREE = [
     groupCode: "REPORT_REASON",
     name: "신고 사유",
     description: null,
-    usedBy: "신고 화면",
+    usedBy: null,
+    system: false,
     codes: [{ code: "001", name: "욕설", sortOrder: 0, enabled: true }],
   },
 ]
 
-type Sent = { create?: unknown; modify?: unknown; order?: unknown; enabled?: unknown; bulkDelete?: unknown }
+type Sent = {
+  create?: unknown
+  modify?: unknown
+  order?: unknown
+  enabled?: unknown
+  bulkDelete?: unknown
+  createGroup?: unknown
+  modifyGroup?: unknown
+  removeGroup?: string
+}
 
 async function mockCodes(page: Page, sent: Sent = {}, tree: unknown[] = TREE) {
   await signedIn(page, { permissions: ["CODE_MANAGE"] })
   await page.route("**/api/v1/admin/code-groups/tree", (route) => route.fulfill({ json: tree }))
+  await page.route("**/api/v1/admin/code-groups", (route) => {
+    sent.createGroup = route.request().postDataJSON()
+    const body = sent.createGroup as { groupCode: string; name: string }
+    return body.groupCode === "GAME_GENRE"
+      ? route.fulfill({ status: 409, json: { code: "R002", message: "", timestamp: "", path: "" } })
+      : route.fulfill({ status: 201, json: { ...body, system: false } })
+  })
+  for (const groupCode of ["GAME_GENRE", "REPORT_REASON"])
+    await page.route(`**/api/v1/admin/code-groups/${groupCode}`, (route) => {
+      if (route.request().method() === "DELETE") {
+        sent.removeGroup = groupCode
+        return route.fulfill({ status: 204 })
+      }
+      sent.modifyGroup = route.request().postDataJSON()
+      return route.fulfill({ json: { groupCode, ...(sent.modifyGroup as object), system: groupCode === "GAME_GENRE" } })
+    })
   await page.route("**/api/v1/admin/code-groups/*/codes", (route) => {
     sent.create = route.request().postDataJSON()
     const body = sent.create as { code?: string; name: string }
@@ -64,17 +91,18 @@ test("공통코드: 가로 넘침·접근성", async ({ page }) => {
   await expectNoSeriousA11yViolations(page)
 })
 
-test("US1-AC1 그룹 행 아래 항목이 들여쓰기된 트리 표이고, 그룹을 더하는 단추는 없다 (FR-007 머리 안내)", async ({
+test("US1-AC1 그룹 행 아래 항목이 들여쓰기된 트리 표이고, 시스템 그룹은 잠금 표시, 머리에 그룹 추가가 있다 (FR-007 머리 안내)", async ({
   page,
 }) => {
   await mockCodes(page)
   await page.goto("/admin/codes")
   await expect(page.getByRole("heading", { name: "공통코드" })).toBeVisible()
-  await expect(page.getByText("그룹은 그 값을 쓰는 기능이 등록해요.")).toBeVisible()
+  await expect(page.getByText("잠금 표시가 있는 그룹은 기능이 쓰고 있어 지울 수 없어요.")).toBeVisible()
   await expect(page.getByText("GAME_GENRE")).toBeVisible()
   await expect(page.getByText("쓰는 곳: 게임 등록 화면")).toBeVisible()
   await expect(page.getByRole("row", { name: /퍼즐/ })).toContainText("사용 안 함")
-  await expect(page.getByRole("button", { name: /그룹 추가/ })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "그룹 추가" })).toBeVisible()
+  await expect(page.getByRole("img", { name: "시스템 그룹" })).toHaveCount(1)
   await expect(page.getByRole("checkbox", { name: "게임 장르 고르기" })).toHaveCount(0)
 
   // 그룹 행은 접고 편다
@@ -178,8 +206,68 @@ test("US1-AC5 키보드로 항목을 옮기면 그 그룹의 순서를 한 번�
     ])
 })
 
-test("US1-AC6 등록된 그룹이 없으면 그룹을 등록하는 곳을 안내한다", async ({ page }) => {
+test("US1-AC6 그룹이 없으면 그룹 추가로 첫 그룹을 만들라고 안내한다", async ({ page }) => {
   await mockCodes(page, {}, [])
   await page.goto("/admin/codes")
-  await expect(page.getByText("공통코드를 쓰는 기능이 생기면 그 기능이 그룹을 등록해요.")).toBeVisible()
+  await expect(page.getByText("그룹이 없어요. 그룹 추가로 첫 그룹을 만들어요.")).toBeVisible()
+  await expect(page.getByRole("button", { name: "그룹 추가" })).toBeVisible()
+})
+
+test("US1-AC7 그룹 추가 드로어에서 그룹 코드와 이름을 보낸다. 형식이 틀리거나 겹치면 그룹 코드 칸에 알린다", async ({
+  page,
+}) => {
+  const sent: Sent = {}
+  await mockCodes(page, sent)
+  await page.goto("/admin/codes")
+  await page.getByRole("button", { name: "그룹 추가" }).click()
+  const drawer = page.getByRole("dialog")
+  await drawer.getByLabel("그룹 코드").fill("event")
+  await drawer.getByLabel("이름").fill("이벤트 분류")
+  await drawer.getByRole("button", { name: "저장" }).click()
+  await expect(drawer.getByText("영문 대문자로 시작하고 대문자·숫자·밑줄(_)만 써 주세요.")).toBeVisible()
+  await expectNoSeriousA11yViolations(page)
+
+  await drawer.getByLabel("그룹 코드").fill("GAME_GENRE")
+  await drawer.getByRole("button", { name: "저장" }).click()
+  await expect(drawer.getByText("이미 있는 그룹 코드예요.")).toBeVisible()
+
+  await drawer.getByLabel("그룹 코드").fill("EVENT_TYPE")
+  await drawer.getByRole("button", { name: "저장" }).click()
+  await expect.poll(() => sent.createGroup).toEqual({ groupCode: "EVENT_TYPE", name: "이벤트 분류" })
+  await expect(drawer).toBeHidden()
+})
+
+test("US1-AC8 그룹 이름을 누르면 드로어에서 이름·설명·쓰는 곳을 고치고 그룹 코드는 보기만 한다", async ({ page }) => {
+  const sent: Sent = {}
+  await mockCodes(page, sent)
+  await page.goto("/admin/codes")
+  await page.getByRole("button", { name: "신고 사유 그룹 수정" }).click()
+  const drawer = page.getByRole("dialog")
+  await expect(drawer.getByLabel("그룹 코드")).toHaveValue("REPORT_REASON")
+  await expect(drawer.getByLabel("그룹 코드")).toHaveAttribute("readonly", "")
+  await drawer.getByLabel("이름").fill("신고 이유")
+  await drawer.getByLabel("쓰는 곳").fill("신고 화면")
+  await drawer.getByRole("button", { name: "저장" }).click()
+  await expect.poll(() => sent.modifyGroup).toEqual({ name: "신고 이유", usedBy: "신고 화면" })
+})
+
+test("US1-AC9 일반 그룹은 드로어에서 지우고, 확인 창에 함께 지울 항목 수를 보인다", async ({ page }) => {
+  const sent: Sent = {}
+  await mockCodes(page, sent)
+  await page.goto("/admin/codes")
+  await page.getByRole("button", { name: "신고 사유 그룹 수정" }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "그룹 삭제" }).click()
+  const ask = page.getByRole("alertdialog", { name: "신고 사유 그룹을 지울까요?" })
+  await expect(ask.getByText("항목 1개도 함께 지워요.", { exact: false })).toBeVisible()
+  await ask.getByRole("button", { name: "삭제" }).click()
+  await expect.poll(() => sent.removeGroup).toBe("REPORT_REASON")
+})
+
+test("US1-AC10 시스템 그룹 드로어에는 그룹 삭제가 없고 지울 수 없다고 안내한다", async ({ page }) => {
+  await mockCodes(page)
+  await page.goto("/admin/codes")
+  await page.getByRole("button", { name: "게임 장르 그룹 수정" }).click()
+  const drawer = page.getByRole("dialog")
+  await expect(drawer.getByText("기능이 쓰는 그룹이라 지울 수 없어요.")).toBeVisible()
+  await expect(drawer.getByRole("button", { name: "그룹 삭제" })).toHaveCount(0)
 })

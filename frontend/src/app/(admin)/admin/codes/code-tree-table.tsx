@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { ChevronDown, ChevronRight, Plus } from "lucide-react"
+import { ChevronDown, ChevronRight, Lock, Plus } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Fragment, useState } from "react"
 import { DragHandle } from "@/components/kit/drag-handle"
@@ -29,7 +29,7 @@ import type { Code, CodeGroupTree } from "@/types/code"
 
 // 공통코드 트리 표 (moa, specs/004-admin-codes FR-005, US1, research R7). 메뉴 관리 트리 표와 같은 틀이다
 //   구성 목록이라 쪽 나눔 없이 전체를 그린다. 그룹 행 아래에 그 그룹의 항목을 들여 쓴다
-//   그룹 행: 접고 펴기, 이름·그룹 코드·쓰는 곳. 체크 칸은 없다 (그룹은 코드에 등록한다)
+//   그룹 행: 접고 펴기, 이름(누르면 그룹 드로어)·그룹 코드·쓰는 곳, 시스템 그룹은 잠금 표시 (FR-004·FR-008). 체크 칸은 없다
 //   항목 행: 체크박스(일괄 처리), 손잡이(같은 그룹 안 순서), 이름(누르면 드로어), 코드, 사용
 //   그룹마다 맨 아래에 "항목 추가" 줄
 
@@ -45,6 +45,7 @@ export function CodeTreeTable({
   selected,
   onSelectedChange,
   onOpen,
+  onOpenGroup,
   onAdd,
   onDrop,
   disabled,
@@ -53,6 +54,7 @@ export function CodeTreeTable({
   selected: string[]
   onSelectedChange: (selected: string[]) => void
   onOpen: (group: CodeGroupTree, code: Code) => void
+  onOpenGroup: (group: CodeGroupTree) => void
   onAdd: (group: CodeGroupTree) => void
   // 다른 그룹 위에 놓으면 activeKey와 overKey의 그룹이 다르다. 부르는 쪽이 안내한다
   onDrop: (activeKey: string, overKey: string) => void
@@ -119,18 +121,32 @@ export function CodeTreeTable({
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
                     <TableCell colSpan={5}>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <button
-                          type="button"
-                          className="flex items-center gap-1 font-medium"
-                          aria-expanded={open}
-                          aria-label={t(open ? "collapse" : "expand", { name: group.name })}
-                          onClick={() => toggleGroup(group.groupCode)}
-                        >
-                          <Chevron aria-hidden="true" className="size-4" />
-                          {group.name}
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            className="rounded-sm"
+                            aria-expanded={open}
+                            aria-label={t(open ? "collapse" : "expand", { name: group.name })}
+                            onClick={() => toggleGroup(group.groupCode)}
+                          >
+                            <Chevron aria-hidden="true" className="size-4" />
+                          </button>
+                          <button
+                            type="button"
+                            className="text-left font-medium underline-offset-4 hover:underline"
+                            aria-label={t("editGroupOf", { name: group.name })}
+                            onClick={() => onOpenGroup(group)}
+                          >
+                            {group.name}
+                          </button>
+                          {group.system && (
+                            <Lock aria-label={t("system")} role="img" className="size-3.5 text-muted-foreground" />
+                          )}
+                        </div>
                         <span className="font-mono text-xs">{group.groupCode}</span>
-                        <span className="text-xs text-muted-foreground">{t("usedBy", { usedBy: group.usedBy })}</span>
+                        {group.usedBy && (
+                          <span className="text-xs text-muted-foreground">{t("usedBy", { usedBy: group.usedBy })}</span>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
