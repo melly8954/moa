@@ -14,7 +14,7 @@
 
 **Primary Dependencies**: 기존 Spring Data JPA·Flyway·Bean Validation, 키트 code 헬퍼(공통코드 조회 `GET /api/v1/codes/{groupCode}`). 새 의존성 없음. 프론트는 기존 api 클라이언트, react-hook-form·zod, TanStack Query(`useMe`), next-intl 문구, 공통코드 훅(`lib/codes.ts`)
 
-**Storage**: MariaDB. 새 테이블 3개 `user_profiles`(닉네임 정규화 칸 `nickname_key` 유일), `user_profile_play_times`, `user_game_profiles`와 기존 회원 프로필 행 채우기 (`V2_9__user_profiles.sql`), 공통코드 시드 `PLAY_TIME` (`V2_9_1__play_time_codes.sql`). 키트 `users`는 구조를 바꾸지 않는다
+**Storage**: MariaDB. 새 테이블 3개 `user_profiles`(닉네임 정규화 칸 `nickname_key` 유일), `user_profile_play_times`, `user_game_profiles`와 기존 회원 프로필 행 채우기 (`V<번호>__user_profiles.sql`), 공통코드 시드 `PLAY_TIME` (`V<번호>_1__play_time_codes.sql`, 시스템 그룹). 번호는 구현 때 dev 마지막 다음이다 (research R12). 키트 `users`는 구조를 바꾸지 않는다
 
 **Testing**: 인수 테스트 `AcceptanceTest` 상속(`@Tag("db")`, `dbTest`, 이름에 AC 번호). 프론트 단위 테스트(`npm run check`), e2e는 핵심 흐름(닉네임 바꾸기 → 계정 메뉴 반영)만
 
@@ -75,8 +75,8 @@ backend/src/main/java/com/moa/
 ├── api/service/user/GameStatsLinks.java  # 게임별 전적 사이트 링크 규칙
 └── common/exception/ErrorCode.java    # B201~B204, A201
 backend/src/main/resources/db/migration/
-├── V2_9__user_profiles.sql
-└── V2_9_1__play_time_codes.sql
+├── V<번호>__user_profiles.sql        # 번호는 구현 때 dev 마지막 다음 (research R12)
+└── V<번호>_1__play_time_codes.sql
 backend/src/test/java/com/moa/api/MyPageAcceptanceTest.java
 
 frontend/
@@ -99,7 +99,7 @@ frontend/
 
 | 파일 | 출처 | 바꿀 것 |
 |---|---|---|
-| `backend/src/main/resources/db/migration/V2_9__user_profiles.sql`, `V2_9_1__play_time_codes.sql` | 번호 공간을 함께 씀 | 새 테이블 3개(`nickname_key` 유일 제약), 기존 회원 프로필 행 채우기, `PLAY_TIME` 그룹·코드 4개 (research R12·R14) |
+| `backend/src/main/resources/db/migration/V<번호>__user_profiles.sql`, `V<번호>_1__play_time_codes.sql` | 번호 공간을 함께 씀. 번호는 구현 때 dev 마지막 다음 | 새 테이블 3개(`nickname_key` 유일 제약), 기존 회원 프로필 행 채우기, `PLAY_TIME` 시스템 그룹·코드 4개 (research R12·R13·R14) |
 | `backend/src/main/java/com/moa/common/exception/ErrorCode.java` | 골격 | B201~B204, A201 |
 | `backend/src/main/java/com/moa/api/controller/v1/user/response/UserGetResponse.java` | 골격 (010도 칸을 더함) | `avatar`, `mypageAllowed` |
 | `backend/src/main/java/com/moa/api/repository/reader/user/UserReader.java` (+ jpa repository) | 골격 | 닉네임 중복 조회(대소문자 무시, 자기 제외). DB 유일 제약 앞의 첫 검사 (research R4) |

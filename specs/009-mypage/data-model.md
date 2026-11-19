@@ -1,6 +1,6 @@
 # Data Model: 마이페이지 (009)
 
-마이그레이션: `V2_9__user_profiles.sql`(아래 새 테이블 3개, 기존 회원 프로필 행 채우기), `V2_9_1__play_time_codes.sql`(공통코드 시드). 번호를 정한 이유는 [research.md](./research.md) R12(`V2_7`은 008, 010은 V2_8로 옮김). 구현 때 dev의 최신 번호를 다시 확인한다.
+마이그레이션: `V<번호>__user_profiles.sql`(아래 새 테이블 3개, 기존 회원 프로필 행 채우기), `V<번호>_1__play_time_codes.sql`(공통코드 시드). 번호는 정해 두지 않고 구현 때 dev 마지막 다음 번호로 한다. 순서 조건과 이유는 [research.md](./research.md) R12.
 
 ## 회원 — `users` (키트, 구조 변경 없음)
 
@@ -14,7 +14,7 @@
 
 ## 프로필 — `user_profiles` (새 테이블)
 
-회원 하나에 하나. 닉네임을 정할 때 만든다: 010 가입 트랜잭션, 기존 회원은 `V2_9`의 채우기, 행 없는 회원은 마이페이지에서 처음 저장할 때 (research R14). 행이 없으면 아래 "기본값"으로 응답한다.
+회원 하나에 하나. 닉네임을 정할 때 만든다: 010 가입 트랜잭션, 기존 회원은 `V<번호>__user_profiles.sql`의 채우기, 행 없는 회원은 마이페이지에서 처음 저장할 때 (research R14). 행이 없으면 아래 "기본값"으로 응답한다.
 
 | 칸 | 형식 | 규칙 | 기본값 |
 |---|---|---|---|
@@ -30,7 +30,7 @@
 | `nickname_changed_at` | DATETIME(6), null | 마지막 닉네임 변경 시각. 비어 있으면 가입 뒤 첫 변경 전 (FR-004, research R5) | 빈 값 |
 | `created_at`, `updated_at` | DATETIME(6), not null | | |
 
-- `V2_9` 채우기: 삭제되지 않은 모든 `users`에 행을 만든다. 정규화 값이 겹치는 기존 이름은 id가 가장 작은 하나만 `nickname_key`를 갖고 나머지는 null (research R14)
+- `V<번호>__user_profiles.sql` 채우기: 삭제되지 않은 모든 `users`에 행을 만든다. 정규화 값이 겹치는 기존 이름은 id가 가장 작은 하나만 `nickname_key`를 갖고 나머지는 null (research R14)
 - 게임 정보 추가 때 이 행을 잠가(`SELECT … FOR UPDATE`) 최대 3개를 지킨다 (research R8)
 - 회원 탈퇴 때 지우거나 `nickname_key`를 비우는 일은 회원 탈퇴 스펙이 정한다 (spec 가정)
 
@@ -71,15 +71,15 @@
 | 닉네임 예약어 | `NicknamePolicy` 상수 | research R4 |
 | 닉네임 변경 제한 기간 | 설정 `ProfileProperties.nicknameCooldown`(기본 30일) | research R5 |
 
-## 공통코드 시드 (`V2_9_1__play_time_codes.sql`)
+## 공통코드 시드 (`V<번호>_1__play_time_codes.sql`)
 
-새 그룹 `PLAY_TIME` (그룹 등록 방식은 research R13):
+새 그룹 `PLAY_TIME`. `code_groups`에 시스템 그룹(`system` = true, `004-admin-codes` FR-008)으로 넣고 `codes`에 코드를 넣는다. `code_groups` 표와 `system` 열은 004 Phase 6이 다시 만들므로 그것이 먼저다 (research R13):
 
 | 코드 그룹 | 이름 | 코드 (순서대로) |
 |---|---|---|
 | `PLAY_TIME` | 플레이 가능 시간대 | `WEEKDAY_MORNING` 평일 오전, `WEEKDAY_EVENING` 평일 저녁, `WEEKEND_ALL_DAY` 주말 종일, `DAWN` 새벽 |
 
-이 기능이 쓰지만 넣지 않는 시드 (`008-party` `V2_7_1__party_codes.sql`, spec FR-002 표):
+이 기능이 쓰지만 넣지 않는 시드 (`008-party`의 공통코드 시드 마이그레이션, 008 spec FR-002 표):
 
 | 코드 그룹 | 코드 |
 |---|---|

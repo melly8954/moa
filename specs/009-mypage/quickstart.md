@@ -4,7 +4,7 @@
 
 ## 준비
 
-1. 공통코드 시드가 있어야 한다: `GAME`·`<게임>_TIER`·`<게임>_POSITION`(`008-party`의 `V2_7_1__party_codes.sql`), `PLAY_TIME`(이 기능의 `V2_9_1__play_time_codes.sql`). 008이 아직 병합되지 않았으면 tasks T001에서 정한 방법을 따른다 (research R13)
+1. 공통코드 시드가 있어야 한다: `GAME`·`<게임>_TIER`·`<게임>_POSITION`(`008-party`의 공통코드 시드 마이그레이션), `PLAY_TIME`(이 기능의 `V<번호>_1__play_time_codes.sql`). 둘 다 004 Phase 6이 다시 만든 `code_groups`에 시스템 그룹으로 들어간다. 004 Phase 6이나 008이 아직 병합되지 않았으면 tasks T002에서 정한 방법을 따른다 (research R13)
 2. 백엔드 `backend/`에서 `.\gradlew.bat bootRun` (local 프로필, 시험 계정 `admin`·`user`), 프론트 `frontend/`에서 `npm run dev`
 3. 칸 추가 뒤 프론트 타입: `npm run gen:api`
 
