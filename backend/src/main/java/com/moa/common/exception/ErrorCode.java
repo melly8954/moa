@@ -27,6 +27,14 @@ public enum ErrorCode {
 	FORBIDDEN("A005", HttpStatus.FORBIDDEN, "권한이 없습니다."),
 	INVALID_CREDENTIALS("A006", HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다."),
 	ACCOUNT_LOCKED("A007", HttpStatus.UNAUTHORIZED, "잠긴 계정입니다. 관리자에게 문의해 주세요."),
+	// moa 010 소셜 로그인 (specs/010-social-login contracts/auth-oauth.md). A010·A013·A016은 US5·FR-015 때 더한다
+	OAUTH_PROVIDER_DISABLED("A008", HttpStatus.NOT_FOUND, "사용할 수 없는 로그인 방식입니다."),
+	OAUTH_FAILED("A009", HttpStatus.BAD_REQUEST, "소셜 로그인에 실패했습니다. 다시 시도해 주세요."),
+	SOCIAL_MEMBER_ROLE_NOT_ALLOWED("A011", HttpStatus.CONFLICT, "소셜 계정 회원에게는 관리 역할을 줄 수 없습니다."),
+	SOCIAL_ACCOUNT_IN_USE("A012", HttpStatus.CONFLICT, "이미 다른 회원에 연결된 소셜 계정입니다."),
+	SOCIAL_EMAIL_UNVERIFIED("A014", HttpStatus.BAD_REQUEST, "제공자에서 이메일 인증을 마친 뒤 다시 시도해 주세요."),
+	SOCIAL_EMAIL_IN_USE("A015", HttpStatus.CONFLICT, "다른 방식으로 가입된 이메일입니다."),
+	TERMS_NOT_AGREED("A017", HttpStatus.BAD_REQUEST, "필수 약관에 동의해 주세요."),
 
 	// R: 리소스
 	NOT_FOUND("R001", HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
@@ -34,6 +42,8 @@ public enum ErrorCode {
 
 	// B: 업무 규칙
 	INVALID_STATE("B001", HttpStatus.CONFLICT, "현재 상태에서 할 수 없는 요청입니다."),
+	// 닉네임 (specs/009-mypage research R4). 010 가입·009 변경·관리자 이름 바꾸기가 함께 쓴다
+	NICKNAME_TAGS_EXHAUSTED("B201", HttpStatus.CONFLICT, "이 닉네임은 더 쓸 수 없습니다. 다른 닉네임을 골라 주세요."),
 
 	// S: 시스템
 	INTERNAL_ERROR("S001", HttpStatus.INTERNAL_SERVER_ERROR, "처리 중 문제가 발생했습니다.");
