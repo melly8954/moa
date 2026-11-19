@@ -21,7 +21,6 @@ import { useTranslations } from "next-intl"
 import { Fragment, useState } from "react"
 import { DragHandle } from "@/components/kit/drag-handle"
 import { StatusText } from "@/components/kit/status-text"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
@@ -29,7 +28,8 @@ import type { Code, CodeGroupTree } from "@/types/code"
 
 // 공통코드 트리 표 (moa, specs/004-admin-codes FR-005, US1, research R7). 메뉴 관리 트리 표와 같은 틀이다
 //   구성 목록이라 쪽 나눔 없이 전체를 그린다. 그룹 행 아래에 그 그룹의 항목을 들여 쓴다
-//   그룹 행: 접고 펴기, 이름(누르면 그룹 드로어)·그룹 코드·쓰는 곳, 시스템 그룹은 잠금 표시 (FR-004·FR-008). 체크 칸은 없다
+//   그룹 행도 항목 행과 같은 칸을 쓴다 (메뉴 관리 트리 표와 같다): 첫 칸에 접고 펴기, 이름 칸에 이름(누르면 그룹 드로어)·
+//   잠금 표시(시스템 그룹, FR-004·FR-008)·쓰는 곳, 코드 칸에 그룹 코드. 체크 칸은 없다
 //   항목 행: 체크박스(일괄 처리), 손잡이(같은 그룹 안 순서), 이름(누르면 드로어), 코드, 사용
 //   그룹마다 맨 아래에 "항목 추가" 줄
 
@@ -119,36 +119,48 @@ export function CodeTreeTable({
               return (
                 <Fragment key={group.groupCode}>
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableCell colSpan={5}>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <div className="flex items-center gap-1">
+                    <TableCell>
+                      <button
+                        type="button"
+                        className="flex size-4 items-center justify-center rounded-sm"
+                        aria-expanded={open}
+                        aria-label={t(open ? "collapse" : "expand", { name: group.name })}
+                        onClick={() => toggleGroup(group.groupCode)}
+                      >
+                        <Chevron aria-hidden="true" className="size-4" />
+                      </button>
+                    </TableCell>
+                    <TableCell />
+                    <TableCell>
+                      <div className="flex max-w-(--col-text-max) flex-col">
+                        <div className="flex items-center gap-1.5">
                           <button
                             type="button"
-                            className="rounded-sm"
-                            aria-expanded={open}
-                            aria-label={t(open ? "collapse" : "expand", { name: group.name })}
-                            onClick={() => toggleGroup(group.groupCode)}
-                          >
-                            <Chevron aria-hidden="true" className="size-4" />
-                          </button>
-                          <button
-                            type="button"
-                            className="text-left font-medium underline-offset-4 hover:underline"
+                            className="truncate text-left font-medium underline-offset-4 hover:underline"
                             aria-label={t("editGroupOf", { name: group.name })}
                             onClick={() => onOpenGroup(group)}
                           >
                             {group.name}
                           </button>
                           {group.system && (
-                            <Lock aria-label={t("system")} role="img" className="size-3.5 text-muted-foreground" />
+                            <Lock
+                              aria-label={t("system")}
+                              role="img"
+                              className="size-3.5 shrink-0 text-muted-foreground"
+                            />
                           )}
                         </div>
-                        <span className="font-mono text-xs">{group.groupCode}</span>
                         {group.usedBy && (
-                          <span className="text-xs text-muted-foreground">{t("usedBy", { usedBy: group.usedBy })}</span>
+                          <span className="truncate text-xs text-muted-foreground">
+                            {t("usedBy", { usedBy: group.usedBy })}
+                          </span>
                         )}
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <span className="font-mono">{group.groupCode}</span>
+                    </TableCell>
+                    <TableCell />
                   </TableRow>
                   {open && (
                     <>
@@ -172,25 +184,27 @@ export function CodeTreeTable({
                         })}
                       </SortableContext>
                       {group.codes.length === 0 && (
-                        <TableRow>
+                        <TableRow className="hover:bg-transparent">
                           <TableCell colSpan={2} />
-                          <TableCell colSpan={3} className="pl-8 text-muted-foreground">
-                            {t("noCodes")}
+                          <TableCell colSpan={3}>
+                            <span className="pl-6 text-muted-foreground">{t("noCodes")}</span>
                           </TableCell>
                         </TableRow>
                       )}
                       <TableRow className="hover:bg-transparent">
                         <TableCell colSpan={2} />
-                        <TableCell colSpan={3} className="pl-6">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            aria-label={t("addCodeOf", { name: group.name })}
-                            onClick={() => onAdd(group)}
-                          >
-                            <Plus />
-                            {t("addCode")}
-                          </Button>
+                        <TableCell colSpan={3}>
+                          <div className="pl-6">
+                            <button
+                              type="button"
+                              className="flex items-center gap-1 text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                              aria-label={t("addCodeOf", { name: group.name })}
+                              onClick={() => onAdd(group)}
+                            >
+                              <Plus aria-hidden="true" className="size-4" />
+                              {t("addCode")}
+                            </button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     </>

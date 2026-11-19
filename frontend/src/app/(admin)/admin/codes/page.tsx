@@ -149,7 +149,7 @@ export default function CodesPage() {
         )}
       </QueryState>
       <CodeDrawer
-        key={editing ? `${editing.group.groupCode}/${editing.code?.code ?? ""}` : "closed"}
+        key={editing ? `code:${editing.group.groupCode}/${editing.code?.code ?? ""}` : "code:closed"}
         group={editing?.group}
         code={editing?.code}
         open={editing !== null}
@@ -157,7 +157,7 @@ export default function CodesPage() {
         onSaved={(g) => refresh([g])}
       />
       <GroupDrawer
-        key={editingGroup ? (editingGroup.group?.groupCode ?? "new") : "closed"}
+        key={editingGroup ? `group:${editingGroup.group?.groupCode ?? "new"}` : "group:closed"}
         group={editingGroup?.group}
         open={editingGroup !== null}
         onOpenChange={(open) => !open && setEditingGroup(null)}
