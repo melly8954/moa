@@ -1,6 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Plus } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -14,10 +15,11 @@ import { useErrorMessages } from "@/lib/error-messages"
 import type { Code, CodeGroupTree } from "@/types/code"
 import { CodeDrawer } from "./code-drawer"
 import { CodeTreeTable, parseKey } from "./code-tree-table"
+import { GroupDrawer } from "./group-drawer"
 
 // 공통코드 (code 헬퍼, 권한 CODE_MANAGE)
-// moa: 관리 화면 정리 (specs/004-admin-codes FR-004~FR-007, US1, research R5~R7). 메뉴 관리와 같은 틀이다
-//   그룹은 기능이 코드에 등록한다. 화면에서 그룹을 더하지 않는다
+// moa: 관리 화면 정리 (specs/004-admin-codes FR-004~FR-008, US1, research R7·R9). 메뉴 관리와 같은 틀이다
+//   그룹은 머리의 "그룹 추가"와 그룹 이름(그룹 드로어)으로 다룬다. 시스템 그룹은 지울 수 없다
 //   그룹 > 항목 트리 표(구성 목록, 쪽 나눔 없음), 이름을 누르면 드로어, 그룹마다 "항목 추가"
 //   체크박스 일괄 처리(사용·사용 안 함·삭제)는 한 그룹 안에서만. 끌어서 순서도 같은 그룹 안에서만
 //   하나라도 틀리면 서버가 아무것도 바꾸지 않는다
@@ -29,6 +31,8 @@ export default function CodesPage() {
   const { describeError } = useErrorMessages()
   const tree = useQuery({ queryKey: TREE_KEY, queryFn: api.v1.code.admin.tree })
   const [editing, setEditing] = useState<{ group: CodeGroupTree; code?: Code } | null>(null)
+  // 그룹 드로어: group이 없으면 추가
+  const [editingGroup, setEditingGroup] = useState<{ group?: CodeGroupTree } | null>(null)
   const [selected, setSelected] = useState<string[]>([])
   const selectedGroups = [...new Set(selected.map((key) => parseKey(key).groupCode))]
   const groupCode = selectedGroups.length === 1 ? selectedGroups[0] : undefined
@@ -103,7 +107,16 @@ export default function CodesPage() {
 
   return (
     <>
-      <PageHeader title={t("title")} description={t("guide")} />
+      <PageHeader
+        title={t("title")}
+        description={t("guide")}
+        actions={
+          <Button onClick={() => setEditingGroup({})}>
+            <Plus />
+            {t("addGroup")}
+          </Button>
+        }
+      />
       {selected.length > 0 && (
         <BulkToolbar
           label={t("bulkToolbar")}
@@ -128,6 +141,7 @@ export default function CodesPage() {
             selected={selected}
             onSelectedChange={setSelected}
             onOpen={(group, code) => setEditing({ group, code })}
+            onOpenGroup={(group) => setEditingGroup({ group })}
             onAdd={(group) => setEditing({ group })}
             onDrop={reorder}
             disabled={run.isPending}
@@ -141,6 +155,16 @@ export default function CodesPage() {
         open={editing !== null}
         onOpenChange={(open) => !open && setEditing(null)}
         onSaved={(g) => refresh([g])}
+      />
+      <GroupDrawer
+        key={editingGroup ? (editingGroup.group?.groupCode ?? "new") : "closed"}
+        group={editingGroup?.group}
+        open={editingGroup !== null}
+        onOpenChange={(open) => !open && setEditingGroup(null)}
+        onSaved={(g) => {
+          setSelected((keys) => keys.filter((key) => parseKey(key).groupCode !== g))
+          return refresh([g])
+        }}
       />
     </>
   )
