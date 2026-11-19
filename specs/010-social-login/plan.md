@@ -14,7 +14,7 @@ moa의 첫 회원 가입 경로로 구글·디스코드 소셜 로그인을 붙�
 
 **Primary Dependencies**: 기존 Spring Security·jjwt·Spring Data JPA·Flyway. 제공자 호출은 Spring `RestClient`(새 의존성 없음). 재가입 제한 해시는 JDK `Mac`(HmacSHA256). 키트 oauth 헬퍼 — 적용 기록에 없음, 팀 확인 중 (R2). 프론트는 기존 api 클라이언트, react-hook-form·zod, next-intl 문구
 
-**Storage**: MariaDB. 새 테이블 3개 `user_social_accounts`, `user_terms_agreements`, `social_rejoin_blocks` (한 마이그레이션 `V2_8__social_login.sql`). state·가입 대기는 서명 쿠키 (DB 아님)
+**Storage**: MariaDB. 새 테이블 3개 `user_social_accounts`, `user_terms_agreements`, `social_rejoin_blocks` (한 마이그레이션 `V<번호>__social_login.sql`, 번호는 구현 때 dev 마지막 다음). state·가입 대기는 서명 쿠키 (DB 아님)
 
 **Testing**: 인수 테스트 `AcceptanceTest` 상속(`@Tag("db")`, `dbTest`, AC 번호 이름), 제공자 클라이언트는 제공자마다 테스트용 가짜. 재가입 제한 행은 테스트가 직접 넣는다. 프론트 단위 테스트(`npm run check`), e2e는 US1만
 
@@ -79,7 +79,7 @@ backend/src/main/java/com/moa/
 └── common/exception/ErrorCode.java  # A008~A017
 backend/src/main/resources/
 ├── application.yaml                 # app.oauth.google.*, app.oauth.discord.*, app.oauth.rejoin-hash-secret, app.terms.*
-└── db/migration/V2_8__social_login.sql
+└── db/migration/V<번호>__social_login.sql   # 번호는 구현 때 dev 마지막 다음
 backend/src/test/java/com/moa/api/SocialLoginAcceptanceTest.java (+ 제공자별 가짜)
 
 frontend/src/
@@ -103,7 +103,7 @@ frontend/src/
 |---|---|
 | `backend/.env.example` | `GOOGLE_*`, `DISCORD_*`, `SOCIAL_REJOIN_HASH_SECRET` 이름만 |
 | `backend/src/main/resources/application.yaml` | `app.oauth.google.*`, `app.oauth.discord.*`, `app.oauth.rejoin-hash-secret`, `app.terms.*` |
-| `backend/src/main/resources/db/migration/V2_8__social_login.sql` | 새 테이블 3개 (번호 공간을 함께 씀) |
+| `backend/src/main/resources/db/migration/V<번호>__social_login.sql` | 새 테이블 3개 (번호 공간을 함께 씀. 번호는 구현 때 dev 마지막 다음) |
 | `backend/src/main/java/com/moa/common/exception/ErrorCode.java` | A008~A017 |
 | `backend/.../service/user/UserAdminService.java` (키트 user-admin) | 소셜 회원에게 `ADMIN` 막기 |
 | `backend/.../service/role/RoleUserService.java` (키트 rbac) | 소셜 회원에게 업무 역할 막기 |
