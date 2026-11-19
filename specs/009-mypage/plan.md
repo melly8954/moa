@@ -6,7 +6,7 @@
 
 ## Summary
 
-로그인한 회원(관리자·운영자 제외)이 계정 화면 `/account/profile`에서 자기 프로필을 보고 고친다. 닉네임은 키트 `users.name`을 그대로 표시 이름으로 쓰고(`010-social-login`과 같은 결정), 나머지 프로필(아바타, 자기소개, 출생 연도·성별·공개 여부, 디스코드 태그·공개 범위, 플레이 가능 시간대)은 새 테이블 `user_profiles`, 게임 정보는 `user_game_profiles`(회원당 최대 3개)에 둔다. 닉네임 중복은 DB에서도 막는다: `user_profiles.nickname_key`(앞뒤 공백 제거·소문자)에 유일 제약을 걸고, 닉네임을 바꿀 때 `users.name`과 같은 트랜잭션에서 함께 바꾼다. 프로필 행은 닉네임을 정할 때(010 가입, 기존 회원은 마이그레이션) 만든다 (research R4·R14). 게임·랭크·포지션은 `008-party`가 넣는 공통코드를, 플레이 가능 시간대는 이 기능이 새로 넣는 공통코드 그룹 `PLAY_TIME`을 쓴다. 전적 사이트 링크는 서버가 게임별 규칙으로 만들어 준다. 계정 메뉴는 닉네임·아바타를 보이고 로그인 아이디를 숨기며 "마이페이지" 항목을 더한다. 열린 질문 6개는 spec의 잠정 답으로 설계하고 확정되면 해당 자리만 바꾼다 ([research.md](./research.md) "열린 질문의 처리").
+로그인한 회원(관리자·운영자 제외)이 계정 화면 `/account/profile`에서 자기 프로필을 보고 고친다. 닉네임은 키트 `users.name`을 그대로 표시 이름으로 쓰고(`010-social-login`과 같은 결정), 나머지 프로필(아바타, 자기소개, 출생 연도·성별·공개 여부, 디스코드 태그·공개 범위, 플레이 가능 시간대)은 새 테이블 `user_profiles`, 게임 정보는 `user_game_profiles`(회원당 최대 3개)에 둔다. 닉네임은 다른 회원과 겹쳐도 되고 회원은 서버가 정한 4자리 태그로 `닉네임#0421`처럼 구별한다(2026-11-19). `user_profiles`(`nickname_key`·`nickname_tag`, 유일 `(nickname_key, nickname_tag)`)와 규칙 `NicknamePolicy`·태그 `NicknameTags`, 가입 때 행 만들기, 기존 회원 채우기는 010이 먼저 만들고, 009는 칸을 더하고 닉네임을 바꿀 때 `users.name`과 키·태그를 같은 트랜잭션에서 함께 바꾼다 (research R4·R14). **009 구현은 010 구현 뒤다**. 게임·랭크·포지션은 `008-party`가 넣는 공통코드를, 플레이 가능 시간대는 이 기능이 새로 넣는 공통코드 그룹 `PLAY_TIME`을 쓴다. 전적 사이트 링크는 서버가 게임별 규칙으로 만들어 준다. 계정 메뉴는 닉네임·아바타를 보이고 로그인 아이디를 숨기며 "마이페이지" 항목을 더한다. 열린 질문 6개는 spec의 잠정 답으로 설계하고 확정되면 해당 자리만 바꾼다 ([research.md](./research.md) "열린 질문의 처리").
 
 ## Technical Context
 
@@ -14,7 +14,7 @@
 
 **Primary Dependencies**: 기존 Spring Data JPA·Flyway·Bean Validation, 키트 code 헬퍼(공통코드 조회 `GET /api/v1/codes/{groupCode}`). 새 의존성 없음. 프론트는 기존 api 클라이언트, react-hook-form·zod, TanStack Query(`useMe`), next-intl 문구, 공통코드 훅(`lib/codes.ts`)
 
-**Storage**: MariaDB. 새 테이블 3개 `user_profiles`(닉네임 정규화 칸 `nickname_key` 유일), `user_profile_play_times`, `user_game_profiles`와 기존 회원 프로필 행 채우기 (`V<번호>__user_profiles.sql`), 공통코드 시드 `PLAY_TIME` (`V<번호>_1__play_time_codes.sql`, 시스템 그룹). 번호는 구현 때 dev 마지막 다음이다 (research R12). 키트 `users`는 구조를 바꾸지 않는다
+**Storage**: MariaDB. 010이 만든 `user_profiles`에 칸 더하기, 새 테이블 2개 `user_profile_play_times`, `user_game_profiles` (`V<번호>__user_profiles.sql`), 공통코드 시드 `PLAY_TIME` (`V<번호>_1__play_time_codes.sql`, 시스템 그룹). 번호는 구현 때 dev 마지막 다음이다 (research R12). 키트 `users`는 구조를 바꾸지 않는다
 
 **Testing**: 인수 테스트 `AcceptanceTest` 상속(`@Tag("db")`, `dbTest`, 이름에 AC 번호). 프론트 단위 테스트(`npm run check`), e2e는 핵심 흐름(닉네임 바꾸기 → 계정 메뉴 반영)만
 
@@ -71,9 +71,10 @@ backend/src/main/java/com/moa/
 ├── api/entity/user/                   # UserProfile, UserGameProfile, Gender, DiscordVisibility, DefaultAvatar
 ├── api/repository/{jpa,reader,writer}/user/
 ├── api/service/user/                  # ProfileService, NicknameService, GameProfileService,
-│                                      # NicknamePolicy(규칙), ProfileVisibility(보이는 규칙), MemberActivityPolicy(관리자·운영자 판단)
+│                                      # ProfileVisibility(보이는 규칙), MemberActivityPolicy(관리자·운영자 판단)
+│                                      # NicknamePolicy(규칙)·NicknameTags(태그)는 010이 만든 것을 쓴다
 ├── api/service/user/GameStatsLinks.java  # 게임별 전적 사이트 링크 규칙
-└── common/exception/ErrorCode.java    # B201~B204, A201
+└── common/exception/ErrorCode.java    # B202~B204, A201 (B201은 010)
 backend/src/main/resources/db/migration/
 ├── V<번호>__user_profiles.sql        # 번호는 구현 때 dev 마지막 다음 (research R12)
 └── V<번호>_1__play_time_codes.sql
@@ -99,11 +100,9 @@ frontend/
 
 | 파일 | 출처 | 바꿀 것 |
 |---|---|---|
-| `backend/src/main/resources/db/migration/V<번호>__user_profiles.sql`, `V<번호>_1__play_time_codes.sql` | 번호 공간을 함께 씀. 번호는 구현 때 dev 마지막 다음 | 새 테이블 3개(`nickname_key` 유일 제약), 기존 회원 프로필 행 채우기, `PLAY_TIME` 시스템 그룹·코드 4개 (research R12·R13·R14) |
-| `backend/src/main/java/com/moa/common/exception/ErrorCode.java` | 골격 | B201~B204, A201 |
+| `backend/src/main/resources/db/migration/V<번호>__user_profiles.sql`, `V<번호>_1__play_time_codes.sql` | 번호 공간을 함께 씀. 번호는 구현 때 dev 마지막 다음(010 뒤) | 010이 만든 `user_profiles`에 칸 더하기, 새 테이블 2개, `PLAY_TIME` 시스템 그룹·코드 4개 (research R12·R13·R14) |
+| `backend/src/main/java/com/moa/common/exception/ErrorCode.java` | 골격 | B202~B204, A201 (B201은 010이 넣음) |
 | `backend/src/main/java/com/moa/api/controller/v1/user/response/UserGetResponse.java` | 골격 (010도 칸을 더함) | `avatar`, `mypageAllowed` |
-| `backend/src/main/java/com/moa/api/repository/reader/user/UserReader.java` (+ jpa repository) | 골격 | 닉네임 중복 조회(대소문자 무시, 자기 제외). DB 유일 제약 앞의 첫 검사 (research R4) |
-| `backend/src/main/java/com/moa/api/service/user/UserAdminService.java` | 골격 (`002-admin-users`) | `rename`: 프로필 행이 있으면 `nickname_key`도 함께 바꾸고, 겹치면 B201 (research R14) |
 | `frontend/src/types/user.ts` | 키트 web-next | `Me`에 `avatar`, `mypageAllowed` |
 | `frontend/src/components/shell/account-menu.tsx` | 키트 셸 (010도 고침) | 닉네임·아바타 표시, `loginId` 숨김, "마이페이지" 항목(관리자·운영자에게 숨김) |
 | `frontend/src/lib/next-path.ts` | 키트 web-next | `PROFILE_PATH = "/account/profile"` |
@@ -111,8 +110,8 @@ frontend/
 
 - `SecurityConfig`, `AuthGate`, `(account)/layout.tsx`, 키트 `User` 엔터티는 고치지 않는다 (`User.rename`을 그대로 쓴다)
 - 다른 스펙(001·002·004·008·010)과 `specs/README.md`는 spec "나중에 고칠 곳" 목록대로 나중에
-- 010과 겹치는 파일(`UserGetResponse`, `account-menu.tsx`, `UserReader`의 닉네임 중복 조회, 관리자·운영자 판단)은 먼저 병합되는 쪽을 기준으로 다른 쪽이 맞춘다 (research R11)
-- 010 가입 흐름에서 프로필 행(`nickname_key`)을 만드는 일: 010이 먼저 병합되면 009 구현 PR에서 010 가입 서비스에 더한다 [공용] (research R14)
+- 010과 겹치는 파일(`UserGetResponse`, `account-menu.tsx`, 관리자·운영자 판단)은 먼저 병합되는 쪽을 기준으로 다른 쪽이 맞춘다 (research R11)
+- `UserReader` 닉네임 중복 조회와 `UserAdminService.rename` 고치기는 2026-11-19에 이 표에서 빠졌다: 중복 조회는 필요 없고, 이름 바꾸기의 태그 맞추기는 010이 한다 (research R4·R14)
 
 ## Complexity Tracking
 

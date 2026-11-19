@@ -9,7 +9,7 @@
 | 코드 | 이름 | HTTP | 언제 |
 |---|---|---|---|
 | A201 | `MYPAGE_NOT_ALLOWED` | 403 | 관리자·운영자 계정이 마이페이지 API를 부름 (FR-016, US1-AC7) |
-| B201 | `NICKNAME_IN_USE` | 409 | 다른 회원이 쓰는 닉네임(대소문자 무시) (FR-003, US2-AC5). `010-social-login` 가입도 같은 코드를 쓴다 |
+| B201 | `NICKNAME_TAGS_EXHAUSTED` | 409 | 그 닉네임(대소문자 무시)의 태그 9999개가 모두 쓰여 더 쓸 수 없음 (FR-003, US2-AC8). `010-social-login` 가입도 같은 코드를 쓴다. 010이 먼저 더한다. 2026-11-19 "다른 회원이 쓰는 닉네임"(`NICKNAME_IN_USE`)에서 바뀜 |
 | B202 | `NICKNAME_CHANGE_TOO_SOON` | 409 | 마지막 변경 + 30일 전 (FR-004, US2-AC4). 응답 `data.availableAt` |
 | B203 | `GAME_PROFILE_LIMIT` | 409 | 게임 정보가 이미 3개 (FR-010, US5-AC2) |
 | B204 | `GAME_PROFILE_DUPLICATED` | 409 | 같은 게임이 이미 있음 (FR-010, US5-AC3) |
@@ -23,6 +23,7 @@
   ```json
   {
     "nickname": "string",
+    "nicknameTag": "0421 | null",
     "avatar": "default",
     "bio": "string | null",
     "birthYear": 2000,
@@ -48,7 +49,8 @@
     }
   }
   ```
-- 프로필 행이 없으면 기본값(아바타 `default`, 빈 값, `ageGenderPublic` 거짓, `discordVisibility` `PRIVATE`) (US1-AC1·AC4)
+- 프로필 행이 없으면 기본값(`nicknameTag` `null`, 아바타 `default`, 빈 값, `ageGenderPublic` 거짓, `discordVisibility` `PRIVATE`) (US1-AC1·AC4)
+- 화면은 `nickname`과 `nicknameTag`로 `닉네임#0421`을 만든다. 태그가 `null`이면 닉네임만 (spec FR-003 표시 형식, research R4)
 - `age`는 `birthYear`가 있을 때만. `nicknameChangeAvailableAt`은 지금 바꿀 수 없을 때만 값이 있다 (FR-004)
 - 꺼진 공통코드의 값도 이름과 함께 그대로 보인다 (spec Edge Cases)
 
@@ -74,8 +76,9 @@
 ## PUT `/api/v1/users/me/nickname` — 닉네임 바꾸기
 
 - 요청 `{ "nickname": "string" }`
-- 처리: 앞뒤 공백 제거 → 같은 값이면 그대로 200(시각 안 바뀜) → 규칙(V001) → 중복(B201) → 변경 제한(B202) → `users.name` 바꾸기, `nickname_changed_at` = 지금
-- 200 `{ "nickname": "string", "nicknameChangeAvailableAt": "…" }` (US2-AC1·AC6)
+- 처리: 앞뒤 공백 제거 → 같은 값이면 그대로 200(시각 안 바뀜) → 규칙(V001) → 변경 제한(B202) → 태그 맞추기(새 `nickname_key`에서 지금 태그가 비어 있으면 그대로, 아니면 새로. 다 차면 B201) → `users.name` 바꾸기, `nickname_key`·`nickname_tag`, `nickname_changed_at` = 지금 (research R4·R5)
+- 200 `{ "nickname": "string", "nicknameTag": "0421", "nicknameChangeAvailableAt": "…" }` (US2-AC1·AC5~AC7)
+- 409 B201 그 닉네임의 태그가 다 참 (US2-AC8)
 - 409 B202 응답의 `data.availableAt`으로 화면이 "언제부터"를 보인다 (US2-AC4)
 
 ## POST `/api/v1/users/me/games` — 게임 정보 더하기 (게임정보 추가 모달)

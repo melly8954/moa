@@ -14,7 +14,7 @@ moa의 첫 회원 가입 경로로 구글·디스코드 소셜 로그인을 붙�
 
 **Primary Dependencies**: 기존 Spring Security·jjwt·Spring Data JPA·Flyway. 제공자 호출은 Spring `RestClient`(새 의존성 없음). 재가입 제한 해시는 JDK `Mac`(HmacSHA256). 키트 oauth 헬퍼 — 적용 기록에 없음, 팀 확인 중 (R2). 프론트는 기존 api 클라이언트, react-hook-form·zod, next-intl 문구
 
-**Storage**: MariaDB. 새 테이블 3개 `user_social_accounts`, `user_terms_agreements`, `social_rejoin_blocks` (한 마이그레이션 `V<번호>__social_login.sql`, 번호는 구현 때 dev 마지막 다음). state·가입 대기는 서명 쿠키 (DB 아님)
+**Storage**: MariaDB. 새 테이블 4개 `user_social_accounts`, `user_terms_agreements`, `social_rejoin_blocks`, `user_profiles`(최소형: 닉네임 키·태그, 009가 칸을 더함)와 기존 회원 프로필 행 채우기 (한 마이그레이션 `V<번호>__social_login.sql`, 번호는 구현 때 dev 마지막 다음. research R14, 2026-11-19). state·가입 대기는 서명 쿠키 (DB 아님)
 
 **Testing**: 인수 테스트 `AcceptanceTest` 상속(`@Tag("db")`, `dbTest`, AC 번호 이름), 제공자 클라이언트는 제공자마다 테스트용 가짜. 재가입 제한 행은 테스트가 직접 넣는다. 프론트 단위 테스트(`npm run check`), e2e는 US1만
 
@@ -35,7 +35,7 @@ moa의 첫 회원 가입 경로로 구글·디스코드 소셜 로그인을 붙�
 | 원칙 | 확인 | 결과 |
 |---|---|---|
 | I. 스펙이 먼저다 | 계획의 동작은 spec FR·AC에 있다. 스펙 미정 6곳은 추측으로 확정하지 않고 자리표시·현재 동작 유지로 두었다 (research "남은 스펙 미정") | 통과 (자리표시는 확정 뒤 바꿈) |
-| II. AC마다 테스트 하나 | US1~US5 AC 전부(US1-AC1~AC12, US5-AC1~AC10 포함)를 인수 테스트로, 이름에 AC 번호. 제공자는 가짜 | 통과 |
+| II. AC마다 테스트 하나 | US1~US5 AC 전부(US1-AC1~AC14, US5-AC1~AC10 포함)를 인수 테스트로, 이름에 AC 번호. 제공자는 가짜 | 통과 |
 | III. 키트를 따른다 | 기존 확장점(`PublicPaths`, `AuthTokenApplication.issue`, `LoginAttemptedEvent`)을 쓴다. 헬퍼가 확인되면 제공자 클라이언트를 헬퍼로 바꾸고 스펙 출처에 적는다. 키트 user-admin·rbac 서비스와 로그인 화면을 고치는 것은 moa에서 먼저 하고 키트로 옮길지 팀과 정한다 | 통과 (헬퍼 확인 대기) |
 | IV. 제자리에서 고친다 | 002·003·008·README 경계 갱신은 spec "나중에 고칠 곳"에 목록만, 이번에 다른 스펙 파일을 고치지 않음 | 통과 |
 | V. 테스트를 고쳐서 통과시키지 않는다 | 해당 없음 (계획 단계) | 통과 |
@@ -70,13 +70,14 @@ backend/src/main/java/com/moa/
 ├── api/controller/v1/terms/         # 현재 약관 버전 조회
 ├── api/controller/v1/user/          # 내 외부 계정 link·unlink ({provider})
 ├── api/application/v1/auth/         # 소셜 로그인 흐름 → AuthTokenApplication.issue 재사용
-├── api/entity/user/                 # UserSocialAccount, SocialProvider, UserTermsAgreement, TermsType, SocialRejoinBlock
+├── api/entity/user/                 # UserSocialAccount, SocialProvider, UserTermsAgreement, TermsType, SocialRejoinBlock, UserProfile(최소형)
 ├── api/repository/{jpa,reader,writer}/user/
 ├── api/service/user/                # 소셜 계정 서비스 (찾기·가입·연결·해제, 가입·연결 확인, 관리자 제한)
-├── api/service/user/UserAdminService.java, api/service/role/RoleUserService.java  # 소셜 회원 역할 막기 추가
+│                                    # NicknamePolicy(닉네임 규칙), NicknameTags(태그) — 009가 그대로 씀 (R14)
+├── api/service/user/UserAdminService.java, api/service/role/RoleUserService.java  # 소셜 회원 역할 막기 추가, rename의 태그 맞추기
 ├── common/security/oauth/           # 제공자 클라이언트 경계(구글, 디스코드), state·가입 대기 서명 쿠키, 설정, 재가입 해시, PublicPaths 빈
 │                                    #   ← 키트 oauth 헬퍼로 바뀔 수 있는 부분 (R2)
-└── common/exception/ErrorCode.java  # A008~A017
+└── common/exception/ErrorCode.java  # A008~A017, B201
 backend/src/main/resources/
 ├── application.yaml                 # app.oauth.google.*, app.oauth.discord.*, app.oauth.rejoin-hash-secret, app.terms.*
 └── db/migration/V<번호>__social_login.sql   # 번호는 구현 때 dev 마지막 다음
@@ -97,15 +98,15 @@ frontend/src/
 
 ## 공용 파일 (구현 전에 바꿀 내용을 보고하고 승인받는다)
 
-다른 기능·키트가 함께 쓰는 파일이다. tasks.md의 `[공용]` 작업 15개(조건부 1개 포함)가 아래 11개 파일을 고친다.
+다른 기능·키트가 함께 쓰는 파일이다. tasks.md의 `[공용]` 작업 16개(조건부 1개 포함)가 아래 11개 파일을 고친다.
 
 | 파일 | 바꿀 것 |
 |---|---|
 | `backend/.env.example` | `GOOGLE_*`, `DISCORD_*`, `SOCIAL_REJOIN_HASH_SECRET` 이름만 |
 | `backend/src/main/resources/application.yaml` | `app.oauth.google.*`, `app.oauth.discord.*`, `app.oauth.rejoin-hash-secret`, `app.terms.*` |
-| `backend/src/main/resources/db/migration/V<번호>__social_login.sql` | 새 테이블 3개 (번호 공간을 함께 씀. 번호는 구현 때 dev 마지막 다음) |
-| `backend/src/main/java/com/moa/common/exception/ErrorCode.java` | A008~A017 |
-| `backend/.../service/user/UserAdminService.java` (키트 user-admin) | 소셜 회원에게 `ADMIN` 막기 |
+| `backend/src/main/resources/db/migration/V<번호>__social_login.sql` | 새 테이블 4개와 기존 회원 프로필 행 채우기 (번호 공간을 함께 씀. 번호는 구현 때 dev 마지막 다음. 009가 이 뒤) |
+| `backend/src/main/java/com/moa/common/exception/ErrorCode.java` | A008~A017, B201 |
+| `backend/.../service/user/UserAdminService.java` (키트 user-admin) | 소셜 회원에게 `ADMIN` 막기, `rename`의 `nickname_key`·태그 맞추기 |
 | `backend/.../service/role/RoleUserService.java` (키트 rbac) | 소셜 회원에게 업무 역할 막기 |
 | `backend/.../UserGetResponse.java` | `hasPassword`, `socialAccounts`, `socialLinkAllowed` |
 | `frontend/src/app/(public)/sign-in/page.tsx` (키트 web-next) | 제공자 단추, `oauthError` 문구 |
