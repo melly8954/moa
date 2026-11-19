@@ -133,7 +133,7 @@ PENDING ──승인──▶ APPROVED
 
 ## 공통코드 시드
 
-그룹과 초기 코드는 spec.md FR-002 표가 기준이다. 시드는 `code_groups`(시스템 그룹, `system` = true, `004-admin-codes` FR-008)와 `codes`에 id를 고정해 넣는다. `created_by`와 `updated_by`는 1이다 (`V1_7__menus.sql` 선례).
+그룹과 초기 코드는 spec.md FR-002 표가 기준이다. 시드는 `code_groups`(사용 중 `enabled` = true, `004-admin-codes` FR-008)와 `codes`에 id를 고정해 넣는다. `created_by`와 `updated_by`는 1이다 (`V1_7__menus.sql` 선례).
 
 ## 표시 이름
 

@@ -13,13 +13,15 @@ moa가 할 일은 "관리자가 코드 관리를 열면 FR-001 표의 그룹이 
 
 **그룹 관리 (2026-11-18, FR-002·FR-004·FR-008, US1-AC1·AC6~AC10)**: 위의 "그룹을 코드로 등록"을 되돌린다. `code_groups`를 `used_by`·`system` 열과 함께 다시 만들고, 코드 등록(`CodeGroupSource` 등)을 지운다. 그룹 만들기·고치기·지우기 API를 두고 시스템 그룹은 지우지 못하게 막는다. 화면에 그룹 추가와 그룹 드로어, 잠금 표시를 더한다 ([research.md](./research.md) R9·R10). 구현 브랜치는 `feat/004-code-groups-on-screen`
 
+**흔한 방식과 두 칸 화면 (2026-11-20, FR-002·FR-004·FR-005·FR-007~FR-009, US1)**: 시스템 그룹과 삭제를 없애고 그룹에 사용 여부를 둔다. 쓰는 곳은 설명으로 합친다. 화면은 좌 트리 · 우 상세 두 칸으로 바꾸고, 일괄 처리 줄 고정, 그룹 체크(항목 모두 고르기), 트리 안 그룹 추가, 상태 색, 코드 입력 거르기를 더한다. 좁은 폭은 드로어 ([research.md](./research.md) R11~R13). 구현 브랜치는 `feat/004-code-standard`
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)
 
 **Primary Dependencies**: psw-dev-kit code 헬퍼 (`CodeApplication`, `ApiAdminCodeController`, `ApiCodeController`)
 
-**Storage**: MariaDB `code_groups`, `codes` (`V1_4__codes.sql`). `code_groups`는 2026-11-15에 지웠다가 2026-11-18에 `used_by`·`system` 열을 더해 다시 만든다 ([data-model.md](./data-model.md))
+**Storage**: MariaDB `code_groups`, `codes` (`V1_4__codes.sql`). `code_groups`는 2026-11-15에 지웠다가 2026-11-18에 다시 만들고, 2026-11-20에 `used_by`·`system`을 빼고 `enabled`를 더한다 ([data-model.md](./data-model.md))
 
 **Testing**: 인수 테스트 `AcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`)
 
