@@ -16,6 +16,19 @@ export async function expectNoSeriousA11yViolations(
   page: Page,
   { disableRules = [], exclude = [] }: { disableRules?: string[]; exclude?: string[] } = {},
 ) {
+  // 전환(transition)이 끝난 뒤에 본다. 사이드바 접기·어두운 화면 전환 중의 흐린 글자를 대비 위반으로 잡는다
+  //   끝없는 애니메이션(불러오는 중 표시 등)은 기다리지 않고, 길어도 2초까지만 기다린다 (moa에서 먼저, 키트로 옮길 것)
+  await page.evaluate(() =>
+    Promise.race([
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+          .map((a) => a.finished.catch(() => undefined)),
+      ),
+      new Promise((resolve) => setTimeout(resolve, 2000)),
+    ]),
+  )
   let axe = new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).disableRules(disableRules)
   for (const selector of exclude) axe = axe.exclude(selector)
   const { violations } = await axe.analyze()

@@ -21,7 +21,7 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 시스템 | 관리 메뉴 구성과 접근 제한, 관리 셸·사용자 셸 | 키트 menu | `001-admin-menus` | 구현됨 |
 | 회원 | 첫 관리자, 운영자 계정 | 키트 user-admin, 골격 부트스트랩 | `002-admin-users` | 구현됨 |
 | 시스템 | 운영자 역할 | 키트 rbac | `003-admin-roles` | 구현됨 |
-| 시스템 | 공통코드 | 키트 code | `004-admin-codes` | 구현됨. 관리 화면 정리는 기획 중 |
+| 시스템 | 공통코드 | 키트 code | `004-admin-codes` | 구현됨. 그룹 관리(관리자가 그룹 추가·수정·삭제, 시스템 그룹 잠금, 2026-11-18)는 구현 전 |
 | 시스템 | 접속 이력 | 키트 login-history | `005-admin-login-history` | 구현됨 |
 | 공지 | 공지사항 (관리 화면과 사용자 목록·상세) | moa | `006-notices` | 구현됨 |
 | 알림 | 알림 (실시간 전달, 개인 알림함, 브라우저 알림) | moa, 키트 websocket | `007-notifications` | 구현됨. 개인 알림을 보내는 기능은 각 기능이 `NotificationApplication.notify`로 붙는다 |
@@ -40,6 +40,14 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 회원 | 마이페이지 (프로필: 닉네임, 아바타, 소개, 게임 정보) | moa | `009-mypage` | 기획 중 |
 | 모임 | 크루(반영구 모임), 크루원 모집 | moa | - | 008 다음 |
 | 모임 | 크루 내전, 크루 간 경기 매칭 | moa | - | 크루 다음 |
+
+## 공통 화면
+
+관리 셸과 사용자 셸이 함께 쓰는 화면 동작이다. 키트 web-next 골격의 공용 부품을 moa가 바꾸는 것을 여기에 둔다.
+
+| 도메인 | 기능 | 출처 | 스펙 | 상태 |
+|---|---|---|---|---|
+| 화면 | 업무 목록의 쪽 이동·빈 결과 (쪽 크기, 아래 줄 배치, 표 높이) | 키트 web-next 골격 | `011-list-screen` | 기획 중 |
 
 ## 맞춰야 할 경계
 

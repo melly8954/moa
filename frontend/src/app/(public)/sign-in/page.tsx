@@ -8,8 +8,7 @@ import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
-import { landingPath } from "@/components/shell/landing"
-import { MY_MENUS_QUERY_KEY } from "@/components/shell/use-menu"
+import { fetchLandingPath } from "@/components/shell/landing"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -48,11 +47,7 @@ export default function SignInPage() {
         router.replace(next)
         return
       }
-      // 메뉴를 읽지 못하면 사용자 셸 첫 화면으로 간다 (권한은 화면마다 API가 막는다)
-      const menus = await queryClient
-        .fetchQuery({ queryKey: MY_MENUS_QUERY_KEY, queryFn: api.v1.menu.mine })
-        .catch(() => [])
-      router.replace(landingPath(menus))
+      router.replace(await fetchLandingPath(queryClient))
     } catch (error) {
       const apiError = toApiError(error)
       // 서버 V001: 해당 칸만 오류로 표시하고 공통 문구를 보인다

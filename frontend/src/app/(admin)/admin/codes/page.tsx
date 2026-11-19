@@ -1,211 +1,147 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Plus } from "lucide-react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/api"
+import { BulkToolbar } from "@/components/kit/bulk-toolbar"
 import { confirm } from "@/components/kit/confirm-dialog"
 import { PageHeader } from "@/components/kit/page-header"
 import { QueryState } from "@/components/kit/query-state"
-import { StatusText } from "@/components/kit/status-text"
 import { Button } from "@/components/ui/button"
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useErrorMessages } from "@/lib/error-messages"
-import { cn } from "@/lib/utils"
-import type { Code } from "@/types/code"
-import { CodeDialog, GroupDialog } from "./code-dialogs"
+import type { Code, CodeGroupTree } from "@/types/code"
+import { CodeDrawer } from "./code-drawer"
+import { CodeTreeTable, parseKey } from "./code-tree-table"
 
-// 코드 관리 (code 헬퍼, 권한 CODE_MANAGE). 왼쪽 그룹 목록, 오른쪽 고른 그룹의 코드
-// 고른 그룹은 주소(?group=)에 둔다. 그룹 이름 바꾸기·지우기는 백엔드에 없다
+// 공통코드 (code 헬퍼, 권한 CODE_MANAGE)
+// moa: 관리 화면 정리 (specs/004-admin-codes FR-004~FR-007, US1, research R5~R7). 메뉴 관리와 같은 틀이다
+//   그룹은 기능이 코드에 등록한다. 화면에서 그룹을 더하지 않는다
+//   그룹 > 항목 트리 표(구성 목록, 쪽 나눔 없음), 이름을 누르면 드로어, 그룹마다 "항목 추가"
+//   체크박스 일괄 처리(사용·사용 안 함·삭제)는 한 그룹 안에서만. 끌어서 순서도 같은 그룹 안에서만
+//   하나라도 틀리면 서버가 아무것도 바꾸지 않는다
+const TREE_KEY = ["admin", "code-tree"]
+
 export default function CodesPage() {
-  const t = useTranslations("code")
-  const router = useRouter()
-  const pathname = usePathname()
-  const selected = useSearchParams().get("group") ?? ""
-  const groups = useQuery({
-    queryKey: ["admin", "code-groups"],
-    queryFn: api.v1.code.admin.groups,
-  })
-  const [groupOpen, setGroupOpen] = useState(false)
-
-  const select = (groupCode: string) =>
-    router.replace(`${pathname}?group=${encodeURIComponent(groupCode)}`, {
-      scroll: false,
-    })
-
-  return (
-    <>
-      <PageHeader
-        title={t("title")}
-        description={t("pageDescription")}
-        actions={
-          <Button onClick={() => setGroupOpen(true)}>
-            <Plus />
-            {t("addGroup")}
-          </Button>
-        }
-      />
-      <div className="grid gap-(--page-gap) lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h2>{t("groups")}</h2>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <QueryState query={groups} isEmpty={(d) => d.length === 0} empty={t("noGroups")}>
-              {(list) => (
-                <ul className="flex flex-col gap-1">
-                  {list.map((group) => (
-                    <li key={group.groupCode}>
-                      <Button
-                        variant={group.groupCode === selected ? "secondary" : "ghost"}
-                        className="h-auto w-full flex-col items-start gap-0 py-2 text-left"
-                        aria-current={group.groupCode === selected ? "true" : undefined}
-                        onClick={() => select(group.groupCode)}
-                      >
-                        <span className="font-medium">{group.name}</span>
-                        {/* 고른 단추 바탕(secondary) 위에서는 흐린 글자의 대비가 모자라 기본 글자색을 쓴다 */}
-                        <span
-                          className={cn("font-mono text-xs", group.groupCode !== selected && "text-muted-foreground")}
-                        >
-                          {group.groupCode}
-                        </span>
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </QueryState>
-          </CardContent>
-        </Card>
-        {selected ? (
-          <CodeList groupCode={selected} groupName={groups.data?.find((g) => g.groupCode === selected)?.name} />
-        ) : (
-          <Card>
-            <CardContent className="text-sm text-muted-foreground">{t("pickGroup")}</CardContent>
-          </Card>
-        )}
-      </div>
-      <GroupDialog open={groupOpen} onOpenChange={setGroupOpen} onCreated={select} />
-    </>
-  )
-}
-
-function CodeList({ groupCode, groupName }: { groupCode: string; groupName?: string }) {
   const t = useTranslations("code")
   const queryClient = useQueryClient()
   const { describeError } = useErrorMessages()
-  const codes = useQuery({
-    queryKey: ["admin", "codes", groupCode],
-    queryFn: () => api.v1.code.admin.codes(groupCode),
-  })
-  const [editing, setEditing] = useState<{ code?: Code } | null>(null)
+  const tree = useQuery({ queryKey: TREE_KEY, queryFn: api.v1.code.admin.tree })
+  const [editing, setEditing] = useState<{ group: CodeGroupTree; code?: Code } | null>(null)
+  const [selected, setSelected] = useState<string[]>([])
+  const selectedGroups = [...new Set(selected.map((key) => parseKey(key).groupCode))]
+  const groupCode = selectedGroups.length === 1 ? selectedGroups[0] : undefined
+  const selectedCodes = selected.map((key) => parseKey(key).code)
 
-  const remove = useMutation({
-    mutationFn: (code: string) => api.v1.code.admin.removeCode(groupCode, code),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ["admin", "codes", groupCode],
-        }),
-        queryClient.invalidateQueries({ queryKey: ["codes", groupCode] }),
-      ])
-      toast.success(t("codeRemoved"))
+  // 관리 화면과 그 그룹의 화면용 목록(선택 상자)을 함께 새로 읽는다
+  const refresh = (groupCodes: string[]) =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: TREE_KEY }),
+      ...groupCodes.map((g) => queryClient.invalidateQueries({ queryKey: ["codes", g] })),
+    ])
+
+  const run = useMutation({
+    mutationFn: ({ action }: { group: string; action: () => Promise<unknown>; done?: string }) => action(),
+    onSuccess: async (_, { group, done }) => {
+      await refresh([group])
+      if (done) toast.success(done)
     },
-    onError: (error) => toast.error(describeError(error).message),
+    onError: async (error, { group }) => {
+      toast.error(describeError(error).message)
+      await refresh([group])
+    },
   })
 
-  const askRemove = async (code: Code) => {
+  const reorder = (activeKey: string, overKey: string) => {
+    const active = parseKey(activeKey)
+    const over = parseKey(overKey)
+    if (active.groupCode !== over.groupCode) {
+      toast.error(t("dragOtherGroup"))
+      return
+    }
+    const codes = tree.data?.find((g) => g.groupCode === active.groupCode)?.codes.map((c) => c.code) ?? []
+    const next = codes.filter((c) => c !== active.code)
+    next.splice(codes.indexOf(over.code), 0, active.code)
+    run.mutate({
+      group: active.groupCode,
+      action: () =>
+        api.v1.code.admin.order(
+          active.groupCode,
+          next.map((code, i) => ({ code, sortOrder: i })),
+        ),
+    })
+  }
+
+  const setEnabled = (enabled: boolean) => {
+    if (!groupCode) return
+    run.mutate({
+      group: groupCode,
+      action: () => api.v1.code.admin.setEnabled(groupCode, selectedCodes, enabled),
+      done: t(enabled ? "bulkEnabled" : "bulkDisabled", { count: selected.length }),
+    })
+  }
+
+  const remove = async () => {
+    if (!groupCode) return
     const ok = await confirm({
-      title: t("removeTitle", { name: code.name }),
-      description: t("removeDescription"),
+      title: t("bulkRemoveTitle", { count: selected.length }),
+      description: t("bulkRemoveDescription"),
       confirmLabel: t("remove"),
       destructive: true,
     })
-    if (ok) remove.mutate(code.code)
+    if (!ok) return
+    run.mutate(
+      {
+        group: groupCode,
+        action: () => api.v1.code.admin.bulkDelete(groupCode, selectedCodes),
+        done: t("bulkRemoved", { count: selected.length }),
+      },
+      { onSuccess: () => setSelected([]) },
+    )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>{groupName ? t("codesOf", { name: groupName }) : groupCode}</h2>
-        </CardTitle>
-        <CardAction>
-          <Button size="sm" onClick={() => setEditing({})}>
-            <Plus />
-            {t("addCode")}
+    <>
+      <PageHeader title={t("title")} description={t("guide")} />
+      {selected.length > 0 && (
+        <BulkToolbar
+          label={t("bulkToolbar")}
+          selected={t("bulkSelected", { count: selected.length })}
+          note={groupCode ? undefined : t("bulkOneGroup")}
+        >
+          <Button size="sm" variant="outline" disabled={run.isPending} onClick={() => setEnabled(true)}>
+            {t("inUse")}
           </Button>
-        </CardAction>
-      </CardHeader>
-      <CardContent>
-        <QueryState query={codes} isEmpty={(d) => d.length === 0} empty={t("noCodes")}>
-          {(list) => (
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("code")}</TableHead>
-                    <TableHead>{t("name")}</TableHead>
-                    <TableHead className="w-(--col-number) text-right">{t("sortOrder")}</TableHead>
-                    <TableHead className="w-(--col-status)">{t("enabled")}</TableHead>
-                    <TableHead className="w-(--col-actions) text-right">
-                      <span className="sr-only">{t("actions")}</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {list.map((code) => (
-                    <TableRow key={code.code}>
-                      <TableCell>
-                        <div className="max-w-(--col-text-max) truncate font-mono">{code.code}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-(--col-text-max) truncate">{code.name}</div>
-                      </TableCell>
-                      <TableCell className="text-right">{code.sortOrder}</TableCell>
-                      <TableCell>
-                        <StatusText tone={code.enabled ? "positive" : "neutral"}>
-                          {t(code.enabled ? "inUse" : "notInUse")}
-                        </StatusText>
-                      </TableCell>
-                      <TableCell className={cn("text-right")}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-label={t("editOf", { name: code.name })}
-                          onClick={() => setEditing({ code })}
-                        >
-                          {t("edit")}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-label={t("removeOf", { name: code.name })}
-                          onClick={() => void askRemove(code)}
-                        >
-                          {t("remove")}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </QueryState>
-      </CardContent>
-      <CodeDialog
-        groupCode={groupCode}
+          <Button size="sm" variant="outline" disabled={run.isPending} onClick={() => setEnabled(false)}>
+            {t("notInUse")}
+          </Button>
+          <Button size="sm" variant="outline" disabled={run.isPending} onClick={() => void remove()}>
+            {t("remove")}
+          </Button>
+        </BulkToolbar>
+      )}
+      <QueryState query={tree} isEmpty={(d) => d.length === 0} empty={t("empty")}>
+        {(groups) => (
+          <CodeTreeTable
+            tree={groups}
+            selected={selected}
+            onSelectedChange={setSelected}
+            onOpen={(group, code) => setEditing({ group, code })}
+            onAdd={(group) => setEditing({ group })}
+            onDrop={reorder}
+            disabled={run.isPending}
+          />
+        )}
+      </QueryState>
+      <CodeDrawer
+        key={editing ? `${editing.group.groupCode}/${editing.code?.code ?? ""}` : "closed"}
+        group={editing?.group}
         code={editing?.code}
         open={editing !== null}
         onOpenChange={(open) => !open && setEditing(null)}
+        onSaved={(g) => refresh([g])}
       />
-    </Card>
+    </>
   )
 }

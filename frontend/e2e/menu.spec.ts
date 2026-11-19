@@ -170,15 +170,31 @@ async function signIn(page: Page, menus: unknown[]) {
 }
 
 const menuLinks = (page: Page) => page.getByRole("navigation", { name: "메뉴" }).getByRole("link")
+// 사이드바 묶음 행 (눌러 펴고 접는다, FR-005)
+const menuGroup = (page: Page, name: string) =>
+  page.getByRole("navigation", { name: "메뉴" }).getByRole("button", { name, exact: true })
+const OPS_NAMES = SIX_ADMIN_MENUS[0].children.map((m) => m.name)
+
+// 관리 화면의 API는 비운다 (사이드바만 본다). 공통코드는 목록이 아니라 그룹 트리(배열)를 받는다
+async function adminShell(page: Page) {
+  await signedIn(page, { menus: SIX_ADMIN_MENUS })
+  await page.route("**/api/v1/admin/**", (route) =>
+    route.fulfill({ json: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 } }),
+  )
+  await page.route("**/api/v1/admin/code-groups/tree", (route) => route.fulfill({ json: [] }))
+}
 
 test("US1-AC1 관리자는 로그인하면 첫 관리 메뉴 화면이 열리고 사이드바에 운영·설정 묶음 아래 관리 메뉴 6개만 있다 @wide", async ({
   page,
 }) => {
   await signIn(page, SIX_ADMIN_MENUS)
   await expect(page).toHaveURL(/\/admin\/users$/)
+  // 지금 화면이 있는 "운영"만 펴져 있고, "설정"은 펴야 보인다 (FR-005)
+  await expect(menuGroup(page, "운영")).toHaveAttribute("aria-expanded", "true")
+  await expect(menuGroup(page, "설정")).toHaveAttribute("aria-expanded", "false")
+  await expect(menuLinks(page)).toHaveText(OPS_NAMES)
+  await menuGroup(page, "설정").click()
   await expect(menuLinks(page)).toHaveText(SIX_NAMES)
-  await expect(page.getByRole("button", { name: "운영", exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "설정", exact: true })).toBeVisible()
   await expect(page.getByRole("link", { name: "홈", exact: true })).toHaveCount(0)
   await expect(page.getByRole("link", { name: /^공지(, 새 공지)?$/ })).toHaveCount(0)
 })
@@ -206,6 +222,70 @@ test("US1-AC3 넓은 폭에는 머리 줄이 없고, 로고 줄 단추로 사이
   await expect(menuLinks(page).first()).toHaveText("사용자 관리")
 })
 
+test("US1-AC4 묶음을 펴고 접은 상태는 새로 고쳐도 유지된다 @wide", async ({ page }) => {
+  await adminShell(page)
+  await page.goto("/admin/users")
+  const settings = menuGroup(page, "설정")
+  await expect(settings).toHaveAttribute("aria-expanded", "false")
+  await expect(page.getByRole("link", { name: "메뉴 관리" })).toHaveCount(0)
+
+  await settings.click()
+  await expect(settings).toHaveAttribute("aria-expanded", "true")
+  await page.reload()
+  await expect(settings).toHaveAttribute("aria-expanded", "true")
+  await expect(page.getByRole("link", { name: "메뉴 관리" })).toBeVisible()
+
+  await settings.click()
+  await expect(settings).toHaveAttribute("aria-expanded", "false")
+  await page.reload()
+  await expect(settings).toHaveAttribute("aria-expanded", "false")
+  await expect(page.getByRole("link", { name: "메뉴 관리" })).toHaveCount(0)
+})
+
+test("US1-AC5 기억이 없으면 묶음 안의 화면 주소로 들어갈 때 그 묶음만 펴진다 @wide", async ({ page }) => {
+  await adminShell(page)
+  await page.goto("/admin/codes")
+  await expect(menuGroup(page, "설정")).toHaveAttribute("aria-expanded", "true")
+  await expect(menuGroup(page, "운영")).toHaveAttribute("aria-expanded", "false")
+  await expect(page.getByRole("link", { name: "공통코드" })).toHaveAttribute("data-active", /.*/)
+  await expectNoSeriousA11yViolations(page)
+})
+
+test("US1-AC6 지금 화면의 묶음도 직접 접으면 새로 고쳐도 접힌 채다 @wide", async ({ page }) => {
+  await adminShell(page)
+  await page.goto("/admin/users")
+  const ops = menuGroup(page, "운영")
+  await expect(ops).toHaveAttribute("aria-expanded", "true")
+  await ops.click()
+  await expect(ops).toHaveAttribute("aria-expanded", "false")
+  await page.reload()
+  await expect(ops).toHaveAttribute("aria-expanded", "false")
+  await expect(page.getByRole("link", { name: "사용자 관리" })).toHaveCount(0)
+})
+
+test("US1-AC7 아이콘만 남게 접힌 사이드바에서 묶음을 누르면 사이드바가 펼쳐지고 그 묶음이 펴진다 @wide", async ({
+  page,
+}) => {
+  await adminShell(page)
+  await page.goto("/admin/users")
+  await page.getByRole("button", { name: "사이드바 접기" }).click()
+  await expect(page.getByRole("button", { name: "사이드바 펼치기" })).toBeVisible()
+  await menuGroup(page, "설정").click()
+  await expect(page.getByRole("button", { name: "사이드바 접기" })).toBeVisible()
+  await expect(menuGroup(page, "설정")).toHaveAttribute("aria-expanded", "true")
+  await expect(page.getByRole("link", { name: "메뉴 관리" })).toBeVisible()
+})
+
+test("US1-AC8 다른 묶음의 화면으로 옮겨도 지나온 묶음은 펴진 채다 @wide", async ({ page }) => {
+  await adminShell(page)
+  await page.goto("/admin/users")
+  await menuGroup(page, "설정").click()
+  await page.getByRole("link", { name: "공통코드" }).click()
+  await expect(page).toHaveURL(/\/admin\/codes$/)
+  await expect(menuGroup(page, "운영")).toHaveAttribute("aria-expanded", "true")
+  await expect(menuLinks(page)).toHaveText(SIX_NAMES)
+})
+
 test("US2-AC1 일반 회원 사이드바에는 관리 메뉴가 없다 @wide", async ({ page }) => {
   await signedIn(page)
   await page.route("**/api/v1/notices/new", (route) => route.fulfill({ json: { hasNew: false } }))
@@ -223,7 +303,10 @@ test("관리자의 계정 화면(설정)은 관리 셸 안에 열린다 @wide", 
   await signedIn(page, { menus: SIX_ADMIN_MENUS })
   await page.goto("/settings")
   await expect(page.getByRole("heading", { name: "설정" })).toBeVisible()
-  await expect(menuLinks(page)).toHaveText(SIX_NAMES)
+  // 묶음 안의 화면이 아니라 두 묶음 모두 접혀 있다 (FR-005)
+  await expect(menuGroup(page, "운영")).toHaveAttribute("aria-expanded", "false")
+  await expect(menuGroup(page, "설정")).toHaveAttribute("aria-expanded", "false")
+  await expect(menuLinks(page)).toHaveCount(0)
 })
 
 test("사용자 셸은 서버의 사용자 메뉴를 그린다 (FR-007) @wide", async ({ page }) => {

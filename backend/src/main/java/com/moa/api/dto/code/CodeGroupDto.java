@@ -1,10 +1,11 @@
 package com.moa.api.dto.code;
 
-import com.moa.api.entity.code.CodeGroup;
+import com.moa.api.codegroup.CodeGroupDefinition;
 
-public record CodeGroupDto(String groupCode, String name, String description) {
+/** 등록된 코드 그룹 (moa, specs/004-admin-codes FR-004) */
+public record CodeGroupDto(String groupCode, String name, String description, String usedBy) {
 
-	public static CodeGroupDto from(CodeGroup group) {
-		return new CodeGroupDto(group.getGroupCode(), group.getName(), group.getDescription());
+	public static CodeGroupDto from(CodeGroupDefinition group) {
+		return new CodeGroupDto(group.groupCode(), group.name(), group.description(), group.usedBy());
 	}
 }

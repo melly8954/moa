@@ -56,4 +56,14 @@ public class Code extends SoftDeleteEntity {
 		this.sortOrder = sortOrder;
 		this.enabled = enabled;
 	}
+
+	/** moa: 일괄 사용·사용 안 함 (specs/004-admin-codes FR-005) */
+	public void changeEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	/** moa: 그룹 안 순서 바꾸기 (FR-005) */
+	public void changeSortOrder(int sortOrder) {
+		this.sortOrder = sortOrder;
+	}
 }
