@@ -9,6 +9,7 @@ import { useCallback, useMemo, useState } from "react"
 //   - 조건을 바꿔도 바로 반영하지 않는다. 조회를 눌러야 주소가 바뀌고, 1쪽으로 돌아간다
 //   - 초기화는 기본값으로 되돌리고 바로 조회한다
 //   - 쪽 크기·정렬을 바꾸면 1쪽으로 돌아간다
+//   - 기본 쪽 크기는 10이다. 주소의 쪽이 전체 쪽 수를 넘으면 목록 표가 마지막 쪽으로 바꾼다(replace)
 //   - 주소의 쪽은 1부터, API의 page는 0부터다 (CONTRACT.md PageResponse)
 // 조건 값은 모두 문자열이다. 빈 문자열은 조건 없음이고 주소·API에 넣지 않는다
 
@@ -34,7 +35,8 @@ export type ListSearch<F extends Filters> = {
   isFiltered: boolean
   submit: (patch?: Partial<F>) => void
   reset: () => void
-  setPage: (page: number) => void
+  // replace: 방문 기록을 남기지 않는다 (넘친 쪽 바로잡기)
+  setPage: (page: number, options?: { replace?: boolean }) => void
   setSize: (size: PageSize) => void
   setSort: (sort: Sort) => void
   // API에 넘길 값: 빈 조건은 빼고, page(0부터)·size·sort("필드,asc")를 붙인다. queryKey에도 쓴다
@@ -53,7 +55,7 @@ function readSize(value: string | null, fallback: PageSize): PageSize {
 
 export function useListSearch<F extends Filters>({
   defaults,
-  size: defaultSize = 20,
+  size: defaultSize = 10,
   sort: defaultSort,
 }: {
   defaults: F
@@ -89,7 +91,7 @@ export function useListSearch<F extends Filters>({
   }
 
   const navigate = useCallback(
-    (next: { filters: F; page: number; size: PageSize; sort: Sort }) => {
+    (next: { filters: F; page: number; size: PageSize; sort: Sort }, replace = false) => {
       const params = new URLSearchParams()
       for (const [key, value] of Object.entries(next.filters)) if (value !== "") params.set(key, value)
       if (next.page > 1) params.set("page", String(next.page))
@@ -98,7 +100,9 @@ export function useListSearch<F extends Filters>({
       const defaultSortText = defaultSort ? `${defaultSort.field},${defaultSort.direction}` : ""
       if (sortText !== defaultSortText) params.set("sort", sortText)
       const text = params.toString()
-      router.push(text ? `${pathname}?${text}` : pathname, { scroll: false })
+      const href = text ? `${pathname}?${text}` : pathname
+      if (replace) router.replace(href, { scroll: false })
+      else router.push(href, { scroll: false })
     },
     [router, pathname, defaultSize, defaultSort],
   )
@@ -122,7 +126,7 @@ export function useListSearch<F extends Filters>({
       setDraftState(defaults)
       navigate({ filters: defaults, page: 1, size: state.size, sort: defaultSort })
     },
-    setPage: (page) => navigate({ ...state, page }),
+    setPage: (page, options) => navigate({ ...state, page }, options?.replace),
     setSize: (size) => navigate({ ...state, size, page: 1 }),
     setSort: (sort) => navigate({ ...state, sort, page: 1 }),
     params,

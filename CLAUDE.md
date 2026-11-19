@@ -29,6 +29,7 @@
 - 기존 기능을 바꿀 때는 새 스펙 폴더를 만들지 않고 그 기능의 spec.md를 고친다
 - 키트에서 온 기능도 도입할 때 스펙을 만들고, 머리에 출처(태그·헬퍼)를 적는다
 - 스펙 작업 브랜치는 `docs/<이름>`, 구현 브랜치는 `feat/<스펙 번호>-<이름>`이다. spec·plan·tasks를 먼저 PR로 병합한 뒤 구현 브랜치를 딴다
+- 구현은 기능 코드(백엔드·프론트)를 먼저 끝내고, 테스트 작성·수정은 PR 직전 마지막에 한다. tasks.md도 테스트 작업을 맨 끝에 둔다
 
 ## git
 
@@ -48,7 +49,7 @@
 | 로컬 실행 | `./gradlew bootRun` (local 프로필, Docker로 DB를 함께 띄운다. 시험 계정 `admin`·`user`). 처음 한 번 `backend/.env.local`에 `JWT_SECRET`을 넣는다 (`backend/.env.example`) |
 | 다른 프로필로 실행 | `SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun` (PowerShell: `$env:SPRING_PROFILES_ACTIVE="dev"; .\gradlew.bat bootRun`). 값은 실행 폴더의 `.env.<프로필>`(`backend/.env.example` 참고)이나 환경 변수로 준다 |
 | 전체 검사 | `./gradlew build` (포맷·lint·테스트. DB 테스트 제외) |
-| DB 테스트 (AC) | `./gradlew dbTest` (Docker 필요) |
+| 인수 테스트 (DB) | `./gradlew dbTest` (Docker 필요. `@Tag("db")` 테스트만 돈다) |
 | 포맷 적용 | `./gradlew spotlessApply` |
 
 프론트는 `frontend/`에서 실행한다.
@@ -61,8 +62,12 @@
 | API 타입 만들기 | `npm run gen:api` (local 프로필 백엔드가 떠 있어야 한다) |
 | 포맷 적용 | `npm run format` |
 
-- 화면 검사와 DB 테스트를 언제 돌리는지는 `docs/git.md` "빌드·테스트 (앱 CI)"를 따르되, moa는 그보다 좁힌다 (키트 `git` 템플릿으로 옮길 것)
-  - 로컬에서는 빠른 검사(`./gradlew build`, `npm run check`)만 돌린다. 인수 테스트(`dbTest`)와 화면 검사(e2e)는 바꾼 기능의 묶음이라도 로컬에서 돌리지 않고 PR CI로 본다. 사용자가 요청할 때만 로컬에서 돌린다
-  - 구현은 기능 코드(백엔드·프론트)를 먼저 끝내고, 테스트 작성·수정은 PR 직전 마지막에 한다. tasks.md도 테스트 작업을 맨 끝에 둔다
-
 - 키트 사용법은 psw-dev-kit `springboot/v0.5.0`의 `backend/springboot/README.md`, `web-next/v0.5.0`의 `frontend/web/next/README.md`를 본다
+
+## 로컬 검사
+
+- 로컬에서는 빠른 검사만 돌린다: 백엔드 `./gradlew build`, 프론트 `npm run check`
+- 무거운 검사는 로컬에서 돌리지 않는다: 인수 테스트(`./gradlew dbTest`), 화면 검사(`npm run test:e2e`)
+  - 바꾼 기능의 테스트 묶음(`dbTest --tests "*<기능>AcceptanceTest"` 등)도 돌리지 않는다
+  - 작업 브랜치 → `dev` PR의 CI가 돌린다. 결과는 PR에서 보고, 실패하면 그때 고친다
+  - 사용자가 요청할 때만 로컬에서 돌린다

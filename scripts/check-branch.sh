@@ -3,8 +3,8 @@
 #
 # 사용법
 #   pre-push hook: check-branch.sh < <git이 주는 push 목록>
-#   CI(PR):        check-branch.sh --pr <작업 브랜치> <대상 브랜치>
-#   CI(태그):      check-branch.sh --tag <태그>
+#   CI(PR):        check-branch.sh --pr <작업 브랜치> <대상 브랜치>   (.github/workflows/git.yml)
+#   CI(자동 태그): check-branch.sh --tag <태그>                        (.github/workflows/tag.yml, 태그를 올리기 전)
 #   이름만:        check-branch.sh --name <브랜치>
 # 통과하면 0, 아니면 1.
 #
@@ -39,12 +39,14 @@ errors=0
 err() { echo "브랜치 검사 오류: $*" >&2; errors=$((errors + 1)); }
 in_list() { [[ " $2 " == *" $1 "* ]]; }   # in_list <값> <공백 구분 목록>
 
-# 작업 브랜치 이름: <종류>/<소문자·숫자·-·.>
+# 작업 브랜치 이름: <종류>/<이름>. 이름은 소문자·숫자 덩어리를 - 또는 . 하나로 잇는다
+#   통과: feat/admin-role-remove, feat/008-party, chore/git-template-v0.4.0
+#   막힘: fix/a--b, fix/abc-, fix/-abc, fix/a_b, fix/a..b, fix/Abc
 check_name() {
   local name="$1"
   in_list "$name" "$base" && return 0
-  if ! [[ "$name" =~ ^($types)/[a-z0-9][a-z0-9._-]*$ ]]; then
-    err "브랜치 이름은 '<종류>/<이름>'이다 (종류: ${types//|/, }, 이름: 소문자·숫자·-): $name"
+  if ! [[ "$name" =~ ^($types)/[a-z0-9]+([.-][a-z0-9]+)*$ ]]; then
+    err "브랜치 이름은 '<종류>/<이름>'이다 (종류: ${types//|/, }, 이름: 소문자·숫자를 - 또는 . 하나로 잇는다. 예: feat/admin-role-remove): $name"
   fi
 }
 

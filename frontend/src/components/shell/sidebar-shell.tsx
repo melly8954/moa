@@ -1,6 +1,6 @@
 "use client"
 
-import { LogIn, PanelLeft } from "lucide-react"
+import { ChevronRight, LogIn, PanelLeft } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -32,10 +32,12 @@ import { signInPath } from "@/lib/next-path"
 import { cn } from "@/lib/utils"
 import { SITE } from "@/lib/site"
 import { useAuthStore } from "@/stores/auth"
+import { useEffect } from "react"
 import { HAS_LOCALE_CHOICE, LocaleMenu } from "./locale-menu"
 import { AccountMenu } from "./account-menu"
 import { isActive, type MenuItem } from "./menu"
 import { ThemeMenu } from "./theme-menu"
+import { useOpenMenus } from "./use-open-menus"
 
 // 사이드바형 셸. 폭 768px 미만에서는 사이드바가 서랍(Sheet)으로 바뀐다
 // 설정: side left|right, collapsible icon|offcanvas|none, variant sidebar|floating|inset
@@ -60,7 +62,8 @@ export function SidebarShell({
   return (
     <SidebarProvider defaultOpen>
       <Sidebar side="left" collapsible="icon" variant="sidebar">
-        <SidebarHeader>
+        {/* 머리·메뉴·바닥 사이를 선으로 나눈다 (001 FR-005, R24. 키트로 옮길 것) */}
+        <SidebarHeader className="border-b border-sidebar-border">
           <SidebarBrand homeHref={homeHref} />
         </SidebarHeader>
         <SidebarContent>
@@ -68,49 +71,11 @@ export function SidebarShell({
           <nav aria-label={t("shell.menu")}>
             <SidebarGroup>
               <SidebarGroupLabel>{t("shell.menu")}</SidebarGroupLabel>
-              <SidebarMenu>
-                {menu.map((item) => (
-                  <SidebarMenuItem key={item.key}>
-                    <SidebarMenuButton
-                      className="relative"
-                      isActive={isActive(item, pathname)}
-                      tooltip={item.label}
-                      render={item.href ? <Link href={item.href} /> : undefined}
-                    >
-                      {item.icon && <item.icon />}
-                      {/* 새 소식 점 (moa 006 R12): 펼치면 이름 오른쪽, 접으면 아이콘 오른쪽 위. 이름 칸이 마지막이어야 말줄임이 된다 */}
-                      {item.badge && (
-                        <i
-                          aria-hidden
-                          className="order-last ml-auto size-2 shrink-0 rounded-full bg-destructive group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1 group-data-[collapsible=icon]:right-1"
-                        />
-                      )}
-                      <span>
-                        {item.label}
-                        {item.badge && <span className="sr-only">, {item.badge}</span>}
-                      </span>
-                    </SidebarMenuButton>
-                    {item.children && (
-                      <SidebarMenuSub>
-                        {item.children.map((child) => (
-                          <SidebarMenuSubItem key={child.key}>
-                            <SidebarMenuSubButton
-                              isActive={isActive(child, pathname)}
-                              render={child.href ? <Link href={child.href} /> : undefined}
-                            >
-                              <span>{child.label}</span>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    )}
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
+              <SidebarNav menu={menu} pathname={pathname} />
             </SidebarGroup>
           </nav>
         </SidebarContent>
-        <SidebarFooter>
+        <SidebarFooter className="border-t border-sidebar-border">
           <SidebarMenu>
             {/* 개인 알림 벨 (moa 007 US2, 키트로 옮길 것) */}
             {signedIn && (
@@ -170,6 +135,83 @@ export function SidebarShell({
   )
 }
 
+// 사이드바 메뉴. 하위 메뉴가 있는 묶음(주소 없음)은 행을 눌러 펴고 접는다 (moa 001 FR-005, research R24. 키트로 옮길 것)
+//   펴짐 = 브라우저에 기억한 값 ?? 지금 화면이 그 안인가. 자동으로 펴진 묶음도 펴진 채로 기억한다 (US1-AC8)
+//   접힌 하위 목록은 그리지 않는다. 아이콘만 남게 접혔을 때 묶음을 누르면 사이드바를 펼치고 그 묶음을 편다
+function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) {
+  const { state, isMobile, setOpen } = useSidebar()
+  const { openMenus, setMenuOpen, rememberOpen } = useOpenMenus()
+  const isGroup = (item: MenuItem) => !item.href && !!item.children?.length
+  const activeGroup = menu.find((item) => isGroup(item) && isActive(item, pathname))?.key
+  useEffect(() => {
+    if (activeGroup) rememberOpen(activeGroup)
+  }, [activeGroup, rememberOpen])
+
+  return (
+    <SidebarMenu>
+      {menu.map((item) => {
+        const group = isGroup(item)
+        const open = group ? (openMenus[item.key] ?? isActive(item, pathname)) : true
+        const subId = `sidebar-sub-${item.key}`
+        const toggle = () => {
+          if (state === "collapsed" && !isMobile) {
+            setOpen(true)
+            setMenuOpen(item.key, true)
+          } else setMenuOpen(item.key, !open)
+        }
+        return (
+          <SidebarMenuItem key={item.key}>
+            <SidebarMenuButton
+              className="relative"
+              isActive={isActive(item, pathname)}
+              tooltip={item.label}
+              render={item.href ? <Link href={item.href} /> : undefined}
+              {...(group && { "aria-expanded": open, "aria-controls": open ? subId : undefined, onClick: toggle })}
+            >
+              {item.icon && <item.icon />}
+              {/* 새 소식 점 (moa 006 R12): 펼치면 이름 오른쪽, 접으면 아이콘 오른쪽 위. 이름 칸이 마지막이어야 말줄임이 된다 */}
+              {item.badge && (
+                <i
+                  aria-hidden
+                  className="order-last ml-auto size-2 shrink-0 rounded-full bg-destructive group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1 group-data-[collapsible=icon]:right-1"
+                />
+              )}
+              {group && (
+                <ChevronRight
+                  aria-hidden
+                  data-open={open || undefined}
+                  className={cn(
+                    "order-last text-muted-foreground transition-transform group-data-[collapsible=icon]:hidden data-open:rotate-90",
+                    !item.badge && "ml-auto",
+                  )}
+                />
+              )}
+              <span>
+                {item.label}
+                {item.badge && <span className="sr-only">, {item.badge}</span>}
+              </span>
+            </SidebarMenuButton>
+            {item.children && open && (
+              <SidebarMenuSub id={subId}>
+                {item.children.map((child) => (
+                  <SidebarMenuSubItem key={child.key}>
+                    <SidebarMenuSubButton
+                      isActive={isActive(child, pathname)}
+                      render={child.href ? <Link href={child.href} /> : undefined}
+                    >
+                      <span>{child.label}</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                ))}
+              </SidebarMenuSub>
+            )}
+          </SidebarMenuItem>
+        )
+      })}
+    </SidebarMenu>
+  )
+}
+
 // 사이드바 로고 줄. 펼쳤을 때: 로고(첫 화면 링크)와 접기 단추. 아이콘만 남게 접었을 때: 로고 자리가 펼치기 단추
 //   (평소 로고 글자, 마우스를 올리거나 키보드 초점이 닿으면 펼치기 아이콘). 서랍(좁은 폭)에는 접기 단추가 없다
 function SidebarBrand({ homeHref }: { homeHref: string }) {
@@ -204,7 +246,7 @@ function SidebarBrand({ homeHref }: { homeHref: string }) {
       <SidebarMenuItem className="flex items-center gap-1">
         <SidebarMenuButton size="lg" className="min-w-0 flex-1" render={<Link href={homeHref} />}>
           <div className={logo}>{initial}</div>
-          <span className="truncate font-medium">{SITE.name}</span>
+          <span className="truncate font-semibold">{SITE.name}</span>
         </SidebarMenuButton>
         {!isMobile && (
           <Button variant="ghost" size="icon-sm" aria-label={t("collapseSidebar")} onClick={toggleSidebar}>

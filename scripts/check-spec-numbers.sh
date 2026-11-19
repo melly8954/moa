@@ -5,7 +5,7 @@
 # 같은 번호에 이름이 둘 이상이거나(폴더·표), 예약 줄이 둘 이상이면 겹친 것이다.
 # 예약 줄(`008`)과 그 번호의 스펙 하나(`008-<이름>`)가 함께 있는 것은 같은 스펙이라 괜찮다.
 # 여럿이 각자 /speckit-specify를 돌리면 같은 번호(예: 008-party, 008-feed)가 git 충돌 없이 함께 병합될 수 있다.
-# 번호 예약 규칙은 docs/spec-numbers.md. CI는 .github/workflows/specs.yml이 돌린다.
+# 번호 예약 규칙은 docs/spec-numbers.md. CI는 .github/workflows/spec-numbers.yml이 돌린다.
 # psw-dev-kit git 템플릿(--spec-kit)에서 온 파일이다. 여기서 고치지 않는다.
 #
 #   bash scripts/check-spec-numbers.sh [specs 폴더]   # 기본 specs

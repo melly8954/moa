@@ -49,15 +49,17 @@ test("검색어 칸에서 Enter로 조회하고, 결과가 없으면 '조건에 
 
 test("초기화는 기본값으로 되돌리고 바로 조회한다", async ({ page }) => {
   await open(page, "?status=STOPPED&grade=%EA%B3%A8%EB%93%9C&page=2")
-  await page.getByRole("button", { name: "초기화" }).click()
+  // 빈 결과면 표 안의 "조건 초기화"도 함께 보인다. 검색 영역의 버튼을 누른다
+  await page.getByRole("button", { name: "초기화", exact: true }).click()
   await expect(page).toHaveURL(/\/dev\/list$/)
   await expect(page.getByText("총 87건")).toBeVisible()
   await expect(page.getByLabel("등급")).toHaveValue("")
 })
 
-test("쪽 이동과 쪽 크기 (쪽 크기를 바꾸면 1쪽)", async ({ page }) => {
+test("쪽 이동과 쪽 크기 (기본 10개씩, 쪽 크기를 바꾸면 1쪽)", async ({ page }) => {
   await open(page)
-  await expect(rows(page)).toHaveCount(20)
+  await expect(rows(page)).toHaveCount(10)
+  await expect(page.getByLabel("한 쪽에 보일 개수")).toHaveValue("10")
   await page.getByRole("button", { name: "2쪽" }).click()
   await expect(page).toHaveURL(/\?page=2$/)
   await expect(page.getByRole("button", { name: "2쪽" })).toHaveAttribute("aria-current", "page")
@@ -65,6 +67,53 @@ test("쪽 이동과 쪽 크기 (쪽 크기를 바꾸면 1쪽)", async ({ page })
   await page.getByLabel("한 쪽에 보일 개수").selectOption("50")
   await expect(page).toHaveURL(/\?size=50$/)
   await expect(rows(page)).toHaveCount(50)
+})
+
+// 011-list-screen
+test("처음·마지막 쪽으로 한 번에 가고, 양 끝에서는 비활성이다", async ({ page }) => {
+  await open(page, "?page=6")
+  await page.getByRole("button", { name: "첫 쪽" }).click()
+  await expect(page).toHaveURL(/\/dev\/list$/)
+  await expect(page.getByRole("button", { name: "첫 쪽" })).toBeDisabled()
+  await expect(page.getByRole("button", { name: "이전 쪽" })).toBeDisabled()
+
+  // 87건 ÷ 10 = 9쪽
+  await page.getByRole("button", { name: "마지막 쪽" }).click()
+  await expect(page).toHaveURL(/\?page=9$/)
+  await expect(rows(page)).toHaveCount(7)
+  await expect(page.getByRole("button", { name: "마지막 쪽" })).toBeDisabled()
+  await expect(page.getByRole("button", { name: "다음 쪽" })).toBeDisabled()
+})
+
+test("주소의 쪽이 넘치면 마지막 쪽으로 바꾸고, 뒤로 가기로 넘친 주소에 돌아가지 않는다", async ({ page }) => {
+  await open(page)
+  await page.goto("/dev/list?page=99")
+  await expect(page).toHaveURL(/\?page=9$/)
+  await expect(page.getByRole("button", { name: "9쪽" })).toHaveAttribute("aria-current", "page")
+  await page.goBack()
+  await expect(page).toHaveURL(/\/dev\/list$/)
+})
+
+test("조건이 걸린 빈 결과에만 '조건 초기화'를 두고, 누르면 기본 조건으로 돌아간다", async ({ page }) => {
+  await open(page, "?keyword=%EC%97%86%EB%8A%94%EC%9D%B4%EB%A6%84")
+  await expect(page.getByText("조건에 맞는 결과가 없어요.")).toBeVisible()
+  await page.getByRole("button", { name: "조건 초기화" }).click()
+  await expect(page).toHaveURL(/\/dev\/list$/)
+  await expect(page.getByText("총 87건")).toBeVisible()
+  await expect(page.getByRole("button", { name: "조건 초기화" })).toHaveCount(0)
+})
+
+test("데이터·마지막 쪽·빈 결과·오류에서 쪽 이동 줄의 높이가 같다", async ({ page }) => {
+  const navTop = async () => (await page.getByRole("navigation", { name: "쪽 이동" }).boundingBox())?.y
+  await open(page)
+  const full = await navTop()
+  await open(page, "?page=9")
+  expect(await navTop()).toBe(full)
+  await open(page, "?keyword=%EC%97%86%EB%8A%94%EC%9D%B4%EB%A6%84")
+  expect(await navTop()).toBe(full)
+  await open(page, "?keyword=error", { loaded: false })
+  await expect(page.getByRole("button", { name: "다시 시도" })).toBeVisible()
+  expect(await navTop()).toBe(full)
 })
 
 test("열 이름을 누르면 서버 정렬: 오름차순 → 내림차순 → 기본", async ({ page }) => {
@@ -103,7 +152,8 @@ test("행 선택과 확인 창", async ({ page }) => {
   await open(page)
   await page.getByRole("checkbox", { name: "이 쪽 모두 선택" }).click()
   await page.getByRole("button", { name: "선택 삭제" }).click()
-  await expect(page.getByRole("alertdialog", { name: "20명을 지울까요?" })).toBeVisible()
+  // 기본 10개씩이라 이 쪽 모두 = 10명
+  await expect(page.getByRole("alertdialog", { name: "10명을 지울까요?" })).toBeVisible()
   await page.getByRole("button", { name: "취소" }).click()
   await expect(page.getByRole("alertdialog")).toBeHidden()
 })

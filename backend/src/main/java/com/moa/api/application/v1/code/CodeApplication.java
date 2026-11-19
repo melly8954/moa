@@ -1,5 +1,6 @@
 package com.moa.api.application.v1.code;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.cache.annotation.CacheEvict;
@@ -11,6 +12,8 @@ import com.moa.api.application.v1.code.command.CreateCodeCommand;
 import com.moa.api.application.v1.code.command.ModifyCodeCommand;
 import com.moa.api.dto.code.CodeDto;
 import com.moa.api.dto.code.CodeGroupDto;
+import com.moa.api.dto.code.CodeGroupTreeDto;
+import com.moa.api.dto.code.CodeOrderDto;
 import com.moa.api.service.code.CodeService;
 import com.moa.common.audit.CurrentActor;
 
@@ -46,9 +49,10 @@ public class CodeApplication {
 		return codeService.getGroups();
 	}
 
-	@Transactional
-	public CodeGroupDto createGroup(String groupCode, String name, String description) {
-		return codeService.createGroup(groupCode, name, description);
+	/** moa: 등록된 그룹마다 항목 (specs/004-admin-codes FR-005) */
+	@Transactional(readOnly = true)
+	public List<CodeGroupTreeDto> getTree() {
+		return codeService.getTree();
 	}
 
 	@Transactional
@@ -68,5 +72,26 @@ public class CodeApplication {
 	@CacheEvict(value = CACHE, key = "#groupCode")
 	public void deleteCode(String groupCode, String code) {
 		codeService.deleteCode(groupCode, code, currentActor.id());
+	}
+
+	/** moa: 한 그룹 안 일괄 사용·사용 안 함 (FR-005). 하나라도 틀리면 아무것도 바꾸지 않는다 */
+	@Transactional
+	@CacheEvict(value = CACHE, key = "#groupCode")
+	public void setEnabled(String groupCode, Collection<String> codes, boolean enabled) {
+		codeService.setEnabled(groupCode, codes, enabled);
+	}
+
+	/** moa: 한 그룹 안 일괄 삭제 (FR-005) */
+	@Transactional
+	@CacheEvict(value = CACHE, key = "#groupCode")
+	public void deleteAll(String groupCode, Collection<String> codes) {
+		codeService.deleteAll(groupCode, codes, currentActor.id());
+	}
+
+	/** moa: 한 그룹 안 순서 (FR-005) */
+	@Transactional
+	@CacheEvict(value = CACHE, key = "#groupCode")
+	public void reorder(String groupCode, List<CodeOrderDto> orders) {
+		codeService.reorder(groupCode, orders);
 	}
 }

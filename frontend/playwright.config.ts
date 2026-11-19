@@ -17,7 +17,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? "github" : "list",
+  // CI: PR 화면 표시(github)와 실패 때 올릴 HTML 보고서(playwright-report, frontend-ci.yml)
+  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: { baseURL: BASE_URL, trace: "on-first-retry" },
   projects: [
     narrow("w360", 360, 800),

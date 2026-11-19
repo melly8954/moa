@@ -1,5 +1,7 @@
 package com.moa.api.controller.v1.admin.code.request;
 
+import org.jspecify.annotations.Nullable;
+
 import com.moa.api.application.v1.code.command.ModifyCodeCommand;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,8 +14,8 @@ import jakarta.validation.constraints.Size;
 public record CodeModifyRequest(
 	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "이름",
 		example = "결제 완료") @NotBlank @Size(max = 100) String name,
-	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "정렬 순서",
-		example = "10") @NotNull @Min(0) Integer sortOrder,
+	@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "정렬 순서. moa: 비우면 그대로",
+		example = "10") @Min(0) @Nullable Integer sortOrder,
 	@Schema(requiredMode = Schema.RequiredMode.REQUIRED,
 		description = "사용 여부. false면 화면 목록에서 빠진다") @NotNull Boolean enabled) {
 

@@ -1,4 +1,5 @@
 // 공통코드 API의 응답·요청 (백엔드 code 헬퍼: CodeListResponse, CodeGroupListResponse, Code*Request)
+// moa: 그룹은 코드에 등록한다 (specs/004-admin-codes FR-004). 그룹 만들기 요청은 없다
 
 export type Code = {
   code: string
@@ -12,20 +13,24 @@ export type CodeGroup = {
   groupCode: string
   name: string
   description?: string | null
+  // moa: 이 그룹을 쓰는 곳
+  usedBy: string
 }
 
-export type CodeGroupCreateRequest = {
-  groupCode: string
-  name: string
-  description?: string
-}
+// moa: 공통코드 트리 표의 그룹 하나 (GET /admin/code-groups/tree). 항목은 사용 안 함 포함, 정렬 순서대로
+export type CodeGroupTree = CodeGroup & { codes: Code[] }
+
 export type CodeCreateRequest = {
-  code: string
+  // moa: 비우면 그룹 안의 자동 순번 (001, 002, …)
+  code?: string
   name: string
-  sortOrder: number
+  // moa: 비우면 그룹 맨 뒤
+  sortOrder?: number
 }
 export type CodeModifyRequest = {
   name: string
-  sortOrder: number
+  // moa: 비우면 그대로
+  sortOrder?: number
   enabled: boolean
 }
+export type CodeOrder = { code: string; sortOrder: number }
