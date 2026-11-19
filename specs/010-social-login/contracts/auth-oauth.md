@@ -19,6 +19,7 @@
 | A015 | `SOCIAL_EMAIL_IN_USE` | 409 | 다른 회원이 쓰는 이메일 (FR-014, US1-AC9, US5-AC8) |
 | A016 | `SOCIAL_REJOIN_RESTRICTED` | 403 | 재가입 제한 기록에 걸림 (FR-015, US1-AC10·AC11, US5-AC9) |
 | A017 | `TERMS_NOT_AGREED` | 400 | 필수 약관에 동의하지 않았거나 현재 버전이 아님 (FR-013, US1-AC7) |
+| B201 | `NICKNAME_TAGS_EXHAUSTED` | 409 | 그 닉네임(대소문자 무시)의 태그 9999개가 모두 쓰임 (FR-005, US1-AC14). `009-mypage` contracts와 같은 코드다. 010이 먼저 더한다 (2026-11-19) |
 
 기존 A007 `ACCOUNT_LOCKED`는 잠긴 회원의 소셜 로그인에도 쓴다 (US2-AC2).
 
@@ -78,11 +79,11 @@
   ```json
   { "nickname": "string", "agreements": [ { "type": "SERVICE", "version": "string" }, { "type": "PRIVACY", "version": "string" } ] }
   ```
-  - `nickname`: 잠정 규칙(data-model, `009-mypage` FR-003과 같음) — 앞뒤 공백 제거 뒤 2~12자, 한글·영문·숫자·`_`만, 예약어 금지는 V00x. 다른 회원과 겹치면(대소문자 무시) 409로 막는다. 중복 오류 코드는 구현 때 009와 같은 코드로 맞춘다
+  - `nickname`: 잠정 규칙(data-model, `009-mypage` FR-003과 같음) — 앞뒤 공백 제거 뒤 2~12자, 한글·영문·숫자·`_`만, 예약어 금지는 V00x. 다른 회원과 겹쳐도 된다. 서버가 4자리 태그를 정한다(응답에 싣지 않음). 그 닉네임(대소문자 무시)의 태그가 다 찼으면 409 B201 `NICKNAME_TAGS_EXHAUSTED`(`009-mypage` contracts와 같은 코드, 010이 먼저 더함)
   - `agreements`: 필수 두 종류가 모두 있고 버전이 `GET /api/v1/terms`의 현재 버전과 같아야 한다
-- 처리: 가입 확인(R12·R13)을 다시 한 뒤 한 트랜잭션으로 회원·연결·약관 동의 2행
+- 처리: 가입 확인(R12·R13)을 다시 한 뒤 한 트랜잭션으로 회원·프로필(`nickname_key`, 태그)·연결·약관 동의 2행 (research R14)
 - 200 기존 `POST /api/v1/auth/login`과 같은 응답 모양(`AuthRefreshResponse`) + 리프레시 쿠키. `oauth_signup` 쿠키 지움. 성공 이력
-- 400 V00x 닉네임 검증 실패 / A017 약관 미동의·버전 다름 / A009 가입 대기 쿠키 없음·만료 / A014·A015·A016 쿠키 발급 뒤 상황이 바뀌어 막힘 / 409 A012 동시 가입에서 이미 가입됨
+- 400 V00x 닉네임 검증 실패 / A017 약관 미동의·버전 다름 / A009 가입 대기 쿠키 없음·만료 / A014·A015·A016 쿠키 발급 뒤 상황이 바뀌어 막힘 / 409 A012 동시 가입에서 이미 가입됨 / 409 B201 닉네임 태그가 다 참(가입 대기 쿠키는 그대로, US1-AC14)
 
 ## POST `/api/v1/users/me/social-accounts/{provider}/link` — 로그인 필요
 

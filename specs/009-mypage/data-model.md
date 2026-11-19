@@ -1,25 +1,27 @@
 # Data Model: 마이페이지 (009)
 
-마이그레이션: `V<번호>__user_profiles.sql`(아래 새 테이블 3개, 기존 회원 프로필 행 채우기), `V<번호>_1__play_time_codes.sql`(공통코드 시드). 번호는 정해 두지 않고 구현 때 dev 마지막 다음 번호로 한다. 순서 조건과 이유는 [research.md](./research.md) R12.
+마이그레이션: `V<번호>__user_profiles.sql`(010이 만든 `user_profiles`에 칸 더하기, 아래 새 테이블 2개), `V<번호>_1__play_time_codes.sql`(공통코드 시드). 번호는 정해 두지 않고 구현 때 dev 마지막 다음 번호로 한다. 010 다음이어야 한다. 순서 조건과 이유는 [research.md](./research.md) R12.
 
 ## 회원 — `users` (키트, 구조 변경 없음)
 
 | 칸 | 이 기능에서의 쓰임 |
 |---|---|
-| `name` (not null, 50) | 닉네임 = 표시 이름 (spec FR-003, `010-social-login` FR-005). 바꿀 때 `User.rename`을 쓴다. 잠정 규칙(2~12자 등)은 바꿀 때만 검사한다. 규칙 이전의 기존 이름은 그대로 둔다 (spec Edge Cases) |
+| `name` (not null, 50) | 닉네임 = 표시 이름 (spec FR-003, `010-social-login` FR-005). 다른 회원과 겹쳐도 된다. 바꿀 때 `User.rename`을 쓴다. 잠정 규칙(2~12자 등)은 바꿀 때만 검사한다. 규칙 이전의 기존 이름은 그대로 둔다 (spec Edge Cases) |
 | `login_id` | 화면에 보이지 않는다 (계정 메뉴에서도 숨김, spec FR-014) |
 | `role` + 업무 역할(rbac) | 관리자·운영자 판단 (spec FR-016, research R2) |
 
-- 닉네임 중복 조회: `name`을 대소문자 무시로 비교(`utf8mb4_unicode_ci`), 자기 제외, 삭제된 회원 제외. 첫 검사다. DB 유일 제약은 `users`가 아니라 `user_profiles.nickname_key`에 둔다 (research R4)
+- 닉네임 중복 조회는 두지 않는다. 회원 구별은 `user_profiles`의 `(nickname_key, nickname_tag)`가 한다 (research R4, 2026-11-19)
 
-## 프로필 — `user_profiles` (새 테이블)
+## 프로필 — `user_profiles` (010이 만든 테이블에 칸을 더함)
 
-회원 하나에 하나. 닉네임을 정할 때 만든다: 010 가입 트랜잭션, 기존 회원은 `V<번호>__user_profiles.sql`의 채우기, 행 없는 회원은 마이페이지에서 처음 저장할 때 (research R14). 행이 없으면 아래 "기본값"으로 응답한다.
+회원 하나에 하나. 닉네임을 정할 때 만든다: 010 가입 트랜잭션, 기존 회원은 010 마이그레이션의 채우기, 행 없는 회원은 마이페이지에서 처음 저장할 때 (research R14). 행이 없으면 아래 "기본값"으로 응답한다.
+`user_id`·`nickname_key`·`nickname_tag`·`created_at`·`updated_at`과 유일 제약은 `010-social-login` 마이그레이션이 만든다(`010-social-login` data-model). 009는 그 밖의 칸을 더한다.
 
 | 칸 | 형식 | 규칙 | 기본값 |
 |---|---|---|---|
-| `user_id` | BIGINT, PK | `users.id` | |
-| `nickname_key` | VARCHAR(50), null, 유일 `uk_user_profiles_nickname_key` | `users.name`의 앞뒤 공백 제거 + 소문자. 닉네임을 바꿀 때 `users.name`과 같은 트랜잭션에서 함께 바꾼다. 관리자 이름 바꾸기(002)도 함께 바꾼다 (research R4·R14) | 행을 만들 때의 `users.name`에서 |
+| `user_id` | BIGINT, PK (010) | `users.id` | |
+| `nickname_key` | VARCHAR(50), not null (010) | `users.name`의 앞뒤 공백 제거 + 소문자(`NicknamePolicy.key`). 닉네임을 바꿀 때 `users.name`과 같은 트랜잭션에서 함께 바꾼다. 관리자 이름 바꾸기(002)도 함께 바꾼다 (research R4·R14) | 행을 만들 때의 `users.name`에서 |
+| `nickname_tag` | CHAR(4), not null (010) | `0001`~`9999`. 유일 `uk_user_profiles_nickname_tag (nickname_key, nickname_tag)`. 서버가 정한다(`NicknameTags`). 닉네임을 바꾸면 새 `nickname_key`에서 비어 있으면 그대로, 아니면 새로 (research R4) | 행을 만들 때 `NicknameTags.assign` |
 | `avatar_key` | VARCHAR(30), null | `DefaultAvatar` 키 (research R10). 목록에서 빠진 키는 응답 때 `default` | `default` |
 | `bio` | VARCHAR(500), null | 자기소개 500자 이내 (FR-006) | 빈 값 |
 | `birth_year` | SMALLINT, null | 1900~올해. 응답에 `age` = 올해 − 출생 연도 (FR-007, research R6) | 빈 값 |
@@ -30,9 +32,10 @@
 | `nickname_changed_at` | DATETIME(6), null | 마지막 닉네임 변경 시각. 비어 있으면 가입 뒤 첫 변경 전 (FR-004, research R5) | 빈 값 |
 | `created_at`, `updated_at` | DATETIME(6), not null | | |
 
-- `V<번호>__user_profiles.sql` 채우기: 삭제되지 않은 모든 `users`에 행을 만든다. 정규화 값이 겹치는 기존 이름은 id가 가장 작은 하나만 `nickname_key`를 갖고 나머지는 null (research R14)
+- 기존 회원 채우기는 010 마이그레이션이 한다: 삭제되지 않은 모든 `users`에 행, 태그는 같은 `nickname_key` 안에서 id 순서대로 `0001`부터 (research R14)
+- `V<번호>__user_profiles.sql`은 `ALTER TABLE user_profiles ADD …`로 위 표의 009 칸(`avatar_key`~`nickname_changed_at`)을 더한다. 기존 행은 기본값을 갖는다
 - 게임 정보 추가 때 이 행을 잠가(`SELECT … FOR UPDATE`) 최대 3개를 지킨다 (research R8)
-- 회원 탈퇴 때 지우거나 `nickname_key`를 비우는 일은 회원 탈퇴 스펙이 정한다 (spec 가정)
+- 회원 탈퇴 때 행을 지우거나 태그를 풀어 주는 일은 회원 탈퇴 스펙이 정한다 (spec 가정)
 
 ## 플레이 가능 시간대 — `user_profile_play_times` (새 테이블)
 
@@ -95,7 +98,8 @@
 |---|---|
 | 관리자·운영자 계정은 마이페이지 API 전부 403 A201 | FR-016, US1-AC7, SC-006 |
 | 닉네임: 공백 제거 뒤 2~12자, 한글·영문·숫자·`_`, 예약어 아님 (V001) | FR-003 잠정, US2-AC3 |
-| 닉네임: 다른 회원과 대소문자 무시로 같으면 409 B201 (서비스 검사 + `nickname_key` 유일 제약) | FR-003 잠정, US2-AC5 |
+| 닉네임: 다른 회원과 겹쳐도 됨. `(nickname_key, nickname_tag)` 유일. 바꾸면 태그는 비어 있으면 그대로, 아니면 새로 | FR-003, US2-AC5·AC7 |
+| 닉네임: 그 `nickname_key`의 태그 9999개가 다 쓰이면 409 B201 | FR-003, US2-AC8 |
 | 닉네임: `nickname_changed_at` + 30일 전이면 409 B202 (첫 변경은 바로) | FR-004 잠정, US2-AC4·AC6 |
 | 같은 닉네임으로 저장하면 아무것도 바뀌지 않음 | Edge Cases |
 | 자기소개 500자, 출생 연도 1900~올해, 성별 목록, 디스코드 형식 (V001) | FR-006~FR-008, US3 |
