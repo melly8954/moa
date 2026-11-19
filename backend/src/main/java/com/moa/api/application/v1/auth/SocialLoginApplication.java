@@ -2,6 +2,7 @@ package com.moa.api.application.v1.auth;
 
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -13,6 +14,8 @@ import com.moa.api.dto.user.SocialSignUpCheck;
 import com.moa.api.dto.user.UserDto;
 import com.moa.api.service.user.NicknameTags;
 import com.moa.api.service.user.SocialAccountService;
+import com.moa.common.exception.ErrorCode;
+import com.moa.common.security.LoginAttemptedEvent;
 import com.moa.common.security.oauth.OAuthCookies;
 import com.moa.common.security.oauth.OAuthIdentity;
 import com.moa.common.security.oauth.OAuthMode;
@@ -22,6 +25,7 @@ import com.moa.common.security.oauth.OAuthProviderRegistry;
 import com.moa.common.security.oauth.OAuthSecrets;
 import com.moa.common.security.oauth.OAuthSignup;
 import com.moa.common.security.oauth.OAuthState;
+import com.moa.common.security.oauth.SocialProvider;
 import com.moa.common.security.token.AuthTokenService;
 import com.moa.common.security.token.IssuedTokens;
 import com.moa.common.security.token.RefreshTokenTransport;
@@ -36,6 +40,10 @@ import lombok.RequiredArgsConstructor;
  * <p>
  * 클래스에 @Transactional을 두지 않는다 (AuthTokenApplication과 같은 이유. 토큰 발급은 AuthTokenService가 트랜잭션을 가진다).
  * 가입만 TransactionTemplate으로 한 트랜잭션에 묶고, 태그 충돌이면 새 트랜잭션으로 다시 한다 (research R14).
+ * <p>
+ * 접속 이력(FR-008, research R8): 성공(연결된 회원 로그인, 가입)과 실패(잠김 A007, state·교환·확인 실패 A009,
+ * 가입 확인에서 막힘 A014·A015)에 LoginAttemptedEvent를 낸다. 취소와 설정 없음은 로그인 시도가 아니라 남기지 않는다 (T050).
+ * 가입 제출(POST sign-up)의 입력 오류(V001·A017·B201)도 로그인 시도가 아니라 남기지 않는다.
  */
 @Component
 @RequiredArgsConstructor
@@ -46,6 +54,7 @@ public class SocialLoginApplication {
 	static final String DONE_PATH = "/auth/oauth/done";
 	private static final String LOGIN_MODE = "login";
 	private static final String ACCESS_DENIED = "access_denied";
+	private static final int SUBJECT_PREFIX_LENGTH = 8;
 
 	private final OAuthProviderRegistry providerRegistry;
 	private final OAuthCookies oauthCookies;
@@ -53,6 +62,7 @@ public class SocialLoginApplication {
 	private final AuthTokenService authTokenService;
 	private final RefreshTokenTransport refreshTokenTransport;
 	private final TransactionTemplate transactionTemplate;
+	private final ApplicationEventPublisher eventPublisher;
 
 	/**
 	 * 인가 시작 (contracts "authorize", US1). state·nonce·PKCE를 만들어 oauth_state 쿠키에 담고 제공자 인가 화면 주소를 준다.
@@ -92,20 +102,30 @@ public class SocialLoginApplication {
 		HttpServletResponse response) {
 		Optional<OAuthState> saved = oauthCookies.readState(request);
 		oauthCookies.clearState(response);
+		Optional<SocialProvider> knownProvider = SocialProvider.fromPathValue(provider);
 		if (error != null) {
-			return ACCESS_DENIED.equals(error) ? SIGN_IN_PATH : signInWithError("failed");
+			// 취소(access_denied)는 로그인 시도 전이라 접속 이력을 남기지 않는다 (T050). 그 밖의 제공자 오류는 실패로 남긴다
+			if (ACCESS_DENIED.equals(error)) {
+				return SIGN_IN_PATH;
+			}
+			knownProvider.ifPresent(found -> recordFailure(unlinkedLoginId(found, null), ErrorCode.OAUTH_FAILED));
+			return signInWithError("failed");
 		}
 		Optional<OAuthProviderClient> client = providerRegistry.find(provider);
 		if (client.isEmpty()) {
+			// 설정이 없는 제공자는 로그인 시도가 아니라 남기지 않는다
 			return signInWithError("disabled");
 		}
-		if (saved.isEmpty() || saved.get().provider() != client.get().provider() || code == null
+		SocialProvider current = client.get().provider();
+		if (saved.isEmpty() || saved.get().provider() != current || code == null
 			|| !saved.get().state().equals(state)) {
+			recordFailure(unlinkedLoginId(current, null), ErrorCode.OAUTH_FAILED);
 			return signInWithError("failed");
 		}
 		Optional<OAuthIdentity> identity = client.get()
 			.exchange(code, saved.get().codeVerifier(), saved.get().nonce());
 		if (identity.isEmpty()) {
+			recordFailure(unlinkedLoginId(current, null), ErrorCode.OAUTH_FAILED);
 			return signInWithError("failed");
 		}
 		String next = saved.get().next();
@@ -115,9 +135,16 @@ public class SocialLoginApplication {
 			return logIn(linked.get(), next, request, response);
 		}
 		SocialSignUpCheck check = socialAccountService.checkSignUp(identity.get());
+		String unlinked = unlinkedLoginId(current, identity.get().subject());
 		return switch (check.result()) {
-			case EMAIL_UNVERIFIED -> signInWithError("emailUnverified");
-			case EMAIL_IN_USE -> signInWithError("emailInUse");
+			case EMAIL_UNVERIFIED -> {
+				recordFailure(unlinked, ErrorCode.SOCIAL_EMAIL_UNVERIFIED);
+				yield signInWithError("emailUnverified");
+			}
+			case EMAIL_IN_USE -> {
+				recordFailure(unlinked, ErrorCode.SOCIAL_EMAIL_IN_USE);
+				yield signInWithError("emailInUse");
+			}
 			case ALLOWED -> {
 				OAuthIdentity verified = identity.get();
 				oauthCookies.writeSignup(response, new OAuthSignup(verified.provider(), verified.subject(),
@@ -146,18 +173,38 @@ public class SocialLoginApplication {
 				}
 			}
 		}
-		return authTokenService.issue(user.toPrincipal());
+		IssuedTokens tokens = authTokenService.issue(user.toPrincipal());
+		eventPublisher.publishEvent(LoginAttemptedEvent.succeeded(user.loginId(), user.id()));
+		return tokens;
 	}
 
 	/** 연결된 회원 로그인 (FR-003, US2). 잠긴 회원은 아이디·비밀번호 로그인과 똑같이 막는다 */
 	private String logIn(SocialLoginUserDto linked, String next, HttpServletRequest request,
 		HttpServletResponse response) {
 		if (linked.locked()) {
+			recordFailure(linked.user().loginId(), ErrorCode.ACCOUNT_LOCKED);
 			return signInWithError("locked");
 		}
 		IssuedTokens tokens = authTokenService.issue(linked.user().toPrincipal());
 		refreshTokenTransport.write(request, response, tokens);
+		eventPublisher.publishEvent(LoginAttemptedEvent.succeeded(linked.user().loginId(), linked.user().id()));
 		return withNext(DONE_PATH, next);
+	}
+
+	private void recordFailure(String loginId, ErrorCode code) {
+		eventPublisher.publishEvent(LoginAttemptedEvent.failed(loginId, code.getCode()));
+	}
+
+	/**
+	 * 회원이 없는 소셜 계정의 접속 이력 아이디 (잠정, research R8): 제공자 경로 값 + ":" + subject 앞 8자.
+	 * 신원을 확인하지 못했으면 제공자 경로 값 + ":"만. spec US4-AC1 [NEEDS CLARIFICATION]이 정해지면 바꾼다
+	 */
+	static String unlinkedLoginId(SocialProvider provider, String subject) {
+		String prefix = provider.pathValue() + ":";
+		if (subject == null) {
+			return prefix;
+		}
+		return prefix + subject.substring(0, Math.min(SUBJECT_PREFIX_LENGTH, subject.length()));
 	}
 
 	private static String signInWithError(String code) {

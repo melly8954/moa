@@ -142,8 +142,8 @@ description: "소셜 로그인 (social-login) 작업 목록"
 
 **Independent Test**: quickstart 22
 
-- [ ] T049 [US4] SocialLoginApplication·가입(T025): 성공(로그인·가입)과 실패(잠김, state·교환·확인 실패, 가입 확인에서 막힘 A014~A016)에 기존 `LoginAttemptedEvent.succeeded/failed`를 발행한다. `loginId` 칸 값은 (잠정) "회원이 있으면 그 회원의 loginId, 없으면 `google:`·`discord:` + subject 앞 8자" — spec US4-AC1 [NEEDS CLARIFICATION] 확정 뒤 고친다 (research R8). `LoginHistoryRecorder`(키트)는 고치지 않는다
-- [ ] T050 [US4] 취소(`access_denied`)는 이력을 남기지 않는다(로그인 시도 전). 이 판단을 SocialLoginApplication 주석에 적는다
+- [x] T049 [US4] SocialLoginApplication·가입(T025): 성공(로그인·가입)과 실패(잠김, state·교환·확인 실패, 가입 확인에서 막힘 A014~A016)에 기존 `LoginAttemptedEvent.succeeded/failed`를 발행한다. `loginId` 칸 값은 (잠정) "회원이 있으면 그 회원의 loginId, 없으면 `google:`·`discord:` + subject 앞 8자" — spec US4-AC1 [NEEDS CLARIFICATION] 확정 뒤 고친다 (research R8). `LoginHistoryRecorder`(키트)는 고치지 않는다 — **이번 구현**: 구글만. 실패는 잠김 A007, state·교환·확인 실패와 제공자 오류 A009, 가입 확인 막힘 A014·A015. 가입 제출 입력 오류(V001·A017·B201)와 설정 없음은 남기지 않음
+- [x] T050 [US4] 취소(`access_denied`)는 이력을 남기지 않는다(로그인 시도 전). 이 판단을 SocialLoginApplication 주석에 적는다
 
 **Checkpoint**: 접속 이력에 소셜 로그인이 보인다
 
