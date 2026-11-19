@@ -12,3 +12,9 @@ export type TermsType = "SERVICE" | "PRIVACY"
 export type CurrentTerms = {
   terms: { type: TermsType; version: string; required: boolean }[]
 }
+
+// POST /api/v1/auth/oauth/sign-up. 응답은 로그인과 같다 (TokenResponse)
+export type OAuthSignUpRequest = {
+  nickname: string
+  agreements: { type: TermsType; version: string }[]
+}

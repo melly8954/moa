@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
@@ -12,7 +12,7 @@ import { fetchLandingPath } from "@/components/shell/landing"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { useFieldErrorText } from "@/i18n/field-error"
 import { useErrorMessages } from "@/lib/error-messages"
@@ -20,6 +20,9 @@ import { currentNextPath } from "@/lib/next-path"
 import { type SignInInput, signInSchema } from "@/lib/schemas/sign-in"
 import { SITE } from "@/lib/site"
 import { useAuthStore } from "@/stores/auth"
+
+// moa: 화면에 단추를 둘 소셜 로그인 제공자 (specs/010-social-login FR-001). 디스코드는 나중에 더한다
+const SOCIAL_PROVIDERS = ["google"] as const
 
 // 폼 만드는 모양의 예시이기도 하다: Zod 스키마 → react-hook-form → shadcn Field → api 호출 → 오류 표시
 export default function SignInPage() {
@@ -33,6 +36,9 @@ export default function SignInPage() {
     resolver: zodResolver(signInSchema),
     defaultValues: { loginId: "", password: "" },
   })
+  // moa: 설정된 제공자만 단추를 보인다 (US3-AC3). 목록을 못 받으면 단추 없이 기존 폼만
+  const providers = useQuery({ queryKey: ["oauth", "providers"], queryFn: api.v1.oauth.providers })
+  const social = SOCIAL_PROVIDERS.filter((provider) => providers.data?.providers.includes(provider))
 
   const onSubmit = async (values: SignInInput) => {
     setFormError(undefined)
@@ -111,6 +117,17 @@ export default function SignInPage() {
             <Button type="submit" disabled={form.formState.isSubmitting}>
               {t("submit")}
             </Button>
+            {social.length > 0 && <FieldSeparator>{t("or")}</FieldSeparator>}
+            {social.map((provider) => (
+              <Button
+                key={provider}
+                type="button"
+                variant="outline"
+                onClick={() => window.location.assign(api.v1.oauth.authorizePath(provider, currentNextPath()))}
+              >
+                {t(`continueWith.${provider}`)}
+              </Button>
+            ))}
           </FieldGroup>
         </form>
       </CardContent>
