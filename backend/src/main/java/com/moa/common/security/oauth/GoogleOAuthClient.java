@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -21,8 +22,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.moa.common.exception.ErrorCode;
-import com.moa.common.exception.ServiceException;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -30,7 +29,7 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * 구글 OIDC 인가 코드 + PKCE (specs/010-social-login research R1·R2).
  * ID 토큰은 TLS로 토큰 엔드포인트에서 직접 받으므로 서명 대신 TLS 서버 확인에 기댄다 (OIDC Core 3.1.3.7 6).
- * iss·aud·exp·nonce는 확인한다.
+ * iss·aud·exp·nonce는 확인한다. 실패하면 빈 값을 돌려주고 이유를 로그에 남긴다 (토큰·비밀 값은 남기지 않는다).
  */
 @Component
 public class GoogleOAuthClient implements OAuthProviderClient {
@@ -80,12 +79,17 @@ public class GoogleOAuthClient implements OAuthProviderClient {
 	}
 
 	@Override
-	public OAuthIdentity exchange(String code, String codeVerifier, String nonce) {
-		String idToken = requestIdToken(code, codeVerifier);
-		IdTokenClaims claims = decode(idToken);
-		verify(claims, nonce);
-		return new OAuthIdentity(SocialProvider.GOOGLE, claims.sub(), claims.email(), claims.emailVerified(),
-			claims.name());
+	public Optional<OAuthIdentity> exchange(String code, String codeVerifier, String nonce) {
+		try {
+			String idToken = requestIdToken(code, codeVerifier);
+			IdTokenClaims claims = decode(idToken);
+			verify(claims, nonce);
+			return Optional.of(new OAuthIdentity(SocialProvider.GOOGLE, claims.sub(), claims.email(),
+				claims.emailVerified(), claims.name()));
+		} catch (VerificationFailed ex) {
+			log.warn("구글 로그인 확인 실패: {}", ex.getMessage());
+			return Optional.empty();
+		}
 	}
 
 	private String requestIdToken(String code, String codeVerifier) {
@@ -143,9 +147,16 @@ public class GoogleOAuthClient implements OAuthProviderClient {
 		}
 	}
 
-	private ServiceException failed(String reason) {
-		log.warn("구글 로그인 확인 실패: {}", reason);
-		return new ServiceException(ErrorCode.OAUTH_FAILED);
+	private VerificationFailed failed(String reason) {
+		return new VerificationFailed(reason);
+	}
+
+	/** 교환·확인 실패. exchange 안에서만 쓰고 밖으로 내보내지 않는다 */
+	private static final class VerificationFailed extends RuntimeException {
+
+		VerificationFailed(String reason) {
+			super(reason, null, false, false);
+		}
 	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)

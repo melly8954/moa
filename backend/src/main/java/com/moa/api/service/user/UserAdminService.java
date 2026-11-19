@@ -2,7 +2,9 @@ package com.moa.api.service.user;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -11,9 +13,13 @@ import org.springframework.stereotype.Service;
 import com.moa.api.dto.user.CreatedUserDto;
 import com.moa.api.dto.user.UserAdminDto;
 import com.moa.api.entity.user.User;
+import com.moa.api.entity.user.UserProfile;
 import com.moa.api.repository.reader.user.UserAdminReader;
+import com.moa.api.repository.reader.user.UserProfileReader;
 import com.moa.api.repository.reader.user.UserReader;
+import com.moa.api.repository.reader.user.UserSocialAccountReader;
 import com.moa.api.repository.writer.user.UserAdminWriter;
+import com.moa.api.repository.writer.user.UserProfileWriter;
 import com.moa.common.audit.AuditProperties;
 import com.moa.common.exception.ErrorCode;
 import com.moa.common.exception.ServiceException;
@@ -45,6 +51,11 @@ public class UserAdminService {
 	private final UserAdminWriter userAdminWriter;
 	private final PasswordEncoder passwordEncoder;
 	private final AuditProperties auditProperties;
+	// moa: 소셜 회원 역할 막기, 닉네임 키·태그 맞추기 (specs/010-social-login FR-007, research R14)
+	private final UserSocialAccountReader userSocialAccountReader;
+	private final UserProfileReader userProfileReader;
+	private final UserProfileWriter userProfileWriter;
+	private final NicknameTags nicknameTags;
 
 	public Page<UserAdminDto> search(String keyword, Role role, Boolean locked, Pageable pageable) {
 		return userAdminReader.findPage(auditProperties.systemActorId(), keyword, role, locked, pageable)
@@ -77,24 +88,51 @@ public class UserAdminService {
 	}
 
 	/**
-	 * @throws ServiceException 없으면 R001, ADMIN이 아닌데 ADMIN 계정이면 A005
+	 * moa: 프로필(user_profiles)이 있는 회원은 닉네임 규칙(NicknamePolicy)을 지키고 닉네임 키·태그를 함께 맞춘다
+	 * (specs/010-social-login research R14, specs/009-mypage FR-003). 태그는 새 키에서 비어 있으면 그대로, 아니면 새로.
+	 * 프로필이 없는 회원(관리자 등)은 키트 규칙만 따른다.
+	 *
+	 * @throws ServiceException 없으면 R001, ADMIN이 아닌데 ADMIN 계정이면 A005, 프로필이 있는데 닉네임 규칙에 안 맞으면 V001(칸 name),
+	 *     새 닉네임의 태그가 다 차면 B201, 같은 닉네임으로 동시에 바뀌어 태그가 겹치면 R002
 	 */
 	public UserAdminDto rename(AuthPrincipal actor, Long id, String name) {
 		User user = requireManageable(actor, id);
-		user.rename(name);
+		Optional<UserProfile> profile = userProfileReader.find(id);
+		if (profile.isEmpty()) {
+			user.rename(name);
+			return UserAdminDto.from(user);
+		}
+		String nickname = NicknamePolicy.validate(name, "name");
+		String key = NicknamePolicy.key(nickname);
+		UserProfile found = profile.get();
+		found.changeNickname(key, nicknameTags.keepOrAssign(key, found.getNicknameKey(), found.getNicknameTag()));
+		user.rename(nickname);
+		try {
+			userProfileWriter.save(found);
+		} catch (DataIntegrityViolationException ex) {
+			if (NicknameTags.isTagConflict(ex)) {
+				throw new ServiceException(ErrorCode.DUPLICATE_RESOURCE,
+					"같은 닉네임으로 바꾸는 요청이 동시에 있었습니다. 다시 시도해 주세요.");
+			}
+			throw ex;
+		}
 		return UserAdminDto.from(user);
 	}
 
 	/**
 	 * 다음 토큰 재발급부터 반영된다 (액세스 토큰이 끝날 때까지는 이전 역할).
 	 *
-	 * @throws ServiceException 없으면 R001, ADMIN이 아니면 A005, 자기 자신이면 B001
+	 * @throws ServiceException 없으면 R001, ADMIN이 아니면 A005, 자기 자신이면 B001, moa: 소셜 회원에게 ADMIN이면 A011
 	 */
 	public UserAdminDto changeRole(AuthPrincipal actor, Long id, Role role) {
 		if (!isAdmin(actor)) {
 			throw new ServiceException(ErrorCode.FORBIDDEN, "시스템 역할은 ADMIN만 바꿀 수 있습니다.");
 		}
 		User user = requireOther(actor, id);
+		// moa: 소셜 회원에게 ADMIN을 주지 않는다 (specs/010-social-login FR-007, US1-AC6)
+		if (role == Role.ADMIN && userSocialAccountReader.existsByUserId(id)) {
+			throw new ServiceException(ErrorCode.SOCIAL_MEMBER_ROLE_NOT_ALLOWED);
+		}
 		user.changeRole(role);
 		return UserAdminDto.from(user);
 	}

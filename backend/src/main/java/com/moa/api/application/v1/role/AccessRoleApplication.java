@@ -21,6 +21,7 @@ import com.moa.api.program.ProgramRegistry;
 import com.moa.api.service.menu.MenuService;
 import com.moa.api.service.role.AccessRoleService;
 import com.moa.api.service.role.RoleUserService;
+import com.moa.api.service.user.SocialAccountService;
 import com.moa.api.service.user.UserService;
 import com.moa.common.audit.AuditProperties;
 import com.moa.common.security.AuthPrincipal;
@@ -44,6 +45,8 @@ public class AccessRoleApplication {
 	private final MenuService menuService;
 	private final ProgramRegistry programRegistry;
 	private final AuditProperties auditProperties;
+	// moa: 소셜 회원에게 업무 역할을 주지 않는다 (specs/010-social-login FR-007, US1-AC6)
+	private final SocialAccountService socialAccountService;
 
 	/** 코드에 등록된 권한 전부 (역할에 묶을 수 있는 것) */
 	public List<PermissionDefinition> getPermissions() {
@@ -110,10 +113,16 @@ public class AccessRoleApplication {
 		return accessRoleService.getRolesOfUser(userId);
 	}
 
-	/** 없는 사용자·역할이면 R001. moa: 대상이 ADMIN이면 B001 (specs/003-admin-roles Edge Cases) */
+	/**
+	 * 없는 사용자·역할이면 R001. moa: 대상이 ADMIN이면 B001 (specs/003-admin-roles Edge Cases),
+	 * 소셜 회원에게 역할을 주면 A011 (specs/010-social-login FR-007. 모두 빼는 것은 막지 않는다)
+	 */
 	@Transactional
 	public void replaceRolesOfUser(AuthPrincipal actor, Long userId, List<Long> roleIds) {
 		roleUserService.requireNotAdmin(userService.find(userId).role());
+		if (!roleIds.isEmpty()) {
+			socialAccountService.requireNoSocialMembers(List.of(userId));
+		}
 		accessRoleService.replaceRolesOfUser(actor, userId, roleIds);
 	}
 
@@ -129,11 +138,15 @@ public class AccessRoleApplication {
 		return roleUserService.getMembers(auditProperties.systemActorId(), roleId, keyword, pageable);
 	}
 
-	/** 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, ADMIN이 섞이면 B001 (moa, FR-006). 하나라도 틀리면 아무도 더하지 않는다 */
+	/**
+	 * 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, ADMIN이 섞이면 B001 (moa, FR-006),
+	 * 소셜 회원이 섞이면 A011 (specs/010-social-login FR-007). 하나라도 틀리면 아무도 더하지 않는다
+	 */
 	@Transactional
 	public void addMembers(AuthPrincipal actor, Long roleId, List<Long> userIds) {
 		accessRoleService.requireExists(roleId);
 		roleUserService.requireTargets(auditProperties.systemActorId(), userIds);
+		socialAccountService.requireNoSocialMembers(userIds);
 		accessRoleService.addMembers(actor, roleId, userIds);
 	}
 

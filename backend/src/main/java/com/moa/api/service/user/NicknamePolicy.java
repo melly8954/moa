@@ -46,21 +46,28 @@ public final class NicknamePolicy {
 	 * @throws ServiceException 비었거나 2~12자 한글·영문·숫자·_가 아니거나 예약어면 V001 (칸 nickname)
 	 */
 	public static String validate(String raw) {
+		return validate(raw, FIELD);
+	}
+
+	/**
+	 * @param field 칸 오류에 쓸 요청 칸 이름 (관리자 이름 바꾸기는 name)
+	 */
+	public static String validate(String raw, String field) {
 		String nickname = normalize(raw);
 		if (nickname.isEmpty()) {
-			throw invalid("닉네임을 입력해 주세요.");
+			throw invalid(field, "닉네임을 입력해 주세요.");
 		}
 		if (!ALLOWED.matcher(nickname).matches()) {
-			throw invalid("닉네임은 2~12자의 한글, 영문, 숫자, _만 쓸 수 있습니다.");
+			throw invalid(field, "닉네임은 2~12자의 한글, 영문, 숫자, _만 쓸 수 있습니다.");
 		}
 		if (RESERVED.contains(key(nickname))) {
-			throw invalid("쓸 수 없는 닉네임입니다.");
+			throw invalid(field, "쓸 수 없는 닉네임입니다.");
 		}
 		return nickname;
 	}
 
-	private static ServiceException invalid(String message) {
+	private static ServiceException invalid(String field, String message) {
 		return new ServiceException(ErrorCode.INVALID_INPUT, ErrorCode.INVALID_INPUT.getMessage(),
-			List.of(new FieldError(FIELD, message)));
+			List.of(new FieldError(field, message)));
 	}
 }
