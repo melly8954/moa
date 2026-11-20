@@ -10,7 +10,7 @@
 | 묶음 | `icon` | `sort_order` | 하위 메뉴 (`program_key`, `sort_order`) |
 |---|---|---|---|
 | 운영 | `briefcase` | 10 | `ADMIN_USERS` 10, `ADMIN_NOTICES` 20, `ADMIN_LOGIN_HISTORIES` 30 |
-| 설정 | `settings` | 20 | `ADMIN_ROLES` 10, `ADMIN_MENUS` 20, `ADMIN_CODES` 30 (이름 "공통코드") |
+| 설정 | `settings` | 20 | `ADMIN_ROLES` 10, `ADMIN_MENUS` 20, `ADMIN_CODES` 30 (이름 "코드 관리", 2026-11-21에 "공통코드"에서 바꿈) |
 
 아래 "처음 구성" 표는 `V2_6` 전의 최상위 구성이다.
 
