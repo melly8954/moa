@@ -324,14 +324,24 @@ test("사용자 셸은 서버의 사용자 메뉴를 그린다 (FR-007) @wide", 
   await expect(menuLinks(page)).toHaveText(["홈", "이벤트"])
 })
 
-// 메뉴 관리 화면 (moa, specs/001-admin-menus US4·US5, FR-010~FR-012)
-test("US5-AC1 메뉴 표는 묶음 아래 하위 메뉴를 들여 쓴 트리이고 행 단추와 프로그램 탭이 없다 @wide", async ({
+// 메뉴 관리 화면 (moa, specs/001-admin-menus US4·US5, FR-009~FR-012, research R26)
+// 넓은 폭(@wide)은 왼쪽 트리 · 오른쪽 상세 칸(region), 좁은 폭은 트리 + 드로어(dialog)다
+const detail = (page: Page, name: "메뉴 수정" | "메뉴 추가") => page.getByRole("region", { name })
+
+test("US5-AC1 왼쪽은 상위 메뉴 아래 하위 메뉴를 들여 쓴 트리이고 행 단추·프로그램 탭이 없으며, 오른쪽은 고르라는 안내다 @wide", async ({
   page,
 }) => {
   await mock(page)
   await page.goto("/admin/menus")
   await expect(nameButton(page, "운영")).toBeVisible()
   await expect(nameButton(page, "코드")).toBeVisible()
+  await expect(page.getByText("왼쪽에서 메뉴를 고르면 여기서 고쳐요.", { exact: false })).toBeVisible()
+  // 일괄 처리 줄은 고르기 전에도 같은 자리에 있다
+  const toolbar = page.getByRole("toolbar", { name: "고른 메뉴 처리" })
+  await expect(toolbar.getByText("체크해서 한꺼번에 처리해요.")).toBeVisible()
+  await expect(toolbar.getByRole("button", { name: "사용 안 함" })).toBeDisabled()
+  // 화면에 "묶음"·"프로그램"이라는 말이 없다 (FR-009)
+  await expect(page.getByText(/묶음|프로그램/)).toHaveCount(0)
   await expect(page.getByRole("button", { name: /수정$/ })).toHaveCount(0)
   await expect(page.getByRole("button", { name: /삭제$/ })).toHaveCount(0)
   await expect(page.getByRole("button", { name: /위로$|아래로$/ })).toHaveCount(0)
@@ -352,17 +362,56 @@ test("FR-011 머리 설명에 역할 관리로 가는 링크가 있다", async (
   )
 })
 
-test("US5-AC2 이름을 누르면 오른쪽 드로어에서 고치고 저장한다 @wide", async ({ page }) => {
+test("US5-AC2 이름을 누르면 오른쪽 칸에서 상위 메뉴·연결 화면을 보고 고쳐 저장한다. 종류 칸은 없다 @wide", async ({
+  page,
+}) => {
   const sent: Sent = {}
   await mock(page, sent)
   await page.goto("/admin/menus")
   await nameButton(page, "코드 관리").click()
-  const drawer = page.getByRole("dialog")
-  await expect(drawer.getByText("메뉴 수정")).toBeVisible()
-  await expect(drawer.getByLabel("경로")).toHaveCount(0)
-  await drawer.getByLabel("이름").fill("코드")
-  await drawer.getByRole("button", { name: "저장" }).click()
+  const panel = detail(page, "메뉴 수정")
+  await expect(page.getByRole("dialog")).toHaveCount(0)
+  await expect(page.getByRole("row", { name: /코드 관리/ })).toHaveAttribute("aria-current", "true")
+  await expect(panel.getByLabel("상위 메뉴")).toHaveValue("")
+  await expect(panel.getByLabel("연결 화면")).toHaveValue("ADMIN_CODES")
+  await expect(panel.getByText("종류")).toHaveCount(0)
+  await expect(panel.getByLabel("경로")).toHaveCount(0)
+  await panel.getByLabel("이름").fill("코드")
+  await panel.getByRole("button", { name: "저장" }).click()
   await expect.poll(() => sent.modify).toMatchObject({ name: "코드", programKey: "ADMIN_CODES", sortOrder: 20 })
+})
+
+test("US5-AC2 상위 메뉴를 바꿔 저장하면 새 상위 메뉴의 맨 뒤로 보낸다 @wide", async ({ page }) => {
+  const sent: Sent = {}
+  await mock(page, sent)
+  await page.goto("/admin/menus")
+  await nameButton(page, "코드 관리").click()
+  const panel = detail(page, "메뉴 수정")
+  await panel.getByLabel("상위 메뉴").selectOption({ label: "운영" })
+  await panel.getByRole("button", { name: "저장" }).click()
+  await expect.poll(() => sent.modify).toMatchObject({ parentId: 7, programKey: "ADMIN_CODES", sortOrder: 30 })
+})
+
+test("FR-009 하위 메뉴가 있는 상위 메뉴는 맨 위·연결 화면 없음으로 고정된다 @wide", async ({ page }) => {
+  await mock(page)
+  await page.goto("/admin/menus")
+  await nameButton(page, "운영").click()
+  const panel = detail(page, "메뉴 수정")
+  await expect(panel.getByLabel("상위 메뉴")).toBeDisabled()
+  await expect(panel.getByLabel("연결 화면")).toBeDisabled()
+  await expect(panel.getByText("하위 메뉴가 있어 연결 화면 없이 상위 메뉴로 둬요.")).toBeVisible()
+})
+
+test("US5-AC7 오른쪽 칸에서 고치다가 다른 메뉴를 누르면 묻고, 머무르면 고치던 값이 남는다 @wide", async ({ page }) => {
+  await mock(page)
+  await page.goto("/admin/menus")
+  await nameButton(page, "코드 관리").click()
+  await detail(page, "메뉴 수정").getByLabel("이름").fill("바뀐 이름")
+  await nameButton(page, "메뉴").click()
+  const ask = page.getByRole("alertdialog")
+  await expect(ask).toBeVisible()
+  await ask.getByRole("button", { name: "머무르기" }).click()
+  await expect(detail(page, "메뉴 수정").getByLabel("이름")).toHaveValue("바뀐 이름")
 })
 
 test("FR-012 저장하지 않은 변경이 있으면 드로어를 닫기 전에 묻는다", async ({ page }) => {
@@ -392,7 +441,7 @@ test("US5-AC3 키보드로 메뉴를 옮기면 바뀐 순서를 한 번에 보�
   await expect.poll(() => sent.order).toEqual(expect.arrayContaining([{ id: 3, parentId: 7, sortOrder: 20 }]))
 })
 
-test("US5-AC4 둘을 골라 사용 안 함으로 바꾸고, 묶음으로 옮긴다 @wide", async ({ page }) => {
+test("US5-AC4 둘을 골라 사용 안 함으로 바꾸고, 상위 메뉴로 옮긴다 @wide", async ({ page }) => {
   const sent: Sent = {}
   await mock(page, sent)
   await page.goto("/admin/menus")
@@ -403,7 +452,7 @@ test("US5-AC4 둘을 골라 사용 안 함으로 바꾸고, 묶음으로 옮긴�
   await toolbar.getByRole("button", { name: "사용 안 함" }).click()
   await expect.poll(() => sent.enabled).toEqual({ ids: [3, 9], enabled: false })
 
-  await toolbar.getByRole("button", { name: "묶음으로 옮기기" }).click()
+  await toolbar.getByRole("button", { name: "상위 메뉴로 옮기기" }).click()
   await page.getByRole("menuitem", { name: "설정" }).click()
   await expect
     .poll(() => sent.order)
@@ -415,13 +464,13 @@ test("US5-AC4 둘을 골라 사용 안 함으로 바꾸고, 묶음으로 옮긴�
     )
 })
 
-test("US5-AC5 하위 메뉴가 남는 묶음을 지우려 하면 아무것도 지우지 않고 알린다", async ({ page }) => {
+test("US5-AC5 하위 메뉴가 남는 상위 메뉴를 지우려 하면 아무것도 지우지 않고 알린다", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/menus")
   await page.getByRole("checkbox", { name: "운영 고르기" }).click()
   await page.getByRole("toolbar", { name: "고른 메뉴 처리" }).getByRole("button", { name: "삭제" }).click()
   await page.getByRole("alertdialog").getByRole("button", { name: "삭제" }).click()
-  await expect(page.getByText("하위 메뉴가 남는 묶음이 있거나", { exact: false })).toBeVisible()
+  await expect(page.getByText("하위 메뉴가 남는 상위 메뉴가 있거나", { exact: false })).toBeVisible()
 })
 
 test("FR-007 사용자 메뉴 탭에서 만들면 대상 USER로 보낸다 @wide", async ({ page }) => {
@@ -430,31 +479,31 @@ test("FR-007 사용자 메뉴 탭에서 만들면 대상 USER로 보낸다 @wide
   await page.goto("/admin/menus")
   await page.getByRole("tab", { name: "사용자 메뉴" }).click()
   await page.getByRole("button", { name: "메뉴 추가" }).click()
-  const drawer = page.getByRole("dialog")
-  await expect(drawer.getByText("대상: 사용자 메뉴", { exact: false })).toBeVisible()
-  await drawer.getByLabel("이름").fill("이벤트")
-  await drawer.getByLabel("프로그램", { exact: true }).selectOption("NOTICES")
-  await drawer.getByRole("button", { name: "저장" }).click()
+  const panel = detail(page, "메뉴 추가")
+  await expect(panel.getByText("대상: 사용자 메뉴", { exact: false })).toBeVisible()
+  await panel.getByLabel("이름").fill("이벤트")
+  await panel.getByLabel("연결 화면").selectOption("NOTICES")
+  await panel.getByRole("button", { name: "저장" }).click()
   await expect
     .poll(() => sent.create)
     .toMatchObject({ name: "이벤트", programKey: "NOTICES", audience: "USER", visibility: "PUBLIC" })
 })
 
-test("US4-AC2 관리 메뉴는 관리 프로그램만 고르고, 고르면 경로와 권한이 보이며 넣을 묶음의 맨 뒤에 만든다 @wide", async ({
+test("US4-AC2 관리 메뉴는 관리 화면만 연결 화면으로 고르고, 고르면 경로와 권한이 보이며 고른 상위 메뉴의 맨 뒤에 만든다 @wide", async ({
   page,
 }) => {
   const sent: Sent = {}
   await mock(page, sent)
   await page.goto("/admin/menus")
   await page.getByRole("button", { name: "메뉴 추가" }).click()
-  const drawer = page.getByRole("dialog")
-  await expect(drawer.getByLabel("경로")).toHaveCount(0)
-  await expect(drawer.getByLabel("프로그램", { exact: true }).locator("option", { hasText: "공지" })).toHaveCount(0)
-  await drawer.getByLabel("넣을 곳").selectOption({ label: "운영" })
-  await drawer.getByLabel("이름").fill("코드 도구")
-  await drawer.getByLabel("프로그램", { exact: true }).selectOption("ADMIN_CODES")
-  await expect(drawer.getByText('경로 /admin/codes · "공통코드 관리" 권한이 있는 사람')).toBeVisible()
-  await drawer.getByRole("button", { name: "저장" }).click()
+  const panel = detail(page, "메뉴 추가")
+  await expect(panel.getByLabel("경로")).toHaveCount(0)
+  await expect(panel.getByLabel("연결 화면").locator("option", { hasText: "공지" })).toHaveCount(0)
+  await panel.getByLabel("상위 메뉴").selectOption({ label: "운영" })
+  await panel.getByLabel("이름").fill("코드 도구")
+  await panel.getByLabel("연결 화면").selectOption("ADMIN_CODES")
+  await expect(panel.getByText('경로 /admin/codes · "공통코드 관리" 권한이 있는 사람')).toBeVisible()
+  await panel.getByRole("button", { name: "저장" }).click()
   await expect
     .poll(() => sent.create)
     .toMatchObject({ name: "코드 도구", programKey: "ADMIN_CODES", audience: "ADMIN", parentId: 7, sortOrder: 30 })
@@ -466,26 +515,46 @@ test("US4-AC3 로그인이 필요한 사용자 프로그램을 고르면 공개 
   await page.goto("/admin/menus")
   await page.getByRole("tab", { name: "사용자 메뉴" }).click()
   await page.getByRole("button", { name: "메뉴 추가" }).click()
-  const drawer = page.getByRole("dialog")
-  await drawer.getByLabel("이름").fill("내 정보")
-  await drawer.getByLabel("프로그램", { exact: true }).selectOption("MY_PAGE")
-  await expect(drawer.getByRole("radio", { name: "비회원 포함 모두" })).toBeDisabled()
-  await expect(drawer.getByRole("radio", { name: "회원만" })).toBeChecked()
-  await drawer.getByRole("button", { name: "저장" }).click()
+  const panel = detail(page, "메뉴 추가")
+  await panel.getByLabel("이름").fill("내 정보")
+  await panel.getByLabel("연결 화면").selectOption("MY_PAGE")
+  await expect(panel.getByRole("radio", { name: "비회원 포함 모두" })).toBeDisabled()
+  await expect(panel.getByRole("radio", { name: "회원만" })).toBeChecked()
+  await panel.getByRole("button", { name: "저장" }).click()
   await expect.poll(() => sent.create).toMatchObject({ programKey: "MY_PAGE", visibility: "MEMBER" })
 })
 
-test("화면 메뉴는 프로그램을 골라야 한다", async ({ page }) => {
-  await mock(page)
+test("US5-AC6 맨 위에 연결 화면 없이 만들면 상위 메뉴가 되고, 상위 메뉴 아래에 두려면 연결 화면을 골라야 한다 @wide", async ({
+  page,
+}) => {
+  const sent: Sent = {}
+  await mock(page, sent)
   await page.goto("/admin/menus")
   await page.getByRole("button", { name: "메뉴 추가" }).click()
-  const drawer = page.getByRole("dialog")
-  await drawer.getByLabel("이름").fill("빈 메뉴")
-  await drawer.getByRole("button", { name: "저장" }).click()
-  await expect(drawer.getByText("프로그램을 골라 주세요.")).toBeVisible()
+  const panel = detail(page, "메뉴 추가")
+  await expect(panel.getByLabel("상위 메뉴")).toHaveValue("")
+  await panel.getByLabel("이름").fill("빈 메뉴")
+  await panel.getByLabel("상위 메뉴").selectOption({ label: "운영" })
+  await panel.getByRole("button", { name: "저장" }).click()
+  await expect(panel.getByText("상위 메뉴 아래에 두려면 연결 화면을 골라 주세요.")).toBeVisible()
+  expect(sent.create).toBeUndefined()
+
+  await panel.getByLabel("상위 메뉴").selectOption({ label: "없음 (맨 위)" })
+  await panel.getByRole("button", { name: "저장" }).click()
+  await expect.poll(() => sent.create).toMatchObject({ name: "빈 메뉴", audience: "ADMIN" })
+  expect((sent.create as { programKey?: string }).programKey).toBeUndefined()
+  expect((sent.create as { parentId?: number }).parentId).toBeUndefined()
 })
 
-test("FR-012 좁은 폭에서는 드로어가 화면 전체를 덮는다", async ({ page }) => {
+test("FR-010 고른 메뉴가 있으면 새 메뉴의 상위 메뉴 처음 값은 그 메뉴의 상위 메뉴다 @wide", async ({ page }) => {
+  await mock(page)
+  await page.goto("/admin/menus")
+  await nameButton(page, "메뉴").click()
+  await page.getByRole("button", { name: "메뉴 추가" }).click()
+  await expect(detail(page, "메뉴 추가").getByLabel("상위 메뉴")).toHaveValue("7")
+})
+
+test("US5-AC8 FR-012 좁은 폭에서는 트리만 보이고 상세가 화면 전체를 덮는 드로어로 열린다", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 })
   await mock(page)
   await page.goto("/admin/menus")

@@ -117,10 +117,10 @@ test("US2-AC1 역할 추가: 관리 메뉴 트리를 체크하면 그 메뉴의 
   await expect(drawer.getByRole("tab", { name: "구성원" })).toHaveCount(0)
   await drawer.getByLabel("역할 코드").fill("VIEWER")
   await drawer.getByLabel("이름").fill("조회 담당")
-  await expect(drawer.getByText("메뉴에 없는 프로그램")).toBeVisible()
+  await expect(drawer.getByText("메뉴에 없는 화면")).toBeVisible()
   await expect(drawer.getByText("꺼짐")).toBeVisible()
   await drawer.getByRole("checkbox", { name: /^코드 관리/ }).click()
-  // 묶음 메뉴를 체크하면 하위 메뉴가 모두 체크된다
+  // 상위 메뉴를 체크하면 하위 메뉴가 모두 체크된다
   await drawer.getByRole("checkbox", { name: /^시스템/ }).click()
   await expect(drawer.getByRole("checkbox", { name: /^역할/ })).toBeChecked()
   await expectNoSeriousA11yViolations(page)
