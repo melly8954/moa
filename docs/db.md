@@ -102,8 +102,8 @@ moa가 정한 MariaDB 테이블·열·인덱스·마이그레이션 규칙이다
 - dev에 들어간 파일은 고치지 않고 새 파일을 더한다. 아직 dev에 들어가지 않은 내 브랜치의 파일은 고쳐도 된다
 - 관리자가 화면에서 바꾸는 데이터(메뉴, 공통코드 등)를 다루는 마이그레이션은 관리자 변경을 덮어쓰지 않는다
   - 새 행은 넣기만 한다
-  - 있는 행을 고쳐야 하면 관리자가 바꾸지 않은 행만 고친다 (예: `WHERE program_key = 'ADMIN_CODES' AND name = '공통코드'`)
-  - 행은 고정 id가 아니라 키(`program_key`, `group_code` 등)로 찾는다. 환경마다 id가 다를 수 있다
+  - 있는 행을 고쳐야 하면 관리자가 바꾸지 않은 행만 고친다 (예: `WHERE screen_key = 'ADMIN_CODES' AND name = '공통코드'`)
+  - 행은 고정 id가 아니라 키(`screen_key`, `group_code` 등)로 찾는다. 환경마다 id가 다를 수 있다
 - 로컬 전용 데이터(시험 계정 등)는 `db/localdata/R__<설명>.sql`에 둔다. local·test 프로필에서만 돌고 운영에 들어가지 않는다
 - 테스트 전용 마이그레이션은 `src/test/resources/db/testmigration/`에 `V900`부터 둔다. 테이블은 이 문서의 이름 규칙을 따른다
 - 마이그레이션을 바꾸면 `bootRun`으로 한 번 띄워 Flyway 적용과 `ddl-auto: validate` 통과를 본다
