@@ -5,7 +5,8 @@ import { createContext, useContext, useEffect, useMemo, useRef, useSyncExternalS
 import { confirm } from "@/components/kit/confirm-dialog"
 import { SideDrawer } from "@/components/kit/side-drawer"
 
-// 공통코드 오른쪽 상세 패널 (specs/004-admin-codes FR-005, research R12). 넓은 폭에서 드로어 대신 화면을 좌 트리 · 우 상세로 나눈다
+// 관리 화면 오른쪽 상세 패널 (specs/004-admin-codes FR-005, research R12). 넓은 폭에서 드로어 대신 화면을 좌 트리 · 우 상세로 나눈다
+//   공통코드와 메뉴 관리가 함께 쓴다 (specs/001-admin-menus FR-010, research R25). 키트로 옮길 것
 //   SideDrawer와 같은 props를 받아 드로어 자리에 그대로 쓴다. open이 false면 아무것도 그리지 않는다
 //   dirty는 화면이 받아 둔다. 다른 행을 고르기 전에 저장하지 않은 변경을 묻는 데 쓴다 (usePanelGuard)
 
