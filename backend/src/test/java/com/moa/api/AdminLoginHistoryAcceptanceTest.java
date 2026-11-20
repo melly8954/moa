@@ -73,7 +73,7 @@ class AdminLoginHistoryAcceptanceTest extends AcceptanceTest {
 
 		loginHistoryCleaner.deleteExpired();
 
-		List<String> remaining = jdbcTemplate.queryForList("select login_id from login_histories", String.class);
+		List<String> remaining = jdbcTemplate.queryForList("select login_id from tb_login_history", String.class);
 		assertThat(remaining).containsExactly("within-90-days");
 	}
 
@@ -90,7 +90,7 @@ class AdminLoginHistoryAcceptanceTest extends AcceptanceTest {
 	}
 
 	private void history(String loginId, LocalDateTime createdAt) {
-		jdbcTemplate.update("insert into login_histories (user_id, login_id, success, failure_code, device_type, os, "
+		jdbcTemplate.update("insert into tb_login_history (user_id, login_id, success, failure_code, device_type, os, "
 			+ "browser, created_at, updated_at) values (null, ?, false, 'A006', 'PC', 'Windows', 'Chrome', ?, ?)",
 			loginId, createdAt, createdAt);
 	}

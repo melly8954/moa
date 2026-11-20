@@ -128,7 +128,7 @@ class AdminCodesAcceptanceTest extends AcceptanceTest {
 	@DisplayName("US1-AC6 그룹이 하나도 없으면 트리는 빈 목록이다")
 	void emptyTree() {
 		// @BeforeEach가 만든 그룹은 API로 지울 수 없으므로(FR-008) 표를 직접 비워 처음 상태를 만든다
-		jdbcTemplate.update("DELETE FROM code_groups");
+		jdbcTemplate.update("DELETE FROM tb_code_group");
 
 		assertThat(admin(mvc.get().uri(GROUPS + "/tree"))).hasStatus(200).bodyJson().extractingPath("$.length()")
 			.isEqualTo(0);
