@@ -17,7 +17,7 @@ import com.moa.api.dto.menu.MenuDto;
 import com.moa.api.dto.role.AccessRoleDto;
 import com.moa.api.dto.role.PermissionTreeDto;
 import com.moa.api.dto.role.RoleMemberDto;
-import com.moa.api.program.ProgramRegistry;
+import com.moa.api.screen.ScreenRegistry;
 import com.moa.api.service.menu.MenuService;
 import com.moa.api.service.role.AccessRoleService;
 import com.moa.api.service.role.RoleUserService;
@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 역할·권한 관리 (선택 헬퍼 rbac). actor는 요청한 사용자다 (권한 상승 검사에 쓴다).
- * moa: 권한 트리, 사용자별 역할, 구성원 (specs/003-admin-roles FR-004~FR-008). 권한 트리는 menu 헬퍼의 메뉴와 프로그램을 읽는다.
+ * moa: 권한 트리, 사용자별 역할, 구성원 (specs/003-admin-roles FR-004~FR-008). 권한 트리는 menu 헬퍼의 메뉴와 연결 화면을 읽는다.
  */
 @Component
 @RequiredArgsConstructor
@@ -42,7 +42,7 @@ public class AccessRoleApplication {
 	private final UserService userService;
 	private final PermissionRegistry permissionRegistry;
 	private final MenuService menuService;
-	private final ProgramRegistry programRegistry;
+	private final ScreenRegistry screenRegistry;
 	private final AuditProperties auditProperties;
 
 	/** 코드에 등록된 권한 전부 (역할에 묶을 수 있는 것) */
@@ -51,8 +51,8 @@ public class AccessRoleApplication {
 	}
 
 	/**
-	 * 역할 창에서 권한을 고르는 트리 (moa, FR-004). 관리 메뉴 트리(꺼진 메뉴 포함, 없는 프로그램을 가리키는 메뉴는 뺌)와
-	 * 어느 관리 메뉴도 가리키지 않는 관리 프로그램.
+	 * 역할 창에서 권한을 고르는 트리 (moa, FR-004). 관리 메뉴 트리(꺼진 메뉴 포함, 없는 연결 화면을 가리키는 메뉴는 뺌)와
+	 * 어느 관리 메뉴도 가리키지 않는 관리 연결 화면.
 	 */
 	@Transactional(readOnly = true)
 	public PermissionTreeDto getPermissionTree() {
@@ -61,17 +61,17 @@ public class AccessRoleApplication {
 			.toList();
 		Set<String> listed = new HashSet<>();
 		adminMenus.forEach(menu -> {
-			listed.add(menu.programKey());
-			menu.children().forEach(child -> listed.add(child.programKey()));
+			listed.add(menu.screenKey());
+			menu.children().forEach(child -> listed.add(child.screenKey()));
 		});
 		List<PermissionTreeDto.Node> nodes = adminMenus.stream()
 			.map(this::node)
 			.filter(Objects::nonNull)
 			.toList();
-		List<PermissionTreeDto.Unlisted> unlisted = programRegistry.of(MenuAudience.ADMIN).stream()
-			.filter(program -> !listed.contains(program.key()))
-			.map(program -> new PermissionTreeDto.Unlisted(program.key(), program.name(), program.permission(),
-				permissionName(program.permission())))
+		List<PermissionTreeDto.Unlisted> unlisted = screenRegistry.of(MenuAudience.ADMIN).stream()
+			.filter(screen -> !listed.contains(screen.key()))
+			.map(screen -> new PermissionTreeDto.Unlisted(screen.key(), screen.name(), screen.permission(),
+				permissionName(screen.permission())))
 			.toList();
 		return new PermissionTreeDto(nodes, unlisted);
 	}
@@ -145,9 +145,9 @@ public class AccessRoleApplication {
 		accessRoleService.removeMembers(actor, roleId, userIds);
 	}
 
-	/** 화면 메뉴는 프로그램의 권한, 묶음 메뉴는 하위 메뉴를 담는다. 없는 프로그램과 하위 메뉴 없는 묶음은 null */
+	/** 화면 메뉴는 연결 화면의 권한, 묶음 메뉴는 하위 메뉴를 담는다. 없는 연결 화면과 하위 메뉴 없는 묶음은 null */
 	private PermissionTreeDto.Node node(MenuDto menu) {
-		if (menu.programKey() == null) {
+		if (menu.screenKey() == null) {
 			List<PermissionTreeDto.Node> children = menu.children().stream()
 				.map(this::node)
 				.filter(Objects::nonNull)
@@ -155,10 +155,10 @@ public class AccessRoleApplication {
 			return children.isEmpty() ? null
 				: new PermissionTreeDto.Node(menu.id(), menu.name(), menu.enabled(), null, null, children);
 		}
-		if (menu.program() == null) {
+		if (menu.screen() == null) {
 			return null;
 		}
-		String permission = menu.program().permission();
+		String permission = menu.screen().permission();
 		return new PermissionTreeDto.Node(menu.id(), menu.name(), menu.enabled(), permission,
 			permissionName(permission), List.of());
 	}

@@ -190,7 +190,7 @@ function SortableMenuRow({
           >
             {menu.name}
           </button>
-          {menu.missingProgram && <StatusText tone="negative">{t("missingProgram")}</StatusText>}
+          {menu.missingScreen && <StatusText tone="negative">{t("missingScreen")}</StatusText>}
         </div>
       </TableCell>
       <TableCell>

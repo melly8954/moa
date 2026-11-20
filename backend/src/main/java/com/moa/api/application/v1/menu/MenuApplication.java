@@ -11,7 +11,7 @@ import com.moa.api.application.v1.menu.command.ModifyMenuCommand;
 import com.moa.api.dto.menu.MenuAudience;
 import com.moa.api.dto.menu.MenuDto;
 import com.moa.api.dto.menu.MenuOrderDto;
-import com.moa.api.dto.menu.ProgramDto;
+import com.moa.api.dto.menu.ScreenDto;
 import com.moa.api.service.menu.MenuService;
 import com.moa.common.audit.CurrentActor;
 import com.moa.common.security.AuthPrincipal;
@@ -41,9 +41,9 @@ public class MenuApplication {
 		return menuService.getVisibleTree(MenuAudience.USER, Set.of(), principal != null);
 	}
 
-	/** 메뉴에 걸 수 있는 프로그램 (moa, specs/001-admin-menus FR-008) */
-	public List<ProgramDto> getPrograms() {
-		return menuService.getPrograms();
+	/** 메뉴에 걸 수 있는 연결 화면 (moa, specs/001-admin-menus FR-008) */
+	public List<ScreenDto> getScreens() {
+		return menuService.getScreens();
 	}
 
 	@Transactional(readOnly = true)
@@ -53,13 +53,13 @@ public class MenuApplication {
 
 	@Transactional
 	public MenuDto create(CreateMenuCommand command) {
-		return menuService.create(command.parentId(), command.name(), command.programKey(), command.icon(),
+		return menuService.create(command.parentId(), command.name(), command.screenKey(), command.icon(),
 			command.sortOrder(), command.audience(), command.visibility());
 	}
 
 	@Transactional
 	public MenuDto modify(ModifyMenuCommand command) {
-		return menuService.modify(command.id(), command.parentId(), command.name(), command.programKey(),
+		return menuService.modify(command.id(), command.parentId(), command.name(), command.screenKey(),
 			command.icon(), command.sortOrder(), command.enabled(), command.audience(), command.visibility());
 	}
 

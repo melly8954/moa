@@ -44,7 +44,7 @@ export default function MenusPage() {
   const queryClient = useQueryClient()
   const { describeError } = useErrorMessages()
   const tree = useQuery({ queryKey: ["admin", "menus"], queryFn: api.v1.menu.admin.tree })
-  const programs = useQuery({ queryKey: ["admin", "programs"], queryFn: api.v1.menu.admin.programs })
+  const screens = useQuery({ queryKey: ["admin", "screens"], queryFn: api.v1.menu.admin.screens })
   const [audience, setAudience] = useState<MenuAudience>("ADMIN")
   // 오른쪽 상세 칸: 고친다(menu) 또는 새로 만든다(menu 없음, parentId는 상위 메뉴 칸의 처음 값)
   const [panel, setPanel] = useState<{ menu?: AdminMenu; parentId?: number } | null>(null)
@@ -218,7 +218,7 @@ export default function MenusPage() {
                 open
                 audience={audience}
                 tree={ofAudience}
-                programs={programs.data ?? []}
+                screens={screens.data ?? []}
                 defaultParentId={panel.parentId}
                 onOpenChange={(open) => !open && setPanel(null)}
                 onSaved={refresh}
