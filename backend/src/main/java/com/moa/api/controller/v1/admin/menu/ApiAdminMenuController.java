@@ -49,7 +49,7 @@ public class ApiAdminMenuController {
 	}
 
 	@Operation(summary = "메뉴 만들기",
-		description = "등록되지 않았거나 대상이 다른 프로그램·공개 범위 V001, 없는 부모 R001, 3단계가 되는 부모 B001")
+		description = "등록되지 않았거나 대상이 다른 연결 화면·공개 범위 V001, 없는 부모 R001, 3단계가 되는 부모 B001")
 	@PostMapping
 	public ResponseEntity<MenuTreeResponse> create(@Valid @RequestBody MenuCreateRequest request) {
 		return ResponseEntity.status(HttpStatus.CREATED)

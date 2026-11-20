@@ -84,7 +84,7 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US2-AC1 역할 창의 권한은 관리 메뉴 트리로 보이고, 메뉴마다 그 프로그램의 권한이 있다")
+	@DisplayName("US2-AC1 역할 창의 권한은 관리 메뉴 트리로 보이고, 메뉴마다 그 연결 화면의 권한이 있다")
 	void permissionTreeFollowsAdminMenus() {
 		MvcTestResult result = asAdmin(mvc.get().uri(ROLES + "/permission-tree"));
 
@@ -109,8 +109,8 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US2-AC3 코드 관리 메뉴를 지우면 코드 관리는 '메뉴에 없는 프로그램'으로 고를 수 있다")
-	void deletedMenuProgramIsUnlisted() {
+	@DisplayName("US2-AC3 코드 관리 메뉴를 지우면 코드 관리는 '메뉴에 없는 연결 화면'으로 고를 수 있다")
+	void deletedMenuScreenIsUnlisted() {
 		Number codeMenuId = JsonPath.<List<Number>>read(body(asAdmin(mvc.get().uri("/api/v1/admin/menus"))),
 			"$..[?(@.name == '코드 관리')].id").getFirst();
 		assertThat(asAdmin(mvc.delete().uri("/api/v1/admin/menus/" + codeMenuId))).hasStatus(204);
@@ -118,7 +118,7 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 		MvcTestResult result = asAdmin(mvc.get().uri(ROLES + "/permission-tree"));
 
 		assertThat(result).bodyJson().extractingPath("$.menus..name").asArray().doesNotContain("코드 관리");
-		assertThat(result).bodyJson().extractingPath("$.unlisted[*].programKey").asArray()
+		assertThat(result).bodyJson().extractingPath("$.unlisted[*].screenKey").asArray()
 			.containsExactly("ADMIN_CODES");
 		assertThat(result).bodyJson().extractingPath("$.unlisted[0].permission.key").isEqualTo("CODE_MANAGE");
 	}

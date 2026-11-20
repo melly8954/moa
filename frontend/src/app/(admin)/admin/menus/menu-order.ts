@@ -8,8 +8,8 @@ export type MenuStructure = { id: number; children: number[] }[]
 
 export type MenuRow = { menu: AdminMenu; depth: 0 | 1 }
 
-// 프로그램이 없으면 묶음 메뉴다
-export const isGroup = (menu: Pick<AdminMenu, "programKey">) => !menu.programKey
+// 연결 화면이 없으면 묶음 메뉴다
+export const isGroup = (menu: Pick<AdminMenu, "screenKey">) => !menu.screenKey
 
 export function structureOf(tree: AdminMenu[]): MenuStructure {
   return tree.map((top) => ({ id: top.id, children: top.children.map((child) => child.id) }))

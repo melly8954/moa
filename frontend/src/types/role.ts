@@ -31,8 +31,8 @@ export type PermissionTreeNode = {
 }
 export type PermissionTree = {
   menus: PermissionTreeNode[]
-  // 어느 관리 메뉴도 가리키지 않는 관리 프로그램
-  unlisted: { programKey: string; name: string; permission: PermissionRef }[]
+  // 어느 관리 메뉴도 가리키지 않는 관리 연결 화면
+  unlisted: { screenKey: string; name: string; permission: PermissionRef }[]
 }
 
 // 역할 드로어 "구성원" 탭의 사용자 (moa, specs/003-admin-roles FR-006). role은 시스템 역할 (ADMIN은 업무 역할을 받지 않는다)

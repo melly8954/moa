@@ -6,9 +6,9 @@ import { Field, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field"
 import type { PermissionTree, PermissionTreeNode } from "@/types/role"
 
 // 역할 창의 권한 고르기 (moa, specs/003-admin-roles FR-004, research R10)
-//   관리 메뉴 트리를 체크한다. 체크한 메뉴의 프로그램 권한이 역할에 담긴다 (value는 권한 키 목록)
+//   관리 메뉴 트리를 체크한다. 체크한 메뉴의 연결 화면 권한이 역할에 담긴다 (value는 권한 키 목록)
 //   같은 권한을 쓰는 메뉴는 함께 체크된다. 묶음 메뉴를 체크하면 하위 메뉴가 모두 체크된다
-//   어느 메뉴도 가리키지 않는 관리 프로그램은 맨 아래 "메뉴에 없는 화면"에 둔다
+//   어느 메뉴도 가리키지 않는 관리 연결 화면은 맨 아래 "메뉴에 없는 화면"에 둔다
 export function PermissionTreePicker({
   tree,
   value,
@@ -63,15 +63,15 @@ export function PermissionTreePicker({
       </div>
       {tree.unlisted.length > 0 && (
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-muted-foreground">{t("unlistedPrograms")}</p>
-          {tree.unlisted.map((program) =>
+          <p className="text-sm font-medium text-muted-foreground">{t("unlistedScreens")}</p>
+          {tree.unlisted.map((screen) =>
             item(
-              `program-${program.programKey}`,
+              `screen-${screen.screenKey}`,
               <span className="flex flex-wrap items-center gap-x-2">
-                <span>{program.name}</span>
-                <span className="font-mono text-xs text-muted-foreground">{program.permission.key}</span>
+                <span>{screen.name}</span>
+                <span className="font-mono text-xs text-muted-foreground">{screen.permission.key}</span>
               </span>,
-              [program.permission.key],
+              [screen.permission.key],
             ),
           )}
         </div>

@@ -59,7 +59,7 @@ public class ApiAdminRoleController {
 	}
 
 	@Operation(summary = "권한 트리",
-		description = "moa: 역할 창에서 권한을 고르는 관리 메뉴 트리(꺼진 메뉴 포함)와 메뉴에 없는 관리 프로그램 (specs/003-admin-roles FR-004)")
+		description = "moa: 역할 창에서 권한을 고르는 관리 메뉴 트리(꺼진 메뉴 포함)와 메뉴에 없는 관리 연결 화면 (specs/003-admin-roles FR-004)")
 	@GetMapping("/roles/permission-tree")
 	public ResponseEntity<PermissionTreeResponse> getPermissionTree() {
 		return ResponseEntity.ok(PermissionTreeResponse.from(accessRoleApplication.getPermissionTree()));

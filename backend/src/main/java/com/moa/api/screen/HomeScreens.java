@@ -1,4 +1,4 @@
-package com.moa.api.program;
+package com.moa.api.screen;
 
 import java.util.List;
 
@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 /** 사용자 셸 첫 화면 (specs/001-admin-menus FR-008) */
 @Component
 @Order(5)
-public class HomePrograms implements ProgramSource {
+public class HomeScreens implements ScreenSource {
 
 	@Override
-	public List<ProgramDefinition> programs() {
-		return List.of(ProgramDefinition.user("HOME", "홈", "/", false));
+	public List<ScreenDefinition> screens() {
+		return List.of(ScreenDefinition.user("HOME", "홈", "/", false));
 	}
 }

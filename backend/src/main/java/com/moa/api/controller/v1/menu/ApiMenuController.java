@@ -31,7 +31,7 @@ public class ApiMenuController {
 
 	@Operation(summary = "내 메뉴",
 		description = "사용 중이고 내 권한으로 볼 수 있는 관리 메뉴 트리 (2단계, moa: 대상 ADMIN만). "
-			+ "메뉴가 가리키는 프로그램의 권한으로 거른다. ADMIN은 모두 본다. 보이는 하위 메뉴가 없는 묶음 메뉴는 빠진다")
+			+ "메뉴가 가리키는 연결 화면의 권한으로 거른다. ADMIN은 모두 본다. 보이는 하위 메뉴가 없는 묶음 메뉴는 빠진다")
 	@GetMapping("/me")
 	public ResponseEntity<List<MyMenuResponse>> me(@CurrentUser AuthPrincipal user) {
 		return ResponseEntity.ok(menuApplication.getMyMenus(user).stream().map(MyMenuResponse::from).toList());
