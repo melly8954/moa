@@ -14,7 +14,7 @@ import { useErrorMessages } from "@/lib/error-messages"
 import type { Code, CodeGroupTree } from "@/types/code"
 import { CodeDrawer } from "./code-drawer"
 import { CodeTreeTable, parseKey } from "./code-tree-table"
-import { PanelGuardContext, useIsWide, usePanelGuard } from "./detail-panel"
+import { PanelGuardContext, useIsWide, usePanelGuard } from "@/components/kit/detail-panel"
 import { GroupDrawer } from "./group-drawer"
 
 // 공통코드 (code 헬퍼, 권한 CODE_MANAGE)

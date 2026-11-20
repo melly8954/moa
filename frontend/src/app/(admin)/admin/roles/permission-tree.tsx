@@ -8,7 +8,7 @@ import type { PermissionTree, PermissionTreeNode } from "@/types/role"
 // 역할 창의 권한 고르기 (moa, specs/003-admin-roles FR-004, research R10)
 //   관리 메뉴 트리를 체크한다. 체크한 메뉴의 프로그램 권한이 역할에 담긴다 (value는 권한 키 목록)
 //   같은 권한을 쓰는 메뉴는 함께 체크된다. 묶음 메뉴를 체크하면 하위 메뉴가 모두 체크된다
-//   어느 메뉴도 가리키지 않는 관리 프로그램은 맨 아래 "메뉴에 없는 프로그램"에 둔다
+//   어느 메뉴도 가리키지 않는 관리 프로그램은 맨 아래 "메뉴에 없는 화면"에 둔다
 export function PermissionTreePicker({
   tree,
   value,

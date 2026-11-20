@@ -16,20 +16,21 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import type { LucideIcon } from "lucide-react"
+import { FileText, Folder } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { DragHandle } from "@/components/kit/drag-handle"
 import { StatusText } from "@/components/kit/status-text"
-import { menuIcon } from "@/components/menu/icons"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import type { AdminMenu } from "@/types/menu"
 import { isGroup, type MenuRow, rowsOf } from "./menu-order"
 
-// 메뉴 트리 표 (moa, specs/001-admin-menus FR-010, US5, research R20·R22)
-//   구성 목록이라 쪽 나눔 없이 전체를 그린다. 묶음 바로 아래에 하위 메뉴를 들여 쓴다
-//   행 단추는 없다: 체크박스(일괄 처리), 손잡이(끌어서 순서·부모), 이름(누르면 드로어)
+// 메뉴 트리 표 (moa, specs/001-admin-menus FR-010, US5, research R20·R22·R25)
+//   구성 목록이라 쪽 나눔 없이 전체를 그린다. 상위 메뉴 바로 아래에 하위 메뉴를 들여 쓴다
+//   행 단추는 없다: 체크박스(일괄 처리), 손잡이(끌어서 순서·부모), 이름(누르면 오른쪽 상세 칸)
+//   두 칸 화면의 왼쪽 칸이라 연결 화면 열은 두지 않는다(상세 칸에 보인다). 상위 메뉴는 폴더, 화면 메뉴는 문서 아이콘
+//   상세 칸에 열린 행(active)은 강조한다
 //   손잡이는 키보드로도 옮긴다 (스페이스로 집고 화살표로 옮기고 스페이스로 놓기)
 export function MenuTreeTable({
   tree,
@@ -38,6 +39,8 @@ export function MenuTreeTable({
   onOpen,
   onDrop,
   disabled,
+  active,
+  className,
 }: {
   tree: AdminMenu[]
   selected: number[]
@@ -45,6 +48,8 @@ export function MenuTreeTable({
   onOpen: (menu: AdminMenu) => void
   onDrop: (activeId: number, overId: number) => void
   disabled: boolean
+  active?: number
+  className?: string
 }) {
   const t = useTranslations("menuAdmin")
   const rows = rowsOf(tree)
@@ -64,7 +69,7 @@ export function MenuTreeTable({
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className={cn("rounded-lg border", className)}>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -96,7 +101,6 @@ export function MenuTreeTable({
                 <span className="sr-only">{t("dragColumn")}</span>
               </TableHead>
               <TableHead>{t("name")}</TableHead>
-              <TableHead>{t("program")}</TableHead>
               <TableHead>{t("whoSees")}</TableHead>
               <TableHead className="w-(--col-status)">{t("enabled")}</TableHead>
             </TableRow>
@@ -107,11 +111,11 @@ export function MenuTreeTable({
                 <SortableMenuRow
                   key={row.menu.id}
                   row={row}
-                  icon={menuIcon(row.menu.icon)}
                   checked={selected.includes(row.menu.id)}
                   onCheck={(checked) => toggle(row.menu.id, checked)}
                   onOpen={() => onOpen(row.menu)}
                   disabled={disabled}
+                  active={active === row.menu.id}
                 />
               ))}
             </SortableContext>
@@ -128,18 +132,18 @@ function nameOf(rows: MenuRow[], id: string | number): string {
 
 function SortableMenuRow({
   row,
-  icon: Icon,
   checked,
   onCheck,
   onOpen,
   disabled,
+  active,
 }: {
   row: MenuRow
-  icon?: LucideIcon
   checked: boolean
   onCheck: (checked: boolean) => void
   onOpen: () => void
   disabled: boolean
+  active: boolean
 }) {
   const t = useTranslations("menuAdmin")
   const { menu, depth } = row
@@ -148,12 +152,14 @@ function SortableMenuRow({
     disabled,
   })
   const group = isGroup(menu)
+  const Icon = group ? Folder : FileText
 
   return (
     <TableRow
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn(isDragging && "relative z-10 bg-muted")}
+      className={cn(active && "bg-muted", isDragging && "relative z-10 bg-muted")}
+      aria-current={active ? "true" : undefined}
       data-state={checked ? "selected" : undefined}
     >
       <TableCell>
@@ -173,7 +179,7 @@ function SortableMenuRow({
       </TableCell>
       <TableCell>
         <div className={cn("flex items-center gap-2", depth === 1 && "pl-6")}>
-          {Icon && <Icon aria-hidden="true" className="size-4 text-muted-foreground" />}
+          <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
           <button
             type="button"
             className={cn("text-left underline-offset-4 hover:underline", group && "font-medium")}
@@ -181,19 +187,8 @@ function SortableMenuRow({
           >
             {menu.name}
           </button>
+          {menu.missingProgram && <StatusText tone="negative">{t("missingProgram")}</StatusText>}
         </div>
-      </TableCell>
-      <TableCell>
-        {menu.program ? (
-          <div className="flex flex-col">
-            <span>{menu.program.name}</span>
-            <span className="font-mono text-xs text-muted-foreground">{menu.program.path}</span>
-          </div>
-        ) : menu.missingProgram ? (
-          <StatusText tone="negative">{t("missingProgram")}</StatusText>
-        ) : (
-          <span className="text-muted-foreground">{t("group")}</span>
-        )}
       </TableCell>
       <TableCell>
         <WhoSees menu={menu} />
@@ -205,7 +200,7 @@ function SortableMenuRow({
   )
 }
 
-// 사이드바에 누구에게 보이나. 관리 메뉴는 프로그램의 권한, 사용자 메뉴는 공개 범위, 묶음 메뉴는 하위 메뉴를 따른다
+// 사이드바에 누구에게 보이나. 관리 메뉴는 연결 화면의 권한, 사용자 메뉴는 공개 범위, 상위 메뉴는 하위 메뉴를 따른다
 function WhoSees({ menu }: { menu: AdminMenu }) {
   const t = useTranslations("menuAdmin")
   if (!menu.programKey) return <span className="text-muted-foreground">{t("followsChildren")}</span>

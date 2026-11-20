@@ -9,5 +9,6 @@ services:
       MARIADB_USER: moa
       MARIADB_PASSWORD: moa
       MARIADB_ROOT_PASSWORD: moa
+    # 호스트 포트를 고정해 DB 도구로 늘 같은 주소(localhost:3306)에 붙는다. 3306이 이미 쓰이면 앞 번호를 바꾼다
     ports:
-      - "3306"
+      - "3306:3306"
