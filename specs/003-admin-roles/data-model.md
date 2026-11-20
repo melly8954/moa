@@ -1,13 +1,13 @@
 # Data Model: 운영자 역할 (admin-roles)
 
-새 테이블과 컬럼은 없다. 키트 `access_roles`, `user_access_roles`(`V1_8__access_roles.sql`)가 기준이다.
+새 테이블과 컬럼은 없다. 키트 `tb_access_role`, `tb_user_access_role`(`V1_8__access_roles.sql`)가 기준이다.
 
 ## 스펙의 개념과 키트의 대응
 
 | 스펙 | 키트 | 비고 |
 |---|---|---|
-| 역할 | `access_roles` (코드, 이름, 설명, 권한 목록) | 소프트 삭제. 처음에는 없다 |
-| 운영자에게 역할 주기 | `user_access_roles` | 한 사용자가 여러 역할을 받는다 |
+| 역할 | `tb_access_role` (코드, 이름, 설명, 권한 목록) | 소프트 삭제. 처음에는 없다 |
+| 운영자에게 역할 주기 | `tb_user_access_role` | 한 사용자가 여러 역할을 받는다 |
 | 운영자가 쓸 수 있는 범위 | 받은 역할들의 권한 합집합 | 요청마다 조회한다 |
 
 ## 권한 키
@@ -20,10 +20,10 @@
 
 | 스펙 | 읽는 곳 | 비고 |
 |---|---|---|
-| 역할 창의 메뉴 트리 (FR-004) | `menus`(대상 `ADMIN`, 꺼진 것 포함)와 프로그램의 권한 | 메뉴 id가 아니라 권한 키를 `access_roles`에 담는다 |
+| 역할 창의 메뉴 트리 (FR-004) | `tb_menu`(대상 `ADMIN`, 꺼진 것 포함)와 프로그램의 권한 | 메뉴 id가 아니라 권한 키를 `tb_access_role`에 담는다 |
 | 메뉴에 없는 프로그램 | 관리 프로그램 중 어느 메뉴의 `program_key`도 아닌 것 | |
-| 사용자별 역할 기본 목록 (FR-005) | `user_access_roles`가 있는 사용자 + `users.role` = `ADMIN` | 시스템 계정은 뺀다. 지운 역할은 빠진다 |
-| 구성원 (FR-006) | 그 역할의 `user_access_roles` | |
+| 사용자별 역할 기본 목록 (FR-005) | `tb_user_access_role`가 있는 사용자 + `tb_user.role` = `ADMIN` | 시스템 계정은 뺀다. 지운 역할은 빠진다 |
+| 구성원 (FR-006) | 그 역할의 `tb_user_access_role` | |
 
 규칙: `ADMIN`에게는 업무 역할을 주거나 빼지 않는다(`B001`). 이미 가진 역할을 다시 더하면 그대로 둔다.
 

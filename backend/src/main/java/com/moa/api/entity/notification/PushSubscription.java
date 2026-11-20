@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "push_subscriptions")
+@Table(name = "tb_push_subscription")
 @HardDelete(reason = "브라우저 알림을 끄거나 로그아웃하거나 푸시 서버가 만료를 알리면 지운다. 이력이 아니다")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PushSubscription {

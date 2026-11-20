@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "access_roles")
+@Table(name = "tb_access_role")
 @SQLRestriction(SoftDeleteEntity.NOT_DELETED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AccessRole extends SoftDeleteEntity {
@@ -45,7 +45,7 @@ public class AccessRole extends SoftDeleteEntity {
 	private String description;
 
 	@ElementCollection(fetch = FetchType.EAGER)
-	@CollectionTable(name = "access_role_permissions", joinColumns = @JoinColumn(name = "access_role_id"))
+	@CollectionTable(name = "tb_access_role_permission", joinColumns = @JoinColumn(name = "access_role_id"))
 	@Column(name = "permission", length = 100)
 	private Set<String> permissions = new HashSet<>();
 

@@ -1,16 +1,16 @@
 # Data Model: 공통코드 (admin-codes)
 
-키트 `codes`(`V1_4__codes.sql`)가 기준이다. 그룹은 `code_groups` 표에 둔다 (spec.md FR-004, research.md R11).
-`code_groups`는 2026-11-15에 지웠다가(`V2_7`) 2026-11-18에 다시 만들었고(`V2_8`), 2026-11-20에 `used_by`·`system`을 빼고 `enabled`를 더한다(`V2_9__code_groups_enabled.sql`, 번호는 구현할 때 다시 본다).
+키트 `tb_code`(`V1_4__codes.sql`)가 기준이다. 그룹은 `tb_code_group` 표에 둔다 (spec.md FR-004, research.md R11).
+`tb_code_group`는 2026-11-15에 지웠다가(`V2_7`) 2026-11-18에 다시 만들었고(`V2_8`), 2026-11-20에 `used_by`·`system`을 빼고 `enabled`를 더한다(`V2_9__code_groups_enabled.sql`, 번호는 구현할 때 다시 본다).
 
 ## 스펙의 개념과 표의 대응
 
 | 스펙 | 표 | 비고 |
 |---|---|---|
-| 코드 그룹 | `code_groups` (그룹 코드, 이름, 설명, 사용 여부 `enabled`) | 지우지 않는다(FR-008). 소프트 삭제 열은 키트 표에 남지만 쓰지 않는다. 지금 moa가 쓰는 그룹은 없다 (spec.md FR-001 표) |
-| 코드 | `codes` (그룹, 코드, 이름, 순서, 사용 여부) | 지우지 않는다(FR-008). 코드를 비우면 자동 순번 (FR-006) |
+| 코드 그룹 | `tb_code_group` (그룹 코드, 이름, 설명, 사용 여부 `enabled`) | 지우지 않는다(FR-008). 소프트 삭제 열은 키트 표에 남지만 쓰지 않는다. 지금 moa가 쓰는 그룹은 없다 (spec.md FR-001 표) |
+| 코드 | `tb_code` (그룹, 코드, 이름, 순서, 사용 여부) | 지우지 않는다(FR-008). 코드를 비우면 자동 순번 (FR-006) |
 
-## 바뀌는 열 (`code_groups`)
+## 바뀌는 열 (`tb_code_group`)
 
 | 열 | 바뀜 | 뜻 |
 |---|---|---|
