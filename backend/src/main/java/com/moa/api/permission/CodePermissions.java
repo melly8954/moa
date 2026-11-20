@@ -15,6 +15,6 @@ public class CodePermissions implements PermissionSource {
 
 	@Override
 	public List<PermissionDefinition> permissions() {
-		return List.of(new PermissionDefinition(MANAGE, "공통코드 관리", "공통코드"));
+		return List.of(new PermissionDefinition(MANAGE, "코드 관리", "코드"));
 	}
 }
