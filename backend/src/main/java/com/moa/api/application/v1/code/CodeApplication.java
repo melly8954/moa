@@ -41,6 +41,12 @@ public class CodeApplication {
 		return codeService.getCodes(groupCode, true);
 	}
 
+	/** moa: 꺼진 그룹의 화면용 목록은 빈 목록이다 (specs/004-admin-codes FR-008). 캐시하지 않는다 */
+	@Transactional(readOnly = true)
+	public boolean isGroupEnabled(String groupCode) {
+		return codeService.isGroupEnabled(groupCode);
+	}
+
 	@Transactional(readOnly = true)
 	public List<CodeDto> getAllCodes(String groupCode) {
 		return codeService.getCodes(groupCode, true);
@@ -57,23 +63,17 @@ public class CodeApplication {
 		return codeService.getTree();
 	}
 
-	/** moa: 관리자가 만드는 일반 그룹 (FR-004) */
+	/** moa: 관리자가 만드는 그룹 (FR-004) */
 	@Transactional
 	public CodeGroupDto createGroup(CreateCodeGroupCommand command) {
-		return codeService.createGroup(command.groupCode(), command.name(), command.description(), command.usedBy());
+		return codeService.createGroup(command.groupCode(), command.name(), command.description());
 	}
 
-	/** moa: 그룹 이름·설명·쓰는 곳 (FR-004) */
+	/** moa: 그룹 이름·설명·사용 여부 (FR-004·FR-008) */
 	@Transactional
 	public CodeGroupDto modifyGroup(ModifyCodeGroupCommand command) {
-		return codeService.modifyGroup(command.groupCode(), command.name(), command.description(), command.usedBy());
-	}
-
-	/** moa: 그룹과 항목을 함께 지운다. 시스템 그룹은 B001 (FR-004·FR-008) */
-	@Transactional
-	@CacheEvict(value = CACHE, key = "#groupCode")
-	public void deleteGroup(String groupCode) {
-		codeService.deleteGroup(groupCode, currentActor.id());
+		return codeService.modifyGroup(command.groupCode(), command.name(), command.description(),
+			command.enabled());
 	}
 
 	@Transactional
@@ -89,24 +89,11 @@ public class CodeApplication {
 			command.enabled());
 	}
 
-	@Transactional
-	@CacheEvict(value = CACHE, key = "#groupCode")
-	public void deleteCode(String groupCode, String code) {
-		codeService.deleteCode(groupCode, code, currentActor.id());
-	}
-
 	/** moa: 한 그룹 안 일괄 사용·사용 안 함 (FR-005). 하나라도 틀리면 아무것도 바꾸지 않는다 */
 	@Transactional
 	@CacheEvict(value = CACHE, key = "#groupCode")
 	public void setEnabled(String groupCode, Collection<String> codes, boolean enabled) {
 		codeService.setEnabled(groupCode, codes, enabled);
-	}
-
-	/** moa: 한 그룹 안 일괄 삭제 (FR-005) */
-	@Transactional
-	@CacheEvict(value = CACHE, key = "#groupCode")
-	public void deleteAll(String groupCode, Collection<String> codes) {
-		codeService.deleteAll(groupCode, codes, currentActor.id());
 	}
 
 	/** moa: 한 그룹 안 순서 (FR-005) */

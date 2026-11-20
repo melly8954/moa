@@ -26,7 +26,7 @@ class CodeAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("공통코드: 사용자는 사용하는 코드만 정렬 순서대로 본다. includeDisabled면 사용 안 함도, 지운 코드는 빼고")
+	@DisplayName("공통코드: 사용자는 사용하는 코드만 정렬 순서대로 본다. includeDisabled면 사용 안 함도")
 	void createAndRead() {
 		post(ADMIN_CODES, "{\"code\":\"PAID\",\"name\":\"결제 완료\",\"sortOrder\":20}");
 		post(ADMIN_CODES, "{\"code\":\"READY\",\"name\":\"주문 접수\",\"sortOrder\":10}");
@@ -48,24 +48,17 @@ class CodeAcceptanceTest extends AcceptanceTest {
 		assertThat(all).bodyJson().extractingPath("$.length()").isEqualTo(2);
 		assertThat(all).bodyJson().extractingPath("$[1].code").isEqualTo("PAID");
 		assertThat(all).bodyJson().extractingPath("$[1].enabled").isEqualTo(false);
-
-		assertThat(admin(mvc.delete().uri(ADMIN_CODES + "/PAID"))).hasStatus(204);
-		assertThat(mvc.get().uri("/api/v1/codes/" + GROUP + "?includeDisabled=true")
-			.header(HttpHeaders.AUTHORIZATION, bearer(3L, "USER"))).bodyJson().extractingPath("$.length()")
-			.isEqualTo(1);
 	}
 
 	@Test
-	@DisplayName("공통코드: 같은 코드는 R002, 없는 그룹은 R001, 지운 코드는 다시 만들 수 있다")
-	void duplicateAndDelete() {
+	@DisplayName("공통코드: 같은 코드는 R002, 없는 그룹은 R001 (moa: 코드는 지우지 않는다, specs/004-admin-codes FR-008)")
+	void duplicate() {
 		post(ADMIN_CODES, "{\"code\":\"PAID\",\"name\":\"결제 완료\",\"sortOrder\":10}");
 
 		assertThat(post(ADMIN_CODES, "{\"code\":\"PAID\",\"name\":\"중복\",\"sortOrder\":10}"))
 			.hasStatus(409).bodyJson().extractingPath("$.code").isEqualTo("R002");
 		assertThat(admin(mvc.get().uri(GROUPS + "/NONE/codes")))
 			.hasStatus(404).bodyJson().extractingPath("$.code").isEqualTo("R001");
-		assertThat(admin(mvc.delete().uri(ADMIN_CODES + "/PAID"))).hasStatus(204);
-		assertThat(post(ADMIN_CODES, "{\"code\":\"PAID\",\"name\":\"결제 완료\",\"sortOrder\":10}")).hasStatus(201);
 	}
 
 	@Test

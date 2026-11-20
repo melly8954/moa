@@ -17,8 +17,8 @@ import lombok.NoArgsConstructor;
 
 /**
  * 코드 그룹 (선택 헬퍼 code). 예: GAME_GENRE(게임 장르).
- * moa: 관리자가 화면에서 다룬다. 기능이 코드에서 읽는 그룹은 마이그레이션으로 넣은 시스템 그룹이고 지울 수 없다
- * (specs/004-admin-codes FR-004·FR-008). 그룹 코드는 만든 뒤 바꾸지 않는다
+ * moa: 관리자가 화면에서 다룬다. 지우지 않고 사용 여부로 끈다 (specs/004-admin-codes FR-004·FR-008).
+ * 그룹 코드는 만든 뒤 바꾸지 않는다
  */
 @Getter
 @Entity
@@ -40,26 +40,21 @@ public class CodeGroup extends SoftDeleteEntity {
 	@Column(length = 500)
 	private @Nullable String description;
 
-	/** moa: 쓰는 곳 */
-	@Column(name = "used_by", length = 200)
-	private @Nullable String usedBy;
+	/** moa: 사용 여부. 꺼지면 화면용 목록이 빈 목록이다 (FR-008) */
+	@Column(nullable = false)
+	private boolean enabled;
 
-	/** moa: 기능이 코드에서 읽는 그룹. 마이그레이션으로만 켠다 (FR-008) */
-	@Column(name = "`system`", nullable = false, updatable = false)
-	private boolean system;
-
-	/** 관리자가 만드는 일반 그룹 */
-	public CodeGroup(String groupCode, String name, @Nullable String description, @Nullable String usedBy) {
+	/** 사용 중으로 만든다 */
+	public CodeGroup(String groupCode, String name, @Nullable String description) {
 		this.groupCode = groupCode;
 		this.name = name;
 		this.description = description;
-		this.usedBy = usedBy;
-		this.system = false;
+		this.enabled = true;
 	}
 
-	public void modify(String name, @Nullable String description, @Nullable String usedBy) {
+	public void modify(String name, @Nullable String description, boolean enabled) {
 		this.name = name;
 		this.description = description;
-		this.usedBy = usedBy;
+		this.enabled = enabled;
 	}
 }

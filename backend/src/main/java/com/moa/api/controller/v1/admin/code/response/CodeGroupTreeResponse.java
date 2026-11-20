@@ -14,12 +14,11 @@ public record CodeGroupTreeResponse(
 	@Schema(description = "그룹 코드", example = "GAME_GENRE") String groupCode,
 	@Schema(description = "이름", example = "게임 장르") String name,
 	@Schema(description = "설명") @Nullable String description,
-	@Schema(description = "쓰는 곳", example = "게임 등록 화면의 장르") @Nullable String usedBy,
-	@Schema(description = "시스템 그룹. 기능이 코드에서 읽어 지울 수 없다") boolean system,
+	@Schema(description = "사용 여부. false면 화면용 목록이 빈 목록이다") boolean enabled,
 	@Schema(description = "항목 (사용 안 함 포함, 정렬 순서대로)") List<CodeListResponse> codes) {
 
 	public static CodeGroupTreeResponse from(CodeGroupTreeDto dto) {
 		return new CodeGroupTreeResponse(dto.group().groupCode(), dto.group().name(), dto.group().description(),
-			dto.group().usedBy(), dto.group().system(), dto.codes().stream().map(CodeListResponse::from).toList());
+			dto.group().enabled(), dto.codes().stream().map(CodeListResponse::from).toList());
 	}
 }

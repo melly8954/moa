@@ -13,7 +13,7 @@ export const codeItemSchema = z.object({
 export type CodeItemInput = z.input<typeof codeItemSchema>
 
 // moa: 그룹 드로어 폼 (specs/004-admin-codes FR-004). 백엔드 CodeGroupCreateRequest·CodeGroupModifyRequest와 같다
-//   그룹 코드: 영문 대문자로 시작, 대문자·숫자·밑줄 50자까지 (만들 때만) / 이름 100자 / 설명 500자 / 쓰는 곳 200자
+//   그룹 코드: 영문 대문자로 시작, 대문자·숫자·밑줄 50자까지 (만들 때만) / 이름 100자 / 설명 500자
 const GROUP_CODE_PATTERN = /^[A-Z][A-Z0-9_]*$/
 
 export const codeGroupSchema = z.object({
@@ -25,7 +25,7 @@ export const codeGroupSchema = z.object({
     .regex(GROUP_CODE_PATTERN, "code.groupCodePattern"),
   name: z.string().trim().min(1, "code.nameRequired").max(100, "code.nameMax"),
   description: z.string().trim().max(500, "code.descriptionMax"),
-  usedBy: z.string().trim().max(200, "code.usedByMax"),
+  enabled: z.boolean(),
 })
 
 export type CodeGroupInput = z.input<typeof codeGroupSchema>

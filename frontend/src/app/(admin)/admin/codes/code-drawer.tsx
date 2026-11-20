@@ -8,7 +8,8 @@ import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
-import { SideDrawer, useDrawerClose } from "@/components/kit/side-drawer"
+import { useDrawerClose } from "@/components/kit/side-drawer"
+import { ResponsivePanel as SideDrawer } from "./detail-panel"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -124,6 +125,19 @@ export function CodeDrawer({
                 <FieldLabel htmlFor="code-code">{t("code")}</FieldLabel>
                 <Input
                   {...field}
+                  // 치는 대로 대문자로, -와 빈칸은 _로 바꾸고, 대문자·숫자·밑줄 밖의 글자는 받지 않는다 (50자까지)
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value
+                        .toUpperCase()
+                        .replace(/[-\s]/g, "_")
+                        .replace(/[^A-Z0-9_]/g, ""),
+                    )
+                  }
+                  maxLength={50}
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  spellCheck={false}
                   id="code-code"
                   className="font-mono"
                   readOnly={editing}

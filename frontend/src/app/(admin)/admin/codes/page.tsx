@@ -7,7 +7,6 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/api"
 import { BulkToolbar } from "@/components/kit/bulk-toolbar"
-import { confirm } from "@/components/kit/confirm-dialog"
 import { PageHeader } from "@/components/kit/page-header"
 import { QueryState } from "@/components/kit/query-state"
 import { Button } from "@/components/ui/button"
@@ -15,6 +14,7 @@ import { useErrorMessages } from "@/lib/error-messages"
 import type { Code, CodeGroupTree } from "@/types/code"
 import { CodeDrawer } from "./code-drawer"
 import { CodeTreeTable, parseKey } from "./code-tree-table"
+import { PanelGuardContext, useIsWide, usePanelGuard } from "./detail-panel"
 import { GroupDrawer } from "./group-drawer"
 
 // 공통코드 (code 헬퍼, 권한 CODE_MANAGE)
@@ -30,9 +30,23 @@ export default function CodesPage() {
   const queryClient = useQueryClient()
   const { describeError } = useErrorMessages()
   const tree = useQuery({ queryKey: TREE_KEY, queryFn: api.v1.code.admin.tree })
-  const [editing, setEditing] = useState<{ group: CodeGroupTree; code?: Code } | null>(null)
-  // 그룹 드로어: group이 없으면 추가
-  const [editingGroup, setEditingGroup] = useState<{ group?: CodeGroupTree } | null>(null)
+  // 미리보기: 오른쪽 상세 패널. 항목(code가 없으면 추가) 또는 그룹(group이 없으면 추가)
+  const [panel, setPanel] = useState<
+    { kind: "code"; group: CodeGroupTree; code?: Code } | { kind: "group"; group?: CodeGroupTree } | null
+  >(null)
+  const { guard, confirmLeave } = usePanelGuard()
+  // 좁은 폭은 트리 한 칸, 상세는 드로어 (FR-005)
+  const wide = useIsWide()
+  // 저장하지 않은 변경이 있으면 묻고 바꾼다
+  const openPanel = async (next: typeof panel) => {
+    if (await confirmLeave()) setPanel(next)
+  }
+  const activeKey =
+    panel?.kind === "code" && panel.code
+      ? `${panel.group.groupCode}/${panel.code.code}`
+      : panel?.kind === "group" && panel.group
+        ? `group:${panel.group.groupCode}`
+        : undefined
   const [selected, setSelected] = useState<string[]>([])
   const selectedGroups = [...new Set(selected.map((key) => parseKey(key).groupCode))]
   const groupCode = selectedGroups.length === 1 ? selectedGroups[0] : undefined
@@ -86,86 +100,93 @@ export default function CodesPage() {
     })
   }
 
-  const remove = async () => {
-    if (!groupCode) return
-    const ok = await confirm({
-      title: t("bulkRemoveTitle", { count: selected.length }),
-      description: t("bulkRemoveDescription"),
-      confirmLabel: t("remove"),
-      destructive: true,
-    })
-    if (!ok) return
-    run.mutate(
-      {
-        group: groupCode,
-        action: () => api.v1.code.admin.bulkDelete(groupCode, selectedCodes),
-        done: t("bulkRemoved", { count: selected.length }),
-      },
-      { onSuccess: () => setSelected([]) },
-    )
-  }
-
   return (
     <>
-      <PageHeader
-        title={t("title")}
-        description={t("guide")}
-        actions={
-          <Button onClick={() => setEditingGroup({})}>
-            <Plus />
-            {t("addGroup")}
-          </Button>
-        }
-      />
-      {selected.length > 0 && (
-        <BulkToolbar
-          label={t("bulkToolbar")}
-          selected={t("bulkSelected", { count: selected.length })}
-          note={groupCode ? undefined : t("bulkOneGroup")}
-        >
-          <Button size="sm" variant="outline" disabled={run.isPending} onClick={() => setEnabled(true)}>
-            {t("inUse")}
-          </Button>
-          <Button size="sm" variant="outline" disabled={run.isPending} onClick={() => setEnabled(false)}>
-            {t("notInUse")}
-          </Button>
-          <Button size="sm" variant="outline" disabled={run.isPending} onClick={() => void remove()}>
-            {t("remove")}
-          </Button>
-        </BulkToolbar>
-      )}
-      <QueryState query={tree} isEmpty={(d) => d.length === 0} empty={t("empty")}>
-        {(groups) => (
-          <CodeTreeTable
-            tree={groups}
-            selected={selected}
-            onSelectedChange={setSelected}
-            onOpen={(group, code) => setEditing({ group, code })}
-            onOpenGroup={(group) => setEditingGroup({ group })}
-            onAdd={(group) => setEditing({ group })}
-            onDrop={reorder}
-            disabled={run.isPending}
-          />
-        )}
-      </QueryState>
-      <CodeDrawer
-        key={editing ? `${editing.group.groupCode}/${editing.code?.code ?? ""}` : "closed"}
-        group={editing?.group}
-        code={editing?.code}
-        open={editing !== null}
-        onOpenChange={(open) => !open && setEditing(null)}
-        onSaved={(g) => refresh([g])}
-      />
-      <GroupDrawer
-        key={editingGroup ? (editingGroup.group?.groupCode ?? "new") : "closed"}
-        group={editingGroup?.group}
-        open={editingGroup !== null}
-        onOpenChange={(open) => !open && setEditingGroup(null)}
-        onSaved={(g) => {
-          setSelected((keys) => keys.filter((key) => parseKey(key).groupCode !== g))
-          return refresh([g])
-        }}
-      />
+      <PageHeader title={t("title")} description={t("guide")} />
+      {/* 넓은 폭: 두 칸이 화면 남은 높이를 채우고, 길어지면 각 칸 안에서 스크롤한다 (페이지는 스크롤하지 않는다)
+          basis-0으로 두어 내용 높이가 페이지를 늘리지 않게 한다 */}
+      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:basis-0 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]">
+        <div className="flex min-h-0 min-w-0 flex-col gap-2">
+          {/* 일괄 처리 줄은 늘 같은 자리·높이에 둔다. 고르면 목록이 밀리지 않고 글자와 단추만 바뀐다 */}
+          <BulkToolbar
+            label={t("bulkToolbar")}
+            selected={selected.length > 0 ? t("bulkSelected", { count: selected.length }) : t("bulkHint")}
+            note={selected.length > 0 && !groupCode ? t("bulkOneGroup") : undefined}
+          >
+            <Button size="sm" variant="outline" disabled={run.isPending || !groupCode} onClick={() => setEnabled(true)}>
+              {t("inUse")}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={run.isPending || !groupCode}
+              onClick={() => setEnabled(false)}
+            >
+              {t("notInUse")}
+            </Button>
+          </BulkToolbar>
+          <QueryState
+            query={tree}
+            isEmpty={(d) => d.length === 0}
+            empty={
+              <span className="flex flex-col items-center gap-3">
+                {t("empty")}
+                <Button size="sm" onClick={() => void openPanel({ kind: "group" })}>
+                  <Plus />
+                  {t("addGroup")}
+                </Button>
+              </span>
+            }
+          >
+            {(groups) => (
+              <CodeTreeTable
+                tree={groups}
+                className="min-h-0 overflow-y-auto lg:flex-1"
+                selected={selected}
+                onSelectedChange={setSelected}
+                active={activeKey}
+                onOpen={(group, code) => void openPanel({ kind: "code", group, code })}
+                onOpenGroup={(group) => void openPanel({ kind: "group", group })}
+                onAdd={(group) => void openPanel({ kind: "code", group })}
+                onAddGroup={() => void openPanel({ kind: "group" })}
+                onDrop={reorder}
+                disabled={run.isPending}
+              />
+            )}
+          </QueryState>
+        </div>
+        <div className="min-h-0 min-w-0">
+          <PanelGuardContext.Provider value={guard}>
+            {panel?.kind === "code" && (
+              <CodeDrawer
+                key={`code:${panel.group.groupCode}/${panel.code?.code ?? ""}`}
+                group={panel.group}
+                code={panel.code}
+                open
+                onOpenChange={(open) => !open && setPanel(null)}
+                onSaved={(g) => refresh([g])}
+              />
+            )}
+            {panel?.kind === "group" && (
+              <GroupDrawer
+                key={`group:${panel.group?.groupCode ?? "new"}`}
+                group={panel.group}
+                open
+                onOpenChange={(open) => !open && setPanel(null)}
+                onSaved={(g) => {
+                  setSelected((keys) => keys.filter((key) => parseKey(key).groupCode !== g))
+                  return refresh([g])
+                }}
+              />
+            )}
+            {!panel && wide && (
+              <div className="hidden items-center justify-center rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground lg:flex lg:h-full">
+                {t("panelEmpty")}
+              </div>
+            )}
+          </PanelGuardContext.Provider>
+        </div>
+      </div>
     </>
   )
 }

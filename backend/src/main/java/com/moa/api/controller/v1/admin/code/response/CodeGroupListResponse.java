@@ -11,10 +11,9 @@ public record CodeGroupListResponse(
 	@Schema(description = "그룹 코드", example = "GAME_GENRE") String groupCode,
 	@Schema(description = "이름", example = "게임 장르") String name,
 	@Schema(description = "설명") @Nullable String description,
-	@Schema(description = "moa: 쓰는 곳", example = "게임 등록 화면의 장르") @Nullable String usedBy,
-	@Schema(description = "moa: 시스템 그룹. 기능이 코드에서 읽어 지울 수 없다") boolean system) {
+	@Schema(description = "moa: 사용 여부. false면 화면용 목록이 빈 목록이다") boolean enabled) {
 
 	public static CodeGroupListResponse from(CodeGroupDto dto) {
-		return new CodeGroupListResponse(dto.groupCode(), dto.name(), dto.description(), dto.usedBy(), dto.system());
+		return new CodeGroupListResponse(dto.groupCode(), dto.name(), dto.description(), dto.enabled());
 	}
 }
