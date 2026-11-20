@@ -19,6 +19,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { FileText, Folder } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { DragHandle } from "@/components/kit/drag-handle"
+import { openOnRowClick, ROW_CLICKABLE } from "@/components/kit/row-click"
 import { StatusText } from "@/components/kit/status-text"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -28,8 +29,10 @@ import { isGroup, type MenuRow, rowsOf } from "./menu-order"
 
 // 메뉴 트리 표 (moa, specs/001-admin-menus FR-010, US5, research R20·R22·R25)
 //   구성 목록이라 쪽 나눔 없이 전체를 그린다. 상위 메뉴 바로 아래에 하위 메뉴를 들여 쓴다
-//   행 단추는 없다: 체크박스(일괄 처리), 손잡이(끌어서 순서·부모), 이름(누르면 오른쪽 상세 칸)
-//   두 칸 화면의 왼쪽 칸이라 연결 화면 열은 두지 않는다(상세 칸에 보인다). 상위 메뉴는 폴더, 화면 메뉴는 문서 아이콘
+//   행 단추는 없다: 체크박스(일괄 처리), 손잡이(끌어서 순서·부모), 메뉴명. 행 어디를 눌러도 오른쪽 상세 칸이 열린다
+//   (체크박스·손잡이는 제 일만 한다. 키보드는 메뉴명 단추로 연다)
+//   열은 체크박스·손잡이·메뉴명·사용이다. 연결 화면과 누가 보는지(권한·공개 범위)는 상세 칸에 보인다 (2026-11-21)
+//   상위 메뉴는 폴더, 화면 메뉴는 문서 아이콘. 사용 안 함은 회색(neutral), 빨강은 "없는 화면"에만 쓴다
 //   상세 칸에 열린 행(active)은 강조한다
 //   손잡이는 키보드로도 옮긴다 (스페이스로 집고 화살표로 옮기고 스페이스로 놓기)
 export function MenuTreeTable({
@@ -101,7 +104,6 @@ export function MenuTreeTable({
                 <span className="sr-only">{t("dragColumn")}</span>
               </TableHead>
               <TableHead>{t("name")}</TableHead>
-              <TableHead>{t("whoSees")}</TableHead>
               <TableHead className="w-(--col-status)">{t("enabled")}</TableHead>
             </TableRow>
           </TableHeader>
@@ -158,9 +160,10 @@ function SortableMenuRow({
     <TableRow
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn(active && "bg-muted", isDragging && "relative z-10 bg-muted")}
+      className={cn(ROW_CLICKABLE, active && "bg-muted", isDragging && "relative z-10 bg-muted")}
       aria-current={active ? "true" : undefined}
       data-state={checked ? "selected" : undefined}
+      onClick={openOnRowClick(onOpen)}
     >
       <TableCell>
         <Checkbox
@@ -191,20 +194,8 @@ function SortableMenuRow({
         </div>
       </TableCell>
       <TableCell>
-        <WhoSees menu={menu} />
-      </TableCell>
-      <TableCell>
         <StatusText tone={menu.enabled ? "positive" : "neutral"}>{t(menu.enabled ? "inUse" : "notInUse")}</StatusText>
       </TableCell>
     </TableRow>
   )
-}
-
-// 사이드바에 누구에게 보이나. 관리 메뉴는 연결 화면의 권한, 사용자 메뉴는 공개 범위, 상위 메뉴는 하위 메뉴를 따른다
-function WhoSees({ menu }: { menu: AdminMenu }) {
-  const t = useTranslations("menuAdmin")
-  if (!menu.programKey) return <span className="text-muted-foreground">{t("followsChildren")}</span>
-  if (!menu.program) return <span className="text-muted-foreground">{t("hidden")}</span>
-  if (menu.audience === "ADMIN") return <>{menu.program.permissionName}</>
-  return <>{t(menu.visibility === "MEMBER" ? "visibilityMember" : "visibilityPublic")}</>
 }

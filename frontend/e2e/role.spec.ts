@@ -11,7 +11,7 @@ const PERMISSION_TREE = {
       menuId: 3,
       name: "코드 관리",
       enabled: true,
-      permission: { key: "CODE_MANAGE", name: "공통코드 관리" },
+      permission: { key: "CODE_MANAGE", name: "코드 관리" },
       children: [],
     },
     {

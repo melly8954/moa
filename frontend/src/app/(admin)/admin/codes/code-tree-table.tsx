@@ -20,6 +20,7 @@ import { ChevronDown, ChevronRight, Plus } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Fragment, useState } from "react"
 import { DragHandle } from "@/components/kit/drag-handle"
+import { openOnRowClick, ROW_CLICKABLE } from "@/components/kit/row-click"
 import { StatusText } from "@/components/kit/status-text"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -28,6 +29,8 @@ import type { Code, CodeGroupTree } from "@/types/code"
 
 // 공통코드 트리 표 (moa, specs/004-admin-codes FR-005, US1, research R7). 메뉴 관리 트리 표와 같은 틀이다
 //   구성 목록이라 쪽 나눔 없이 전체를 그린다. 그룹 행 아래에 그 그룹의 항목을 들여 쓴다
+//   그룹·항목 행은 어디를 눌러도 오른쪽 패널이 열린다 (2026-11-21). 체크박스·접기 단추·손잡이는 제 일만 하고, 키보드는 이름 단추로 연다
+//   사용 안 함은 회색(neutral)이다. 빨강은 문제 표시에만 쓴다
 //   그룹 행도 항목 행과 같은 칸을 쓴다 (메뉴 관리 트리 표와 같다): 첫 칸에 항목 전체 고르기, 둘째 칸에 접고 펴기, 이름 칸에 이름(누르면 그룹 드로어)·
 //   설명(꺼진 그룹은 이름을 흐리게), 코드 칸에 그룹 코드, 사용 칸에 상태 (FR-005·FR-008)
 //   항목 행: 체크박스(일괄 처리), 손잡이(같은 그룹 안 순서), 이름(누르면 드로어), 코드, 사용
@@ -145,8 +148,13 @@ export function CodeTreeTable({
               return (
                 <Fragment key={group.groupCode}>
                   <TableRow
-                    className={cn("bg-muted/50 hover:bg-muted/50", active === `group:${group.groupCode}` && ACTIVE_ROW)}
+                    className={cn(
+                      ROW_CLICKABLE,
+                      "bg-muted/50 hover:bg-muted/50",
+                      active === `group:${group.groupCode}` && ACTIVE_ROW,
+                    )}
                     aria-current={active === `group:${group.groupCode}` ? "true" : undefined}
+                    onClick={openOnRowClick(() => onOpenGroup(group))}
                   >
                     <TableCell>
                       {/* 그룹 체크 = 그 그룹 항목 전부 고르기·풀기. 처리되는 것은 항목뿐이다 (그룹 삭제는 패널에서 하나씩). 항목이 없으면 체크 칸을 두지 않는다 */}
@@ -195,7 +203,7 @@ export function CodeTreeTable({
                       <span className="font-mono">{group.groupCode}</span>
                     </TableCell>
                     <TableCell>
-                      <StatusText tone={group.enabled ? "positive" : "negative"}>
+                      <StatusText tone={group.enabled ? "positive" : "neutral"}>
                         {t(group.enabled ? "inUse" : "notInUse")}
                       </StatusText>
                     </TableCell>
@@ -298,9 +306,10 @@ function SortableCodeRow({
     <TableRow
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn(active && ACTIVE_ROW, isDragging && "relative z-10 bg-muted")}
+      className={cn(ROW_CLICKABLE, active && ACTIVE_ROW, isDragging && "relative z-10 bg-muted")}
       aria-current={active ? "true" : undefined}
       data-state={checked ? "selected" : undefined}
+      onClick={openOnRowClick(onOpen)}
     >
       <TableCell>
         <Checkbox
@@ -328,7 +337,7 @@ function SortableCodeRow({
         <span className="font-mono">{code.code}</span>
       </TableCell>
       <TableCell>
-        <StatusText tone={code.enabled ? "positive" : "negative"}>{t(code.enabled ? "inUse" : "notInUse")}</StatusText>
+        <StatusText tone={code.enabled ? "positive" : "neutral"}>{t(code.enabled ? "inUse" : "notInUse")}</StatusText>
       </TableCell>
     </TableRow>
   )
