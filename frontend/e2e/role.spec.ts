@@ -31,7 +31,7 @@ const PERMISSION_TREE = {
     },
   ],
   unlisted: [
-    { programKey: "ADMIN_NOTICES", name: "공지 관리", permission: { key: "NOTICE_MANAGE", name: "공지 관리" } },
+    { screenKey: "ADMIN_NOTICES", name: "공지 관리", permission: { key: "NOTICE_MANAGE", name: "공지 관리" } },
   ],
 }
 // 구성원 탭의 사용자 (moa, specs/003-admin-roles FR-006)

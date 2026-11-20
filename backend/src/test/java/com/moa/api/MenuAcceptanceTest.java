@@ -19,8 +19,8 @@ import com.moa.support.AcceptanceTest;
 
 /**
  * 메뉴 권한 (선택 헬퍼 menu).
- * moa: 메뉴는 경로·권한 대신 등록된 프로그램을 가리킨다 (specs/001-admin-menus FR-008·FR-009).
- * 경로 형식·겹침 검사는 없어지고, 프로그램·공개 범위 검사가 그 자리에 온다
+ * moa: 메뉴는 경로·권한 대신 등록된 연결 화면을 가리킨다 (specs/001-admin-menus FR-008·FR-009).
+ * 경로 형식·겹침 검사는 없어지고, 연결 화면·공개 범위 검사가 그 자리에 온다
  */
 class MenuAcceptanceTest extends AcceptanceTest {
 
@@ -37,8 +37,8 @@ class MenuAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	// moa: 관리 메뉴는 가리키는 프로그램의 권한으로 거른다 (specs/001-admin-menus FR-002). 키트는 메뉴의 권한 키다
-	@DisplayName("메뉴: 내 메뉴는 프로그램의 권한으로 거르고(ADMIN은 전부), 보이는 하위 메뉴가 없는 묶음 메뉴는 뺀다")
+	// moa: 관리 메뉴는 가리키는 연결 화면의 권한으로 거른다 (specs/001-admin-menus FR-002). 키트는 메뉴의 권한 키다
+	@DisplayName("메뉴: 내 메뉴는 연결 화면의 권한으로 거르고(ADMIN은 전부), 보이는 하위 메뉴가 없는 묶음 메뉴는 뺀다")
 	void myMenusByPermission() {
 		long group = create(null, "업무", null, 10);
 		create(group, "코드", "ADMIN_CODES", 10);
@@ -62,7 +62,7 @@ class MenuAcceptanceTest extends AcceptanceTest {
 		long codes = create(group, "코드", "ADMIN_CODES", 10);
 
 		assertThat(asAdmin(mvc.put().uri(ADMIN_MENUS + "/" + codes).contentType(MediaType.APPLICATION_JSON)
-			.content("{\"parentId\":" + group + ",\"name\":\"코드\",\"programKey\":\"ADMIN_CODES\",\"sortOrder\":10,"
+			.content("{\"parentId\":" + group + ",\"name\":\"코드\",\"screenKey\":\"ADMIN_CODES\",\"sortOrder\":10,"
 				+ "\"enabled\":false}")))
 			.hasStatus(200);
 
@@ -72,12 +72,12 @@ class MenuAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	// moa: 키트의 경로 규칙(V001·R002)은 프로그램 규칙으로 바뀌었다 (specs/001-admin-menus FR-009)
-	@DisplayName("메뉴: 프로그램은 등록된 키만(V001), 하위 메뉴는 프로그램이 있어야 하고(V001), 사용자 화면 메뉴는 공개 범위가 있어야 한다(V001)")
-	void programRules() {
+	// moa: 키트의 경로 규칙(V001·R002)은 연결 화면 규칙으로 바뀌었다 (specs/001-admin-menus FR-009)
+	@DisplayName("메뉴: 연결 화면은 등록된 키만(V001), 하위 메뉴는 연결 화면이 있어야 하고(V001), 사용자 화면 메뉴는 공개 범위가 있어야 한다(V001)")
+	void screenRules() {
 		long group = create(null, "업무", null, 10);
 
-		assertThat(post(json(null, "a", "NO_SUCH_PROGRAM", 10, null, null))).hasStatus(400)
+		assertThat(post(json(null, "a", "NO_SUCH_SCREEN", 10, null, null))).hasStatus(400)
 			.bodyJson().extractingPath("$.code").isEqualTo("V001");
 		assertThat(post(json(null, "b", "MISSING", 10, null, null))).hasStatus(400)
 			.bodyJson().extractingPath("$.code").isEqualTo("V001");
@@ -86,7 +86,7 @@ class MenuAcceptanceTest extends AcceptanceTest {
 		assertThat(post(json(null, "d", "NOTICES", 10, "USER", null))).hasStatus(400)
 			.bodyJson().extractingPath("$.code").isEqualTo("V001");
 		assertThat(post(json(null, "e", "ADMIN_CODES", 10, null, null))).hasStatus(201);
-		assertThat(post(json(null, "f", "ADMIN_CODES", 20, null, null))).as("같은 프로그램을 여러 메뉴에 건다")
+		assertThat(post(json(null, "f", "ADMIN_CODES", 20, null, null))).as("같은 연결 화면을 여러 메뉴에 건다")
 			.hasStatus(201);
 	}
 
@@ -128,9 +128,9 @@ class MenuAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	// moa: 메뉴 대상은 프로그램의 대상이라 묶음 메뉴를 하위로, 다른 대상의 부모 아래로 옮기지 않는다 (specs/001-admin-menus FR-009)
+	// moa: 메뉴 대상은 연결 화면의 대상이라 묶음 메뉴를 하위로, 다른 대상의 부모 아래로 옮기지 않는다 (specs/001-admin-menus FR-009)
 	@DisplayName("메뉴: 묶음 메뉴를 하위로 옮기거나 대상이 다른 부모 아래로 옮기면 B001")
-	void reorderKeepsProgramRules() {
+	void reorderKeepsScreenRules() {
 		long group = create(null, "업무", null, 10);
 		long other = create(null, "다른 묶음", null, 20);
 		long notices = ((Number)JsonPath.read(body(post(json(null, "공지", "NOTICES", 30, "USER", "PUBLIC"))), "$.id"))
@@ -169,8 +169,8 @@ class MenuAcceptanceTest extends AcceptanceTest {
 		assertThat(mvc.get().uri(MY_MENUS)).hasStatus(401).bodyJson().extractingPath("$.code").isEqualTo("A001");
 	}
 
-	private long create(Long parentId, String name, String programKey, int sortOrder) {
-		MvcTestResult result = post(json(parentId, name, programKey, sortOrder, null, null));
+	private long create(Long parentId, String name, String screenKey, int sortOrder) {
+		MvcTestResult result = post(json(parentId, name, screenKey, sortOrder, null, null));
 		assertThat(result).hasStatus(201);
 		return ((Number)JsonPath.read(body(result), "$.id")).longValue();
 	}
@@ -183,9 +183,9 @@ class MenuAcceptanceTest extends AcceptanceTest {
 		return asAdmin(mvc.put().uri(ADMIN_MENUS + "/order").contentType(MediaType.APPLICATION_JSON).content(json));
 	}
 
-	private String json(Long parentId, String name, String programKey, int sortOrder, String audience,
+	private String json(Long parentId, String name, String screenKey, int sortOrder, String audience,
 		String visibility) {
-		return "{\"parentId\":" + parentId + ",\"name\":\"" + name + "\",\"programKey\":" + quote(programKey)
+		return "{\"parentId\":" + parentId + ",\"name\":\"" + name + "\",\"screenKey\":" + quote(screenKey)
 			+ ",\"sortOrder\":" + sortOrder + ",\"audience\":" + quote(audience) + ",\"visibility\":"
 			+ quote(visibility) + "}";
 	}
