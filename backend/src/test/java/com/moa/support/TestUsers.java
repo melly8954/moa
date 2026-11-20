@@ -19,8 +19,8 @@ public class TestUsers {
 	private final PasswordEncoder passwordEncoder;
 
 	public void create(Long id, String loginId, String rawPassword, Role role) {
-		jdbcTemplate.update("insert into tb_user (id, login_id, password, name, role, created_at, updated_at, "
-			+ "created_by, updated_by) values (?, ?, ?, ?, ?, now(6), now(6), 1, 1)",
+		jdbcTemplate.update("insert into tb_user (id, login_id, password, name, role, password_change_required, "
+			+ "created_at, updated_at, created_by, updated_by) values (?, ?, ?, ?, ?, false, now(6), now(6), 1, 1)",
 			id, loginId, rawPassword == null ? null : passwordEncoder.encode(rawPassword), loginId, role.name());
 	}
 }

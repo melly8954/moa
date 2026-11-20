@@ -74,7 +74,7 @@ class AuditAcceptanceTest extends AcceptanceTest {
 			.hasStatus(204);
 		assertThat(mvc.get().uri("/test/items/" + id).header(HttpHeaders.AUTHORIZATION, bearer(7L)))
 			.hasStatus(404);
-		Long deletedBy = jdbcTemplate.queryForObject("select deleted_by from sample_items where id = ?", Long.class,
+		Long deletedBy = jdbcTemplate.queryForObject("select deleted_by from tb_sample_item where id = ?", Long.class,
 			id.longValue());
 		assertThat(deletedBy).isEqualTo(8L);
 	}

@@ -17,7 +17,7 @@ moa가 처음 직접 만드는 기능이다. 백엔드에 공지 엔터티와 �
 
 **Primary Dependencies**: 키트 rich-text 헬퍼 (백엔드 jsoup, 프론트 Tiptap·DOMPurify). 기존 admin 프리셋 헬퍼(menu·rbac 등)
 
-**Storage**: MariaDB. `tb_notice`, `tb_notice_read` (moa `V2_1`), `tb_rich_text_image` (키트 `V1_9`). 본문 이미지 파일은 `app.rich-text.image-dir` (기본 `./data/rich-text-images`)
+**Storage**: MariaDB. `tb_notice`, `tb_notice_read` (moa `V2_1`), `tb_rich_text_image` (키트 `V1_9`). 본문 이미지 파일은 `app.rich-text.image-dir` (기본 `./data/rich-text-images`). 지금은 `V1__schema.sql`·`V2__seed.sql`에 합쳐져 있다 (2026-11-21)
 
 **Testing**: 인수 테스트 `NoticesAcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`). 키트 `RichTextImageAcceptanceTest`·`HtmlSanitizerTest`를 함께 얹는다. 프론트는 `npm run check`(단위)와 핵심 흐름 e2e(Playwright)
 

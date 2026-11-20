@@ -1,5 +1,7 @@
 # Data Model: 공통코드 (admin-codes)
 
+> 2026-11-21: 지금 스키마는 `V1__schema.sql`, 처음 데이터는 `V2__seed.sql`에 합쳐져 있다 (`docs/db.md`). 아래 마이그레이션 파일 이름은 합치기 전 기록이다.
+
 키트 `tb_code`(`V1_4__codes.sql`)가 기준이다. 그룹은 `tb_code_group` 표에 둔다 (spec.md FR-004, research.md R11).
 `tb_code_group`는 2026-11-15에 지웠다가(`V2_7`) 2026-11-18에 다시 만들었고(`V2_8`), 2026-11-20에 `used_by`·`system`을 빼고 `enabled`를 더한다(`V2_9__code_groups_enabled.sql`, 번호는 구현할 때 다시 본다).
 

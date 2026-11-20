@@ -21,7 +21,7 @@ moa가 할 일은 "관리자가 코드 관리를 열면 FR-001 표의 그룹이 
 
 **Primary Dependencies**: psw-dev-kit code 헬퍼 (`CodeApplication`, `ApiAdminCodeController`, `ApiCodeController`)
 
-**Storage**: MariaDB `tb_code_group`, `tb_code` (`V1_4__codes.sql`). `tb_code_group`는 2026-11-15에 지웠다가 2026-11-18에 다시 만들고, 2026-11-20에 `used_by`·`system`을 빼고 `enabled`를 더한다 ([data-model.md](./data-model.md))
+**Storage**: MariaDB `tb_code_group`, `tb_code` (`V1_4__codes.sql`). `tb_code_group`는 2026-11-15에 지웠다가 2026-11-18에 다시 만들고, 2026-11-20에 `used_by`·`system`을 빼고 `enabled`를 더한다 ([data-model.md](./data-model.md)). 지금은 `V1__schema.sql`·`V2__seed.sql`에 합쳐져 있다 (2026-11-21)
 
 **Testing**: 인수 테스트 `AcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`)
 

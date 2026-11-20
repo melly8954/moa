@@ -1,5 +1,7 @@
 # Data Model: 관리 메뉴와 접근 (admin-menus)
 
+> 2026-11-21: 지금 스키마는 `V1__schema.sql`, 처음 데이터는 `V2__seed.sql`에 합쳐져 있다 (`docs/db.md`). 아래 마이그레이션 파일 이름은 합치기 전 기록이다.
+
 새 테이블은 없다. 키트 `tb_menu` 테이블의 스키마는 `V1_7__menus.sql`이 기준이고, moa가 `audience` 열을 더한다 (2026-11-15, `V2_4__menu_audience.sql`, research R9).
 이어서 `program_key`·`visibility` 열을 더하고 `path`·`permission` 열을 지운다 (2026-11-15, `V2_5__menu_programs.sql`, research R14). 아래 처음 구성 표의 `path`·`permission`은 `V2_5` 전의 시드 값이고, `V2_5`가 이 값으로 프로그램을 찾는다.
 
