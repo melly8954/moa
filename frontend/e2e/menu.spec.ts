@@ -342,9 +342,11 @@ test("US5-AC1 왼쪽은 상위 메뉴 아래 하위 메뉴를 들여 쓴 트리�
   await expect(toolbar.getByRole("button", { name: "사용 안 함" })).toBeDisabled()
   // 화면에 "묶음"·"프로그램"이라는 말이 없다 (FR-009)
   await expect(page.getByText(/묶음|프로그램/)).toHaveCount(0)
-  await expect(page.getByRole("button", { name: /수정$/ })).toHaveCount(0)
-  await expect(page.getByRole("button", { name: /삭제$/ })).toHaveCount(0)
-  await expect(page.getByRole("button", { name: /위로$|아래로$/ })).toHaveCount(0)
+  // 행 단추는 없다 (일괄 처리 줄의 "삭제"는 늘 보이므로 트리 안만 본다)
+  const table = page.getByRole("table")
+  await expect(table.getByRole("button", { name: /수정$/ })).toHaveCount(0)
+  await expect(table.getByRole("button", { name: /삭제$/ })).toHaveCount(0)
+  await expect(table.getByRole("button", { name: /위로$|아래로$/ })).toHaveCount(0)
   await expect(page.getByRole("tab", { name: "프로그램" })).toHaveCount(0)
   // 관리 메뉴 탭에는 관리 메뉴만
   await expect(nameButton(page, "홈")).toHaveCount(0)
@@ -371,7 +373,7 @@ test("US5-AC2 이름을 누르면 오른쪽 칸에서 상위 메뉴·연결 화�
   await nameButton(page, "코드 관리").click()
   const panel = detail(page, "메뉴 수정")
   await expect(page.getByRole("dialog")).toHaveCount(0)
-  await expect(page.getByRole("row", { name: /코드 관리/ })).toHaveAttribute("aria-current", "true")
+  await expect(page.getByRole("row", { name: /^코드 관리 고르기/ })).toHaveAttribute("aria-current", "true")
   await expect(panel.getByLabel("상위 메뉴")).toHaveValue("")
   await expect(panel.getByLabel("연결 화면")).toHaveValue("ADMIN_CODES")
   await expect(panel.getByText("종류")).toHaveCount(0)
@@ -414,7 +416,9 @@ test("US5-AC7 오른쪽 칸에서 고치다가 다른 메뉴를 누르면 묻고
   await expect(detail(page, "메뉴 수정").getByLabel("이름")).toHaveValue("바뀐 이름")
 })
 
+// 넓은 폭(1280)에서는 드로어 대신 오른쪽 칸이다(US5-AC7이 본다). 이 테스트는 좁은 폭 드로어를 본다
 test("FR-012 저장하지 않은 변경이 있으면 드로어를 닫기 전에 묻는다", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 })
   await mock(page)
   await page.goto("/admin/menus")
   await nameButton(page, "코드 관리").click()
