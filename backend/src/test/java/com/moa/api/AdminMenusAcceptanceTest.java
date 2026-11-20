@@ -62,7 +62,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
 			.containsExactly("사용자 관리", "공지 관리", "접속 이력");
 		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
-			.containsExactly("역할 관리", "메뉴 관리", "공통코드");
+			.containsExactly("역할 관리", "메뉴 관리", "코드 관리");
 		assertThat(result).bodyJson().extractingPath("$[*].children[*].path").asArray()
 			.containsExactly("/admin/users", "/admin/notices", "/admin/login-histories", "/admin/roles", "/admin/menus",
 				"/admin/codes");
@@ -117,7 +117,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].name").asArray()
 			.containsExactlyInAnyOrder("운영", "설정");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].children[*].name").asArray()
-			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "공통코드", "접속 이력", "역할 관리", "공지 관리");
+			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "역할 관리", "공지 관리");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'USER')].name").asArray()
 			.containsExactlyInAnyOrder("홈", "공지");
 	}
@@ -183,7 +183,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 			.containsExactly("ADMIN_USERS", "ADMIN_MENUS", "ADMIN_CODES", "ADMIN_LOGIN_HISTORIES", "ADMIN_ROLES",
 				"ADMIN_NOTICES", "HOME", "NOTICES");
 		assertThat(result).bodyJson().extractingPath("$[?(@.key == 'ADMIN_CODES')].permission.name").asArray()
-			.containsExactly("공통코드 관리");
+			.containsExactly("코드 관리");
 		assertThat(result).bodyJson().extractingPath("$[?(@.key == 'NOTICES')].path").asArray()
 			.containsExactly("/notices");
 		assertThat(result).bodyJson().extractingPath("$[?(@.key == 'NOTICES')].signInRequired").asArray()
@@ -205,7 +205,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 
 		assertThat(created).hasStatus(201);
 		assertThat(created).bodyJson().extractingPath("$.program.path").isEqualTo("/admin/codes");
-		assertThat(created).bodyJson().extractingPath("$.program.permissionName").isEqualTo("공통코드 관리");
+		assertThat(created).bodyJson().extractingPath("$.program.permissionName").isEqualTo("코드 관리");
 		assertThat(created).bodyJson().extractingPath("$.programKey").isEqualTo("ADMIN_CODES");
 		assertThat(created).bodyJson().doesNotHavePath("$.path");
 		assertThat(created).bodyJson().doesNotHavePath("$.permission");
@@ -259,7 +259,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
 			.containsExactly("사용자 관리", "공지 관리");
 		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
-			.containsExactly("역할 관리", "메뉴 관리", "공통코드", "접속 이력");
+			.containsExactly("역할 관리", "메뉴 관리", "코드 관리", "접속 이력");
 	}
 
 	@Test

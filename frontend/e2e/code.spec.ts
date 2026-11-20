@@ -86,7 +86,7 @@ test("US1-AC1 왼쪽 트리와 오른쪽 안내가 보이고, 일괄 처리 줄�
 }) => {
   await mockCodes(page)
   await page.goto("/admin/codes")
-  await expect(page.getByRole("heading", { name: "공통코드" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "코드 관리" })).toBeVisible()
   await expect(page.getByText("지우지 않고 사용 안 함으로 꺼요.")).toBeVisible()
   await expect(page.getByText("왼쪽에서 그룹이나 항목을 고르면 여기서 고쳐요.", { exact: false })).toBeVisible()
   await expect(page.getByText("GAME_GENRE")).toBeVisible()
@@ -138,11 +138,15 @@ test("US1-AC2 그룹의 항목 추가는 패널에서 이름만 적으면 코드
   await expect(panel.getByText("이미 있는 코드예요.")).toBeVisible()
 })
 
-test("US1-AC3 항목 이름을 누르면 패널에서 이름과 사용을 고치고 코드는 보기만 한다 @wide", async ({ page }) => {
+test("US1-AC3 항목 행을 누르면 패널에서 이름과 사용을 고치고 코드는 보기만 한다 @wide", async ({ page }) => {
   const sent: Sent = {}
   await mockCodes(page, sent)
   await page.goto("/admin/codes")
-  await page.getByRole("button", { name: "FPS", exact: true }).click()
+  // 이름 단추가 아닌 행의 코드 칸을 누른다 (2026-11-21)
+  await page
+    .getByRole("row", { name: /^FPS 고르기/ })
+    .getByText("001", { exact: true })
+    .click()
   const panel = page.getByRole("region", { name: "항목 수정" })
   await expect(panel.getByLabel("코드")).toHaveValue("001")
   await expect(panel.getByLabel("코드")).toHaveAttribute("readonly", "")
@@ -230,13 +234,18 @@ test("US1-AC7 트리 맨 아래 그룹 추가로 그룹 코드와 이름을 보�
   await expect(panel).toBeHidden()
 })
 
-test("US1-AC8 그룹 이름을 누르면 패널에서 이름·설명·사용을 고치고 그룹 코드는 보기만 하며 삭제는 없다 @wide", async ({
+test("US1-AC8 그룹 행을 누르면 패널에서 이름·설명·사용을 고치고 그룹 코드는 보기만 하며 삭제는 없다 @wide", async ({
   page,
 }) => {
   const sent: Sent = {}
   await mockCodes(page, sent)
   await page.goto("/admin/codes")
-  await page.getByRole("button", { name: "게임 장르 그룹 수정" }).click()
+  // 접기 단추는 접기만 하고 패널을 열지 않는다
+  await page.getByRole("button", { name: "게임 장르 접기" }).click()
+  await expect(page.getByRole("region", { name: "그룹 수정" })).toHaveCount(0)
+  await page.getByRole("button", { name: "게임 장르 펼치기" }).click()
+  // 이름 단추가 아닌 그룹 행의 그룹 코드 칸을 누른다 (2026-11-21)
+  await page.getByText("GAME_GENRE", { exact: true }).click()
   const panel = page.getByRole("region", { name: "그룹 수정" })
   await expect(panel.getByLabel("그룹 코드")).toHaveValue("GAME_GENRE")
   await expect(panel.getByLabel("그룹 코드")).toHaveAttribute("readonly", "")
