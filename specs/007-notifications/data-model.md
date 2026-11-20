@@ -1,5 +1,7 @@
 # Data Model: 알림 (notifications)
 
+> 2026-11-21: 지금 스키마는 `V1__schema.sql`, 처음 데이터는 `V2__seed.sql`에 합쳐져 있다 (`docs/db.md`). 아래 마이그레이션 파일 이름은 합치기 전 기록이다.
+
 moa 마이그레이션 `V2_3__notifications.sql`을 더한다. 전체 알림(공지 게시)은 저장하지 않는다.
 
 ## 개인 알림 (`tb_notification`)

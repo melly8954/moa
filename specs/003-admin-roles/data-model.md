@@ -1,5 +1,7 @@
 # Data Model: 운영자 역할 (admin-roles)
 
+> 2026-11-21: 지금 스키마는 `V1__schema.sql`, 처음 데이터는 `V2__seed.sql`에 합쳐져 있다 (`docs/db.md`). 아래 마이그레이션 파일 이름은 합치기 전 기록이다.
+
 새 테이블과 컬럼은 없다. 키트 `tb_access_role`, `tb_user_access_role`(`V1_8__access_roles.sql`)가 기준이다.
 
 ## 스펙의 개념과 키트의 대응

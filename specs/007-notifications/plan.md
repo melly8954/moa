@@ -18,7 +18,7 @@
 
 **Primary Dependencies**: 키트 websocket 헬퍼(`spring-boot-starter-websocket`, STOMP), 웹 푸시 라이브러리(백엔드, R6), `@stomp/stompjs`(프론트, R3)
 
-**Storage**: MariaDB. `tb_notification`, `tb_push_subscription` (moa `V2_3`). 전체 알림은 저장하지 않는다
+**Storage**: MariaDB. `tb_notification`, `tb_push_subscription` (moa `V2_3`). 전체 알림은 저장하지 않는다. 지금은 `V1__schema.sql`·`V2__seed.sql`에 합쳐져 있다 (2026-11-21)
 
 **Testing**: 인수 테스트 `NotificationsAcceptanceTest` (실제 포트로 띄워 STOMP 클라이언트와 MockMvc를 함께 쓴다, 웹 푸시는 가짜 푸시 서버로 받는다, `./gradlew dbTest`). 키트 `WebSocketAcceptanceTest`를 함께 얹는다. 프론트는 단위 테스트와 핵심 흐름 e2e(Playwright `routeWebSocket`으로 STOMP를 흉내 낸다)
 

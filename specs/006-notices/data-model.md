@@ -1,5 +1,7 @@
 # Data Model: 공지사항 (notices)
 
+> 2026-11-21: 지금 스키마는 `V1__schema.sql`, 처음 데이터는 `V2__seed.sql`에 합쳐져 있다 (`docs/db.md`). 아래 마이그레이션 파일 이름은 합치기 전 기록이다.
+
 moa 마이그레이션 `V2_1__notices.sql`(테이블), `V2_2__notice_admin_menu.sql`(메뉴)을 더한다. 본문 이미지 테이블 `tb_rich_text_image`는 키트 `V1_9`가 기준이다.
 
 ## 공지 (`tb_notice`)
