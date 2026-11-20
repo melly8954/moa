@@ -63,7 +63,7 @@
 | API 타입 만들기 | `npm run gen:api` (local 프로필 백엔드가 떠 있어야 한다) |
 | 포맷 적용 | `npm run format` |
 
-- 키트 사용법은 psw-dev-kit `springboot/v0.5.0`의 `backend/springboot/README.md`, `web-next/v0.5.0`의 `frontend/web/next/README.md`를 본다
+- 키트 사용법은 psw-dev-kit `springboot/v0.9.0`의 `backend/springboot/README.md`, `web-next/v0.7.0`의 `frontend/web/next/README.md`를 본다
 
 ## 로컬 검사
 
