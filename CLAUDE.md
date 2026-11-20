@@ -11,6 +11,7 @@
 | `specs/README.md` | 도메인·기능 지도. 무엇이 키트에서 왔고 무엇을 moa가 만드는지 |
 | `docs/git.md` | git 규칙 (흐름, 브랜치·커밋·태그, 검사). psw-dev-kit `git` 템플릿 |
 | `docs/spec-numbers.md` | 스펙 번호 예약과 겹침 검사. psw-dev-kit `git` 템플릿(`--spec-kit`) |
+| `docs/db.md` | DB 테이블 규칙 (이름, 열, 인덱스, 마이그레이션). moa가 정한다 |
 | `specs/<번호>-<이름>/` | 기능 스펙 (spec·plan·tasks 등). 첫 `/speckit-specify` 때 생긴다 |
 
 - 작업 전에 해당 기능의 스펙과 원칙 문서만 읽는다. `specs/` 전체를 한꺼번에 읽지 않는다
