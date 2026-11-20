@@ -17,13 +17,13 @@ moa가 할 일은 키트 시드의 "관리" 그룹을 없애 메뉴를 최상위
 
 **머리 줄 (2026-11-15, FR-005)**: 프론트 `SidebarShell`만 바꾼다. 넓은 폭의 본문 머리 줄을 없애고 접기 단추를 사이드바 로고 줄로 옮긴다. 좁은 폭 머리 줄은 남기고 화면 이름 대신 사이트 이름을 둔다 ([research.md](./research.md) R12).
 
-**프로그램과 공개 범위 (2026-11-15, FR-002·FR-007~FR-009)**: 메뉴에 걸 화면을 프로그램으로 코드에 등록하고, 메뉴는 경로·권한 대신 프로그램을 가리킨다. 사용자 메뉴는 권한 대신 공개 범위(`PUBLIC`·`MEMBER`)를 가진다. 셸이 쓰는 메뉴 API의 모양은 그대로다. 키트 menu 헬퍼(백엔드 등록·열·API, 메뉴 관리 화면)를 moa에서 먼저 고치고 키트로 옮긴다 ([research.md](./research.md) R13~R17).
+**연결 화면과 공개 범위 (2026-11-15, FR-002·FR-007~FR-009)**: 메뉴에 걸 화면을 연결 화면으로 코드에 등록하고, 메뉴는 경로·권한 대신 연결 화면을 가리킨다. 사용자 메뉴는 권한 대신 공개 범위(`PUBLIC`·`MEMBER`)를 가진다. 셸이 쓰는 메뉴 API의 모양은 그대로다. 키트 menu 헬퍼(백엔드 등록·열·API, 메뉴 관리 화면)를 moa에서 먼저 고치고 키트로 옮긴다 ([research.md](./research.md) R13~R17).
 
-**관리 화면 정리 (2026-11-15, FR-001·FR-006·FR-008·FR-010~FR-012, US5)**: 관리 메뉴를 운영·설정 묶음으로 옮기는 마이그레이션, 메뉴 일괄 API 둘(사용 여부, 지우기), 메뉴 관리 화면을 트리 표·끌기·드로어·일괄 처리로 다시 짜고 프로그램 탭을 없앤다. 관리 화면이 함께 쓰는 드로어 부품과 머리 안내를 둔다. 끌기는 `@dnd-kit`을 들인다 ([research.md](./research.md) R18~R23). 역할·사용자·공통코드 화면은 각 스펙(003·002·004)에서 같은 틀로 바꾼다
+**관리 화면 정리 (2026-11-15, FR-001·FR-006·FR-008·FR-010~FR-012, US5)**: 관리 메뉴를 운영·설정 묶음으로 옮기는 마이그레이션, 메뉴 일괄 API 둘(사용 여부, 지우기), 메뉴 관리 화면을 트리 표·끌기·드로어·일괄 처리로 다시 짜고 연결 화면 탭을 없앤다. 관리 화면이 함께 쓰는 드로어 부품과 머리 안내를 둔다. 끌기는 `@dnd-kit`을 들인다 ([research.md](./research.md) R18~R23). 역할·사용자·공통코드 화면은 각 스펙(003·002·004)에서 같은 틀로 바꾼다
 
 **사이드바 묶음 펴기·접기 (2026-11-18, FR-005, US1-AC4~AC8)**: 프론트 `SidebarShell`만 바꾼다. 묶음 메뉴를 처음에 접고(지금 화면이 있는 묶음만 펴고, 펴진 묶음은 화면을 옮겨도 기억하고) 펴고 접은 상태를 브라우저에 기억한다. 머리·메뉴·바닥 사이에 선을 둔다. 백엔드와 API는 바꾸지 않는다 ([research.md](./research.md) R24)
 
-**두 칸 화면과 쉬운 말 (2026-11-20, FR-009·FR-010·FR-012, US5)**: 프론트만 바꾼다. 메뉴 관리를 공통코드처럼 좌 트리 · 우 상세 두 칸으로 바꾸고(좁은 폭은 드로어), 메뉴 폼에서 "종류" 칸을 없애고 "상위 메뉴" 칸을 둔다. 화면 문구의 "묶음"·"프로그램"을 "상위 메뉴"·"연결 화면"으로 바꾸고, 역할 관리의 같은 문구도 맞춘다. 공통코드의 상세 패널을 공용 부품으로 옮겨 함께 쓴다. 백엔드와 API는 바꾸지 않는다 ([research.md](./research.md) R25·R26). 구현 브랜치는 `feat/001-menu-two-pane`
+**두 칸 화면과 쉬운 말 (2026-11-20, FR-009·FR-010·FR-012, US5)**: 프론트만 바꾼다. 메뉴 관리를 공통코드처럼 좌 트리 · 우 상세 두 칸으로 바꾸고(좁은 폭은 드로어), 메뉴 폼에서 "종류" 칸을 없애고 "상위 메뉴" 칸을 둔다. 화면 문구의 "묶음"·"연결 화면"을 "상위 메뉴"·"연결 화면"으로 바꾸고, 역할 관리의 같은 문구도 맞춘다. 공통코드의 상세 패널을 공용 부품으로 옮겨 함께 쓴다. 백엔드와 API는 바꾸지 않는다 ([research.md](./research.md) R25·R26). 구현 브랜치는 `feat/001-menu-two-pane`
 
 ## Technical Context
 
@@ -51,7 +51,7 @@ moa가 할 일은 키트 시드의 "관리" 그룹을 없애 메뉴를 최상위
 
 | 원칙 | 판정 | 근거 |
 |---|---|---|
-| I. 스펙이 먼저다 | 통과 | 새 동작을 만들지 않는다. 셸 나누기(2026-11-15)는 spec.md FR-005·FR-006을, 프로그램과 공개 범위(2026-11-15)는 FR-002·FR-007~FR-009를 먼저 고친 뒤 한다. spec.md에 `[NEEDS CLARIFICATION]`이 없다 |
+| I. 스펙이 먼저다 | 통과 | 새 동작을 만들지 않는다. 셸 나누기(2026-11-15)는 spec.md FR-005·FR-006을, 연결 화면과 공개 범위(2026-11-15)는 FR-002·FR-007~FR-009를 먼저 고친 뒤 한다. spec.md에 `[NEEDS CLARIFICATION]`이 없다 |
 | II. AC마다 테스트 하나 | 통과 | US1-AC1~US2-AC3에 API 통합 테스트를 하나씩 둔다. 이름에 AC 번호를 적는다 |
 | III. 키트를 따른다 | 통과 | 키트 헬퍼와 시드를 그대로 쓰고, 메뉴 위치만 moa 마이그레이션으로 바꾼다 (원칙 III의 "메뉴 구성"). 스펙의 머리에 출처가 있다 |
 | IV. 기존 기능은 제자리에서 고친다 | 통과 | 새 기능 폴더를 만들지 않는다 |
@@ -130,28 +130,28 @@ frontend/src/
 frontend/e2e/{menu.spec.ts, support/api.ts}   # 사용자 메뉴 가로채기, 대상 탭
 ```
 
-프로그램과 공개 범위 (2026-11-15):
+연결 화면과 공개 범위 (2026-11-15):
 
 ```text
-backend/src/main/java/com/moa/api/program/                    # 새 패키지 (R13). menu 헬퍼가 갖는다
-├── ProgramDefinition.java, ProgramSource.java
-├── ProgramRegistry.java                                        # 모으고 시작할 때 검사: 키 형식, 키·경로 겹침, 권한 등록
-└── {MenuPrograms, UserPrograms, CodePrograms, LoginHistoryPrograms, RolePrograms, NoticePrograms, HomePrograms}.java
+backend/src/main/java/com/moa/api/screen/                    # 새 패키지 (R13). menu 헬퍼가 갖는다
+├── ScreenDefinition.java, ScreenSource.java
+├── ScreenRegistry.java                                        # 모으고 시작할 때 검사: 키 형식, 키·경로 겹침, 권한 등록
+└── {MenuScreens, UserScreens, CodeScreens, LoginHistoryScreens, RoleScreens, NoticeScreens, HomeScreens}.java
 backend/src/main/java/com/moa/common/security/permission/PermissionRegistry.java  # find(key): 권한 이름을 보이려고
-backend/src/main/resources/db/migration/V2_5__menu_programs.sql  # program_key·visibility, path·permission 지움 (R14)
+backend/src/main/resources/db/migration/V2_5__menu_programs.sql  # screen_key·visibility, path·permission 지움 (R14)
 backend/src/main/java/com/moa/api/
 ├── entity/menu/{Menu.java, MenuVisibility.java}
 ├── service/menu/MenuService.java                              # 보이는 트리, 만들기·고치기 검사 (R14, R15)
-├── application/v1/menu/** , controller/v1/admin/menu/**      # 요청·응답 programKey·visibility
-└── controller/v1/admin/program/ApiAdminProgramController.java # GET /admin/programs (메뉴 관리 권한)
+├── application/v1/menu/** , controller/v1/admin/menu/**      # 요청·응답 screenKey·visibility
+└── controller/v1/admin/screen/ApiAdminScreenController.java # GET /admin/screens (메뉴 관리 권한)
 backend/src/test/java/com/moa/
 ├── api/AdminMenusAcceptanceTest.java   # US3-AC2·AC4·AC5, US4-AC1~AC5 (R17)
 ├── api/MenuAcceptanceTest.java         # 키트. 요청 모양이 바뀐 만큼
 ├── support/MenuSeed.java               # V2_5도 읽는다
-└── support/TestPrograms.java           # 테스트에서만 등록하는 로그인 필요 프로그램
+└── support/TestScreens.java           # 테스트에서만 등록하는 로그인 필요 연결 화면
 frontend/src/
-├── api/menu.ts, types/menu.ts          # admin.programs(), Program
-└── app/(admin)/admin/menus/            # 프로그램 탭, 목록 열, 대화상자 (R16)
+├── api/menu.ts, types/menu.ts          # admin.screens(), Screen
+└── app/(admin)/admin/menus/            # 연결 화면 탭, 목록 열, 대화상자 (R16)
 frontend/e2e/{menu.spec.ts, screens.spec.ts, support/api.ts}
 ```
 
@@ -160,7 +160,7 @@ frontend/e2e/{menu.spec.ts, screens.spec.ts, support/api.ts}
 ```text
 backend/src/main/resources/db/migration/V2_6__admin_menu_groups.sql  # 운영·설정 묶음, 메뉴 옮기기, 공통코드 이름 (R18)
 backend/src/main/java/com/moa/api/
-├── program/CodePrograms.java                                   # 이름 "공통코드"
+├── screen/CodeScreens.java                                   # 이름 "코드 관리"
 ├── service/menu/MenuService.java                               # setEnabled(ids), deleteAll(ids) (R19)
 ├── application/v1/menu/MenuApplication.java
 └── controller/v1/admin/menu/{ApiAdminMenuController, request/MenuEnabledRequest, request/MenuIdsRequest}.java

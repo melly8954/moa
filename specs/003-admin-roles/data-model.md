@@ -14,7 +14,7 @@
 
 ## 권한 키
 
-역할에 묶는 권한은 `001-admin-menus` FR-008 표의 관리 프로그램 권한이다 (키는 [`001` data-model.md](../001-admin-menus/data-model.md) 프로그램 표).
+역할에 묶는 권한은 `001-admin-menus` FR-008 표의 관리 연결 화면 권한이다 (키는 [`001` data-model.md](../001-admin-menus/data-model.md) 연결 화면 표).
 
 ## 메뉴 트리와 사용자 화면 (2026-11-15)
 
@@ -22,8 +22,8 @@
 
 | 스펙 | 읽는 곳 | 비고 |
 |---|---|---|
-| 역할 창의 메뉴 트리 (FR-004) | `tb_menu`(대상 `ADMIN`, 꺼진 것 포함)와 프로그램의 권한 | 메뉴 id가 아니라 권한 키를 `tb_access_role`에 담는다 |
-| 메뉴에 없는 프로그램 | 관리 프로그램 중 어느 메뉴의 `program_key`도 아닌 것 | |
+| 역할 창의 메뉴 트리 (FR-004) | `tb_menu`(대상 `ADMIN`, 꺼진 것 포함)와 연결 화면의 권한 | 메뉴 id가 아니라 권한 키를 `tb_access_role`에 담는다 |
+| 메뉴에 없는 연결 화면 | 관리 연결 화면 중 어느 메뉴의 `screen_key`도 아닌 것 | |
 | 사용자별 역할 기본 목록 (FR-005) | `tb_user_access_role`가 있는 사용자 + `tb_user.role` = `ADMIN` | 시스템 계정은 뺀다. 지운 역할은 빠진다 |
 | 구성원 (FR-006) | 그 역할의 `tb_user_access_role` | |
 

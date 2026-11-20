@@ -4,11 +4,11 @@ US1은 키트 API를 moa의 AC에 맞춰 어떻게 확인하는지만 적는다.
 
 ## 메뉴 트리 (US2, 새로)
 
-`GET /api/v1/admin/roles/permission-tree` — `menus`(`menuId`, `name`, `enabled`, `permission`(`key`, `name`), `children`), `unlisted`(`programKey`, `name`, `permission`)
+`GET /api/v1/admin/roles/permission-tree` — `menus`(`menuId`, `name`, `enabled`, `permission`(`key`, `name`), `children`), `unlisted`(`screenKey`, `name`, `permission`)
 
 | AC | 준비 | 기대 |
 |---|---|---|
-| US2-AC1 | 메뉴 처음 구성 | 200. `menus`가 관리 메뉴 6개를 `001` FR-001 순서와 각 프로그램의 권한으로, `unlisted`는 빈 목록 |
+| US2-AC1 | 메뉴 처음 구성 | 200. `menus`가 관리 메뉴 6개를 `001` FR-001 순서와 각 연결 화면의 권한으로, `unlisted`는 빈 목록 |
 | US2-AC2 | `POST /api/v1/admin/roles` (`permissions` = `["LOGIN_HISTORY_READ"]`) | `GET /api/v1/admin/roles/{id}`의 `permissions`가 그것 하나, `GET /api/v1/admin/roles`의 그 역할 권한 수 1 |
 | US2-AC3 | 코드 관리 메뉴를 지운다 | `menus`에 코드 관리가 없고 `unlisted`에 `ADMIN_CODES`(권한 `CODE_MANAGE`) |
 
