@@ -1,6 +1,6 @@
 # Data Model: 접속 이력 (admin-login-history)
 
-새 테이블과 컬럼은 없다. 키트 `login_histories`가 기준이다.
+새 테이블과 컬럼은 없다. 키트 `tb_login_history`가 기준이다.
 
 ## 접속 이력
 

@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "users")
+@Table(name = "tb_user")
 @SQLRestriction(SoftDeleteEntity.NOT_DELETED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends SoftDeleteEntity {

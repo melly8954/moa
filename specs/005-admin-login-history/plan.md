@@ -15,7 +15,7 @@ moa가 바꿀 것은 보관 기간 하나다. 지금 기본값이 키트 기본 
 
 **Primary Dependencies**: psw-dev-kit login-history 헬퍼 (`LoginHistoryCleaner`, `ApiAdminLoginHistoryController`)
 
-**Storage**: MariaDB `login_histories`. 새 테이블과 컬럼은 없다
+**Storage**: MariaDB `tb_login_history`. 새 테이블과 컬럼은 없다
 
 **Testing**: 인수 테스트 `AcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`)
 

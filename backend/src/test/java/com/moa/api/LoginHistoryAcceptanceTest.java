@@ -106,7 +106,7 @@ class LoginHistoryAcceptanceTest extends AcceptanceTest {
 
 	/** 시각을 정해 이력을 넣는다 (로그인으로 남기면 시각이 지금이라 기간을 시험할 수 없다) */
 	private void history(Long userId, String loginId, boolean success, String createdAt) {
-		jdbcTemplate.update("insert into login_histories (user_id, login_id, success, failure_code, device_type, os, "
+		jdbcTemplate.update("insert into tb_login_history (user_id, login_id, success, failure_code, device_type, os, "
 			+ "browser, created_at, updated_at) values (?, ?, ?, ?, 'PC', 'Windows', 'Chrome', ?, ?)",
 			userId, loginId, success, success ? null : "A006", createdAt, createdAt);
 	}

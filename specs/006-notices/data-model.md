@@ -1,8 +1,8 @@
 # Data Model: 공지사항 (notices)
 
-moa 마이그레이션 `V2_1__notices.sql`(테이블), `V2_2__notice_admin_menu.sql`(메뉴)을 더한다. 본문 이미지 테이블 `rich_text_images`는 키트 `V1_9`가 기준이다.
+moa 마이그레이션 `V2_1__notices.sql`(테이블), `V2_2__notice_admin_menu.sql`(메뉴)을 더한다. 본문 이미지 테이블 `tb_rich_text_image`는 키트 `V1_9`가 기준이다.
 
-## 공지 (`notices`)
+## 공지 (`tb_notice`)
 
 | 칸 | 형식 | 규칙 |
 |---|---|---|
@@ -31,7 +31,7 @@ PUBLISHED → DRAFT: 막는다 (B001)      아무 상태 → 삭제(deleted_at)
 - 게시할 때만 `published_at`을 넣는다. 고치기·고정·풀기는 `published_at`을 바꾸지 않는다 (Edge Cases)
 - 이미 게시한 공지를 다시 게시하면 B001
 
-## 공지 확인 기록 (`notice_reads`)
+## 공지 확인 기록 (`tb_notice_read`)
 
 | 칸 | 형식 | 규칙 |
 |---|---|---|
@@ -41,7 +41,7 @@ PUBLISHED → DRAFT: 막는다 (B001)      아무 상태 → 삭제(deleted_at)
 - 새 공지 있음: `published_at > last_seen_at`인 게시·미삭제 공지가 있다. 행이 없으면 게시·미삭제 공지가 하나라도 있다 (FR-008, Edge Cases)
 - 감사 필드를 두지 않는다. 사용자가 자기 기록만 바꾼다
 
-## 공지 이미지 (키트 `rich_text_images`)
+## 공지 이미지 (키트 `tb_rich_text_image`)
 
 - `owner_type` = `NOTICE`, `owner_id` = 공지 `id`
 - 만들기·고치기 뒤 attach, 지우기 뒤 detach (research R3, R4). 정리는 키트 동작
@@ -51,7 +51,7 @@ PUBLISHED → DRAFT: 막는다 (B001)      아무 상태 → 삭제(deleted_at)
 | 대상 | 값 |
 |---|---|
 | 권한 키 | `NOTICE_MANAGE` ("공지 관리", 묶음 "공지") |
-| 메뉴 (`menus`) | `id` 7, 최상위(`parent_id` 없음), 이름 "공지 관리", `path` `/admin/notices`, `icon` `clipboard`, `sort_order` 50, `permission` `NOTICE_MANAGE` |
+| 메뉴 (`tb_menu`) | `id` 7, 최상위(`parent_id` 없음), 이름 "공지 관리", `path` `/admin/notices`, `icon` `clipboard`, `sort_order` 50, `permission` `NOTICE_MANAGE` |
 
 - 관리자(ADMIN)는 모든 권한을 가진다. 운영자는 역할에 이 권한을 묶어 받는다 (`003-admin-roles`)
 - `001-admin-menus`의 data-model 표에 6번째 줄로 더한다

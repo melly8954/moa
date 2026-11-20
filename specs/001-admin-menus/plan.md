@@ -31,7 +31,7 @@ moa가 할 일은 키트 시드의 "관리" 그룹을 없애 메뉴를 최상위
 
 **Primary Dependencies**: psw-dev-kit menu·user-admin·code·login-history·rbac 헬퍼 (백엔드·프론트 짝)
 
-**Storage**: MariaDB. 메뉴는 `menus` 테이블, 처음 구성은 Flyway 시드 (`V1_7`, `V1_7_1`)와 moa의 위치 변경 (`V2`)
+**Storage**: MariaDB. 메뉴는 `tb_menu` 테이블, 처음 구성은 Flyway 시드 (`V1_7`, `V1_7_1`)와 moa의 위치 변경 (`V2`)
 
 **Testing**: 인수 테스트 `AcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`). 화면은 키트 e2e(Playwright)
 

@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "code_groups")
+@Table(name = "tb_code_group")
 @SQLRestriction(SoftDeleteEntity.NOT_DELETED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CodeGroup extends SoftDeleteEntity {

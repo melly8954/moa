@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "menus")
+@Table(name = "tb_menu")
 @SQLRestriction(SoftDeleteEntity.NOT_DELETED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Menu extends SoftDeleteEntity {

@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "rich_text_images")
+@Table(name = "tb_rich_text_image")
 @HardDelete(reason = "글에 쓰이지 않은 이미지는 보관 시간이 지나면 파일과 함께 지운다")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RichTextImage extends BaseEntity {

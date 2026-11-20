@@ -33,7 +33,7 @@ class MenuAcceptanceTest extends AcceptanceTest {
 	/** 마이그레이션 시드(메뉴 관리)를 비우고 테스트마다 직접 만든다 */
 	@BeforeEach
 	void clearMenus() {
-		jdbcTemplate.update("delete from menus");
+		jdbcTemplate.update("delete from tb_menu");
 	}
 
 	@Test

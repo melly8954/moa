@@ -7,7 +7,7 @@
 ## Summary
 
 키트 websocket 헬퍼(`springboot/v0.5.0`)를 얹어 실시간 연결을 열고, 그 위에 두 갈래 알림을 만든다.
-전체 알림은 공지 게시 때 `/topic/notices`로 보내고(`006-notices` US4), 개인 알림은 `notifications` 테이블에 쌓은 뒤 `/user/queue/notifications`와 브라우저 알림(웹 푸시)으로 보낸다.
+전체 알림은 공지 게시 때 `/topic/notices`로 보내고(`006-notices` US4), 개인 알림은 `tb_notification` 테이블에 쌓은 뒤 `/user/queue/notifications`와 브라우저 알림(웹 푸시)으로 보낸다.
 다른 기능은 `NotificationApplication.notify(...)` 하나로 개인 알림을 보낸다.
 프론트는 로그인하면 실시간 연결을 열고, 토스트와 표시(공지 점, 계정 줄 벨)를 바꾸며, 설정 화면에서 브라우저 알림을 켜고 끈다(2026-11-15에 알림 화면에서 옮김).
 프론트 실시간 연결, 웹 푸시, 셸 벨은 키트에 없어 moa에서 먼저 만든다 ([research.md](./research.md) R1, R2, R6, R10).
@@ -18,7 +18,7 @@
 
 **Primary Dependencies**: 키트 websocket 헬퍼(`spring-boot-starter-websocket`, STOMP), 웹 푸시 라이브러리(백엔드, R6), `@stomp/stompjs`(프론트, R3)
 
-**Storage**: MariaDB. `notifications`, `push_subscriptions` (moa `V2_3`). 전체 알림은 저장하지 않는다
+**Storage**: MariaDB. `tb_notification`, `tb_push_subscription` (moa `V2_3`). 전체 알림은 저장하지 않는다
 
 **Testing**: 인수 테스트 `NotificationsAcceptanceTest` (실제 포트로 띄워 STOMP 클라이언트와 MockMvc를 함께 쓴다, 웹 푸시는 가짜 푸시 서버로 받는다, `./gradlew dbTest`). 키트 `WebSocketAcceptanceTest`를 함께 얹는다. 프론트는 단위 테스트와 핵심 흐름 e2e(Playwright `routeWebSocket`으로 STOMP를 흉내 낸다)
 

@@ -1,6 +1,6 @@
 # Data Model: 관리 메뉴와 접근 (admin-menus)
 
-새 테이블은 없다. 키트 `menus` 테이블의 스키마는 `V1_7__menus.sql`이 기준이고, moa가 `audience` 열을 더한다 (2026-11-15, `V2_4__menu_audience.sql`, research R9).
+새 테이블은 없다. 키트 `tb_menu` 테이블의 스키마는 `V1_7__menus.sql`이 기준이고, moa가 `audience` 열을 더한다 (2026-11-15, `V2_4__menu_audience.sql`, research R9).
 이어서 `program_key`·`visibility` 열을 더하고 `path`·`permission` 열을 지운다 (2026-11-15, `V2_5__menu_programs.sql`, research R14). 아래 처음 구성 표의 `path`·`permission`은 `V2_5` 전의 시드 값이고, `V2_5`가 이 값으로 프로그램을 찾는다.
 
 ## 관리 메뉴 묶음 (FR-001, 2026-11-15, `V2_6__admin_menu_groups.sql`, research R18)
@@ -27,7 +27,7 @@
 | `HOME` | 홈 | `/` | `USER` | - | false |
 | `NOTICES` | 공지 | `/notices` | `USER` | - | false |
 
-## `menus.program_key`, `menus.visibility` (FR-007, FR-009)
+## `tb_menu.program_key`, `tb_menu.visibility` (FR-007, FR-009)
 
 | 열 | 형 | 값 | 설명 |
 |---|---|---|---|
@@ -36,7 +36,7 @@
 
 `V2_5`는 기존 메뉴의 `path`로 프로그램을 찾아 `program_key`를 채우고, 사용자 메뉴의 `visibility`를 `PUBLIC`으로 둔 뒤 `path`·`permission` 열을 지운다. 경로가 맞는 프로그램이 없으면 `MISSING`이다.
 
-## `menus.audience` (FR-007)
+## `tb_menu.audience` (FR-007)
 
 | 열 | 형 | 값 | 설명 |
 |---|---|---|---|

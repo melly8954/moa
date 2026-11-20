@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "notifications")
+@Table(name = "tb_notification")
 @HardDelete(reason = "보관 기간(90일)이 지난 알림은 정리기가 지운다. 사용자가 지우는 기능은 없다")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Notification {

@@ -19,7 +19,7 @@ moa가 할 일은 "접속 이력만 보는 운영자" 흐름을 AC 테스트로 
 
 **Primary Dependencies**: psw-dev-kit rbac 헬퍼 (`AccessRolePermissionChecker`), menu 헬퍼 (내 메뉴 거르기)
 
-**Storage**: MariaDB `access_roles`, `user_access_roles` (`V1_8__access_roles.sql`). 새 테이블과 컬럼은 없다
+**Storage**: MariaDB `tb_access_role`, `tb_user_access_role` (`V1_8__access_roles.sql`). 새 테이블과 컬럼은 없다
 
 **Testing**: 인수 테스트 `AcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`). 화면은 키트 e2e(Playwright)
 

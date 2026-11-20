@@ -17,7 +17,7 @@ moa가 할 일은 스펙의 두 흐름을 AC 테스트로 고정하는 것이다
 
 **Primary Dependencies**: psw-dev-kit user-admin 헬퍼, 골격의 첫 관리자 부트스트랩 (`AdminBootstrapRunner`)
 
-**Storage**: MariaDB `users` 테이블. 새 테이블과 컬럼은 없다
+**Storage**: MariaDB `tb_user` 테이블. 새 테이블과 컬럼은 없다
 
 **Testing**: 인수 테스트 `AcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`). 화면은 키트 e2e(Playwright)
 

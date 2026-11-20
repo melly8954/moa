@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "notice_reads")
+@Table(name = "tb_notice_read")
 @HardDelete(reason = "사용자마다 마지막 확인 시각 한 행만 덮어쓴다. 지울 일이 없고 이력이 아니다")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class NoticeRead {
