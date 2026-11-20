@@ -1,0 +1,29 @@
+# Flyway 마이그레이션 번호 검사 (scripts/check-migration-numbers.sh, 규칙은 docs/db.md "마이그레이션")
+#   PR: 병합 결과 기준으로 본다. 따로 통과한 두 PR이 같은 번호로 함께 병합될 수 있어 dev push에서도 다시 본다
+#       (db-test는 PR에서만 돌고, dev push의 build는 Flyway를 돌리지 않는다)
+#   main에는 dev → main PR만 들어오고 그 PR 검사가 곧 병합 결과라 main push는 보지 않는다
+#   paths 조건을 두지 않는다: 필수 검사로 걸면 조건에 안 맞는 PR에서 검사가 생기지 않아 병합이 막힌다. 몇 초면 끝난다
+# moa가 정한 검사다 (키트 git 템플릿에는 없다)
+name: migration-numbers
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+# 같은 PR에 새 커밋이 오면 앞선 실행을 취소한다. dev push는 병합마다 결과를 남기려고 취소하지 않는다
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  migration-numbers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: bash scripts/check-migration-numbers.sh
