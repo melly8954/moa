@@ -238,10 +238,30 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 ---
 
+## Phase 13: 두 칸 화면과 쉬운 말 (2026-11-20 FR-009·FR-010·FR-012, US5 변경)
+
+**Purpose**: 메뉴 관리를 좌 트리 · 우 상세 두 칸으로 바꾸고, "종류" 칸을 없애고 "상위 메뉴" 칸을 두고, 화면 문구의 "묶음"·"프로그램"을 "상위 메뉴"·"연결 화면"으로 바꾼다 (research.md R25·R26). 프론트만 고친다. 구현 브랜치는 `feat/001-menu-two-pane`
+
+**프론트**
+
+- [ ] T082 frontend/src/app/(admin)/admin/codes/detail-panel.tsx를 frontend/src/components/kit/detail-panel.tsx로 옮기고 공통코드 화면의 import를 고친다. 동작은 그대로다. "키트로 옮길 것" 주석을 단다 (R25)
+- [ ] T083 frontend/src/app/(admin)/admin/menus/menu-drawer.tsx의 폼을 menu-form.tsx로 떼고 칸을 바꾼다: "종류" 라디오를 없애고, "상위 메뉴" 칸(고치기에도 보임, "없음(맨 위)" + 같은 대상의 연결 화면 없는 맨 위 메뉴, 하위 메뉴가 있으면 맨 위만), "연결 화면" 칸(상위 메뉴가 있으면 필수, 맨 위면 비울 수 있음, 하위 메뉴가 있으면 비움 고정). 상위 메뉴를 바꾸면 새 부모의 맨 뒤 순서로 저장한다 (R25)
+- [ ] T084 frontend/src/app/(admin)/admin/menus/page.tsx: 두 칸 그리드, 오른쪽 `DetailPanel`(고르기 전 안내, 열린 행 강조), 좁은 폭 `SideDrawer`, 다른 행·대상 탭으로 가기 전 `confirmLeave()`, 일괄 처리 줄 늘 그리기(사용·사용 안 함·상위 메뉴로 옮기기·삭제), 트리 위 "메뉴 추가" 하나와 상위 메뉴 처음 값, 트리 행의 상위 메뉴·화면 메뉴 아이콘 (R25)
+- [ ] T085 frontend/messages/ko.json: `menuAdmin`의 "묶음"·"프로그램" 문구를 "상위 메뉴"·"연결 화면"으로, "없는 프로그램"을 "없는 화면"으로, 머리 안내를 FR-011 문구로. 쓰지 않게 된 키(`kind*`, `placeIn*` 등)를 지운다. `role`의 `unlistedPrograms`·`permissionTreeHint`를 같은 말로 바꾼다 (R25, `003-admin-roles` US2-AC3)
+
+**테스트 (마지막)**
+
+- [ ] T086 frontend/e2e/menu.spec.ts를 R26대로 고치고 더한다(US5-AC1~AC8). frontend/e2e/role.spec.ts의 "묶음"·"프로그램" 문구 기대를 새 문구로 고친다 (원칙 V)
+- [ ] T087 frontend/에서 `npm run format`, `npm run check`. e2e는 PR CI로 본다
+- [ ] T088 specs/001-admin-menus/quickstart.md "화면 확인" 3번을 사람이 확인한다 (T076의 메뉴 관리 부분을 갈음한다)
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 → T002 → US1(T003, T004)·US2(T005~T007) → T008 → T009, T010
 - T011 → T012 → T013, T014 → T015 → T016
+- Phase 13: T082 → T083 → T084 → T085 → T086 → T087 → T088. T076의 메뉴 관리 화면 확인은 T088로 갈음한다
 - Phase 12: T077 → T078 → T079 → T080 → T081
 - Phase 11: T068 → T069 → T070 → T071 → T072, T073 → T074 → T075 → T076. 002·003·004의 관리 화면 정리가 T071(드로어·머리 안내)에 기댄다
 - Phase 10: T052 → T053 → T054 → T055 → T056, T057 → T058 → T059, T060 → T061 → T062, T063 → T064 → T065 → T066, T067. 프론트 타입(T061)은 API 모양(T056·T057)이 정해지면 백엔드 테스트와 나란히 해도 된다. `003-admin-roles` Phase 5가 이 Phase에 기댄다
