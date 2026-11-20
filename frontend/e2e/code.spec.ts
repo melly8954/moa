@@ -92,7 +92,7 @@ test("US1-AC1 왼쪽 트리와 오른쪽 안내가 보이고, 일괄 처리 줄�
   await expect(page.getByText("GAME_GENRE")).toBeVisible()
   await expect(page.getByText("게임 등록 화면의 장르")).toBeVisible()
   await expect(page.getByRole("row", { name: /퍼즐/ })).toContainText("사용 안 함")
-  await expect(page.getByRole("row", { name: /신고 사유/ })).toContainText("사용 안 함")
+  await expect(page.getByRole("row").filter({ hasText: "REPORT_REASON" })).toContainText("사용 안 함")
   // 삭제는 어디에도 없다 (FR-008)
   await expect(page.getByRole("button", { name: /삭제/ })).toHaveCount(0)
   // 항목이 없는 그룹은 체크 칸이 없다
@@ -254,7 +254,7 @@ test("US1-AC9 그룹 패널의 사용을 끄면 사용 안 함으로 보낸다. 
   const sent: Sent = {}
   await mockCodes(page, sent)
   await page.goto("/admin/codes")
-  await expect(page.getByRole("row", { name: /신고 사유/ })).toContainText("사용 안 함")
+  await expect(page.getByRole("row").filter({ hasText: "REPORT_REASON" })).toContainText("사용 안 함")
   await page.getByRole("button", { name: "게임 장르 그룹 수정" }).click()
   const panel = page.getByRole("region", { name: "그룹 수정" })
   await panel.getByRole("switch", { name: "사용" }).click()
