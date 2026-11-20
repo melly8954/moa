@@ -25,7 +25,7 @@ import com.moa.common.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 공통코드. moa: 그룹은 DB(code_groups)에 두고 관리자가 다룬다. 시스템 그룹은 지울 수 없다
+ * 공통코드. moa: 그룹은 DB(code_groups)에 두고 관리자가 다룬다. 그룹과 항목은 지우지 않고 사용 여부로 끈다
  * (specs/004-admin-codes FR-004·FR-008). 없는 그룹은 R001
  */
 @Service
@@ -57,42 +57,35 @@ public class CodeService {
 	}
 
 	/**
-	 * moa: 관리자가 일반 그룹을 만든다 (FR-004)
+	 * moa: 관리자가 그룹을 만든다. 사용 중으로 만든다 (FR-004)
 	 *
-	 * @throws ServiceException 지우지 않은 그룹(시스템 그룹 포함)과 그룹 코드가 겹치면 R002
+	 * @throws ServiceException 그룹 코드가 겹치면 R002
 	 */
-	public CodeGroupDto createGroup(String groupCode, String name, @Nullable String description,
-		@Nullable String usedBy) {
+	public CodeGroupDto createGroup(String groupCode, String name, @Nullable String description) {
 		if (codeReader.existsGroup(groupCode)) {
 			throw new ServiceException(ErrorCode.DUPLICATE_RESOURCE, "이미 있는 그룹 코드입니다: " + groupCode);
 		}
-		return CodeGroupDto.from(codeWriter.save(new CodeGroup(groupCode, name, description, usedBy)));
+		return CodeGroupDto.from(codeWriter.save(new CodeGroup(groupCode, name, description)));
 	}
 
 	/**
-	 * moa: 그룹 이름·설명·쓰는 곳 (FR-004). 시스템 그룹도 고칠 수 있다
+	 * moa: 그룹 이름·설명·사용 여부 (FR-004·FR-008)
 	 *
 	 * @throws ServiceException 그룹이 없으면 R001
 	 */
-	public CodeGroupDto modifyGroup(String groupCode, String name, @Nullable String description,
-		@Nullable String usedBy) {
+	public CodeGroupDto modifyGroup(String groupCode, String name, @Nullable String description, boolean enabled) {
 		CodeGroup group = requireGroup(groupCode);
-		group.modify(name, description, usedBy);
+		group.modify(name, description, enabled);
 		return CodeGroupDto.from(group);
 	}
 
 	/**
-	 * moa: 그룹과 그 항목을 함께 지운다 (FR-004, US1-AC9)
+	 * moa: 그룹이 사용 중인가. 꺼진 그룹의 화면용 목록은 빈 목록이다 (FR-008)
 	 *
-	 * @throws ServiceException 그룹이 없으면 R001, 시스템 그룹이면 B001
+	 * @throws ServiceException 그룹이 없으면 R001
 	 */
-	public void deleteGroup(String groupCode, Long actorId) {
-		CodeGroup group = requireGroup(groupCode);
-		if (group.isSystem()) {
-			throw new ServiceException(ErrorCode.INVALID_STATE, "기능이 쓰는 그룹이라 지울 수 없습니다: " + groupCode);
-		}
-		codeReader.findCodes(groupCode).forEach(code -> code.delete(actorId));
-		group.delete(actorId);
+	public boolean isGroupEnabled(String groupCode) {
+		return requireGroup(groupCode).isEnabled();
 	}
 
 	/**
@@ -134,13 +127,6 @@ public class CodeService {
 	}
 
 	/**
-	 * @throws ServiceException 코드가 없으면 R001
-	 */
-	public void deleteCode(String groupCode, String code, Long actorId) {
-		requireCode(groupCode, code).delete(actorId);
-	}
-
-	/**
 	 * moa: 한 그룹 안의 여러 항목을 한 번에 켜고 끈다 (FR-005). 하나라도 없으면 아무것도 바꾸지 않는다
 	 * (호출하는 Application의 트랜잭션이 롤백한다).
 	 *
@@ -148,15 +134,6 @@ public class CodeService {
 	 */
 	public void setEnabled(String groupCode, Collection<String> codes, boolean enabled) {
 		requireAll(groupCode, codes).forEach(code -> code.changeEnabled(enabled));
-	}
-
-	/**
-	 * moa: 한 그룹 안의 여러 항목을 한 번에 지운다 (FR-005). 하나라도 없으면 아무것도 지우지 않는다
-	 *
-	 * @throws ServiceException 그룹이 없거나 그룹에 없는 코드 R001
-	 */
-	public void deleteAll(String groupCode, Collection<String> codes, Long actorId) {
-		requireAll(groupCode, codes).forEach(code -> code.delete(actorId));
 	}
 
 	/**

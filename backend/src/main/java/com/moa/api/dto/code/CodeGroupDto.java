@@ -7,13 +7,11 @@ import com.moa.api.entity.code.CodeGroup;
 /**
  * 코드 그룹 (moa, specs/004-admin-codes FR-004·FR-008)
  *
- * @param system 기능이 코드에서 읽는 그룹. 지울 수 없다
+ * @param enabled 사용 여부. 꺼지면 화면용 목록이 빈 목록이다
  */
-public record CodeGroupDto(String groupCode, String name, @Nullable String description, @Nullable String usedBy,
-	boolean system) {
+public record CodeGroupDto(String groupCode, String name, @Nullable String description, boolean enabled) {
 
 	public static CodeGroupDto from(CodeGroup group) {
-		return new CodeGroupDto(group.getGroupCode(), group.getName(), group.getDescription(), group.getUsedBy(),
-			group.isSystem());
+		return new CodeGroupDto(group.getGroupCode(), group.getName(), group.getDescription(), group.isEnabled());
 	}
 }

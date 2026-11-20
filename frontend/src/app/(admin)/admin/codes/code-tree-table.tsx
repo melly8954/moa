@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { ChevronDown, ChevronRight, Lock, Plus } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Fragment, useState } from "react"
 import { DragHandle } from "@/components/kit/drag-handle"
@@ -28,12 +28,19 @@ import type { Code, CodeGroupTree } from "@/types/code"
 
 // 공통코드 트리 표 (moa, specs/004-admin-codes FR-005, US1, research R7). 메뉴 관리 트리 표와 같은 틀이다
 //   구성 목록이라 쪽 나눔 없이 전체를 그린다. 그룹 행 아래에 그 그룹의 항목을 들여 쓴다
-//   그룹 행도 항목 행과 같은 칸을 쓴다 (메뉴 관리 트리 표와 같다): 첫 칸에 접고 펴기, 이름 칸에 이름(누르면 그룹 드로어)·
-//   잠금 표시(시스템 그룹, FR-004·FR-008)·쓰는 곳, 코드 칸에 그룹 코드. 체크 칸은 없다
+//   그룹 행도 항목 행과 같은 칸을 쓴다 (메뉴 관리 트리 표와 같다): 첫 칸에 항목 전체 고르기, 둘째 칸에 접고 펴기, 이름 칸에 이름(누르면 그룹 드로어)·
+//   설명(꺼진 그룹은 이름을 흐리게), 코드 칸에 그룹 코드, 사용 칸에 상태 (FR-005·FR-008)
 //   항목 행: 체크박스(일괄 처리), 손잡이(같은 그룹 안 순서), 이름(누르면 드로어), 코드, 사용
 //   그룹마다 맨 아래에 "항목 추가" 줄
 
 // 한 표에 여러 그룹의 항목이 있어 끌기·고르기 키는 "그룹 코드/코드"로 쓴다 (코드에는 /가 없다)
+// 일부만 고른 그룹: 채운 칸에 "−" (공통 Checkbox는 일부 선택에도 ✓를 그려 구분이 어렵다. ui는 생성 코드라 여기서 입힌다)
+const INDETERMINATE =
+  "data-indeterminate:border-primary data-indeterminate:bg-primary data-indeterminate:text-primary-foreground data-indeterminate:[&_svg]:hidden data-indeterminate:before:h-0.5 data-indeterminate:before:w-2 data-indeterminate:before:rounded-full data-indeterminate:before:bg-current data-indeterminate:before:content-['']"
+
+// 오른쪽 패널에 열린 행: 배경과 첫 칸 왼쪽의 막대로 보인다
+const ACTIVE_ROW = "bg-accent hover:bg-accent [&>td:first-child]:shadow-[inset_3px_0_0_var(--color-primary)]"
+
 export const keyOf = (groupCode: string, code: string) => `${groupCode}/${code}`
 export const parseKey = (key: string) => {
   const at = key.indexOf("/")
@@ -44,21 +51,29 @@ export function CodeTreeTable({
   tree,
   selected,
   onSelectedChange,
+  active,
   onOpen,
   onOpenGroup,
   onAdd,
+  onAddGroup,
   onDrop,
   disabled,
+  className,
 }: {
   tree: CodeGroupTree[]
   selected: string[]
   onSelectedChange: (selected: string[]) => void
+  // 오른쪽 패널에 열린 것 ("group:그룹 코드" 또는 "그룹 코드/코드"). 그 행을 강조한다
+  active?: string
   onOpen: (group: CodeGroupTree, code: Code) => void
   onOpenGroup: (group: CodeGroupTree) => void
   onAdd: (group: CodeGroupTree) => void
+  // 트리 맨 아래 "그룹 추가" 줄
+  onAddGroup: () => void
   // 다른 그룹 위에 놓으면 activeKey와 overKey의 그룹이 다르다. 부르는 쪽이 안내한다
   onDrop: (activeKey: string, overKey: string) => void
   disabled: boolean
+  className?: string
 }) {
   const t = useTranslations("code")
   const [collapsed, setCollapsed] = useState<string[]>([])
@@ -73,6 +88,17 @@ export function CodeTreeTable({
 
   const toggle = (key: string, checked: boolean) =>
     onSelectedChange(checked ? [...selected, key] : selected.filter((s) => s !== key))
+  const groupKeys = (group: CodeGroupTree) => group.codes.map((c) => keyOf(group.groupCode, c.code))
+  const groupState = (group: CodeGroupTree) => {
+    const keys = groupKeys(group)
+    const count = keys.filter((key) => selected.includes(key)).length
+    return count === 0 ? "none" : count === keys.length ? "all" : "some"
+  }
+  const toggleAll = (group: CodeGroupTree, checked: boolean) => {
+    const keys = groupKeys(group)
+    const rest = selected.filter((key) => !keys.includes(key))
+    onSelectedChange(checked ? [...rest, ...keys] : rest)
+  }
   const toggleGroup = (groupCode: string) =>
     setCollapsed(collapsed.includes(groupCode) ? collapsed.filter((g) => g !== groupCode) : [...collapsed, groupCode])
 
@@ -81,7 +107,7 @@ export function CodeTreeTable({
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className={cn("rounded-lg border", className)}>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -118,7 +144,22 @@ export function CodeTreeTable({
               const Chevron = open ? ChevronDown : ChevronRight
               return (
                 <Fragment key={group.groupCode}>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableRow
+                    className={cn("bg-muted/50 hover:bg-muted/50", active === `group:${group.groupCode}` && ACTIVE_ROW)}
+                    aria-current={active === `group:${group.groupCode}` ? "true" : undefined}
+                  >
+                    <TableCell>
+                      {/* 그룹 체크 = 그 그룹 항목 전부 고르기·풀기. 처리되는 것은 항목뿐이다 (그룹 삭제는 패널에서 하나씩). 항목이 없으면 체크 칸을 두지 않는다 */}
+                      {group.codes.length > 0 && (
+                        <Checkbox
+                          aria-label={t("selectAllOf", { name: group.name })}
+                          checked={groupState(group) === "all"}
+                          indeterminate={groupState(group) === "some"}
+                          className={INDETERMINATE}
+                          onCheckedChange={(c) => toggleAll(group, c === true)}
+                        />
+                      )}
+                    </TableCell>
                     <TableCell>
                       <button
                         type="button"
@@ -130,37 +171,34 @@ export function CodeTreeTable({
                         <Chevron aria-hidden="true" className="size-4" />
                       </button>
                     </TableCell>
-                    <TableCell />
                     <TableCell>
                       <div className="flex max-w-(--col-text-max) flex-col">
                         <div className="flex items-center gap-1.5">
                           <button
                             type="button"
-                            className="truncate text-left font-medium underline-offset-4 hover:underline"
+                            className={cn(
+                              "truncate text-left font-medium underline-offset-4 hover:underline",
+                              !group.enabled && "text-muted-foreground",
+                            )}
                             aria-label={t("editGroupOf", { name: group.name })}
                             onClick={() => onOpenGroup(group)}
                           >
                             {group.name}
                           </button>
-                          {group.system && (
-                            <Lock
-                              aria-label={t("system")}
-                              role="img"
-                              className="size-3.5 shrink-0 text-muted-foreground"
-                            />
-                          )}
                         </div>
-                        {group.usedBy && (
-                          <span className="truncate text-xs text-muted-foreground">
-                            {t("usedBy", { usedBy: group.usedBy })}
-                          </span>
+                        {group.description && (
+                          <span className="truncate text-xs text-muted-foreground">{group.description}</span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
                       <span className="font-mono">{group.groupCode}</span>
                     </TableCell>
-                    <TableCell />
+                    <TableCell>
+                      <StatusText tone={group.enabled ? "positive" : "negative"}>
+                        {t(group.enabled ? "inUse" : "notInUse")}
+                      </StatusText>
+                    </TableCell>
                   </TableRow>
                   {open && (
                     <>
@@ -176,6 +214,7 @@ export function CodeTreeTable({
                               id={key}
                               code={code}
                               checked={selected.includes(key)}
+                              active={active === key}
                               onCheck={(checked) => toggle(key, checked)}
                               onOpen={() => onOpen(group, code)}
                               disabled={disabled}
@@ -212,6 +251,19 @@ export function CodeTreeTable({
                 </Fragment>
               )
             })}
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={2} />
+              <TableCell colSpan={3}>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                  onClick={onAddGroup}
+                >
+                  <Plus aria-hidden="true" className="size-4" />
+                  {t("addGroup")}
+                </button>
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </DndContext>
@@ -223,6 +275,7 @@ function SortableCodeRow({
   id,
   code,
   checked,
+  active,
   onCheck,
   onOpen,
   disabled,
@@ -230,6 +283,7 @@ function SortableCodeRow({
   id: string
   code: Code
   checked: boolean
+  active: boolean
   onCheck: (checked: boolean) => void
   onOpen: () => void
   disabled: boolean
@@ -244,7 +298,8 @@ function SortableCodeRow({
     <TableRow
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn(isDragging && "relative z-10 bg-muted")}
+      className={cn(active && ACTIVE_ROW, isDragging && "relative z-10 bg-muted")}
+      aria-current={active ? "true" : undefined}
       data-state={checked ? "selected" : undefined}
     >
       <TableCell>
@@ -273,7 +328,7 @@ function SortableCodeRow({
         <span className="font-mono">{code.code}</span>
       </TableCell>
       <TableCell>
-        <StatusText tone={code.enabled ? "positive" : "neutral"}>{t(code.enabled ? "inUse" : "notInUse")}</StatusText>
+        <StatusText tone={code.enabled ? "positive" : "negative"}>{t(code.enabled ? "inUse" : "notInUse")}</StatusText>
       </TableCell>
     </TableRow>
   )

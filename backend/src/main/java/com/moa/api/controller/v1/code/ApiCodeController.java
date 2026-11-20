@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.moa.api.application.v1.code.CodeApplication;
 import com.moa.api.controller.v1.code.response.CodeListResponse;
+import com.moa.api.dto.code.CodeDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,11 +30,16 @@ public class ApiCodeController {
 
 	@Operation(summary = "그룹의 코드 목록",
 		description = "선택 상자 등에 쓴다. includeDisabled=true면 사용 안 함 코드도 enabled=false로 준다 "
-			+ "(예전 데이터의 코드 이름을 보일 때). 지운 코드는 주지 않는다. 그룹이 없으면 R001")
+			+ "(예전 데이터의 코드 이름을 보일 때). 그룹이 없으면 R001. moa: 그룹이 꺼져 있으면 빈 목록이다 "
+			+ "(includeDisabled=true면 그대로 준다, specs/004-admin-codes FR-008)")
 	@GetMapping("/{groupCode}")
 	public ResponseEntity<List<CodeListResponse>> getCodes(@PathVariable String groupCode,
 		@RequestParam(defaultValue = "false") boolean includeDisabled) {
-		return ResponseEntity.ok(codeApplication.getScreenCodes(groupCode).stream()
+		List<CodeDto> codes = codeApplication.getScreenCodes(groupCode);
+		if (!includeDisabled && !codeApplication.isGroupEnabled(groupCode)) {
+			return ResponseEntity.ok(List.of());
+		}
+		return ResponseEntity.ok(codes.stream()
 			.filter(code -> includeDisabled || code.enabled())
 			.map(CodeListResponse::from)
 			.toList());

@@ -13,7 +13,7 @@ import { http } from "./client"
 // 공통코드 (code 헬퍼). api.v1.code로 부른다
 //   list: 화면용 목록 (로그인한 사용자). 기본은 사용하는 코드만, includeDisabled면 사용 안 함 코드도
 //   admin: 공통코드 화면용 (CODE_MANAGE 권한)
-// moa: tree·한 그룹 안 일괄 처리(order·setEnabled·bulkDelete), 그룹 고치기·지우기를 더했다 (specs/004-admin-codes R7·R9)
+// moa: tree·한 그룹 안 일괄 처리(order·setEnabled), 그룹 만들기·고치기를 더했다. 지우는 API는 없다 (specs/004-admin-codes FR-008)
 const enc = encodeURIComponent
 const groupOf = (groupCode: string) => `/api/v1/admin/code-groups/${enc(groupCode)}`
 const codesOf = (groupCode: string) => `${groupOf(groupCode)}/codes`
@@ -32,20 +32,14 @@ export const codeApi = {
       http.post<CodeGroup>("/api/v1/admin/code-groups", data).then((res) => res.data),
     modifyGroup: (groupCode: string, data: CodeGroupModifyRequest) =>
       http.put<CodeGroup>(groupOf(groupCode), data).then((res) => res.data),
-    // 항목도 함께 지운다. 시스템 그룹은 B001
-    removeGroup: (groupCode: string) => http.delete<void>(groupOf(groupCode)).then(() => undefined),
     codes: (groupCode: string) => http.get<Code[]>(codesOf(groupCode)).then((res) => res.data),
     createCode: (groupCode: string, data: CodeCreateRequest) =>
       http.post<Code>(codesOf(groupCode), data).then((res) => res.data),
     modifyCode: (groupCode: string, code: string, data: CodeModifyRequest) =>
       http.put<Code>(`${codesOf(groupCode)}/${enc(code)}`, data).then((res) => res.data),
-    removeCode: (groupCode: string, code: string) =>
-      http.delete<void>(`${codesOf(groupCode)}/${enc(code)}`).then(() => undefined),
     order: (groupCode: string, orders: CodeOrder[]) =>
       http.put<void>(`${codesOf(groupCode)}/order`, orders).then(() => undefined),
     setEnabled: (groupCode: string, codes: string[], enabled: boolean) =>
       http.put<void>(`${codesOf(groupCode)}/enabled`, { codes, enabled }).then(() => undefined),
-    bulkDelete: (groupCode: string, codes: string[]) =>
-      http.post<void>(`${codesOf(groupCode)}/bulk-delete`, { codes }).then(() => undefined),
   },
 }
