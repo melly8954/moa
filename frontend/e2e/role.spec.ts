@@ -217,6 +217,21 @@ test("US2-AC2 최고 관리자 역할은 쓸 메뉴가 모두 체크된 채 꺼�
   await expect(panel.getByRole("button", { name: "저장" })).toHaveCount(0)
 })
 
+// 2026-11-21 한 명 고정 (specs/003-admin-roles FR-006·FR-010, research R24·R25)
+test("US2-AC4 최고 관리자 역할의 구성원은 보기만 하고 검색·체크·더하기가 없으며 개발자에게 요청하라는 안내가 보인다 @wide", async ({
+  page,
+}) => {
+  await mock(page)
+  await page.goto("/admin/roles")
+  await page.getByRole("button", { name: /최고 관리자$/ }).click()
+  const panel = detail(page, "최고 관리자")
+  await expect(panel.getByText("operator").first()).toBeVisible()
+  await expect(panel.getByText("최고 관리자는 한 명으로 고정이에요. 바꾸려면 개발자에게 요청해요.")).toBeVisible()
+  await expect(panel.getByLabel("관리자 계정 찾기")).toHaveCount(0)
+  await expect(panel.getByRole("checkbox", { name: /고르기$/ })).toHaveCount(0)
+  await expect(panel.getByRole("button", { name: "더하기" })).toHaveCount(0)
+})
+
 test("US4-AC4 둘을 골라 지우면 사용자 수를 알리고 되물은 뒤 한꺼번에 보낸다. 최고 관리자 역할은 고를 수 없다 @wide", async ({
   page,
 }) => {

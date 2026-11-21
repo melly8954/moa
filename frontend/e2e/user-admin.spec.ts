@@ -59,7 +59,7 @@ const ROLES = [
     fixed: true,
     permissionNames: [],
     grantable: false,
-    blockReason: "SUPER_ADMIN_ONLY",
+    blockReason: "FIXED",
   },
   {
     id: 1,
@@ -89,12 +89,12 @@ const ROLES = [
 
 type Sent = { roles?: unknown }
 
-async function mock(page: Page, { roleManage = true, sent = {} as Sent } = {}) {
+async function mock(page: Page, { roleManage = true, sent = {} as Sent, users = USERS, meId = 2 } = {}) {
   await signedIn(page, {
-    me: { role: "ADMIN" },
+    me: { id: meId, role: "ADMIN" },
     permissions: roleManage ? ["USER_MANAGE", "ROLE_MANAGE", "LOGIN_HISTORY_READ"] : ["USER_MANAGE"],
   })
-  const list = { content: USERS, page: 0, size: 20, totalElements: USERS.length, totalPages: 1 }
+  const list = { content: users, page: 0, size: 20, totalElements: users.length, totalPages: 1 }
   await page.route("**/api/v1/admin/users?*", (route) => route.fulfill({ json: list }))
   await page.route("**/api/v1/admin/users", (route) =>
     route.request().method() === "POST"
@@ -190,13 +190,32 @@ test("US3-AC4 회원 드로어에는 역할 체크 칸 대신 계정 종류를 �
   await expect(drawer.getByRole("button", { name: "역할 저장" })).toHaveCount(0)
 })
 
-test("US4-AC3 최고 관리자 계정은 최고 관리자만 다룰 수 있어 단추가 모두 꺼져 있고 이유가 보인다", async ({ page }) => {
+test("US4-AC3 최고 관리자 계정은 바꿀 수 없어 단추가 모두 꺼져 있고 이유가 보인다", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/users")
   const drawer = await openUser(page, "admin")
-  await expect(drawer.getByText("최고 관리자 계정은 최고 관리자만 다룰 수 있어요.")).toBeVisible()
+  await expect(drawer.getByText("최고 관리자 계정은 바꿀 수 없어요. 바꾸려면 개발자에게 요청해요.")).toBeVisible()
   for (const name of ["이름 바꾸기", "계정 종류 바꾸기", "잠그기", "비밀번호 초기화", "삭제"])
     await expect(drawer.getByRole("button", { name })).toBeDisabled()
+})
+
+// 2026-11-21 한 명 고정 (specs/002-admin-users FR-007, research R13·R15)
+test("FR-007 최고 관리자 본인 행은 이름 바꾸기만 켜지고, 역할 칸은 '최고 관리자 (모든 권한)'만 보인다", async ({
+  page,
+}) => {
+  // 나(id 1)가 최고 관리자다. 내 행은 protection이 없다
+  const users = USERS.map((u) => (u.id === 1 ? { ...u, protection: null } : u))
+  await mock(page, { users, meId: 1 })
+  await page.goto("/admin/users")
+  const drawer = await openUser(page, "admin")
+  await expect(
+    drawer.getByText("최고 관리자 계정은 이름만 바꿀 수 있어요. 비밀번호는 비밀번호 변경에서 바꿔요."),
+  ).toBeVisible()
+  await expect(drawer.getByRole("button", { name: "이름 바꾸기" })).toBeEnabled()
+  for (const name of ["계정 종류 바꾸기", "잠그기", "비밀번호 초기화", "삭제"])
+    await expect(drawer.getByRole("button", { name })).toBeDisabled()
+  await expect(drawer.getByText("최고 관리자 (모든 권한)")).toBeVisible()
+  await expect(drawer.getByRole("checkbox")).toHaveCount(0)
 })
 
 test("US4-AC4 권한 관리 권한이 없으면 역할은 이름만 보이고 체크 칸이 없다", async ({ page }) => {
