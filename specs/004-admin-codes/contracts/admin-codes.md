@@ -83,3 +83,13 @@
 | US1-AC5 | `PUT /api/v1/admin/code-groups/order`, `PUT /api/v1/admin/code-groups/{g}/codes/order` | 204. 목록·표가 그 순서 |
 
 - `PUT /api/v1/admin/code-groups/enabled`(그룹과 항목을 섞은 일괄 사용 여부)는 없앤다. 그룹은 `PUT /api/v1/admin/code-groups/{g}`의 `enabled`로 하나씩 끈다
+
+## 사용 안 함 항목 지우기 (2026-11-21)
+
+| 시나리오 | 요청 | 기대 |
+|---|---|---|
+| US1-AC11 | `DELETE /api/v1/admin/code-groups/{g}/codes/{code}` (사용 안 함 항목) | 204. 관리 목록과 화면용 목록(`includeDisabled` 포함)에서 빠진다. 같은 코드로 다시 만들면 201 |
+| US1-AC11 | `DELETE /api/v1/admin/code-groups/{g}/codes/{code}` (사용 중인 항목) | 409 `B001`. 그대로 남는다 |
+| US1-AC11 | `DELETE /api/v1/admin/code-groups/{g}/codes/{code}` (없는 코드) | 404 `R001` |
+
+- 그룹 삭제(`DELETE /api/v1/admin/code-groups/{g}`)는 없다(405)
