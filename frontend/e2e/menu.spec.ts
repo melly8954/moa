@@ -424,6 +424,19 @@ test("FR-010 하위 메뉴 손잡이는 마우스를 올리거나 키보드가 �
   await expect(child.locator("..")).toHaveCSS("opacity", "1")
 })
 
+test("FR-010 이미 고른 연결 화면 칸을 눌러 치면 고른 이름을 바꿔 찾는다 @wide", async ({ page }) => {
+  await mock(page)
+  await page.goto("/admin/menus")
+  await nameButton(page, "코드 관리").click()
+  const input = detail(page, "메뉴 수정").getByLabel("연결 화면")
+  await expect(input).toHaveValue("코드 관리")
+  await input.click()
+  await input.pressSequentially("메뉴")
+  await expect(input).toHaveValue("메뉴")
+  await expect(page.getByRole("option", { name: "메뉴 관리" })).toBeVisible()
+  await expect(page.getByRole("option", { name: "코드 관리" })).toHaveCount(0)
+})
+
 test("FR-011 머리 설명에 역할 관리로 가는 링크가 있다", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/menus")

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { FileText, Folder, Globe, UserCheck } from "lucide-react"
+import { Folder, Globe, UserCheck } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
@@ -239,11 +239,6 @@ export function MenuDrawer({
                       {id === "" ? t("topLevel") : groupById.get(id)?.name}
                     </>
                   )}
-                  startAddon={
-                    field.value !== "" && (
-                      <MenuIcon name={groupById.get(field.value)?.icon} fallback={Folder} aria-hidden="true" />
-                    )
-                  }
                   placeholder={t("parentSearch")}
                   emptyText={t("parentNotFound")}
                   disabled={hasChildren}
@@ -296,7 +291,6 @@ export function MenuDrawer({
                       </span>
                     )
                   }}
-                  startAddon={field.value !== "" && <FileText aria-hidden="true" />}
                   placeholder={t(child ? "screenChoose" : "screenSearch")}
                   emptyText={t("screenNotFound")}
                   disabled={hasChildren}

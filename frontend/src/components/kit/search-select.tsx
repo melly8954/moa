@@ -1,6 +1,7 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { Search } from "lucide-react"
+import type { FocusEvent, MouseEvent, ReactNode } from "react"
 import {
   Combobox,
   ComboboxContent,
@@ -13,7 +14,8 @@ import { InputGroupAddon } from "@/components/ui/input-group"
 
 // 글자를 쳐서 찾는 선택 상자 (moa, specs/001-admin-menus FR-010, 2026-11-21)
 //   값은 문자열 키다. 입력 칸에는 label(키)를 보이고, filter가 없으면 label로 찾는다
-//   renderItem으로 목록 줄을 꾸미고, startAddon으로 입력 칸 앞에 고른 값의 모양(아이콘 등)을 둔다
+//   renderItem으로 목록 줄을 꾸민다. 입력 칸 앞에는 찾는 칸임을 알리는 돋보기를 둔다 (2026-11-21)
+//   칸을 누르거나 닿으면 글자를 모두 골라, 이미 고른 값이 있어도 치는 글자가 그것을 바꿔 바로 찾는다
 //   기본 선택 상자(NativeSelect)를 대신한다. 항목이 많아도 이름·경로 등으로 찾아 고른다
 export function SearchSelect({
   id,
@@ -23,7 +25,6 @@ export function SearchSelect({
   label,
   filter,
   renderItem,
-  startAddon,
   placeholder,
   emptyText,
   disabled,
@@ -37,7 +38,6 @@ export function SearchSelect({
   label: (key: string) => string
   filter?: (key: string, query: string) => boolean
   renderItem?: (key: string) => ReactNode
-  startAddon?: ReactNode
   placeholder?: string
   emptyText: string
   disabled?: boolean
@@ -61,8 +61,12 @@ export function SearchSelect({
         aria-invalid={invalid}
         aria-describedby={describedBy}
         className="w-full"
+        onFocus={selectAll}
+        onClick={selectAll}
       >
-        {startAddon && <InputGroupAddon align="inline-start">{startAddon}</InputGroupAddon>}
+        <InputGroupAddon align="inline-start">
+          <Search aria-hidden="true" />
+        </InputGroupAddon>
       </ComboboxInput>
       <ComboboxContent>
         <ComboboxEmpty>{emptyText}</ComboboxEmpty>
@@ -76,6 +80,11 @@ export function SearchSelect({
       </ComboboxContent>
     </Combobox>
   )
+}
+
+// 칸의 글자를 모두 고른다. 이미 고른 값의 이름 뒤에 글자가 붙어 찾지 못하는 일을 막는다
+export function selectAll(event: FocusEvent<HTMLInputElement> | MouseEvent<HTMLInputElement>) {
+  event.currentTarget.select()
 }
 
 // 찾는 글자(소문자)가 어느 한 글에라도 들어 있는가
