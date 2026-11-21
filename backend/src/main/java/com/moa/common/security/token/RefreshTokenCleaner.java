@@ -29,7 +29,7 @@ public class RefreshTokenCleaner {
 	public void deleteExpired() {
 		int deleted = refreshTokenRepository.deleteExpiredBefore(LocalDateTime.now().minusDays(1));
 		log.info("만료된 리프레시 토큰 {}건을 지웠습니다.", deleted);
-		// moa: 파기 기록 (specs/013-purge-log). 키트로 옮길 것
+		// moa: 파기 이력 (specs/013-purge-log). 키트로 옮길 것
 		eventPublisher.publishEvent(PersonalDataPurgedEvent.byScheduler(PurgeTarget.REFRESH_TOKEN, deleted));
 	}
 }

@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import com.moa.common.purgelog.PurgeTarget;
 
 /**
- * 파기 기록 검색 조건. 모두 선택이다.
+ * 파기 이력 검색 조건. 모두 선택이다.
  *
  * @param target 대상 종류 (null: 전체)
  * @param from 시작일 (포함)

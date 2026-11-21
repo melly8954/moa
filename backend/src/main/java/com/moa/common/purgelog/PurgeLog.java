@@ -16,13 +16,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 개인정보 파기 기록 (specs/013-purge-log). 개인정보는 갖지 않는다 (FR-002). 저장 뒤 고치지 않는다.
+ * 개인정보 파기 이력 (specs/013-purge-log). 개인정보는 갖지 않는다 (FR-002). 저장 뒤 고치지 않는다.
  * 파기 일시는 created_at이다.
  */
 @Getter
 @Entity
 @Table(name = "tb_purge_log")
-@HardDelete(reason = "보관 기간(1년)이 지난 파기 기록은 정리기가 지운다. 개인정보가 없어 기록 없이 지운다")
+@HardDelete(reason = "보관 기간(1년)이 지난 파기 이력은 정리기가 지운다. 개인정보가 없어 기록 없이 지운다")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PurgeLog extends BaseTimeEntity {
 

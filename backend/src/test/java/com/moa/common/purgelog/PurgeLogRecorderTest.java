@@ -11,12 +11,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * 파기 기록기 (specs/013-purge-log FR-003, FR-004). 저장소는 save만 흉내 낸다
+ * 파기 이력기 (specs/013-purge-log FR-003, FR-004). 저장소는 save만 흉내 낸다
  */
 class PurgeLogRecorderTest {
 
 	@Test
-	@DisplayName("FR-003 지운 건수가 0이면 파기 기록을 저장하지 않는다")
+	@DisplayName("FR-003 지운 건수가 0이면 파기 이력을 저장하지 않는다")
 	void skipsZeroCount() {
 		List<PurgeLog> saved = new ArrayList<>();
 		PurgeLogRecorder recorder = new PurgeLogRecorder(repository(saved, null));

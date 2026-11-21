@@ -28,7 +28,7 @@ public class RichTextImageCleaner {
 	public void deleteExpired() {
 		int deleted = richTextImageService.deleteExpiredTemps();
 		log.info("쓰이지 않은 본문 이미지 {}개를 지웠습니다.", deleted);
-		// moa: 파기 기록 (specs/013-purge-log). 키트로 옮길 것. 파일을 먼저 지우는 순서는 그대로다 (FR-004)
+		// moa: 파기 이력 (specs/013-purge-log). 키트로 옮길 것. 파일을 먼저 지우는 순서는 그대로다 (FR-004)
 		eventPublisher.publishEvent(PersonalDataPurgedEvent.byScheduler(PurgeTarget.RICH_TEXT_IMAGE, deleted));
 	}
 }

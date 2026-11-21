@@ -77,7 +77,7 @@ export function addMonths(value: DateString, months: number): DateString {
 // 기간 빠른 단추 (moa, specs/011-list-screen FR-010·FR-011, 2026-11-21)
 //   전체: 두 날짜 칸을 비운다(기간 조건의 기본값) / 나머지는 오늘을 포함한다
 //   오늘: 오늘 하루 / 7일: 오늘까지 7일 / 이번 달: 1일부터 오늘 / 3개월: 3개월 전 날짜의 다음 날부터 오늘
-//   2026-11-22: 전체를 더하고 1년을 뺐다. 기간 조건이 있는 화면(접속 이력·파기 기록)은 1년이 지나면 지워 1년이 전체와 같다
+//   2026-11-22: 전체를 더하고 1년을 뺐다. 기간 조건이 있는 화면(접속 이력·파기 이력)은 1년이 지나면 지워 1년이 전체와 같다
 export const QUICK_RANGES = ["all", "today", "last7Days", "thisMonth", "last3Months"] as const
 export type QuickRange = (typeof QUICK_RANGES)[number]
 

@@ -33,7 +33,7 @@ import com.moa.support.MenuSeed;
 import com.moa.support.TestUsers;
 
 /**
- * 개인정보 파기 기록. 스펙 specs/013-purge-log의 수용 시나리오다
+ * 개인정보 파기 이력. 스펙 specs/013-purge-log의 수용 시나리오다
  */
 @TestPropertySource(properties = "app.rich-text.image-dir=build/tmp/rich-text-images")
 class PurgeLogAcceptanceTest extends AcceptanceTest {
@@ -77,7 +77,7 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC1 보관 기간이 지난 접속 이력 3건을 지우면 접속 이력·3건·행 삭제·정리기 파기 기록 1건이 남는다")
+	@DisplayName("US1-AC1 보관 기간이 지난 접속 이력 3건을 지우면 접속 이력·3건·행 삭제·정리기 파기 이력 1건이 남는다")
 	void loginHistoryCleanupLeavesPurgeLog() {
 		for (int i = 0; i < 3; i++) {
 			loginHistory("old-" + i, LocalDateTime.now().minusDays(400));
@@ -96,7 +96,7 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC2 보관 기간이 지난 알림 2건을 지우면 알림·2건 파기 기록 1건이 남는다")
+	@DisplayName("US1-AC2 보관 기간이 지난 알림 2건을 지우면 알림·2건 파기 이력 1건이 남는다")
 	void notificationCleanupLeavesPurgeLog() {
 		notification("old-1", LocalDateTime.now().minusDays(91));
 		notification("old-2", LocalDateTime.now().minusDays(91));
@@ -108,7 +108,7 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC3 만료된 지 하루가 지난 리프레시 토큰 2건을 지우면 리프레시 토큰·2건 파기 기록 1건이 남는다")
+	@DisplayName("US1-AC3 만료된 지 하루가 지난 리프레시 토큰 2건을 지우면 리프레시 토큰·2건 파기 이력 1건이 남는다")
 	void refreshTokenCleanupLeavesPurgeLog() {
 		refreshToken("a".repeat(64), LocalDateTime.now().minusDays(2));
 		refreshToken("b".repeat(64), LocalDateTime.now().minusDays(2));
@@ -120,7 +120,7 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC4 보관 시간이 지난 본문 이미지 1개를 지우면 본문 이미지·1건 파기 기록 1건이 남는다")
+	@DisplayName("US1-AC4 보관 시간이 지난 본문 이미지 1개를 지우면 본문 이미지·1건 파기 이력 1건이 남는다")
 	void richTextImageCleanupLeavesPurgeLog() {
 		MvcTestResult uploaded = mvc.post().uri("/api/v1/rich-text/images").multipart()
 			.file(new MockMultipartFile("file", "a.png", "application/octet-stream", PNG))
@@ -136,7 +136,7 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC5 보관 기간이 지난 접속 이력이 없으면 정리가 돌아도 파기 기록이 남지 않는다")
+	@DisplayName("US1-AC5 보관 기간이 지난 접속 이력이 없으면 정리가 돌아도 파기 이력이 남지 않는다")
 	void noPurgeLogWhenNothingDeleted() {
 		loginHistory("recent", LocalDateTime.now().minusDays(1));
 
@@ -146,7 +146,7 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC6 파기 기록에는 일시·대상 종류·건수·방법·처리자만 있고 지운 이력의 아이디·IP·브라우저 값은 없다")
+	@DisplayName("US1-AC6 파기 이력에는 일시·대상 종류·건수·방법·처리자만 있고 지운 이력의 아이디·IP·브라우저 값은 없다")
 	void purgeLogHasNoPersonalData() {
 		jdbcTemplate.update("insert into tb_login_history (user_id, login_id, success, failure_code, ip, user_agent, "
 			+ "device_type, os, browser, created_at, updated_at) values (10, 'secret-kim', true, null, '203.0.113.10', "
@@ -165,7 +165,7 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US2-AC1 기간과 종류로 찾으면 그 기간·종류의 파기 기록만 최신순으로 일시·종류·건수·방법·처리자와 함께 보인다")
+	@DisplayName("US2-AC1 기간과 종류로 찾으면 그 기간·종류의 파기 이력만 최신순으로 일시·종류·건수·방법·처리자와 함께 보인다")
 	void adminFindsPurgeLogsByPeriodAndTarget() {
 		purgeLog("LOGIN_HISTORY", 3, LocalDateTime.of(2026, 11, 10, 5, 0));
 		purgeLog("LOGIN_HISTORY", 5, LocalDateTime.of(2026, 11, 12, 5, 0));
@@ -186,7 +186,7 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US2-AC2 파기 기록 조회 권한만 받은 운영자는 운영 아래 파기 기록을 보고 목록을 연다")
+	@DisplayName("US2-AC2 파기 이력 조회 권한만 받은 운영자는 운영 아래 파기 이력을 보고 목록을 연다")
 	void operatorWithReadPermissionSeesMenuAndList() {
 		testUsers.create(OPERATOR_ID, "operator", "operator123!", Role.ADMIN);
 		MvcTestResult role = asAdmin(mvc.post().uri("/api/v1/admin/roles").contentType(MediaType.APPLICATION_JSON)
@@ -199,12 +199,12 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 
 		MvcTestResult menus = asOperator(mvc.get().uri("/api/v1/menus/me"));
 		assertThat(menus).bodyJson().extractingPath("$..[?(@.accessible == true)].name").asArray()
-			.containsExactlyInAnyOrder("운영", "파기 기록");
+			.containsExactlyInAnyOrder("운영", "파기 이력");
 		assertThat(asOperator(mvc.get().uri(PURGE_LOGS))).hasStatus(200);
 	}
 
 	@Test
-	@DisplayName("US2-AC3 파기 기록 조회 권한이 없는 운영자가 목록을 요청하면 권한 없음으로 막힌다")
+	@DisplayName("US2-AC3 파기 이력 조회 권한이 없는 운영자가 목록을 요청하면 권한 없음으로 막힌다")
 	void operatorWithoutPermissionIsForbidden() {
 		testUsers.create(OPERATOR_ID, "operator", "operator123!", Role.ADMIN);
 
@@ -213,7 +213,7 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US3-AC1 366일 전 파기 기록만 지워지고, 이 정리에 대한 파기 기록은 새로 남지 않는다")
+	@DisplayName("US3-AC1 366일 전 파기 이력만 지워지고, 이 정리에 대한 파기 이력은 새로 남지 않는다")
 	void purgeLogsOlderThanOneYearAreDeletedWithoutNewLog() {
 		purgeLog("LOGIN_HISTORY", 1, LocalDateTime.now().minusDays(366));
 		purgeLog("NOTIFICATION", 1, LocalDateTime.now().minusDays(364));

@@ -58,6 +58,10 @@ export type Column<T> = {
 
 type Id = string | number
 
+// moa: 칸 좌우 여백 12px. 열 사이 글자 간격이 24px가 된다 (specs/011-list-screen FR-015, 2026-11-22)
+//   shadcn 표 칸은 8px라 내용만큼 넓어지는 열(예: 아이디)이 옆 열과 붙어 보였다
+const CELL_X = "px-3"
+
 const WIDTH: Record<ColumnKind, string> = {
   text: "",
   number: "w-(--col-number) text-right",
@@ -202,7 +206,7 @@ export function DataTable<T>({
           {columns.map((column) => {
             const kind = column.kind ?? "text"
             return (
-              <TableCell key={column.key} className={cn(WIDTH[kind], column.className)}>
+              <TableCell key={column.key} className={cn(CELL_X, WIDTH[kind], column.className)}>
                 {kind === "text" ? (
                   <div className="max-w-(--col-text-max) truncate">{cellContent(column, row)}</div>
                 ) : (
@@ -256,14 +260,15 @@ export function DataTable<T>({
                   return (
                     <TableHead
                       key={column.key}
-                      className={cn(WIDTH[kind], column.className)}
+                      className={cn(CELL_X, WIDTH[kind], column.className)}
                       aria-sort={direction === "asc" ? "ascending" : direction === "desc" ? "descending" : undefined}
                     >
                       {column.sortable ? (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className={cn("-mx-2", kind === "number" && "flex-row-reverse")}
+                          // 단추 안 글자가 본문 글자와 같은 자리에서 시작하게 단추 여백(10px)만큼 당긴다
+                          className={cn("-mx-2.5", kind === "number" && "flex-row-reverse")}
                           onClick={() => toggleSort(column.key)}
                         >
                           {column.header}

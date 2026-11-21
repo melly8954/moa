@@ -18,7 +18,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 파기 기록 조회 (specs/013-purge-log FR-009). 조건은 모두 선택이다.
+ * 파기 이력 조회 (specs/013-purge-log FR-009). 조건은 모두 선택이다.
  * 인덱스 created_at, target+created_at을 탄다.
  */
 @Component

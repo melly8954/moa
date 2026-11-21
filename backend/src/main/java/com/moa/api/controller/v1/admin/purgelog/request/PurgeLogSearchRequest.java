@@ -10,9 +10,9 @@ import com.moa.common.purgelog.PurgeTarget;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * 파기 기록 검색 조건 (쿼리 파라미터). 모두 선택이고 함께 주면 AND.
+ * 파기 이력 검색 조건 (쿼리 파라미터). 모두 선택이고 함께 주면 AND.
  */
-@Schema(description = "파기 기록 검색 조건")
+@Schema(description = "파기 이력 검색 조건")
 public record PurgeLogSearchRequest(
 	@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "대상 종류. 없으면 전체") PurgeTarget target,
 	@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "시작일 (포함)",

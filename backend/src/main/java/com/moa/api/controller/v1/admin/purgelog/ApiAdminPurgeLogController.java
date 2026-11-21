@@ -24,9 +24,9 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 개인정보 파기 기록 조회 (moa, specs/013-purge-log US2). 보기만 한다.
+ * 개인정보 파기 이력 조회 (moa, specs/013-purge-log US2). 보기만 한다.
  */
-@Tag(name = "관리자 파기 기록 API")
+@Tag(name = "관리자 파기 이력 API")
 @RequirePermission(PurgeLogPermissions.READ)
 @RestController
 @RequestMapping("/api/v1/admin/purge-logs")
@@ -35,7 +35,7 @@ public class ApiAdminPurgeLogController {
 
 	private final PurgeLogApplication purgeLogApplication;
 
-	@Operation(summary = "파기 기록 목록",
+	@Operation(summary = "파기 이력 목록",
 		description = "최신순. 조건(target, from, to)은 모두 선택이고 함께 주면 AND. from이 to보다 늦으면 V001")
 	@GetMapping
 	public ResponseEntity<PageResponse<PurgeLogListResponse>> getPage(

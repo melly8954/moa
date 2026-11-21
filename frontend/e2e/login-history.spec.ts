@@ -47,6 +47,23 @@ test("접속 이력: 가로 넘침·접근성", async ({ page }) => {
   await expectNoSeriousA11yViolations(page)
 })
 
+// moa (2026-11-22): 시간 열은 "<무슨 일> 시각"(011 FR-014), 칸 좌우 여백 12px로 열 사이 글자 간격 24px 이상(011 FR-015)
+test("열 이름은 접속 시각부터이고, 열 사이 글자 간격은 24px 이상이다 @wide", async ({ page }) => {
+  await mock(page)
+  await page.goto("/admin/login-histories")
+  await expect(page.getByRole("columnheader")).toHaveText(["접속 시각", "아이디", "결과", "IP", "기기"])
+  const gaps = await page.getByRole("row", { name: /10\.0\.0\.2/ }).evaluate((row) => {
+    const textBox = (cell: Element) => {
+      const range = document.createRange()
+      range.selectNodeContents(cell)
+      return range.getBoundingClientRect()
+    }
+    const cells = [...row.querySelectorAll("td")]
+    return cells.slice(1).map((cell, i) => textBox(cell).left - textBox(cells[i]).right)
+  })
+  for (const gap of gaps) expect(gap).toBeGreaterThanOrEqual(24)
+})
+
 test("실패는 짧은 사유로, 시각은 초까지 보인다", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/login-histories")

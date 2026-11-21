@@ -34,7 +34,7 @@ public class LoginHistoryCleaner {
 	public void deleteExpired() {
 		int deleted = loginHistoryRepository.deleteCreatedBefore(LocalDateTime.now().minusDays(retentionDays));
 		log.info("보관 기간({}일)이 지난 접속 이력 {}건을 지웠습니다.", retentionDays, deleted);
-		// moa: 파기 기록 (specs/013-purge-log). 키트로 옮길 것
+		// moa: 파기 이력 (specs/013-purge-log). 키트로 옮길 것
 		eventPublisher.publishEvent(PersonalDataPurgedEvent.byScheduler(PurgeTarget.LOGIN_HISTORY, deleted));
 	}
 }
