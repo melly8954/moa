@@ -229,8 +229,9 @@ function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) 
 }
 
 // moa: 권한 없는 메뉴 모양. 글자와 아이콘을 흐리게 (001 FR-002, 2026-11-22)
+//   반투명(…/50)은 대비가 3.7:1로 모자라 흐린 글자 색(muted-foreground, 대비 4.5:1 이상)을 쓴다
 //   aria-disabled는 쓰지 않는다: 사이드바 단추는 aria-disabled면 클릭을 막아(pointer-events: none) 토스트를 띄울 수 없다
-const LOCKED = "text-sidebar-foreground/50 hover:text-sidebar-foreground/70 [&_svg]:text-sidebar-foreground/50"
+const LOCKED = "text-muted-foreground hover:text-sidebar-foreground/80 [&_svg]:text-muted-foreground"
 
 // 자물쇠: 메뉴명 길이와 상관없이 줄 오른쪽 끝에 두어 같은 단계의 메뉴끼리 같은 열에 선다. 아이콘만 남게 접으면 숨긴다
 //   화면 읽기 프로그램에는 이름 칸 안의 ", 권한 없음"으로 메뉴명 뒤에 읽힌다 (새 소식 점과 같은 방식)
