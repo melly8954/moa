@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * 새 개인 알림을 그 사용자가 켜 둔 브라우저마다 웹 푸시로 보낸다 (specs/007-notifications US4, research R4·R6).
+ * 새 개인 알림을 그 사용자가 켜 둔 브라우저마다 웹 푸시로 보낸다 (specs/007-notifications US4, research R4·R6·R13).
  * 커밋 뒤 따로(비동기) 보내고, 푸시 서버가 만료를 알린 구독은 지운다. 화면이 보이면 서비스 워커가 띄우지 않는다.
  */
 @Component
@@ -40,8 +40,9 @@ public class NotificationPushListener {
 		}
 		NotificationDto notification = event.notification();
 		Map<String, Object> payload = new LinkedHashMap<>();
+		// 제목은 보내지 않는다. 브라우저 알림은 내용 없는 문구만 보인다 (spec FR-008, research R13)
 		payload.put("id", notification.id());
-		payload.put("title", notification.title());
+		payload.put("type", notification.type().name());
 		payload.put("link", notification.link());
 		String json = objectMapper.writeValueAsString(payload);
 		for (PushSubscriptionDto subscription : notificationService.getSubscriptions(notification.userId())) {
