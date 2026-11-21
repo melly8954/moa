@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
+import { FileText, Folder, Globe, UserCheck } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
@@ -10,21 +11,25 @@ import { api } from "@/api"
 import { toApiError } from "@/api/error"
 import { ResponsivePanel } from "@/components/kit/detail-panel"
 import { EnabledSwitch } from "@/components/kit/enabled-switch"
+import { matchesAny, SearchSelect } from "@/components/kit/search-select"
 import { useDrawerClose } from "@/components/kit/side-drawer"
 import { IconPicker } from "@/components/menu/icon-picker"
+import { MenuIcon } from "@/components/menu/icons"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Field,
+  FieldContent,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
   FieldSet,
+  FieldTitle,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useFieldErrorText } from "@/i18n/field-error"
 import { useErrorMessages } from "@/lib/error-messages"
@@ -87,6 +92,18 @@ export function MenuDrawer({
   const screenMenu = screenKey !== ""
   const screen = choices.find((p) => p.key === screenKey)
   const memberOnly = screen?.signInRequired ?? false
+  // 다른 메뉴에 이미 건 연결 화면 → 그 메뉴명들 (FR-010, 2026-11-21. 막지 않고 알리기만 한다)
+  const linkedNames = (key: string) =>
+    tree
+      .flatMap((m) => [m, ...m.children])
+      .filter((m) => m.id !== menu?.id && m.screen && m.screenKey === key)
+      .map((m) => m.name)
+  const screenById = new Map(choices.map((p) => [p.key, p]))
+  const groupById = new Map(groups.map((m) => [String(m.id), m]))
+  const screenWho = (p: Screen) =>
+    p.permission
+      ? t("screenItemPermission", { name: p.permission.name })
+      : t(p.signInRequired ? "screenItemSignIn" : "screenItemPublic")
 
   // 새 자리의 맨 뒤 (10 단위)
   const lastSortOrder = (parent: string) => {
@@ -205,20 +222,33 @@ export function MenuDrawer({
             render={({ field }) => (
               <Field>
                 <FieldLabel htmlFor="menu-parentId">{t("parent")}</FieldLabel>
-                <NativeSelect
+                {/* 메뉴명으로 찾는 선택 상자. 메뉴는 2단계라 맨 위 메뉴만 나온다 (FR-010, 2026-11-21) */}
+                <SearchSelect
                   id="menu-parentId"
+                  items={["", ...groups.map((m) => String(m.id))]}
                   value={field.value}
                   onChange={field.onChange}
+                  label={(id) => (id === "" ? t("topLevel") : (groupById.get(id)?.name ?? ""))}
+                  renderItem={(id) => (
+                    <>
+                      {id === "" ? (
+                        <span aria-hidden="true" className="size-4" />
+                      ) : (
+                        <MenuIcon name={groupById.get(id)?.icon} fallback={Folder} aria-hidden="true" />
+                      )}
+                      {id === "" ? t("topLevel") : groupById.get(id)?.name}
+                    </>
+                  )}
+                  startAddon={
+                    field.value !== "" && (
+                      <MenuIcon name={groupById.get(field.value)?.icon} fallback={Folder} aria-hidden="true" />
+                    )
+                  }
+                  placeholder={t("parentSearch")}
+                  emptyText={t("parentNotFound")}
                   disabled={hasChildren}
-                  aria-describedby="menu-parentId-info"
-                >
-                  <NativeSelectOption value="">{t("topLevel")}</NativeSelectOption>
-                  {groups.map((m) => (
-                    <NativeSelectOption key={m.id} value={String(m.id)}>
-                      {m.name}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
+                  describedBy="menu-parentId-info"
+                />
                 <FieldDescription id="menu-parentId-info">
                   {t(hasChildren ? "parentHasChildren" : "parentHint")}
                 </FieldDescription>
@@ -231,25 +261,48 @@ export function MenuDrawer({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="menu-screenKey">{t("screen")}</FieldLabel>
-                <NativeSelect
+                {/* 화면 이름·경로로 찾는 선택 상자. 목록에 경로·쓰는 사람과 이미 건 메뉴를 보인다 (FR-010, 2026-11-21)
+                    상위 메뉴 아래 메뉴는 "없음"을 고를 수 없어 목록에서 뺀다 */}
+                <SearchSelect
                   id="menu-screenKey"
+                  items={[...(child ? [] : [""]), ...choices.map((p) => p.key)]}
                   value={field.value}
-                  disabled={hasChildren}
-                  onChange={(event) => {
-                    field.onChange(event)
-                    const next = choices.find((p) => p.key === event.target.value)
-                    if (next?.signInRequired) form.setValue("visibility", "MEMBER")
+                  onChange={(next) => {
+                    field.onChange(next)
+                    if (screenById.get(next)?.signInRequired) form.setValue("visibility", "MEMBER")
                   }}
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={fieldState.invalid ? "menu-screenKey-error" : "menu-screenKey-info"}
-                >
-                  <NativeSelectOption value="">{t(child ? "screenChoose" : "screenNone")}</NativeSelectOption>
-                  {choices.map((p) => (
-                    <NativeSelectOption key={p.key} value={p.key}>
-                      {p.name} ({p.path})
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
+                  label={(key) => (key === "" ? (child ? "" : t("screenNone")) : (screenById.get(key)?.name ?? ""))}
+                  filter={(key, query) => {
+                    const p = screenById.get(key)
+                    return p ? matchesAny(query, p.name, p.path) : matchesAny(query, t("screenNone"))
+                  }}
+                  renderItem={(key) => {
+                    const p = screenById.get(key)
+                    if (!p) return t("screenNone")
+                    const linked = linkedNames(key)
+                    return (
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="flex items-center gap-2">
+                          <span className="truncate">{p.name}</span>
+                          {linked.length > 0 && (
+                            <Badge variant="outline" className="ml-auto font-normal">
+                              {t("screenLinked", { name: linked.join(", ") })}
+                            </Badge>
+                          )}
+                        </span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {t("screenItemInfo", { path: p.path, who: screenWho(p) })}
+                        </span>
+                      </span>
+                    )
+                  }}
+                  startAddon={field.value !== "" && <FileText aria-hidden="true" />}
+                  placeholder={t(child ? "screenChoose" : "screenSearch")}
+                  emptyText={t("screenNotFound")}
+                  disabled={hasChildren}
+                  invalid={fieldState.invalid}
+                  describedBy={fieldState.invalid ? "menu-screenKey-error" : "menu-screenKey-info"}
+                />
                 <FieldDescription id="menu-screenKey-info">
                   {screen
                     ? t("screenInfo", {
@@ -273,22 +326,33 @@ export function MenuDrawer({
               render={({ field }) => (
                 <FieldSet>
                   <FieldLegend variant="label">{t("visibility")}</FieldLegend>
+                  {/* 고르기 카드 두 장을 한 줄에 나란히 (FR-010, 2026-11-21) */}
                   <RadioGroup
                     value={memberOnly ? "MEMBER" : field.value}
                     onValueChange={(value) => field.onChange(value as MenuVisibility)}
+                    className="grid grid-cols-2 gap-2"
                   >
-                    {(["PUBLIC", "MEMBER"] as const).map((value) => (
-                      <Field key={value} orientation="horizontal">
-                        <RadioGroupItem
-                          id={`menu-visibility-${value}`}
-                          value={value}
-                          disabled={value === "PUBLIC" && memberOnly}
-                        />
-                        <FieldLabel htmlFor={`menu-visibility-${value}`} className="font-normal">
-                          {t(value === "PUBLIC" ? "visibilityPublic" : "visibilityMember")}
+                    {(["PUBLIC", "MEMBER"] as const).map((value) => {
+                      const Icon = value === "PUBLIC" ? Globe : UserCheck
+                      return (
+                        <FieldLabel key={value} htmlFor={`menu-visibility-${value}`}>
+                          <Field orientation="horizontal" data-disabled={value === "PUBLIC" && memberOnly}>
+                            <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                            <FieldContent>
+                              <FieldTitle>{t(value === "PUBLIC" ? "visibilityPublic" : "visibilityMember")}</FieldTitle>
+                              <FieldDescription>
+                                {t(value === "PUBLIC" ? "visibilityPublicHint" : "visibilityMemberHint")}
+                              </FieldDescription>
+                            </FieldContent>
+                            <RadioGroupItem
+                              id={`menu-visibility-${value}`}
+                              value={value}
+                              disabled={value === "PUBLIC" && memberOnly}
+                            />
+                          </Field>
                         </FieldLabel>
-                      </Field>
-                    ))}
+                      )
+                    })}
                   </RadioGroup>
                   <FieldDescription>{t(memberOnly ? "visibilityMemberOnly" : "visibilityHint")}</FieldDescription>
                 </FieldSet>
