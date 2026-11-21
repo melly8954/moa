@@ -23,9 +23,9 @@ public class CodeReader {
 	private final CodeGroupRepository codeGroupRepository;
 	private final CodeRepository codeRepository;
 
-	/** moa: 만든 순서 */
+	/** moa: 그룹 순서, 같으면 만든 순서 (FR-005) */
 	public List<CodeGroup> findGroups() {
-		return codeGroupRepository.findAllByOrderByIdAsc();
+		return codeGroupRepository.findAllByOrderBySortOrderAscIdAsc();
 	}
 
 	public Optional<CodeGroup> findGroup(String groupCode) {

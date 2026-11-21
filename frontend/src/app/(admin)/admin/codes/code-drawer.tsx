@@ -3,36 +3,39 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
-import { useDrawerClose } from "@/components/kit/side-drawer"
 import { ResponsivePanel as SideDrawer } from "@/components/kit/detail-panel"
+import { EnabledSwitch } from "@/components/kit/enabled-switch"
+import { useDrawerClose } from "@/components/kit/side-drawer"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
 import { useFieldErrorText } from "@/i18n/field-error"
 import { useErrorMessages } from "@/lib/error-messages"
 import { type CodeItemInput, codeItemSchema } from "@/lib/schemas/code"
 import type { Code, CodeGroup } from "@/types/code"
 
-// 공통코드 항목 드로어 (moa, specs/004-admin-codes FR-005·FR-006, US1-AC2·AC3). 이름을 누르거나 그룹의 "항목 추가"로 연다
-//   만들 때: 이름과 코드(비우면 자동 순번). 그룹 맨 뒤에 생긴다
-//   고칠 때: 이름과 사용 여부. 코드는 보기만 한다. 순서는 표에서 끌어 바꾼다
+// 공통코드 항목 패널 (moa, specs/004-admin-codes FR-005·FR-006, US1-AC2·AC3). 행을 누르거나 트리 위 "추가"에서 소속 그룹을 골라 연다
+//   만들 때: 소속 그룹, 이름과 코드(비우면 자동 순번). 그룹 맨 뒤에 생긴다
+//   고칠 때: 이름과 사용 여부(이름 칸 아래 오른쪽). 코드는 보기만 한다. 순서는 표에서 끌어 바꾼다
 //   code가 있으면 수정, 없으면 추가
 export function CodeDrawer({
   group,
   code,
+  parentField,
   open,
   onOpenChange,
   onSaved,
 }: {
   group?: CodeGroup
   code?: Code
+  // 새로 만들 때 맨 위에 두는 "소속 그룹" 칸 (FR-005)
+  parentField?: ReactNode
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved: (groupCode: string) => Promise<unknown>
@@ -101,6 +104,7 @@ export function CodeDrawer({
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           )}
+          {!editing && parentField}
           <Controller
             name="name"
             control={form.control}
@@ -114,6 +118,21 @@ export function CodeDrawer({
                   aria-describedby={fieldState.invalid ? "code-name-error" : undefined}
                 />
                 {fieldState.invalid && <FieldError id="code-name-error" errors={fieldErrorText(fieldState.error)} />}
+                {/* 사용 토글은 이름 칸 바로 아래 오른쪽 (FR-005, 2026-11-21). 고칠 때만 */}
+                {editing && (
+                  <Controller
+                    name="enabled"
+                    control={form.control}
+                    render={({ field: enabled }) => (
+                      <EnabledSwitch
+                        id="code-enabled"
+                        label={t("enabled")}
+                        checked={enabled.value}
+                        onCheckedChange={enabled.onChange}
+                      />
+                    )}
+                  />
+                )}
               </Field>
             )}
           />
@@ -149,23 +168,6 @@ export function CodeDrawer({
               </Field>
             )}
           />
-          {editing && (
-            <Controller
-              name="enabled"
-              control={form.control}
-              render={({ field }) => (
-                <Field orientation="horizontal">
-                  <Switch
-                    id="code-enabled"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    aria-label={t("enabled")}
-                  />
-                  <FieldLabel htmlFor="code-enabled">{t("enabled")}</FieldLabel>
-                </Field>
-              )}
-            />
-          )}
         </FieldGroup>
       </form>
     </SideDrawer>

@@ -3,27 +3,27 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
-import { useDrawerClose } from "@/components/kit/side-drawer"
 import { ResponsivePanel as SideDrawer } from "@/components/kit/detail-panel"
+import { EnabledSwitch } from "@/components/kit/enabled-switch"
+import { useDrawerClose } from "@/components/kit/side-drawer"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useFieldErrorText } from "@/i18n/field-error"
 import { useErrorMessages } from "@/lib/error-messages"
 import { type CodeGroupInput, codeGroupSchema } from "@/lib/schemas/code"
 import type { CodeGroupTree } from "@/types/code"
 
-// 공통코드 그룹 패널 (moa, specs/004-admin-codes FR-004·FR-008·FR-009, US1-AC7·AC8·AC9). 트리 맨 아래 "그룹 추가"나 그룹 이름으로 연다
-//   만들 때: 그룹 코드, 이름, 설명. 사용 중으로 생긴다
-//   고칠 때: 이름, 설명, 사용. 그룹 코드는 보기만 한다. 그룹은 지우지 않고 사용 안 함으로 끈다
+// 공통코드 그룹 패널 (moa, specs/004-admin-codes FR-004·FR-008·FR-009, US1-AC7·AC8·AC9). 그룹 행이나 트리 위 "추가"(소속 그룹 없음)로 연다
+//   만들 때: 소속 그룹(없음), 그룹 코드, 이름, 설명. 사용 중으로 트리 맨 뒤에 생긴다
+//   고칠 때: 이름(아래 오른쪽에 사용 토글), 설명. 그룹 코드는 보기만 한다. 그룹은 지우지 않고 사용 안 함으로 끈다
 //   group이 있으면 수정, 없으면 추가
 const toGroupCode = (value: string) =>
   value
@@ -34,11 +34,14 @@ const toGroupCode = (value: string) =>
 
 export function GroupDrawer({
   group,
+  parentField,
   open,
   onOpenChange,
   onSaved,
 }: {
   group?: CodeGroupTree
+  // 새로 만들 때 맨 위에 두는 "소속 그룹" 칸 (FR-005)
+  parentField?: ReactNode
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved: (groupCode: string) => Promise<unknown>
@@ -111,6 +114,7 @@ export function GroupDrawer({
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           )}
+          {!editing && parentField}
           <Controller
             name="groupCode"
             control={form.control}
@@ -151,6 +155,27 @@ export function GroupDrawer({
                   aria-describedby={fieldState.invalid ? "group-name-error" : undefined}
                 />
                 {fieldState.invalid && <FieldError id="group-name-error" errors={fieldErrorText(fieldState.error)} />}
+                {/* 사용 토글은 이름 칸 바로 아래 오른쪽 (FR-005, 2026-11-21). 고칠 때만 */}
+                {editing && (
+                  <Controller
+                    name="enabled"
+                    control={form.control}
+                    render={({ field: enabled }) => (
+                      <>
+                        <EnabledSwitch
+                          id="group-enabled"
+                          label={t("enabled")}
+                          checked={enabled.value}
+                          onCheckedChange={enabled.onChange}
+                          describedBy="group-enabled-hint"
+                        />
+                        <FieldDescription id="group-enabled-hint" className="text-right">
+                          {t("groupEnabledHint")}
+                        </FieldDescription>
+                      </>
+                    )}
+                  />
+                )}
               </Field>
             )}
           />
@@ -173,27 +198,6 @@ export function GroupDrawer({
               </Field>
             )}
           />
-          {editing && (
-            <Controller
-              name="enabled"
-              control={form.control}
-              render={({ field }) => (
-                <Field>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="group-enabled"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      aria-label={t("enabled")}
-                      aria-describedby="group-enabled-hint"
-                    />
-                    <FieldLabel htmlFor="group-enabled">{t("enabled")}</FieldLabel>
-                  </div>
-                  <FieldDescription id="group-enabled-hint">{t("groupEnabledHint")}</FieldDescription>
-                </Field>
-              )}
-            />
-          )}
         </FieldGroup>
       </form>
     </SideDrawer>

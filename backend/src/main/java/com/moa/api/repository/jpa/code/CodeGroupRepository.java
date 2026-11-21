@@ -12,6 +12,6 @@ public interface CodeGroupRepository extends SoftDeleteRepository<CodeGroup, Lon
 
 	boolean existsByGroupCode(String groupCode);
 
-	/** moa: 만든 순서 (specs/004-admin-codes FR-005) */
-	List<CodeGroup> findAllByOrderByIdAsc();
+	/** moa: 그룹 순서, 같으면 만든 순서 (specs/004-admin-codes FR-005, 2026-11-21) */
+	List<CodeGroup> findAllByOrderBySortOrderAscIdAsc();
 }

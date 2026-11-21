@@ -19,6 +19,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { FileText, Folder } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { DragHandle } from "@/components/kit/drag-handle"
+import { MenuIcon } from "@/components/menu/icons"
 import { openOnRowClick, ROW_CLICKABLE } from "@/components/kit/row-click"
 import { StatusText } from "@/components/kit/status-text"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -32,7 +33,7 @@ import { isGroup, type MenuRow, rowsOf } from "./menu-order"
 //   행 단추는 없다: 체크박스(일괄 처리), 손잡이(끌어서 순서·부모), 메뉴명. 행 어디를 눌러도 오른쪽 상세 칸이 열린다
 //   (체크박스·손잡이는 제 일만 한다. 키보드는 메뉴명 단추로 연다)
 //   열은 체크박스·손잡이·메뉴명·사용이다. 연결 화면과 누가 보는지(권한·공개 범위)는 상세 칸에 보인다 (2026-11-21)
-//   상위 메뉴는 폴더, 화면 메뉴는 문서 아이콘. 사용 안 함은 회색(neutral), 빨강은 "없는 화면"에만 쓴다
+//   메뉴명 앞에 메뉴의 아이콘(없으면 상위 메뉴는 폴더, 화면 메뉴는 문서). 사용 안 함은 회색(neutral), 빨강은 "없는 화면"에만 쓴다
 //   상세 칸에 열린 행(active)은 강조한다
 //   손잡이는 키보드로도 옮긴다 (스페이스로 집고 화살표로 옮기고 스페이스로 놓기)
 export function MenuTreeTable({
@@ -154,7 +155,6 @@ function SortableMenuRow({
     disabled,
   })
   const group = isGroup(menu)
-  const Icon = group ? Folder : FileText
 
   return (
     <TableRow
@@ -182,12 +182,14 @@ function SortableMenuRow({
       </TableCell>
       <TableCell>
         <div className={cn("flex items-center gap-2", depth === 1 && "pl-6")}>
-          <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
-          <button
-            type="button"
-            className={cn("text-left underline-offset-4 hover:underline", group && "font-medium")}
-            onClick={onOpen}
-          >
+          {/* 메뉴의 아이콘. 없으면 상위 메뉴는 폴더, 화면 메뉴는 문서 (FR-010, 2026-11-21) */}
+          <MenuIcon
+            name={menu.icon}
+            fallback={group ? Folder : FileText}
+            aria-hidden="true"
+            className="size-4 shrink-0 text-muted-foreground"
+          />
+          <button type="button" className={cn("text-left", group && "font-medium")} onClick={onOpen}>
             {menu.name}
           </button>
           {menu.missingScreen && <StatusText tone="negative">{t("missingScreen")}</StatusText>}
