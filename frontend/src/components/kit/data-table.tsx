@@ -24,6 +24,7 @@ import { useErrorMessages } from "@/lib/error-messages"
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format"
 import { type ListSearch, PAGE_SIZES, type PageSize } from "@/lib/list-search"
 import { cn } from "@/lib/utils"
+import { openOnRowClick, ROW_CLICKABLE } from "./row-click"
 import type { PageResponse } from "@/types/api"
 
 // 목록 표: 서버가 나눈 쪽(PageResponse)을 그린다. 쪽 번호, 서버 정렬, 쪽 크기(10·20·50), 행 선택
@@ -90,6 +91,7 @@ function defaultCell(kind: ColumnKind, value: unknown): React.ReactNode {
 export function DataTable<T>({
   columns,
   query,
+  onRowClick,
   search,
   rowKey,
   selection,
@@ -116,6 +118,9 @@ export function DataTable<T>({
   empty?: string
   // 표 이름 (화면 낭독기). 보통 화면 제목
   caption?: string
+  // moa: 행 아무 곳이나 눌러 상세를 연다 (specs/002-admin-users FR-007, 2026-11-22)
+  //   행 안의 단추·입력은 건너뛴다(row-click.ts). 키보드는 행 안의 단추(예: 아이디 칸)로 연다
+  onRowClick?: (row: T) => void
 }) {
   const t = useTranslations("table")
   const { describeError } = useErrorMessages()
@@ -204,7 +209,12 @@ export function DataTable<T>({
       const id = rowIds[index]
       const selected = selection?.selected.includes(id) ?? false
       return (
-        <TableRow key={id} className="h-(--table-row-height)" data-state={selected ? "selected" : undefined}>
+        <TableRow
+          key={id}
+          className={cn("h-(--table-row-height)", onRowClick && ROW_CLICKABLE)}
+          data-state={selected ? "selected" : undefined}
+          onClick={onRowClick && openOnRowClick(() => onRowClick(row))}
+        >
           {selection && (
             <TableCell className="w-(--col-select)">
               <Checkbox
