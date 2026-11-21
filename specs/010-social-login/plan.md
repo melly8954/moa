@@ -6,7 +6,7 @@
 
 ## Summary
 
-moa의 첫 회원 가입 경로로 구글·디스코드 소셜 로그인을 붙인다. 팀 결정(2026-11-17)에 따라 두 제공자 모두 서버 경유 OAuth 인가 코드 방식(PKCE)을 쓴다. 프론트는 백엔드 주소로 이동만 하고, 백엔드가 제공자 콜백을 받아 회원을 찾거나(로그인) 닉네임 입력·약관 동의 뒤 만들고(가입), 기존 로그인과 같은 moa JWT·리프레시 쿠키를 발급한다. 가입과 연결 전에 이메일 미인증, 재가입 제한, 이메일 중복을 확인해 막는다. 로그인한 회원은 계정 설정에서 같은 흐름으로 제공자마다 연결·해제한다. 회원 정보는 잠정 B(키트 `users` 그대로 + `user_social_accounts`)로 두고, 약관 동의 기록과 재가입 제한 기록 테이블을 더한다. 제공자와 주고받는 부분은 키트 oauth 헬퍼로 바꿀 수 있게 경계를 나눈다 (팀 확인 후 바뀔 수 있음, [research.md](./research.md) R2).
+moa의 첫 회원 가입 경로로 구글·디스코드 소셜 로그인을 붙인다. 팀 결정(2026-11-17)에 따라 두 제공자 모두 서버 경유 OAuth 인가 코드 방식(PKCE)을 쓴다. 프론트는 백엔드 주소로 이동만 하고, 백엔드가 제공자 콜백을 받아 회원을 찾거나(로그인) 닉네임 입력·약관 동의 뒤 만들고(가입), 기존 로그인과 같은 moa JWT·리프레시 쿠키를 발급한다. 가입과 연결 전에 이메일 미인증, 재가입 제한, 이메일 중복을 확인해 막는다. 로그인한 회원은 계정 설정에서 같은 흐름으로 제공자마다 연결·해제한다. 회원 정보는 잠정 B(키트 `tb_user` 그대로 + `tb_user_social_account`)로 두고, 약관 동의 기록과 재가입 제한 기록 테이블을 더한다. 제공자와 주고받는 부분은 키트 oauth 헬퍼로 바꿀 수 있게 경계를 나눈다 (팀 확인 후 바뀔 수 있음, [research.md](./research.md) R2).
 
 ## Technical Context
 
@@ -14,7 +14,7 @@ moa의 첫 회원 가입 경로로 구글·디스코드 소셜 로그인을 붙�
 
 **Primary Dependencies**: 기존 Spring Security·jjwt·Spring Data JPA·Flyway. 제공자 호출은 Spring `RestClient`(새 의존성 없음). 재가입 제한 해시는 JDK `Mac`(HmacSHA256). 키트 oauth 헬퍼 — 적용 기록에 없음, 팀 확인 중 (R2). 프론트는 기존 api 클라이언트, react-hook-form·zod, next-intl 문구
 
-**Storage**: MariaDB. 새 테이블 4개 `user_social_accounts`, `user_terms_agreements`, `social_rejoin_blocks`, `user_profiles`(최소형: 닉네임 키·태그, 009가 칸을 더함)와 기존 회원 프로필 행 채우기 (한 마이그레이션 `V<번호>__social_login.sql`, 번호는 구현 때 dev 마지막 다음. research R14, 2026-11-19). state·가입 대기는 서명 쿠키 (DB 아님)
+**Storage**: MariaDB. 새 테이블 4개 `tb_user_social_account`, `tb_user_terms_agreement`, `tb_social_rejoin_block`, `tb_user_profile`(최소형: 닉네임 키·태그, 009가 칸을 더함)와 기존 회원 프로필 행 채우기 (한 마이그레이션 `V<다음 번호>__social_login.sql`, 번호는 구현 때 dev 마지막 다음. research R14, 2026-11-19). state·가입 대기는 서명 쿠키 (DB 아님)
 
 **Testing**: 인수 테스트 `AcceptanceTest` 상속(`@Tag("db")`, `dbTest`, AC 번호 이름), 제공자 클라이언트는 제공자마다 테스트용 가짜. 재가입 제한 행은 테스트가 직접 넣는다. 프론트 단위 테스트(`npm run check`), e2e는 US1만
 
@@ -53,7 +53,7 @@ specs/010-social-login/
 ├── spec.md
 ├── plan.md              # 이 파일
 ├── research.md          # R1 서버 경유 결정 ~ R13 재가입 제한
-├── data-model.md        # users(변경 없음) + user_social_accounts(잠정 B) + 약관 동의 + 재가입 제한, 서명 쿠키
+├── data-model.md        # tb_user(변경 없음) + tb_user_social_account(잠정 B) + 약관 동의 + 재가입 제한, 서명 쿠키
 ├── quickstart.md        # 수동·자동 확인 순서
 ├── contracts/
 │   ├── auth-oauth.md            # providers, terms, authorize, callback, sign-up, link, unlink, 오류 코드
@@ -80,7 +80,7 @@ backend/src/main/java/com/moa/
 └── common/exception/ErrorCode.java  # A008~A017, B201
 backend/src/main/resources/
 ├── application.yaml                 # app.oauth.google.*, app.oauth.discord.*, app.oauth.rejoin-hash-secret, app.terms.*
-└── db/migration/V<번호>__social_login.sql   # 번호는 구현 때 dev 마지막 다음
+└── db/migration/V<다음 번호>__social_login.sql   # 번호는 PR 직전 dev 마지막 + 1 (docs/db.md). 009가 이 뒤
 backend/src/test/java/com/moa/api/SocialLoginAcceptanceTest.java (+ 제공자별 가짜)
 
 frontend/src/
@@ -88,7 +88,7 @@ frontend/src/
 ├── app/(public)/sign-up/nickname/page.tsx   # 새: 닉네임 + 약관 동의
 ├── app/(public)/auth/oauth/done/page.tsx    # 새
 ├── app/(account)/settings/page.tsx          # 제공자마다 연결·해제 줄
-├── components/shell/account-menu.tsx        # hasPassword로 비밀번호 변경 숨김
+├── components/shell/account-bar.tsx         # hasPassword로 아이디 줄·비밀번호 변경 숨김
 ├── content/terms/                           # 새: 약관 요약·전문 (버전마다)
 ├── lib/me.ts, types/user.ts, api/index.ts   # 새 칸·API
 └── messages/ko.json
@@ -104,13 +104,13 @@ frontend/src/
 |---|---|
 | `backend/.env.example` | `GOOGLE_*`, `DISCORD_*`, `SOCIAL_REJOIN_HASH_SECRET` 이름만 |
 | `backend/src/main/resources/application.yaml` | `app.oauth.google.*`, `app.oauth.discord.*`, `app.oauth.rejoin-hash-secret`, `app.terms.*` |
-| `backend/src/main/resources/db/migration/V<번호>__social_login.sql` | 새 테이블 4개와 기존 회원 프로필 행 채우기 (번호 공간을 함께 씀. 번호는 구현 때 dev 마지막 다음. 009가 이 뒤) |
+| `backend/src/main/resources/db/migration/V<다음 번호>__social_login.sql` | 새 테이블 4개와 기존 회원 프로필 행 채우기 (번호는 PR 직전 dev 마지막 + 1, docs/db.md. 009는 010의 `tb_user_profile` 다음) |
 | `backend/src/main/java/com/moa/common/exception/ErrorCode.java` | A008~A017, B201 |
 | `backend/.../service/user/UserAdminService.java` (키트 user-admin) | 소셜 회원에게 `ADMIN` 막기, `rename`의 `nickname_key`·태그 맞추기 |
 | `backend/.../service/role/RoleUserService.java` (키트 rbac) | 소셜 회원에게 업무 역할 막기 |
 | `backend/.../UserGetResponse.java` | `hasPassword`, `socialAccounts`, `socialLinkAllowed` |
 | `frontend/src/app/(public)/sign-in/page.tsx` (키트 web-next) | 제공자 단추, `oauthError` 문구 |
-| `frontend/src/components/shell/account-menu.tsx` (키트 셸) | 비밀번호 변경 숨김 |
+| `frontend/src/components/shell/account-bar.tsx` (moa 셸) | 아이디 줄·비밀번호 변경 숨김 |
 | `frontend/src/app/(account)/settings/page.tsx` | 제공자마다 연결·해제 줄 |
 | `frontend/messages/ko.json` | `signIn`, `signUp`(약관 포함), `settings` 문구 |
 
