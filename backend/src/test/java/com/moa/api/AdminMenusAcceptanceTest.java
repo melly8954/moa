@@ -61,7 +61,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).hasStatus(200);
 		assertThat(result).bodyJson().extractingPath("$[*].name").asArray().containsExactly("운영", "설정");
 		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
-			.containsExactly("사용자 관리", "공지 관리", "접속 이력", "파기 기록");
+			.containsExactly("사용자 관리", "공지 관리", "접속 이력", "파기 이력");
 		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
 			.containsExactly("권한 관리", "메뉴 관리", "코드 관리");
 		assertThat(result).bodyJson().extractingPath("$[*].children[*].path").asArray()
@@ -121,7 +121,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 			.containsExactlyInAnyOrder("운영", "설정");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].children[*].name").asArray()
 			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "권한 관리", "공지 관리",
-				"파기 기록");
+				"파기 이력");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'USER')].name").asArray()
 			.containsExactlyInAnyOrder("홈", "공지");
 	}
@@ -262,7 +262,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 
 		MvcTestResult result = asAdmin(mvc.get().uri(MY_MENUS));
 		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
-			.containsExactly("사용자 관리", "공지 관리", "파기 기록");
+			.containsExactly("사용자 관리", "공지 관리", "파기 이력");
 		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
 			.containsExactly("권한 관리", "메뉴 관리", "코드 관리", "접속 이력");
 	}
@@ -275,7 +275,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 			.hasStatus(204);
 
 		assertThat(asAdmin(mvc.get().uri(MY_MENUS))).bodyJson().extractingPath("$[0].children[*].name").asArray()
-			.containsExactly("사용자 관리", "파기 기록");
+			.containsExactly("사용자 관리", "파기 이력");
 	}
 
 	@Test
