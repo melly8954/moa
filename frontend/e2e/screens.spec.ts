@@ -85,6 +85,30 @@ test("계정 줄은 한 줄에 이름·아이디와 알림·설정 메뉴·로�
   await expectNoSeriousA11yViolations(page)
 })
 
+// moa (001 FR-005, 2026-11-22): 이름 칸은 알림 벨 왼쪽까지 남는 칸을 모두 쓰고, 넘치면 말줄임하며 툴팁으로 전체를 보인다
+test("계정 줄 이름이 길면 말줄임하고, 마우스를 올리면 툴팁으로 전체 이름과 아이디를 보인다 (moa 001 FR-005) @wide", async ({
+  page,
+}) => {
+  const name = "운영자 (접속 이력만) 아주 긴 이름"
+  const loginId = "operator-with-a-long-login-id"
+  await signedIn(page, { me: { name, loginId } })
+  await page.goto("/")
+  const footer = page.locator('[data-slot="sidebar-footer"]')
+  const shown = footer.getByText(name, { exact: true })
+  await expect(shown).toBeVisible()
+  expect(await shown.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true)
+  // 이름 칸 오른쪽 끝은 알림 벨 바로 왼쪽이다
+  const nameRight = await shown.evaluate((el) => el.getBoundingClientRect().right)
+  const bellLeft = await footer.getByRole("button", { name: /^알림/ }).evaluate((el) => el.getBoundingClientRect().left)
+  expect(bellLeft - nameRight).toBeLessThanOrEqual(8)
+
+  await shown.hover()
+  // base-ui 툴팁 내용에는 tooltip 역할이 없어 data-slot으로 찾는다
+  const tooltip = page.locator('[data-slot="tooltip-content"]')
+  await expect(tooltip).toContainText(name)
+  await expect(tooltip).toContainText(loginId)
+})
+
 test("관리자 계정이 사용자 화면(공지)을 열면 관리 셸 첫 화면으로 보낸다 (moa 001 FR-005)", async ({ page }) => {
   await signedIn(page, {
     me: { role: "ADMIN" },

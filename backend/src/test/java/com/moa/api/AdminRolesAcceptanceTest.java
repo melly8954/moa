@@ -62,14 +62,17 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC1 접속 이력 조회 역할만 받은 운영자는 관리 메뉴에 접속 이력만 본다")
+	// moa (2026-11-22): 권한 없는 관리 메뉴도 흐리게 보인다 (specs/001-admin-menus FR-002)
+	@DisplayName("US1-AC1 접속 이력 조회 역할만 받은 운영자는 관리 메뉴를 모두 보고, 접속 이력만 들어갈 수 있다")
 	void operatorSeesOnlyLoginHistoryMenu() {
 		MvcTestResult result = asOperator(mvc.get().uri("/api/v1/menus/me"));
 
 		assertThat(result).hasStatus(200);
-		assertThat(result).bodyJson().extractingPath("$[*].name").asArray().containsExactly("운영");
-		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
-			.containsExactly("접속 이력");
+		assertThat(result).bodyJson().extractingPath("$[*].name").asArray().containsExactly("운영", "설정");
+		assertThat(result).bodyJson().extractingPath("$..[?(@.accessible == true)].name").asArray()
+			.containsExactlyInAnyOrder("운영", "접속 이력");
+		assertThat(result).bodyJson().extractingPath("$..[?(@.accessible == false)].name").asArray()
+			.contains("사용자 관리", "설정", "권한 관리");
 	}
 
 	@Test
@@ -247,12 +250,14 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC4 역할을 하나도 받지 않은 관리자 계정은 관리 메뉴가 없고 관리 API는 막힌다")
+	@DisplayName("US1-AC4 역할을 하나도 받지 않은 관리자 계정은 관리 메뉴가 모두 잠겨 보이고 관리 API는 막힌다")
 	void adminWithoutRoleHasNothing() {
 		testUsers.create(OPERATOR2_ID, "operator2", "operator123!", Role.ADMIN);
 
-		assertThat(as(OPERATOR2_ID, mvc.get().uri("/api/v1/menus/me"))).hasStatus(200)
-			.bodyJson().extractingPath("$.length()").isEqualTo(0);
+		MvcTestResult menus = as(OPERATOR2_ID, mvc.get().uri("/api/v1/menus/me"));
+		assertThat(menus).hasStatus(200);
+		assertThat(menus).bodyJson().extractingPath("$[*].name").asArray().containsExactly("운영", "설정");
+		assertThat(menus).bodyJson().extractingPath("$..[?(@.accessible == true)].name").asArray().isEmpty();
 		assertThat(as(OPERATOR2_ID, mvc.get().uri(LOGIN_HISTORIES))).hasStatus(403)
 			.bodyJson().extractingPath("$.code").isEqualTo("A005");
 	}
