@@ -12,6 +12,8 @@
 
 실시간 통신은 알림(`007-notifications`)이 얹은 키트 websocket 헬퍼(STOMP)와 프론트 실시간 연결을 그대로 쓰고, 파티는 구독 경로와 구독 권한 검사만 더한다 (research.md R1, 2026-11-16에 직접 구성에서 바꿈). 동작은 모두 REST로 하고, 커밋한 뒤 STOMP로 알린다 (R2). 인원과 포지션 자리는 파티 행 락으로, "한 번에 한 파티"는 DB 유니크로 지킨다 (R6).
 
+남이 한 일(신청, 승인, 거절, 방장 이어받음, 내보내짐, 해산)이 회원에게 닿으면 007의 `NotificationApplication.notify`로 개인 알림을 보낸다 (spec.md FR-029, research.md R13, 2026-11-22). 테이블·마이그레이션은 `docs/db.md`를 따른다 (R8, data-model.md).
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3, React 19.2)
@@ -21,8 +23,8 @@
 - 프론트: 기존(TanStack Query, axios, zustand, react-hook-form + zod, next-intl, shadcn, `@stomp/stompjs`). 더하는 의존성은 없다
 
 **Storage**
-- MariaDB 11.4. 새 테이블 6개: `parties`, `party_positions`, `party_members`, `party_join_requests`, `party_bans`, `party_messages` (`V2_7__parties.sql`, research.md R8)
-- 공통코드 시드 (`V2_7_1__party_codes.sql`). 자세한 것은 [data-model.md](./data-model.md)
+- MariaDB 11.4. 새 테이블 6개: `tb_party`, `tb_party_position`, `tb_party_member`, `tb_party_join_request`, `tb_party_ban`, `tb_party_message`
+- 마이그레이션은 파일 하나 `V<다음 번호>__party.sql`에 테이블, 공통코드 시드, `tb_notification.type` COMMENT 고치기를 함께 둔다. 번호는 PR 직전에 정한다 (research.md R8). 자세한 것은 [data-model.md](./data-model.md)
 
 **Testing**
 - 테스트는 기능 코드(백엔드·프론트)를 모두 만든 뒤 PR 직전에 쓴다 (`CLAUDE.md`). tasks.md도 테스트 작업을 맨 끝 단계에 모은다
@@ -48,7 +50,7 @@
 - 계층 규칙은 ArchitectureTest를 따른다 (research.md R10)
 
 **Scale/Scope**
-- 사용자 스토리 10개, AC 67개, 화면 5개(모집, 만들기 창, 파티, 초대 입장, 내 파티)
+- 사용자 스토리 10개, AC 73개, 화면 5개(모집, 만들기 창, 파티, 초대 입장, 내 파티)
 - REST API 21개, STOMP 구독 주소 2개
 
 ## Constitution Check
@@ -58,7 +60,7 @@
 | 원칙 | 판정 | 근거 |
 |---|---|---|
 | I. 스펙이 먼저다 | 통과 | spec.md에 `[NEEDS CLARIFICATION]`이 없다. plan에서 정한 값(공통코드 초기값)은 spec.md FR-002 표에 적었다 |
-| II. AC마다 테스트 하나 | 통과 | AC 67개마다 테스트를 하나씩 둔다. 이름에 AC 번호를 적는다. 실시간 AC는 "저장"과 "전달"을 나눠 확인한다(Testing). e2e는 핵심 흐름 3개만이다 |
+| II. AC마다 테스트 하나 | 통과 | AC 73개마다 테스트를 하나씩 둔다. 이름에 AC 번호를 적는다. 실시간 AC는 "저장"과 "전달"을 나눠 확인한다(Testing). e2e는 핵심 흐름 3개만이다 |
 | III. 키트를 따른다 | 통과 | 계층·엔터티·오류·페이지 규칙은 키트 골격을 따른다. 실시간 통신은 007이 얹은 키트 websocket 헬퍼를 고치지 않고 쓴다. 구독 권한 검사는 키트 파일 밖(파티 쪽 설정)에서 더한다 (research.md R3) |
 | IV. 기존 기능은 제자리에서 고친다 | 통과 | 004의 spec.md FR-001 표와 `AdminCodesAcceptanceTest` 기대값을 그 자리에서 고친다. 새 기능 폴더는 008 하나다 |
 | V. 테스트를 고쳐서 통과시키지 않는다 | 통과 | `AdminCodesAcceptanceTest`는 스펙(004 FR-001 표)을 먼저 고친 뒤 그에 맞춰 기대값을 바꾼다. 실패를 덮으려는 수정이 아니다 |
@@ -85,6 +87,7 @@ specs/008-party/
 
 함께 고치는 문서:
 - `specs/004-admin-codes/spec.md`: FR-001 표에 파티 코드 그룹을 더한다
+- `specs/001-admin-menus/spec.md`: FR-007 메뉴 표와 FR-008 연결 화면 표에 모집·내 파티를 더한다 (2026-11-22)
 - `specs/README.md`: 경계 메모를 고친다
 
 ### Source Code (repository root)
@@ -107,24 +110,26 @@ backend/
 │       ├── repository/{reader,writer,jpa}/party/
 │       ├── entity/party/                               # Party, PartyPosition, PartyMember,
 │       │                                               #   PartyJoinRequest(승인 신청), PartyBan, PartyMessage
-│       └── dto/party/
+│       ├── dto/party/
+│       ├── screen/PartyScreens.java                    # 연결 화면 RECRUIT, MY_PARTY (spec.md FR-030, research.md R11)
+│       └── dto/notification/NotificationType.java      # 기존(007). PARTY_ 종류 6개를 더한다 (research.md R13)
 ├── src/main/resources/db/migration/
-│   ├── V2_7__parties.sql
-│   └── V2_7_1__party_codes.sql
+│   └── V<다음 번호>__party.sql                     # 테이블 6개 + 공통코드 시드 + 알림 종류 COMMENT (번호는 PR 직전)
 └── src/test/java/com/moa/
     ├── support/CodeSeed.java                           # 공통코드 시드 되돌리기 (MenuSeed와 같은 방식)
     ├── support/PartyFixtures.java                      # 파티·멤버를 바로 넣는 도우미
     ├── api/AdminCodesAcceptanceTest.java               # 기대 그룹 목록 고침
-    └── api/party/                                      # Party<스토리>AcceptanceTest, PartyRealtimeAcceptanceTest(기존 RealtimeAcceptanceTest 상속)
+    └── api/party/                                      # Party<스토리>AcceptanceTest, PartyRealtimeAcceptanceTest(기존 RealtimeAcceptanceTest 상속),
+                                                        #   PartyNotificationAcceptanceTest(FR-029)
 
 frontend/
 ├── messages/ko.json                                    # party 키(하위에 recruit 등), errors의 A101~B113, menu의 recruit·myParty
 ├── src/
 │   ├── api/party.ts, api/index.ts                      # api.v1.party
 │   ├── providers/realtime-provider.tsx                 # 기존(007). RESYNC_KEYS에 파티 쿼리, 연결 상태 훅을 더한다 (research.md R5)
+│   ├── components/notification/realtime-toasts.tsx    # 기존(007). 파티 알림의 관련 화면을 더한다 (spec.md FR-029, research.md R13)
 │   ├── lib/party-realtime.ts                           # usePartyChannel, useMyPartyQueue (기존 useRealtimeSubscription 위)
 │   ├── lib/schemas/party.ts                            # 만들기·고치기 폼 (zod)
-│   ├── components/shell/menu.ts                        # "모집", "내 파티" 코드 메뉴
 │   └── app/(main)/
 │       ├── recruit/                                    # 모집 페이지 + 파티 만들기 창
 │       ├── parties/[id]/                               # 파티 화면 (정보, 멤버, 채팅, 방장 동작, 참가 창)
@@ -134,7 +139,7 @@ frontend/
 └── e2e/party.spec.ts
 ```
 
-**Structure Decision**: 백엔드는 기존 `com.moa.api` 계층을 그대로 쓰고 도메인 이름은 `party`이다. 실시간 기반은 007이 얹은 키트 `common/websocket`과 프론트 `RealtimeProvider`를 함께 쓴다. 프론트는 `(main)` 아래에 사용자 화면을 두고, 메뉴는 코드 메뉴로 더한다 (research.md R11).
+**Structure Decision**: 백엔드는 기존 `com.moa.api` 계층을 그대로 쓰고 도메인 이름은 `party`이다. 실시간 기반은 007이 얹은 키트 `common/websocket`과 프론트 `RealtimeProvider`를 함께 쓴다. 프론트는 `(main)` 아래에 사용자 화면을 두고, 메뉴는 연결 화면(`PartyScreens`)과 서버 사용자 메뉴로 더한다 (research.md R11).
 
 ## Complexity Tracking
 

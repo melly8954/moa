@@ -47,7 +47,7 @@
 | `GET /parties/invites/{code}` | 누구나 | 200 InvitePreview | B107 (없는 코드, 바뀐 코드, 해산) | 화면 "초대 입장 화면" |
 | `POST /parties/invites/{code}/members` `{positionCode?, tierCode?}` | 비멤버 | 200 PartyDetail. 방식과 상관없이 바로 멤버. 그 회원의 대기 신청은 모두 CANCELLED | B107, B101, B102, B103, B104, B105, B106 | US4-AC2~AC7 |
 | `DELETE /parties/{id}/members/me` | 멤버 | 204. 방장이면 다음 방장으로 넘김. 마지막이면 해산 | A102 | US6-AC1~AC5 |
-| `DELETE /parties/{id}/members/{userId}` | 방장 | 204. party_bans에 KICKED | A101, R001 (멤버 아님), B113 (자기 자신) | US7-AC5 |
+| `DELETE /parties/{id}/members/{userId}` | 방장 | 204. tb_party_ban에 KICKED | A101, R001 (멤버 아님), B113 (자기 자신) | US7-AC5 |
 
 멤버가 되는 모든 길(참가, 승인, 초대 입장)에서 처리 순서는 같다.
 
@@ -69,7 +69,7 @@
 | `POST /parties/{id}/join-requests` `{positionCode?, tierCode?}` | APPROVAL 파티의 비멤버 | 201 `{joinRequestId}` PENDING | B101, B102, B103 (다른 파티에 속함), B104, B105, B106, B108 (이미 대기 중), B112 (APPROVAL이 아님) | US5-AC1, US5-AC7 |
 | `GET /parties/{id}/join-requests` | 방장 | 200 `[{joinRequestId, user, positionCode, tierCode, appliedAt}]` 대기 중만 신청순 | A101 | US5-AC2, US5-AC8 |
 | `POST /parties/{id}/join-requests/{joinRequestId}/approve` | 방장 | 200 PartyDetail | A101, B101, B105, B103 (신청자가 그사이 다른 파티에 들어감), R001 (대기 중이 아님) | US5-AC3, US5-AC5 |
-| `POST /parties/{id}/join-requests/{joinRequestId}/reject` | 방장 | 204. party_bans에 REJECTED | A101, R001 | US5-AC4 |
+| `POST /parties/{id}/join-requests/{joinRequestId}/reject` | 방장 | 204. tb_party_ban에 REJECTED | A101, R001 | US5-AC4 |
 | `DELETE /parties/{id}/join-requests/me` | 신청자 | 204. CANCELLED | R001 (대기 신청 없음) | US5-AC6 |
 
 ## 내 파티

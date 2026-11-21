@@ -33,6 +33,13 @@
 | `KICKED` | user queue | `{partyId}` | 알리고 모집 페이지로 보낸다 | US9-AC8 |
 | `JOIN_REQUESTS_CHANGED` | 방장의 user queue | `{pendingCount}` | 신청 목록을 다시 불러온다 | US9-AC9 |
 
+## 개인 알림과의 관계
+
+위 이벤트는 파티 화면을 바꾸는 것이다. 회원에게 가는 개인 알림(벨, 토스트, 브라우저 알림)은 따로 007의 `/user/queue/notifications`로 간다 (spec.md FR-029, research.md R13).
+
+- 내보내지거나 해산되면 둘 다 간다: 파티 화면은 `KICKED`·`PARTY_DISSOLVED` 이벤트로 알리고 모집 페이지로 보낸다. 벨에는 `PARTY_KICKED`·`PARTY_DISSOLVED` 알림이 쌓인다
+- 그 파티 화면을 보고 있었으면 알림 토스트는 띄우지 않는다 (007 FR-007, FR-029 관련 화면)
+
 ## 확인 방법
 
 - 구독 권한과 이벤트 전달은 기존 `RealtimeAcceptanceTest`를 상속한 `PartyRealtimeAcceptanceTest`에서 STOMP 클라이언트로 확인한다 (plan.md Testing)
