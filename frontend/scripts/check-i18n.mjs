@@ -30,7 +30,7 @@ function* files(dir) {
 function stripComments(text) {
   return text
     .replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, " "))
-    .split("\n")
+    .split(/\r?\n/) // Windows에서 CRLF로 받은 파일도 줄 끝 주석이 지워지게
     .map((line) => line.replace(/(^|[^:])\/\/.*$/, "$1"))
 }
 
