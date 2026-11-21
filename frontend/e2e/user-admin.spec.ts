@@ -1,10 +1,11 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Locator, type Page, test } from "@playwright/test"
 import { signedIn } from "./support/api"
 import { expectNoHorizontalOverflow, expectNoSeriousA11yViolations } from "./support/layout"
 
 // 사용자 관리 (user-admin 헬퍼). 백엔드 대신 API를 가로챈다. 나는 id 2 (e2e), 보안 담당 역할을 받은 운영자다
 // moa (specs/002-admin-users FR-005~FR-007, research R11·R12, 2026-11-21): 계정 종류는 회원(USER)·관리자(ADMIN)
-//   관리자 계정은 드로어에서 역할을 체크해 준다. 다룰 수 없는 계정(protection)은 단추가 꺼지고 이유가 보인다
+//   관리자 계정은 드로어에서 역할을 체크해 준다. 다룰 수 없는 계정(protection)은 칸·스위치·단추가 꺼지고 이유가 보인다
+//   2026-11-22: 드로어는 한 폼(이름·계정 종류·역할) + 계정 상태(로그인 막기·비밀번호 초기화) + 계정 삭제 (FR-007, research R16)
 
 type RoleRef = { id: number; name: string }
 const user = (
@@ -87,9 +88,10 @@ const ROLES = [
   },
 ]
 
-type Sent = { roles?: unknown }
+// 보낸 요청 (순서대로). 드로어 한 폼은 이름 → 계정 종류 → 역할 차례로 보낸다 (research R16)
+type Sent = { calls: string[]; name?: unknown; role?: unknown; roles?: unknown }
 
-async function mock(page: Page, { roleManage = true, sent = {} as Sent, users = USERS, meId = 2 } = {}) {
+async function mock(page: Page, { roleManage = true, sent = { calls: [] } as Sent, users = USERS, meId = 2 } = {}) {
   await signedIn(page, {
     me: { id: meId, role: "ADMIN" },
     permissions: roleManage ? ["USER_MANAGE", "ROLE_MANAGE", "LOGIN_HISTORY_READ"] : ["USER_MANAGE"],
@@ -105,8 +107,24 @@ async function mock(page: Page, { roleManage = true, sent = {} as Sent, users = 
       : route.fulfill({ json: list }),
   )
   await page.route("**/api/v1/admin/roles", (route) => route.fulfill({ json: ROLES }))
+  await page.route("**/api/v1/admin/users/*", (route) => {
+    if (route.request().method() !== "PUT") return route.fallback()
+    sent.calls.push("name")
+    sent.name = route.request().postDataJSON()
+    return route.fulfill({ json: USERS[0] })
+  })
+  await page.route("**/api/v1/admin/users/*/role", (route) => {
+    sent.calls.push("role")
+    sent.role = route.request().postDataJSON()
+    return route.fulfill({ json: USERS[0] })
+  })
+  await page.route("**/api/v1/admin/users/*/lock", (route) => {
+    sent.calls.push(`lock:${route.request().method()}`)
+    return route.fulfill({ status: 204 })
+  })
   await page.route("**/api/v1/admin/users/*/roles", (route) => {
     if (route.request().method() === "PUT") {
+      sent.calls.push("roles")
       sent.roles = route.request().postDataJSON()
       return route.fulfill({ status: 204 })
     }
@@ -116,12 +134,20 @@ async function mock(page: Page, { roleManage = true, sent = {} as Sent, users = 
   })
 }
 
-// moa: 행의 "관리" 메뉴 대신 아이디를 누르면 드로어가 열린다 (specs/002-admin-users FR-007)
+// moa: 행 아무 곳이나 누르면 드로어가 열린다 (specs/002-admin-users FR-007, 2026-11-22). 이름 칸을 누른다
 //   사이드바의 내 계정 메뉴도 이름이 아이디라서 목록 영역 안에서 찾는다 (목록이 뜨기를 기다리는 효과도 있다)
 const openUser = async (page: Page, loginId: string) => {
-  await page.getByRole("region", { name: "사용자 관리" }).getByRole("button", { name: loginId, exact: true }).click()
+  const row = page
+    .getByRole("region", { name: "사용자 관리" })
+    .getByRole("row")
+    .filter({ has: page.getByRole("button", { name: loginId, exact: true }) })
+  await row.getByRole("cell").nth(1).click()
   return page.getByRole("dialog")
 }
+
+// 드로어의 칸 (2026-11-22 한 폼 + 계정 상태 + 계정 삭제)
+const accountType = (drawer: Locator) => drawer.getByRole("group", { name: "계정 종류" })
+const loginBlock = (drawer: Locator) => drawer.getByRole("switch", { name: "로그인 막기" })
 
 test("사용자 관리: 가로 넘침·접근성", async ({ page }) => {
   await mock(page)
@@ -149,35 +175,51 @@ test("US3-AC1 목록의 계정 종류는 회원·관리자이고, 역할 열은 
   await expect(page.getByRole("cell", { name: "역할 없음", exact: true })).toBeVisible()
 })
 
-test("US3-AC2 내 행 드로어는 계정 종류·잠그기·삭제가 꺼져 있고 행의 관리 메뉴 단추는 없다", async ({ page }) => {
+test("FR-007 아이디는 밑줄 없는 단추이고, 행의 다른 칸을 눌러도 드로어가 열린다", async ({ page }) => {
+  await mock(page)
+  await page.goto("/admin/users")
+  const id = page.getByRole("region", { name: "사용자 관리" }).getByRole("button", { name: "lee", exact: true })
+  await id.hover()
+  await expect(id).toHaveCSS("text-decoration-line", "none")
+  const drawer = await openUser(page, "lee")
+  await expect(drawer.getByRole("heading", { name: "lee" })).toBeVisible()
+})
+
+test("US3-AC2 내 행 드로어는 계정 종류·로그인 막기·삭제가 꺼져 있고 이름은 고칠 수 있다", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/users")
   await expect(page.getByRole("button", { name: /관리$/ })).toHaveCount(0)
   const drawer = await openUser(page, "e2e")
-  await expect(drawer.getByRole("button", { name: "계정 종류 바꾸기" })).toBeDisabled()
-  await expect(drawer.getByRole("button", { name: "잠그기" })).toBeDisabled()
+  for (const button of await accountType(drawer).getByRole("button").all()) await expect(button).toBeDisabled()
+  await expect(loginBlock(drawer)).toBeDisabled()
   await expect(drawer.getByRole("button", { name: "삭제" })).toBeDisabled()
-  await expect(drawer.getByRole("button", { name: "이름 바꾸기" })).toBeEnabled()
+  await expect(drawer.getByLabel("이름")).toBeEnabled()
+  // 바꾼 것이 없으면 저장이 꺼져 있다
+  await expect(drawer.getByRole("button", { name: "저장" })).toBeDisabled()
 })
 
-test("US3-AC2·AC3 관리자 계정 드로어에서 역할을 체크해 저장한다. 줄 수 없는 역할은 꺼진 채 이유가 보인다", async ({
+test("US3-AC2·AC3 이름과 역할을 한 폼에서 고쳐 저장 한 번으로 보낸다. 최고 관리자 역할은 목록에 없다", async ({
   page,
 }) => {
-  const sent: Sent = {}
+  const sent: Sent = { calls: [] }
   await mock(page, { sent })
   await page.goto("/admin/users")
   const drawer = await openUser(page, "norole")
   await expect(drawer.getByRole("checkbox", { name: "보안 담당" })).not.toBeChecked()
   await expect(drawer.getByText("접속 이력 조회", { exact: false })).toBeVisible()
-  await expect(drawer.getByRole("checkbox", { name: "최고 관리자" })).toBeDisabled()
+  await expect(drawer.getByRole("checkbox", { name: "최고 관리자" })).toHaveCount(0)
   await expect(drawer.getByRole("checkbox", { name: "공지 담당" })).toBeDisabled()
   await expect(drawer.getByText(/내가 갖지 않은 권한이 들어 있어요/)).toBeVisible()
   await expect(drawer.getByRole("link", { name: "권한 관리" })).toHaveAttribute("href", "/admin/roles")
   await expectNoSeriousA11yViolations(page)
 
+  await drawer.getByLabel("이름").fill("박운영자")
   await drawer.getByRole("checkbox", { name: "보안 담당" }).click()
-  await drawer.getByRole("button", { name: "역할 저장" }).click()
-  await expect.poll(() => sent.roles).toEqual({ roleIds: [1] })
+  await drawer.getByRole("button", { name: "저장" }).click()
+  await expect(page.getByText("저장했어요.")).toBeVisible()
+  expect(sent.calls).toEqual(["name", "roles"])
+  expect(sent.name).toEqual({ name: "박운영자" })
+  expect(sent.roles).toEqual({ roleIds: [1] })
 })
 
 test("US3-AC4 회원 드로어에는 역할 체크 칸 대신 계정 종류를 바꾸라는 안내가 있다", async ({ page }) => {
@@ -187,20 +229,40 @@ test("US3-AC4 회원 드로어에는 역할 체크 칸 대신 계정 종류를 �
   await expect(
     drawer.getByText("회원은 역할을 받지 않아요. 계정 종류를 관리자로 바꾸면 역할을 줄 수 있어요."),
   ).toBeVisible()
-  await expect(drawer.getByRole("button", { name: "역할 저장" })).toHaveCount(0)
+  await expect(drawer.getByRole("checkbox")).toHaveCount(0)
 })
 
-test("US4-AC3 최고 관리자 계정은 바꿀 수 없어 단추가 모두 꺼져 있고 이유가 보인다", async ({ page }) => {
+test("US3-AC4 회원을 관리자로 고르면 역할 체크 칸이 나타나고, 확인 뒤 계정 종류를 바꾸고 역할을 준다", async ({
+  page,
+}) => {
+  const sent: Sent = { calls: [] }
+  await mock(page, { sent })
+  await page.goto("/admin/users")
+  const drawer = await openUser(page, "kim")
+  await accountType(drawer).getByRole("button", { name: "관리자" }).click()
+  await drawer.getByRole("checkbox", { name: "보안 담당" }).click()
+  await drawer.getByRole("button", { name: "저장" }).click()
+  const confirmDialog = page.getByRole("alertdialog", { name: "kim의 계정 종류를 관리자(으)로 바꿀까요?" })
+  await expect(confirmDialog).toContainText("바꾸면 그 계정은 로그아웃돼요")
+  await confirmDialog.getByRole("button", { name: "확인" }).click()
+  await expect.poll(() => sent.calls).toEqual(["role", "roles"])
+  expect(sent.role).toEqual({ role: "ADMIN" })
+  expect(sent.roles).toEqual({ roleIds: [1] })
+})
+
+test("US4-AC3 최고 관리자 계정은 바꿀 수 없어 칸·스위치·단추가 모두 꺼져 있고 이유가 보인다", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/users")
   const drawer = await openUser(page, "admin")
   await expect(drawer.getByText("최고 관리자 계정은 바꿀 수 없어요. 바꾸려면 개발자에게 요청해요.")).toBeVisible()
-  for (const name of ["이름 바꾸기", "계정 종류 바꾸기", "잠그기", "비밀번호 초기화", "삭제"])
-    await expect(drawer.getByRole("button", { name })).toBeDisabled()
+  await expect(drawer.getByLabel("이름")).toBeDisabled()
+  for (const button of await accountType(drawer).getByRole("button").all()) await expect(button).toBeDisabled()
+  await expect(loginBlock(drawer)).toBeDisabled()
+  for (const name of ["초기화", "삭제"]) await expect(drawer.getByRole("button", { name })).toBeDisabled()
 })
 
 // 2026-11-21 한 명 고정 (specs/002-admin-users FR-007, research R13·R15)
-test("FR-007 최고 관리자 본인 행은 이름 바꾸기만 켜지고, 역할 칸은 '최고 관리자 (모든 권한)'만 보인다", async ({
+test("FR-007 최고 관리자 본인 행은 이름만 고칠 수 있고, 역할 칸은 '최고 관리자 (모든 권한)'만 보인다", async ({
   page,
 }) => {
   // 나(id 1)가 최고 관리자다. 내 행은 protection이 없다
@@ -211,9 +273,10 @@ test("FR-007 최고 관리자 본인 행은 이름 바꾸기만 켜지고, 역�
   await expect(
     drawer.getByText("최고 관리자 계정은 이름만 바꿀 수 있어요. 비밀번호는 비밀번호 변경에서 바꿔요."),
   ).toBeVisible()
-  await expect(drawer.getByRole("button", { name: "이름 바꾸기" })).toBeEnabled()
-  for (const name of ["계정 종류 바꾸기", "잠그기", "비밀번호 초기화", "삭제"])
-    await expect(drawer.getByRole("button", { name })).toBeDisabled()
+  await expect(drawer.getByLabel("이름")).toBeEnabled()
+  for (const button of await accountType(drawer).getByRole("button").all()) await expect(button).toBeDisabled()
+  await expect(loginBlock(drawer)).toBeDisabled()
+  for (const name of ["초기화", "삭제"]) await expect(drawer.getByRole("button", { name })).toBeDisabled()
   await expect(drawer.getByText("최고 관리자 (모든 권한)")).toBeVisible()
   await expect(drawer.getByRole("checkbox")).toHaveCount(0)
 })
@@ -227,21 +290,45 @@ test("US4-AC4 권한 관리 권한이 없으면 역할은 이름만 보이고 �
   await expect(drawer.getByRole("checkbox")).toHaveCount(0)
 })
 
-test("US4-AC5 관리자 계정을 회원으로 바꾸려 하면 빠질 역할을 알린다", async ({ page }) => {
-  await mock(page)
+test("US4-AC5 관리자 계정을 회원으로 고르면 빠질 역할을 알리고, 저장 전에 한 번 더 묻는다", async ({ page }) => {
+  const sent: Sent = { calls: [] }
+  await mock(page, { sent })
   await page.goto("/admin/users")
   const drawer = await openUser(page, "lee")
-  await drawer.getByRole("button", { name: "계정 종류 바꾸기" }).click()
-  const dialog = page.getByRole("dialog", { name: "계정 종류 바꾸기" })
-  await dialog.getByLabel("계정 종류").selectOption("USER")
-  await expect(dialog.getByText(/받은 역할\(공지 담당\)이 모두 빠지고/)).toBeVisible()
+  await accountType(drawer).getByRole("button", { name: "회원" }).click()
+  await expect(drawer.getByText(/받은 역할\(공지 담당\)이 모두 빠지고/)).toBeVisible()
+  await drawer.getByRole("button", { name: "저장" }).click()
+  const confirmDialog = page.getByRole("alertdialog")
+  await expect(confirmDialog).toContainText(/받은 역할\(공지 담당\)이 모두 빠지고/)
+  await confirmDialog.getByRole("button", { name: "취소" }).click()
+  await expect(confirmDialog).toBeHidden()
+  expect(sent.calls).toEqual([])
 })
 
-test("비밀번호 없는 계정은 초기화가 꺼져 있다", async ({ page }) => {
+test("계정 상태: 로그인 막기 스위치는 잠김을 보이고, 켜면 확인 뒤 바로 막는다", async ({ page }) => {
+  const sent: Sent = { calls: [] }
+  await mock(page, { sent })
+  await page.goto("/admin/users")
+  const kim = await openUser(page, "kim")
+  await expect(loginBlock(kim)).toBeChecked()
+  await page.keyboard.press("Escape")
+  await expect(kim).toBeHidden()
+
+  const drawer = await openUser(page, "lee")
+  await expect(loginBlock(drawer)).not.toBeChecked()
+  await loginBlock(drawer).click()
+  const confirmDialog = page.getByRole("alertdialog", { name: "lee 계정의 로그인을 막을까요?" })
+  await confirmDialog.getByRole("button", { name: "확인" }).click()
+  await expect.poll(() => sent.calls).toEqual(["lock:PUT"])
+  await expect(page.getByText("로그인을 막았어요.")).toBeVisible()
+})
+
+test("비밀번호 없는 계정은 초기화가 꺼져 있고 이유가 보인다", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/users")
   const drawer = await openUser(page, "kim")
-  await expect(drawer.getByRole("button", { name: "비밀번호 초기화" })).toBeDisabled()
+  await expect(drawer.getByRole("button", { name: "초기화" })).toBeDisabled()
+  await expect(drawer.getByText("비밀번호 없이 로그인하는 계정이에요.")).toBeVisible()
 })
 
 test("만들기도 드로어에서 하고(계정 종류는 회원·관리자) 임시 비밀번호를 드로어 안에 한 번 보인다", async ({ page }) => {
