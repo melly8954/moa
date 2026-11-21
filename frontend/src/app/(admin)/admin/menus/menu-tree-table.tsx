@@ -39,6 +39,8 @@ import { isGroup, type MenuRow, rowsOf } from "./menu-order"
 //   손잡이는 키보드로도 옮긴다 (스페이스로 집고 화살표로 옮기고 스페이스로 놓기)
 //   하위 메뉴가 있는 상위 메뉴는 메뉴명 칸 끝의 "N개" 단추로 접고 편다. 이 단추는 접기만 하고 상세를 열지 않는다 (2026-11-21)
 //   접힌 하위 메뉴는 그리지 않고 끌기 대상에서도 빠진다. 고른 상태는 그대로다
+//   처음에는 하위 메뉴가 있는 첫 상위 메뉴만 펼친다. 대상 탭을 바꾸면 부르는 쪽이 key로 다시 그려 처음 상태로 돌아간다
+//   하위 메뉴의 손잡이는 마우스를 그 행에 올리거나 키보드가 닿을 때만 보인다. 상위 메뉴 손잡이와 터치 화면은 늘 보인다
 export function MenuTreeTable({
   tree,
   selected,
@@ -60,8 +62,13 @@ export function MenuTreeTable({
 }) {
   const t = useTranslations("menuAdmin")
   const allRows = rowsOf(tree)
-  // 접은 상위 메뉴 id. 처음에는 모두 펼친다
-  const [collapsed, setCollapsed] = useState<number[]>([])
+  // 접은 상위 메뉴 id. 처음에는 하위 메뉴가 있는 첫 상위 메뉴만 펼친다 (FR-010, 2026-11-21)
+  const [collapsed, setCollapsed] = useState<number[]>(() =>
+    tree
+      .filter((m) => m.children.length > 0)
+      .slice(1)
+      .map((m) => m.id),
+  )
   const rows = allRows.filter((r) => r.depth === 0 || !collapsed.includes(r.menu.parentId ?? -1))
   const toggleOpen = (id: number) =>
     setCollapsed(collapsed.includes(id) ? collapsed.filter((c) => c !== id) : [...collapsed, id])
@@ -139,6 +146,10 @@ export function MenuTreeTable({
   )
 }
 
+// 마우스를 올릴 수 있는 화면에서만 숨기고, 행에 마우스가 오거나 손잡이에 키보드가 닿으면 보인다
+const HIDDEN_UNTIL_HOVER =
+  "[@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 [@media(hover:hover)]:focus-within:opacity-100"
+
 function nameOf(rows: MenuRow[], id: string | number): string {
   return rows.find((r) => r.menu.id === Number(id))?.menu.name ?? ""
 }
@@ -175,7 +186,7 @@ function SortableMenuRow({
     <TableRow
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn(ROW_CLICKABLE, active && "bg-muted", isDragging && "relative z-10 bg-muted")}
+      className={cn("group/row", ROW_CLICKABLE, active && "bg-muted", isDragging && "relative z-10 bg-muted")}
       aria-current={active ? "true" : undefined}
       data-state={checked ? "selected" : undefined}
       onClick={openOnRowClick(onOpen)}
@@ -188,12 +199,15 @@ function SortableMenuRow({
         />
       </TableCell>
       <TableCell>
-        <DragHandle
-          activatorRef={setActivatorNodeRef}
-          attributes={attributes}
-          listeners={listeners}
-          label={t("dragOf", { name: menu.name })}
-        />
+        {/* 하위 메뉴 손잡이는 마우스를 올리거나 키보드가 닿을 때만 (마우스를 올릴 수 있는 화면에서만 숨긴다) */}
+        <span className={cn("inline-flex", depth === 1 && HIDDEN_UNTIL_HOVER)}>
+          <DragHandle
+            activatorRef={setActivatorNodeRef}
+            attributes={attributes}
+            listeners={listeners}
+            label={t("dragOf", { name: menu.name })}
+          />
+        </span>
       </TableCell>
       <TableCell>
         <div className={cn("flex min-w-0 items-center gap-2", depth === 1 && "pl-6")}>

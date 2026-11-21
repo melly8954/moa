@@ -206,6 +206,7 @@ export default function MenusPage() {
           <QueryState query={tree} isEmpty={(d) => !d.some((m) => m.audience === audience)} empty={t("empty")}>
             {() => (
               <MenuTreeTable
+                key={audience}
                 tree={ofAudience}
                 className="min-h-0 overflow-y-auto lg:flex-1"
                 selected={selected}

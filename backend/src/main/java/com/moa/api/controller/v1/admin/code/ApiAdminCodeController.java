@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -101,6 +102,14 @@ public class ApiAdminCodeController {
 	public ResponseEntity<CodeListResponse> modifyCode(@PathVariable String groupCode, @PathVariable String code,
 		@Valid @RequestBody CodeModifyRequest request) {
 		return ResponseEntity.ok(CodeListResponse.from(codeApplication.modifyCode(request.toCommand(groupCode, code))));
+	}
+
+	@Operation(summary = "moa: 사용 안 함 코드 지우기",
+		description = "사용 안 함 항목만 지운다(소프트 삭제). 사용 중이면 B001, 없으면 R001 (specs/004-admin-codes FR-008)")
+	@DeleteMapping("/code-groups/{groupCode}/codes/{code}")
+	public ResponseEntity<Void> deleteCode(@PathVariable String groupCode, @PathVariable String code) {
+		codeApplication.deleteCode(groupCode, code);
+		return ResponseEntity.noContent().build();
 	}
 
 	@Operation(summary = "moa: 그룹 안 순서 한꺼번에", description = "다른 그룹의 코드가 섞이면 R001, 아무것도 바꾸지 않는다")

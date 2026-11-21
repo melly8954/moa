@@ -16,7 +16,7 @@ import com.moa.support.AcceptanceTest;
 
 /**
  * 공통코드. 스펙 specs/004-admin-codes의 수용 시나리오다.
- * 그룹은 DB에 두고 관리자가 다룬다. 그룹과 항목은 지우지 않고 사용 여부로 끈다 (FR-008).
+ * 그룹은 DB에 두고 관리자가 다룬다. 그룹은 지우지 않고 사용 여부로 끄며, 항목은 사용 안 함일 때만 지운다 (FR-008).
  * 각 테스트는 그룹 둘을 API로 만들고 시작한다 (research R13). US1-AC6은 그룹을 만들지 않은 상태를 따로 본다.
  * US1-AC10(저장하지 않은 변경 묻기)은 화면 동작이라 e2e가 본다
  */
@@ -169,7 +169,7 @@ class AdminCodesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC8 그룹은 이름·설명·사용 여부를 고치고 그룹 코드는 그대로다. 그룹과 항목을 지우는 API는 없다")
+	@DisplayName("US1-AC8 그룹은 이름·설명·사용 여부를 고치고 그룹 코드는 그대로다. 그룹을 지우는 API는 없다")
 	void modifyGroup() {
 		item(GENRE, "FPS", "FPS");
 
@@ -181,7 +181,6 @@ class AdminCodesAcceptanceTest extends AcceptanceTest {
 		assertThat(modified).bodyJson().extractingPath("$.name").isEqualTo("게임 장르");
 		assertThat(modified).bodyJson().extractingPath("$.description").isEqualTo("장르");
 		assertThat(admin(mvc.delete().uri(GROUPS + "/" + GENRE_GROUP))).hasStatus(405);
-		assertThat(admin(mvc.delete().uri(GENRE + "/FPS"))).hasStatus(405);
 	}
 
 	@Test
@@ -204,6 +203,34 @@ class AdminCodesAcceptanceTest extends AcceptanceTest {
 
 		assertThat(screenCodes(REASON_GROUP)).bodyJson().extractingPath("$[*].name").asArray()
 			.containsExactly("욕설", "광고");
+	}
+
+	@Test
+	@DisplayName("US1-AC11 사용 안 함 항목만 지운다. 지우면 관리·화면용 목록에서 빠지고 같은 코드로 다시 만든다. 사용 중이면 B001, 없으면 R001")
+	void deleteDisabledCode() {
+		item(GENRE, "FPS", "FPS");
+		item(GENRE, "TYPO", "오타");
+
+		assertThat(admin(mvc.delete().uri(GENRE + "/TYPO"))).hasStatus(409).bodyJson().extractingPath("$.code")
+			.isEqualTo("B001");
+		assertThat(admin(mvc.get().uri(GENRE))).bodyJson().extractingPath("$[*].code").asArray()
+			.containsExactly("FPS", "TYPO");
+
+		put(GENRE + "/TYPO", "{\"name\":\"오타\",\"enabled\":false}");
+		assertThat(admin(mvc.delete().uri(GENRE + "/TYPO"))).hasStatus(204);
+
+		assertThat(admin(mvc.get().uri(GENRE))).bodyJson().extractingPath("$[*].code").asArray()
+			.containsExactly("FPS");
+		assertThat(mvc.get().uri("/api/v1/codes/" + GENRE_GROUP + "?includeDisabled=true")
+			.header(HttpHeaders.AUTHORIZATION, bearer(3L, "USER"))).bodyJson().extractingPath("$[*].code").asArray()
+			.containsExactly("FPS");
+		// 소프트 삭제라 줄은 남는다
+		assertThat(jdbcTemplate.queryForObject(
+			"SELECT COUNT(*) FROM tb_code WHERE group_code = ? AND code = 'TYPO' AND deleted_at IS NOT NULL",
+			Integer.class, GENRE_GROUP)).isEqualTo(1);
+		assertThat(item(GENRE, "TYPO", "다시")).hasStatus(201);
+		assertThat(admin(mvc.delete().uri(GENRE + "/NONE"))).hasStatus(404).bodyJson().extractingPath("$.code")
+			.isEqualTo("R001");
 	}
 
 	@Test

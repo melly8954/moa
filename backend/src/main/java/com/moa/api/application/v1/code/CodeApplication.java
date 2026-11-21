@@ -90,6 +90,13 @@ public class CodeApplication {
 			command.enabled());
 	}
 
+	/** moa: 사용 안 함 항목 지우기 (FR-008, 2026-11-21) */
+	@Transactional
+	@CacheEvict(value = CACHE, key = "#groupCode")
+	public void deleteCode(String groupCode, String code) {
+		codeService.deleteCode(groupCode, code, currentActor.id());
+	}
+
 	/** moa: 한 그룹 안 일괄 사용·사용 안 함 (FR-005). 하나라도 틀리면 아무것도 바꾸지 않는다 */
 	@Transactional
 	@CacheEvict(value = CACHE, key = "#groupCode")

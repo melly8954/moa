@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
 import { BulkToolbar } from "@/components/kit/bulk-toolbar"
+import { confirm } from "@/components/kit/confirm-dialog"
 import { PageHeader } from "@/components/kit/page-header"
 import { QueryState } from "@/components/kit/query-state"
 import { StatusText } from "@/components/kit/status-text"
@@ -172,6 +173,21 @@ export default function CodesPage() {
                   }
                   toast.success(t("codeCreated"))
                   await refresh(group.groupCode)
+                }}
+                onDelete={async (code) => {
+                  const ok = await confirm({
+                    title: t("deleteTitle", { name: code.name }),
+                    description: t("deleteDescription", { code: code.code }),
+                    confirmLabel: t("delete"),
+                    destructive: true,
+                  })
+                  if (!ok) return
+                  setSelection((s) => ({ ...s, codes: s.codes.filter((c) => c !== code.code) }))
+                  run.mutate({
+                    group: group.groupCode,
+                    action: () => api.v1.code.admin.deleteCode(group.groupCode, code.code),
+                    done: t("deleted", { name: code.name }),
+                  })
                 }}
                 disabled={run.isPending}
               />

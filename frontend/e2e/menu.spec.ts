@@ -385,6 +385,45 @@ test("FR-010 상위 메뉴 행 끝의 개수 단추는 하위 메뉴를 접고 �
   await expect(detail(page, "메뉴 수정")).toBeVisible()
 })
 
+test("FR-010 처음에는 하위 메뉴가 있는 첫 상위 메뉴만 펼친다 @wide", async ({ page }) => {
+  await mock(page)
+  // 하위 메뉴가 있는 상위 메뉴를 둘로 만든다 (나중에 등록한 가로채기가 먼저 잡는다)
+  const second = menu(10, "설정", null, "settings", 30, {
+    children: [menu(11, "역할", "ADMIN_MENUS", "shield", 10, { parentId: 10 })],
+  })
+  await page.route("**/api/v1/admin/menus", (route) =>
+    route.fulfill({ json: ADMIN_MENUS.map((m) => (m.id === 10 ? second : m)) }),
+  )
+  await page.goto("/admin/menus")
+  await expect(nameButton(page, "코드")).toBeVisible()
+  await expect(page.getByRole("button", { name: "설정 하위 메뉴 1개 펼치기" })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  )
+  await expect(nameButton(page, "역할")).toHaveCount(0)
+  // 대상 탭을 오가도 처음 상태로 돌아간다
+  await page.getByRole("button", { name: "설정 하위 메뉴 1개 펼치기" }).click()
+  await page.getByRole("tab", { name: "사용자 메뉴" }).click()
+  await page.getByRole("tab", { name: "관리자 메뉴" }).click()
+  await expect(nameButton(page, "역할")).toHaveCount(0)
+})
+
+test("FR-010 하위 메뉴 손잡이는 마우스를 올리거나 키보드가 닿을 때만 보이고, 상위 메뉴 손잡이는 늘 보인다 @wide", async ({
+  page,
+}) => {
+  await mock(page)
+  await page.goto("/admin/menus")
+  const child = page.getByRole("button", { name: "코드 옮기기" })
+  await expect(child.locator("..")).toHaveCSS("opacity", "0")
+  await expect(page.getByRole("button", { name: "운영 옮기기" }).locator("..")).toHaveCSS("opacity", "1")
+  await menuRow(page, "코드").hover()
+  await expect(child.locator("..")).toHaveCSS("opacity", "1")
+  await page.mouse.move(0, 0)
+  await expect(child.locator("..")).toHaveCSS("opacity", "0")
+  await child.focus()
+  await expect(child.locator("..")).toHaveCSS("opacity", "1")
+})
+
 test("FR-011 머리 설명에 역할 관리로 가는 링크가 있다", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/menus")
