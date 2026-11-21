@@ -13,10 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.moa.api.application.v1.code.CodeApplication;
+import com.moa.api.controller.v1.admin.code.request.CodeBulkEnabledRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeCreateRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeEnabledRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeGroupCreateRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeGroupModifyRequest;
+import com.moa.api.controller.v1.admin.code.request.CodeGroupOrderRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeModifyRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeOrderRequest;
 import com.moa.api.controller.v1.admin.code.response.CodeGroupListResponse;
@@ -65,7 +67,23 @@ public class ApiAdminCodeController {
 		return ResponseEntity.ok(CodeGroupListResponse.from(codeApplication.modifyGroup(request.toCommand(groupCode))));
 	}
 
-	@Operation(summary = "moa: 공통코드 트리", description = "그룹마다(만든 순서) 항목(사용 안 함 포함, 정렬 순서대로)")
+	@Operation(summary = "moa: 그룹 순서 한꺼번에",
+		description = "없는 그룹이 섞이면 R001, 아무것도 바꾸지 않는다 (specs/004-admin-codes FR-005)")
+	@PutMapping("/code-groups/order")
+	public ResponseEntity<Void> reorderGroups(@RequestBody @NotEmpty List<@Valid CodeGroupOrderRequest> request) {
+		codeApplication.reorderGroups(request.stream().map(CodeGroupOrderRequest::toDto).toList());
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "moa: 그룹과 항목의 사용 여부 한꺼번에",
+		description = "여러 그룹에 걸쳐 그룹과 항목을 섞어 켜고 끈다. 하나라도 없으면 R001, 아무것도 바꾸지 않는다. 둘 다 비면 V001 (FR-005)")
+	@PutMapping("/code-groups/enabled")
+	public ResponseEntity<Void> setEnabledBulk(@Valid @RequestBody CodeBulkEnabledRequest request) {
+		codeApplication.setEnabled(request.groupCodesOrEmpty(), request.codeKeys(), request.enabled());
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "moa: 공통코드 트리", description = "그룹마다(그룹 순서, 같으면 만든 순서) 항목(사용 안 함 포함, 정렬 순서대로)")
 	@GetMapping("/code-groups/tree")
 	public ResponseEntity<List<CodeGroupTreeResponse>> getTree() {
 		return ResponseEntity.ok(codeApplication.getTree().stream().map(CodeGroupTreeResponse::from).toList());

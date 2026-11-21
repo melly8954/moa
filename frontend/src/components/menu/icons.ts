@@ -1,3 +1,4 @@
+import { createElement } from "react"
 import {
   Bell,
   BriefcaseBusiness,
@@ -9,6 +10,7 @@ import {
   House,
   List,
   type LucideIcon,
+  type LucideProps,
   Mail,
   Megaphone,
   Menu,
@@ -47,4 +49,15 @@ export const MENU_ICONS: Record<string, LucideIcon> = {
 // 모르는 이름이면 아이콘 없음 (셸이 이름 첫 글자를 보인다)
 export function menuIcon(name?: string | null): LucideIcon | undefined {
   return name ? MENU_ICONS[name] : undefined
+}
+
+// 이름으로 메뉴 아이콘을 그린다. 없는 이름이면 fallback, 그것도 없으면 그리지 않는다
+// (렌더 중에 아이콘 컴포넌트를 변수로 꺼내 쓰지 않으려고 createElement로 그린다)
+export function MenuIcon({
+  name,
+  fallback,
+  ...props
+}: { name?: string | null; fallback?: LucideIcon } & Omit<LucideProps, "name">) {
+  const icon = menuIcon(name) ?? fallback
+  return icon ? createElement(icon, props) : null
 }

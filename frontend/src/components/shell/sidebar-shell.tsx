@@ -199,6 +199,8 @@ function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) 
                       isActive={isActive(child, pathname)}
                       render={child.href ? <Link href={child.href} /> : undefined}
                     >
+                      {/* moa: 하위 메뉴도 아이콘이 있으면 보인다 (specs/001-admin-menus FR-005, 2026-11-21) */}
+                      {child.icon && <child.icon />}
                       <span>{child.label}</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>

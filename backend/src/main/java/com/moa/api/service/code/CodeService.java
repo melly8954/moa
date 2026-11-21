@@ -2,6 +2,7 @@ package com.moa.api.service.code;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,9 @@ import org.springframework.stereotype.Service;
 
 import com.moa.api.dto.code.CodeDto;
 import com.moa.api.dto.code.CodeGroupDto;
+import com.moa.api.dto.code.CodeGroupOrderDto;
 import com.moa.api.dto.code.CodeGroupTreeDto;
+import com.moa.api.dto.code.CodeKeyDto;
 import com.moa.api.dto.code.CodeOrderDto;
 import com.moa.api.entity.code.Code;
 import com.moa.api.entity.code.CodeGroup;
@@ -65,7 +68,8 @@ public class CodeService {
 		if (codeReader.existsGroup(groupCode)) {
 			throw new ServiceException(ErrorCode.DUPLICATE_RESOURCE, "이미 있는 그룹 코드입니다: " + groupCode);
 		}
-		return CodeGroupDto.from(codeWriter.save(new CodeGroup(groupCode, name, description)));
+		int last = codeReader.findGroups().stream().mapToInt(CodeGroup::getSortOrder).max().orElse(-1);
+		return CodeGroupDto.from(codeWriter.save(new CodeGroup(groupCode, name, description, last + 1)));
 	}
 
 	/**
@@ -145,6 +149,41 @@ public class CodeService {
 		Map<String, Code> codes = requireAll(groupCode, orders.stream().map(CodeOrderDto::code).toList()).stream()
 			.collect(Collectors.toMap(Code::getCode, Function.identity()));
 		orders.forEach(order -> codes.get(order.code()).changeSortOrder(order.sortOrder()));
+	}
+
+	/**
+	 * moa: 그룹 순서를 한 번에 바꾼다 (FR-005, 2026-11-21). 없는 그룹이 섞이면 아무것도 바꾸지 않는다
+	 * (호출하는 Application의 트랜잭션이 롤백한다).
+	 *
+	 * @throws ServiceException 없는 그룹 R001
+	 */
+	public void reorderGroups(List<CodeGroupOrderDto> orders) {
+		Map<String, CodeGroup> groups = codeReader.findGroups().stream()
+			.collect(Collectors.toMap(CodeGroup::getGroupCode, Function.identity()));
+		for (CodeGroupOrderDto order : orders) {
+			if (!groups.containsKey(order.groupCode())) {
+				throw new ServiceException(ErrorCode.NOT_FOUND, "없는 그룹입니다: " + order.groupCode());
+			}
+		}
+		orders.forEach(order -> groups.get(order.groupCode()).changeSortOrder(order.sortOrder()));
+	}
+
+	/**
+	 * moa: 그룹과 항목을 섞어 여러 그룹에 걸쳐 한 번에 켜고 끈다 (FR-005, 2026-11-21).
+	 * 하나라도 없으면 아무것도 바꾸지 않는다 (호출하는 Application의 트랜잭션이 롤백한다).
+	 *
+	 * @throws ServiceException 없는 그룹이나 그룹에 없는 코드 R001
+	 */
+	public void setEnabled(Collection<String> groupCodes, Collection<CodeKeyDto> codes, boolean enabled) {
+		List<CodeGroup> groups = new LinkedHashSet<>(groupCodes).stream().map(this::requireGroup).toList();
+		Map<String, List<String>> codesByGroup = codes.stream()
+			.collect(Collectors.groupingBy(CodeKeyDto::groupCode, LinkedHashMap::new,
+				Collectors.mapping(CodeKeyDto::code, Collectors.toList())));
+		List<Code> targets = new ArrayList<>();
+		codesByGroup.forEach((groupCode, groupCodesOfItems) -> targets.addAll(requireAll(groupCode,
+			groupCodesOfItems)));
+		groups.forEach(group -> group.changeEnabled(enabled));
+		targets.forEach(code -> code.changeEnabled(enabled));
 	}
 
 	private CodeGroup requireGroup(String groupCode) {

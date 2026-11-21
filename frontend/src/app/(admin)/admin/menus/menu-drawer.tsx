@@ -9,8 +9,9 @@ import { toast } from "sonner"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
 import { ResponsivePanel } from "@/components/kit/detail-panel"
+import { EnabledSwitch } from "@/components/kit/enabled-switch"
 import { useDrawerClose } from "@/components/kit/side-drawer"
-import { MENU_ICONS } from "@/components/menu/icons"
+import { IconPicker } from "@/components/menu/icon-picker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -25,7 +26,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Switch } from "@/components/ui/switch"
 import { useFieldErrorText } from "@/i18n/field-error"
 import { useErrorMessages } from "@/lib/error-messages"
 import { type MenuFormInput, type MenuFormOutput, menuSchema } from "@/lib/schemas/menu"
@@ -181,6 +181,21 @@ export function MenuDrawer({
                   aria-describedby={fieldState.invalid ? "menu-name-error" : undefined}
                 />
                 {fieldState.invalid && <FieldError id="menu-name-error" errors={fieldErrorText(fieldState.error)} />}
+                {/* 사용 토글은 메뉴명 칸 바로 아래 오른쪽 (FR-010, 2026-11-21). 고칠 때만 */}
+                {editing && (
+                  <Controller
+                    name="enabled"
+                    control={form.control}
+                    render={({ field: enabled }) => (
+                      <EnabledSwitch
+                        id="menu-enabled"
+                        label={t("enabled")}
+                        checked={enabled.value}
+                        onCheckedChange={enabled.onChange}
+                      />
+                    )}
+                  />
+                )}
               </Field>
             )}
           />
@@ -286,29 +301,11 @@ export function MenuDrawer({
             render={({ field }) => (
               <Field>
                 <FieldLabel htmlFor="menu-icon">{t("icon")}</FieldLabel>
-                <NativeSelect id="menu-icon" value={field.value} onChange={field.onChange}>
-                  <NativeSelectOption value="">{t("noIcon")}</NativeSelectOption>
-                  {Object.keys(MENU_ICONS).map((name) => (
-                    <NativeSelectOption key={name} value={name}>
-                      {name}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
+                {/* 이름으로 찾고 미리보기가 붙은 선택 상자 (FR-010, 2026-11-21) */}
+                <IconPicker id="menu-icon" value={field.value ?? ""} onChange={field.onChange} />
               </Field>
             )}
           />
-          {editing && (
-            <Controller
-              name="enabled"
-              control={form.control}
-              render={({ field }) => (
-                <Field orientation="horizontal">
-                  <Switch id="menu-enabled" checked={field.value} onCheckedChange={field.onChange} />
-                  <FieldLabel htmlFor="menu-enabled">{t("enabled")}</FieldLabel>
-                </Field>
-              )}
-            />
-          )}
         </FieldGroup>
       </form>
     </ResponsivePanel>

@@ -40,21 +40,34 @@ public class CodeGroup extends SoftDeleteEntity {
 	@Column(length = 500)
 	private @Nullable String description;
 
+	/** moa: 그룹 순서. 트리는 순서대로, 같으면 만든 순서 (FR-005, 2026-11-21) */
+	@Column(name = "sort_order", nullable = false)
+	private int sortOrder;
+
 	/** moa: 사용 여부. 꺼지면 화면용 목록이 빈 목록이다 (FR-008) */
 	@Column(nullable = false)
 	private boolean enabled;
 
-	/** 사용 중으로 만든다 */
-	public CodeGroup(String groupCode, String name, @Nullable String description) {
+	/** 사용 중으로 만든다. 순서는 부르는 쪽이 정한다 (새 그룹은 맨 뒤) */
+	public CodeGroup(String groupCode, String name, @Nullable String description, int sortOrder) {
 		this.groupCode = groupCode;
 		this.name = name;
 		this.description = description;
+		this.sortOrder = sortOrder;
 		this.enabled = true;
 	}
 
 	public void modify(String name, @Nullable String description, boolean enabled) {
 		this.name = name;
 		this.description = description;
+		this.enabled = enabled;
+	}
+
+	public void changeSortOrder(int sortOrder) {
+		this.sortOrder = sortOrder;
+	}
+
+	public void changeEnabled(boolean enabled) {
 		this.enabled = enabled;
 	}
 }

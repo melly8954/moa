@@ -42,3 +42,11 @@ export type CodeModifyRequest = {
   enabled: boolean
 }
 export type CodeOrder = { code: string; sortOrder: number }
+// moa: 그룹 순서 한 줄 (PUT /admin/code-groups/order, 2026-11-21)
+export type CodeGroupOrder = { groupCode: string; sortOrder: number }
+// moa: 그룹과 항목을 섞어 여러 그룹에 걸쳐 사용 여부 바꾸기 (PUT /admin/code-groups/enabled, 2026-11-21)
+export type CodeBulkEnabledRequest = {
+  groupCodes: string[]
+  codes: { groupCode: string; code: string }[]
+  enabled: boolean
+}
