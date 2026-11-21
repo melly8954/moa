@@ -6,10 +6,10 @@ import { createContext, useContext, useId } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import type { ListSearch } from "@/lib/list-search"
 import { cn } from "@/lib/utils"
 import { DateRangePicker } from "./date-picker"
+import { SegmentedButtons } from "./segmented-buttons"
 
 // 목록 화면 검색 영역: 라벨 열 조건표
 //   <SearchPanel search={search}>
@@ -127,25 +127,19 @@ export function KeywordFilter({ name, placeholder }: { name: string; placeholder
 }
 
 // 선택지 2~4개. "전체"(빈 값)가 맨 앞에 붙는다
+// moa: 기간 빠른 단추와 같은 나눔 단추로 보인다 (specs/011-list-screen FR-010, 2026-11-21)
+//   예전 base-ui ToggleGroup은 빈 값을 자동 id로 바꿔, "전체"를 누르면 조건에 base-ui-… 값이 들어가 조회가 V001로 막혔다
 export function ChoiceFilter({ name, options }: { name: string; options: Option[] }) {
   const t = useTranslations("search")
   const search = useSearch()
   const { labelId } = useField()
-  const value = search.draft[name] ?? ""
   return (
-    <ToggleGroup
+    <SegmentedButtons
       aria-labelledby={labelId}
-      variant="outline"
-      size="sm"
-      value={[value]}
-      onValueChange={(next: string[]) => search.setDraft({ [name]: next[0] ?? "" })}
-    >
-      {[{ value: "", label: t("all") }, ...options].map((option) => (
-        <ToggleGroupItem key={option.value} value={option.value}>
-          {option.label}
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
+      items={[{ value: "", label: t("all") }, ...options]}
+      value={search.draft[name] ?? ""}
+      onChange={(value) => search.setDraft({ [name]: value })}
+    />
   )
 }
 
