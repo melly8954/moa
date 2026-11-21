@@ -374,7 +374,7 @@ test("US5-AC1 구성원이 10명을 넘으면 쪽으로 나뉘고, 2쪽을 누�
   const members = detail(page, "운영 매니저").getByRole("region", { name: "구성원", exact: true })
   await expect(members).toContainText("총 11건")
   await members.getByRole("button", { name: "2쪽" }).click()
-  await expect(members.getByRole("cell", { name: "op10", exact: true })).toBeVisible()
+  await expect(members.getByRole("cell", { name: "op10", exact: true }).first()).toBeVisible()
   expect(asked).toContain("page=0&size=10")
   expect(asked).toContain("page=1&size=10")
 })
