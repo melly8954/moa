@@ -20,6 +20,7 @@ import {
   toCalendarDate,
 } from "@/lib/date"
 import { cn } from "@/lib/utils"
+import { SegmentedButtons } from "./segmented-buttons"
 
 // 날짜 고르기: 입력칸에 직접 치거나(20261106, 2026.11.6도 된다) 달력 버튼으로 고른다
 // 값은 언제나 "YYYY-MM-DD" 문자열이고 비우면 "" (lib/date.ts). min·max 밖은 고를 수 없다
@@ -176,29 +177,13 @@ export function DateRangePicker({
   return (
     <div className={cn("flex flex-wrap items-center gap-x-2 gap-y-1", className)}>
       {/* 빠른 기간 나눔 단추. 날짜 칸(InputGroup h-8)과 같은 높이·테두리 */}
-      <div
-        role="group"
+      <SegmentedButtons
         aria-label={t("quick")}
-        className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-input p-0.5"
-      >
-        {QUICK_RANGES.map((kind) => (
-          <button
-            key={kind}
-            type="button"
-            aria-pressed={picked === kind}
-            disabled={disabled}
-            className={cn(
-              "h-full rounded-md px-2.5 text-sm whitespace-nowrap text-muted-foreground transition-colors outline-none",
-              "hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
-              picked === kind &&
-                "bg-primary font-medium text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-            )}
-            onClick={() => onChange(quickRange(kind))}
-          >
-            {t(kind)}
-          </button>
-        ))}
-      </div>
+        items={QUICK_RANGES.map((kind) => ({ value: kind, label: t(kind) }))}
+        value={picked}
+        onChange={(kind) => onChange(quickRange(kind))}
+        disabled={disabled}
+      />
       {/* 시작 ~ 끝은 한 줄로 붙여 둔다. 좁으면 달력 버튼만 다음 줄로 */}
       <div className="flex items-center gap-1">
         <InputGroup className="w-(--date-range-input-width)" data-disabled={disabled || undefined}>
