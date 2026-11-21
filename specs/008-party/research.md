@@ -54,7 +54,7 @@ Technical Context의 미결은 실시간 통신 하나였다. 처음(2026-11-15)
 - **Decision**
   - 참가, 승인, 초대 입장, 나가기, 내보내기, 정보 고치기, 해산은 파티 행을 비관적 락으로 잡고 처리한다 (`@Lock(PESSIMISTIC_WRITE)`, 선례: `RefreshTokenRepository`)
   - 인원과 포지션 자리는 락 안에서 센다
-  - "한 번에 한 파티"(FR-026)는 `party_members.user_id` 유니크 제약으로 마지막에 한 번 더 막는다. 두 파티에 동시에 들어가는 경우는 파티 락으로 막히지 않기 때문이다
+  - "한 번에 한 파티"(FR-026)는 `tb_party_member.user_id` 유니크 제약(`uk_party_member_user_id`)으로 마지막에 한 번 더 막는다. 두 파티에 동시에 들어가는 경우는 파티 락으로 막히지 않기 때문이다
   - 유니크 충돌(`DataIntegrityViolationException`)은 Service가 받아 B103(이미 다른 파티에 속함)으로 바꾼다. 지금 전역 처리기는 이 예외를 500으로 보내기 때문이다
 - **Rationale**: 한 파티의 쓰기는 몇 명 사이에서만 일어나 락 경합이 작다. 낙관적 락(`@Version`)은 moa에 선례가 없고, 충돌하면 다시 시도하는 로직이 필요하다
 - **Alternatives considered**: 낙관적 락, 인원 수를 원자적 UPDATE로 늘리기. 포지션별 자리까지 함께 보기 어렵다
@@ -71,13 +71,16 @@ Technical Context의 미결은 실시간 통신 하나였다. 처음(2026-11-15)
   - 모드·포지션·티어를 그룹 하나에 두고 코드 앞에 게임을 붙이기(`LOL_TOP`): 게임별로 거르는 일이 화면에 생긴다
   - 파티에 이름을 저장하기: 이름이 바뀌면 어긋난다
 - **영향**: 004의 FR-001 표에 그룹을 더한다. `AdminCodesAcceptanceTest`의 기대 목록도 고친다. `DatabaseCleaner`가 시드를 지우므로 `MenuSeed`처럼 시드를 되돌리는 `CodeSeed` 지원 코드를 둔다 (`004-admin-codes` research.md R3)
-- **004와 맞출 것**: 004는 그룹을 `code_groups`(그룹 코드, 이름, 설명, 사용 여부)에 두고 관리자가 화면에서 다루며, 그룹과 항목을 지우지 않고 사용 여부로만 끈다 (2026-11-20, `004-admin-codes` FR-002·FR-008). 파티의 그룹 12개와 코드는 시드 SQL에 사용 중(`enabled` = true)으로 넣는다. 꺼진 그룹은 화면용 목록이 빈 목록이므로 파티 화면은 빈 선택 상자를 그대로 보인다. 004의 바뀐 열(`V2_9`)이 먼저 들어가야 한다
+- **004와 맞출 것**: 004는 그룹을 `tb_code_group`(그룹 코드, 이름, 설명, 사용 여부, 순서)에 두고 관리자가 화면에서 다루며, 그룹과 항목을 지우지 않고 사용 여부로만 끈다 (2026-11-20, `004-admin-codes` FR-004·FR-008). 파티의 그룹 12개와 코드는 파티 마이그레이션에 사용 중(`enabled` = true)으로 넣는다. 꺼진 그룹은 화면용 목록이 빈 목록이므로 파티 화면은 빈 선택 상자를 그대로 보인다. 필요한 열(`enabled`, `sort_order`)은 dev의 `V1__schema.sql`·`V5__code_group_sort_order.sql`에 이미 있다 (2026-11-22 확인)
+- **시드 넣는 법** (`docs/db.md` "마이그레이션"): 고정 id 없이 `group_code`로 잇고, 관리자가 바꾸는 데이터라 넣기만 한다. 같은 `group_code`가 이미 있으면 넣지 않는다
 
 ## R8. 마이그레이션 번호
 
-- **Decision**: moa 기능은 `V2` 대역에서 차례 번호를 쓴다. dev의 마지막이 `V2_6__admin_menu_groups.sql`(2026-11-16)이므로 이 기능은 `V2_7__parties.sql`(테이블), `V2_7_1__party_codes.sql`(공통코드 시드)이다. implement를 시작할 때 dev의 마지막 번호를 다시 보고, 그사이 누가 썼으면 다음 번호로 옮긴다
-- **Rationale**: `V1_0_x`는 골격, `V1_1` 이후는 키트 헬퍼가 쓴다(`V1_0_1__users.sql:1`). moa의 마이그레이션은 `V2`부터 기능 구분 없이 차례로 번호를 받아 왔다(`V2_1__notices.sql`, `V2_3__notifications.sql` 등). 처음에 적은 "`V2_<스펙 번호>`" 규칙은 dev가 따르지 않아 `V2_6`이 이미 다른 파일에 쓰였다
-- **Alternatives considered**: 빈 `V1_5` 같은 번호를 쓰기. 키트 헬퍼와 겹칠 수 있다
+- **Decision**: `docs/db.md` "마이그레이션"을 따른다 (2026-11-22)
+  - 파일은 하나 `V<다음 번호>__party.sql`이다. 새 테이블, 공통코드 시드, `tb_notification.type` COMMENT 고치기를 함께 둔다. 기능 하나의 스키마 변경과 필요한 데이터는 파일 하나에 둔다는 규칙 때문이다
+  - 스펙에는 번호를 적지 않는다. 번호는 PR 직전에 dev를 병합하고 마지막 번호 + 1로 정한다. CI `migration-numbers`가 겹친 번호를 막는다
+- **Rationale**: dev는 마이그레이션 20개를 `V1__schema.sql`·`V2__seed.sql`로 합치고 그 뒤를 `V3`, `V4`…로 늘린다(2026-11-22에 `V9`까지). 점 번호(`V2_7`)를 쓰면 `V2`와 `V3` 사이에 끼어, 이미 적용된 DB에서 Flyway가 막는다
+- **이전 결정**: 처음에는 `V2_<스펙 번호>`, 다음에는 `V2_7__parties.sql`·`V2_7_1__party_codes.sql`로 적었다. 둘 다 그때의 dev 방식이었고 지금은 쓰지 않는다
 
 ## R9. 오류 코드
 
@@ -96,10 +99,15 @@ Technical Context의 미결은 실시간 통신 하나였다. 처음(2026-11-15)
 
 ## R11. 메뉴와 화면 경로
 
-- **Decision**
-  - "모집"과 "내 파티"는 프론트 코드 메뉴(`components/shell/menu.ts`의 `MENU`)에 권한 없이 더한다
-  - 화면 경로는 `/recruit`(모집), `/parties/{id}`(파티 화면), `/invite/{code}`(초대 입장), `/my-party`(내 파티)이다. 파티 만들기는 모집 페이지 위에 여는 창이다
-- **Rationale**: DB 메뉴 시드로 넣으면 `MenuSeed`와 001의 AC 기대값을 함께 고쳐야 한다. 관리자가 바꿀 일이 없는 사용자 메뉴라 코드 메뉴가 맞다. 권한이 없는 코드 메뉴는 로그인한 모두에게 보인다
+- **Decision** (2026-11-22에 코드 메뉴에서 바꿈)
+  - "모집"과 "내 파티"는 연결 화면으로 코드에 등록하고(`api/screen/PartyScreens.java`, `NoticeScreens`와 같은 방식), 사용자 메뉴 두 줄을 파티 마이그레이션에 넣는다 (`001-admin-menus` FR-007·FR-008, spec.md FR-030)
+    - 모집: 키 `RECRUIT`, `/recruit`, 로그인 필요 없음(`GET /parties`가 누구나), 공개 범위 누구나
+    - 내 파티: 키 `MY_PARTY`, `/my-party`, 로그인 필요(`GET /parties/me`가 회원만), 공개 범위 회원만
+    - 메뉴 행은 `screen_key`로 찾고 이미 있으면 넣지 않는다. 순서는 지금 사용자 메뉴 뒤다 (`docs/db.md` "관리자가 화면에서 바꾸는 데이터")
+  - 화면 경로는 `/recruit`(모집), `/parties/{id}`(파티 화면), `/invite/{code}`(초대 입장), `/my-party`(내 파티)이다. 파티 화면과 초대 입장은 메뉴로 열지 않으므로 연결 화면으로 등록하지 않는다 (001 FR-008). 파티 만들기는 모집 페이지 위에 여는 창이다
+- **Rationale**: dev의 셸 메뉴는 모두 서버 메뉴다. `menu.ts`에 "코드 메뉴는 두지 않는다"고 적혀 있고, 홈·공지도 메뉴 관리의 사용자 메뉴로 옮겼다. 001 FR-007은 "사용자 메뉴를 더하는 것은 사용자 쪽 기능의 스펙이 정한다"고 하므로, 파티가 001의 메뉴 표와 연결 화면 표에 줄을 더한다(원칙 IV)
+- **영향**: 001의 AC 중 사용자 메뉴를 "홈, 공지"로 적은 두 개(US2-AC4, US3-AC1)는 "FR-007 표의 사용자 메뉴"로 고쳤다. `AdminMenusAcceptanceTest`의 사용자 메뉴 기대값은 001 표가 바뀐 뒤 그에 맞춘다 (원칙 V)
+- **이전 결정**: 처음에는 코드 메뉴(`menu.ts`의 `MENU`)에 더하기로 했다. 그때 dev에 서버 사용자 메뉴가 없었기 때문이다
 - **초대 링크**: 로그인하지 않은 채 열면 `AuthGate`가 `?next=`를 붙여 로그인 화면으로 보내고, 로그인 뒤 돌아온다(`providers/auth-gate.tsx:17`). 새로 만들 것이 없다
 
 ## R12. 해산된 파티의 데이터
@@ -110,3 +118,14 @@ Technical Context의 미결은 실시간 통신 하나였다. 처음(2026-11-15)
   - 메시지와 참가 제한 기록은 남기되 API로는 보이지 않는다
 - **Rationale**: 나중에 신고 처리 기능이 해산된 파티의 대화를 봐야 할 수 있다. 얼마나 남길지는 신고 처리 스펙에서 정한다
 - **Alternatives considered**: 해산할 때 메시지를 모두 지우기. 신고 근거가 사라진다
+
+## R13. 개인 알림 보내기 (FR-029)
+
+- **Decision**
+  - 파티 Application이 일을 처리한 같은 트랜잭션 안에서 `NotificationApplication.notify(userId, type, title, link)`를 부른다. 받는 사람이 여럿이면(해산) 사람마다 한 번씩 부른다
+  - 종류 6개를 `dto/notification/NotificationType.java`에 더하고, 프론트 타입은 `npm run gen:api`로 다시 만든다
+  - 알림은 007의 개인 경로(`/user/queue/notifications`)로 간다. 파티의 실시간 이벤트(`KICKED`, `PARTY_DISSOLVED`, contracts/party-realtime.md)와는 따로다. 이벤트는 파티 화면을 바꾸고, 알림은 벨·토스트·브라우저 알림으로 간다
+  - "관련 화면을 보고 있으면 토스트 생략"(007 FR-007)은 프론트 `components/notification/realtime-toasts.tsx`에서 한다. 판정 방법은 007이 만들고(2026-11-22 "구현 전"), 파티는 FR-029의 관련 화면을 더한다. 007 쪽이 아직이면 007 담당과 함께 정한다
+- **Rationale**: `notify`는 부르는 쪽 트랜잭션에서 저장하고 커밋 뒤에 실시간·웹 푸시를 보낸다(`NotificationApplication` 주석). 그래서 파티 일이 롤백되면 알림도 나가지 않는다. Application끼리 부르는 것은 같은 계층 안이라 `ArchitectureTest`의 "Application은 Controller·Scheduler만 부른다"(다른 계층에서 들어오는 의존)에 걸리지 않는다
+- **implement에서 확인할 것**: `./gradlew build`의 ArchitectureTest가 `PartyApplication` → `NotificationApplication`을 통과시키는지. 막히면 007 담당과 부르는 길을 정한다
+- **근거**: 007 담당의 전달 문서(2026-11-22)와 `007-notifications` FR-004·FR-007·FR-012
