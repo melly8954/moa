@@ -275,7 +275,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 			.hasStatus(204);
 
 		assertThat(asAdmin(mvc.get().uri(MY_MENUS))).bodyJson().extractingPath("$[0].children[*].name").asArray()
-			.containsExactly("사용자 관리");
+			.containsExactly("사용자 관리", "파기 기록");
 	}
 
 	@Test

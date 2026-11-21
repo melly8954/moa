@@ -67,9 +67,11 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	@Autowired
 	private PurgeLogCleaner purgeLogCleaner;
 
+	/** 본문 이미지 폴더 설정 때문에 이 클래스는 새 컨텍스트로 뜬다. 첫 테스트에는 마이그레이션 시드의 계정이 남아 있어 먼저 지운다 */
 	@BeforeEach
 	void setUp() {
 		menuSeed.restore();
+		jdbcTemplate.update("delete from tb_user where id in (1, 2)");
 		testUsers.create(1L, "system", null, Role.USER);
 		testUsers.create(2L, "admin", "admin1234!", Role.ADMIN);
 	}
@@ -89,7 +91,8 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 			.containsEntry("purged_count", 3)
 			.containsEntry("purge_method", "ROW_DELETE")
 			.containsEntry("actor_type", "SCHEDULER");
-		assertThat((LocalDateTime)logs.get(0).get("created_at")).isAfter(LocalDateTime.now().minusMinutes(1));
+		assertThat(jdbcTemplate.queryForObject("select created_at from tb_purge_log", LocalDateTime.class))
+			.isAfter(LocalDateTime.now().minusMinutes(1));
 	}
 
 	@Test
