@@ -44,7 +44,7 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 회원 | 회원 프로필 보기, 친구, 팔로우 | moa | `014` | 예약 (담당: hyeonchang) |
 | 모임 | 크루(반영구 모임), 크루원 모집 | moa | - | 008 다음 |
 | 모임 | 크루 내전, 크루 간 경기 매칭 | moa | - | 크루 다음 |
-| 피드 | 게임 플레이 숏폼 (올리기·압축, 탐색 격자, 세로 뷰어, 좋아요·조회수) | moa | `015` | 예약 (담당: hyeonchang) |
+| 피드 | 게임 플레이 숏폼 (올리기·압축, 탐색 격자, 세로 뷰어, 좋아요·조회수) | moa | `015-game-shortform` | 스펙 작성 중 (담당: hyeonchang) |
 
 ## 공통 화면
 
