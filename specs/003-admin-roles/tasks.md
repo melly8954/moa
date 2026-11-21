@@ -166,11 +166,31 @@ description: "권한 관리 (admin-roles) 작업 목록"
 - [ ] T055 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, 한 번 `bootRun`으로 V8 적용과 `validate` 확인(공유 local DB 주의: 이 브랜치를 쓰는 작업 사본에서만), frontend/에서 `npm run format`, `npm run check`. dbTest·e2e는 PR CI로 본다
 - [ ] T056 specs/003-admin-roles/quickstart.md "화면 확인"에 최고 관리자 구성원 보기만을 더하고 사람이 확인한다
 
+
+## Phase 9: 메뉴 권한 트리와 구성원 목록 (2026-11-22 FR-004~FR-006, US3-AC4, US5-AC1·AC5, Clarifications)
+
+**Purpose**: "쓸 메뉴"를 "메뉴 권한"으로 부르고, 트리를 상위 메뉴 접기·칸 안 스크롤로, 구성원을 키트 목록 표(011 쪽 이동 줄)로 바꾼다 (research.md R26~R30). 화면만 바뀐다. 구현 브랜치 `feat/003-role-menu-permission`
+
+**프론트**
+
+- [ ] T057 frontend/messages/ko.json: `role.menusToUse` "메뉴 권한", `role.permissionCountOf` "메뉴 권한 {count}개", 그 밖에 "쓸 메뉴"가 든 역할 문구 (R26)
+- [ ] T058 frontend/src/app/(admin)/admin/roles/permission-tree.tsx: 상위 메뉴·"메뉴에 없는 화면" 줄을 체크 칸 + 접기 단추(화살표·이름·체크 수/전체 수, `aria-expanded`·`aria-controls`)로 나누고, 처음엔 첫 상위 메뉴만 펼침. 체크 칸에 `aria-label`, ko.json에 접기·모두 고르기 문구 (R27)
+- [ ] T059 frontend/src/components/kit/data-table.tsx: 선택 사항 `canSelect`(행 체크 칸 끄기, 모두 고르기에서 빼기)·`rowLabel`(체크 칸 이름)·`empty`(빈 안내 문구)를 더한다. 주지 않으면 지금과 같다 (R29)
+- [ ] T060 frontend/src/app/(admin)/admin/roles/role-members.tsx: 손으로 만든 표·이전·다음을 `DataTable`로 바꾼다. 컴포넌트 상태의 쪽·쪽 크기(기본 10)·검색어로 `search`를 만들고, 검색·쪽·쪽 크기가 바뀌면 고른 계정을 비운다. 최고 관리자 계정 행은 `canSelect`로 끈다. 최고 관리자 역할의 한 줄 목록은 그대로 (R29)
+- [ ] T061 frontend/src/app/(admin)/admin/roles/role-panel.tsx: 트리 칸 높이 — 나란히(xl) + 구성원 표가 있으면 `relative` 상자 안 `absolute inset-0 overflow-y-auto`, 그 밖(xl 미만·드로어·최고 관리자·저장 전 새 역할)은 최대 높이(표 머리 + 10줄). 트리에 역할 ID를 `key`로 줘 역할을 바꾸면 펼침이 처음으로 (R27·R28)
+
+**테스트 (마지막)**
+
+- [ ] T062 frontend/e2e/role.spec.ts: US3-AC4(첫 상위 메뉴만 펼침, 접힌 줄 "0/3", 이름 누르면 펼침·체크 안 됨, 체크 칸은 모두 체크), US5-AC5(빈 구성원에 표 머리·빈 안내·"총 0건"·"10개씩"), US5-AC1(11명 목업에서 2쪽 요청 `page=1&size=10`), @wide 트리 칸과 구성원 칸 아래 끝 같음. 지금 테스트의 "쓸 메뉴"·체크 칸 이름·이전·다음 기대를 새 모양에 맞춘다 (원칙 V, R30)
+- [ ] T063 frontend/에서 `npm run format`, `npm run check`. e2e는 PR CI로 본다
+- [ ] T064 specs/003-admin-roles/quickstart.md "화면 확인"에 메뉴 권한 접기·칸 높이(넓은 폭·좁은 폭)·구성원 쪽 이동 줄(구성원 없는 역할 포함)을 더하고 사람이 확인한다
+
 ---
 
 ## Dependencies & Execution Order
 
 - T001 → T002·T003 → T004 → T005 → T006~T008 → T009 → T010, T011
+- Phase 9: T057 → T058 → T059 → T060 → T061 → T062 → T063 → T064. T057·T059는 다른 파일이라 나란히 해도 된다
 - Phase 8: T049 → T050 → (`002-admin-users` T020) → T051 → (`002-admin-users` T021) → T052 → T053 → T054 → (`002-admin-users` T022~T023) → T055 → T056, `002-admin-users` T024. 기능 코드를 둘 모두 끝낸 뒤 테스트를 한다
 - Phase 7: T033 → T034 → T035 → T036, T037, T038 → T039 → T040, T041 → T042 → (`002-admin-users` T013~T016, `001-admin-menus` T089~T093) → T043 → T044 → T045 → T046 → (002·001 테스트) → T047 → T048. 기능 코드를 셋 모두 끝낸 뒤 테스트를 한다(CLAUDE.md "작업 흐름")
 - Phase 6: `001-admin-menus` T071 → T024 → T025 → T026 → T027 → T028, T029 → T030 → T031 → T032

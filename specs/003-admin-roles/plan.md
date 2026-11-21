@@ -17,6 +17,8 @@ moa가 할 일은 "접속 이력만 보는 운영자" 흐름을 AC 테스트로 
 
 **최고 관리자 한 명 고정 (2026-11-21·22, FR-006·FR-007·FR-010, US2, Clarifications)**: 최고 관리자 역할의 구성원을 화면·API로 더하거나 빼지 못하게 하고(B001, 막힌 이유 `FIXED`), 구성원 칸을 보기만 하게 바꾼다. `V8__single_super_admin.sql`이 이미 여럿인 DB를 ID가 가장 작은 한 명으로 줄이고, `tb_user_access_role`에 생성 열 `super_slot`과 유일 제약을 걸어 DB도 한 명을 지킨다. 되돌리기(`002-admin-users` FR-009)는 DB 절차라 코드를 더하지 않는다. `002-admin-users`(최고 관리자 계정 행)와 한 구현 브랜치 `feat/003-single-super-admin`에서 한다 ([research.md](./research.md) R22~R25)
 
+**메뉴 권한과 구성원 목록 (2026-11-22, FR-004~FR-006, US3-AC4·US5, Clarifications)**: 오른쪽 칸의 "쓸 메뉴"를 "메뉴 권한"으로 부르고, 트리의 상위 메뉴를 접기 줄(처음엔 첫 상위 메뉴만 펼침, 접힌 줄에 체크 수)로 바꾸며, 트리 칸 높이를 나란히일 때 구성원 칸에 맞추고 그 밖에는 최대 높이로 둔다. 구성원 목록은 손으로 만든 표를 키트 목록 표(`DataTable`)로 바꿔 `011-list-screen`의 쪽 이동 줄·10줄 높이·기본 10개를 따른다. 화면만 바뀌고 API·DB는 그대로다. 키트 목록 표에 선택 사항(`canSelect`·`rowLabel`·`empty`)을 더한다. 구현 브랜치 `feat/003-role-menu-permission` ([research.md](./research.md) R26~R30)
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)

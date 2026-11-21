@@ -213,3 +213,49 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
   - `AdminRolesAcceptanceTest`: US2-AC4(최고 관리자 역할 구성원 더하기·빼기 B001, 최고 관리자 자신도), US2-AC5(`PUT /users/{id}/roles`로 최고 관리자 역할을 주거나 최고 관리자에게서 빼기 B001, 목록의 최고 관리자 역할 `blockReason` = `FIXED`). 지금의 `lastSuperAdminStays`·`superAdminDropsOtherRoles`(FR-010 옛 규칙)는 새 규칙으로 바꾼다(원칙 V)
   - SC-006: JdbcTemplate으로 최고 관리자 줄을 하나 더 넣으면 DB가 거부한다(`DuplicateKeyException`)
   - e2e(`role.spec.ts`): 최고 관리자 역할을 고르면 구성원에 검색 칸·체크박스가 없고 안내가 보인다
+
+## R26. "쓸 메뉴" → "메뉴 권한" (FR-004·FR-005, 2026-11-22 사용자 결정)
+
+- **Decision**: 화면 문구만 바꾼다. `frontend/messages/ko.json`의 `role.menusToUse`("메뉴 권한"), `role.permissionCountOf`("메뉴 권한 {count}개")와 그 밖에 "쓸 메뉴"가 든 역할 문구를 고친다. 열쇠 이름·API·DB는 그대로다
+  - 권한 관리 머리 설명(FR-009, "운영자가 쓸 관리 메뉴를 역할로 묶고…")은 칸 이름이 아니라 문장이라 그대로 둔다
+- **Rationale**: 화면 이름 "권한 관리"와 맞는 칸 이름. 동작은 바뀌지 않는다
+
+## R27. 메뉴 권한 트리: 상위 메뉴 접기 (FR-004, US3-AC4, Clarifications 2026-11-22)
+
+- **Decision**: `permission-tree.tsx`의 상위 메뉴(와 "메뉴에 없는 화면") 줄을 접기 줄로 바꾼다
+  - 줄 = 체크 칸 + 접기 단추(화살표 + 이름 + "체크한 수/전체 수"). 체크 칸은 지금처럼 아래 메뉴를 모두 체크·해제한다. 접기 단추는 `aria-expanded`·`aria-controls`를 갖고 아래 메뉴 묶음만 접고 편다. 이름이 체크 칸의 라벨(`FieldLabel htmlFor`)이던 것을 떼어 체크 칸에는 `aria-label`("운영 모두 고르기")을 준다
+  - 펼친 상태는 컴포넌트 상태(`useState`)다. 처음 값은 첫 상위 메뉴만 펼침. 역할을 바꾸면 처음 값으로 돌아간다(`role-panel.tsx`가 역할 ID를 `key`로 준다). localStorage에 두지 않는다(사이드바의 펼침 기억과 다르다. 역할마다 처음 모양이 같아야 한다)
+  - 접힌 줄의 "2/4"는 그 묶음의 아래 메뉴 수 기준이다(머리의 메뉴 권한 수는 권한 수 기준이라 다를 수 있다). 체크 칸의 일부 체크(indeterminate)는 그대로다
+- **Rationale**: 접기와 전부 체크를 다른 자리로 나눠, 접으려다 전부 체크하는 실수를 없앤다(Clarifications). 메뉴 관리·사이드바의 접기 줄과 같은 손맛
+- **Alternatives considered**: 이름 = 체크 라벨 그대로 두고 화살표만 접기(작은 화살표를 정확히 눌러야 한다), 상위 메뉴 펼침을 기억하기(역할을 바꿀 때 모양이 달라져 비교가 어렵다)
+
+## R28. 메뉴 권한 트리 칸 높이 (FR-004, Clarifications 2026-11-22)
+
+- **Decision**: `role-panel.tsx`의 메뉴 권한·구성원 묶음(`grid xl:grid-cols-2`)에서 트리 칸 높이를 정한다
+  - 나란히(xl, 1280px 이상) + 옆에 구성원 표가 있을 때: 트리 칸을 `relative` 상자로 두고 트리는 그 안의 `absolute inset-0 overflow-y-auto`로 그린다. 상자의 높이는 grid 행 높이(= 구성원 칸 높이)를 따르고, 트리 내용은 행 높이에 끼지 않는다. 구성원 쪽 크기를 키우면 행이 길어져 트리 칸도 길어진다
+  - 그 밖(xl 미만, 드로어, 최고 관리자 역할, 저장 전 새 역할): 트리 칸에 `max-height: calc(var(--table-row-height) * 11)`(구성원 표 머리 + 10줄)와 `overflow-y-auto`
+  - 트리 칸 제목("메뉴 권한")과 안내 문장은 스크롤 밖에 둔다
+- **Rationale**: 두 칸 아래 끝을 맞추되 화면 높이 비율을 쓰지 않는다(011이 버린 안과 같은 이유). 기준 높이는 이미 `--table-row-height`로 정해진 표 줄 높이
+- **Alternatives considered**: 화면 남은 높이 모두(화면마다 모양이 다르다), 고정 높이만(구성원 칸과 아래 끝이 어긋난다)
+
+## R29. 구성원: 키트 목록 표로 바꾸기 (FR-006, US5-AC1·AC5, 2026-11-22)
+
+- **Decision**: `role-members.tsx`의 손으로 만든 표와 이전·다음 단추를 키트 `DataTable`(`components/kit/data-table.tsx`)로 바꾼다. `011-list-screen`의 쪽 이동 줄(건수·처음·이전·번호·다음·마지막·쪽 크기), 10줄 높이, 빈 결과 안내를 그대로 얻는다
+  - `DataTable`의 `search`는 주소가 아닌 값도 받는다(타입이 `ListSearch`의 일부만 요구). 구성원은 컴포넌트 상태로 `page`(1부터)·`size`(기본 10)·`isFiltered`(검색어가 있나)·`reset`(검색어 지우기)·`setPage`·`setSize`를 만든다. 정렬은 쓰지 않는다(`sort` undefined, `setSort` 아무것도 안 함). 주소에 두지 않는다(고르기 목록)
+  - `DataTable`에 선택 사항 세 개를 더한다(다른 목록은 그대로): `canSelect?: (row) => boolean`(최고 관리자 계정 행은 체크 칸을 끈다, FR-006), `rowLabel?: (row) => string`(체크 칸 이름에 ID 대신 아이디를 쓴다. "operator2 고르기"), `empty?: string`(빈 안내 문구. 검색 없음 "아직 구성원이 없어요" 등 지금 문구)
+  - 쪽 크기·쪽을 바꾸거나 검색하면 고른 계정을 비운다(지금처럼 고르기는 이 쪽 안에서만)
+  - 최고 관리자 역할은 지금의 한 줄 목록을 그대로 둔다(Clarifications)
+  - API는 그대로다(`GET /admin/roles/{id}/members?keyword&page&size`, 이미 `size`를 받는다). 화면이 보내는 기본 `size`만 20 → 10
+- **Rationale**: 같은 규칙을 화면마다 다시 만들지 않는다(`011-list-screen` FR-009의 뜻). 손으로 만든 쪽 이동이 011과 어긋난 것이 이번 일의 원인이다
+- **키트**: `DataTable`의 새 선택 사항은 moa에서 먼저 더하고 키트로 옮길 목록에 적는다(원칙 III)
+- **Alternatives considered**: 손으로 만든 표에 쪽 이동 줄만 따로 만들기(011 규칙을 두 곳에서 지켜야 한다)
+
+## R30. 무엇을 테스트하나 (US3-AC4, US5-AC1·AC5, 2026-11-22)
+
+- **Decision**: 화면만 바뀌므로 e2e(`role.spec.ts`)로 본다. 백엔드 인수 테스트는 바꾸지 않는다
+  - US3-AC4: 역할을 고르면 첫 상위 메뉴만 펼쳐져 있고 다른 상위 메뉴는 접힌 채 "0/3"이 보인다. 이름을 누르면 펼쳐지고 아래 메뉴는 체크되지 않는다. 체크 칸을 누르면 아래 메뉴가 모두 체크된다
+  - US5-AC5: 구성원이 없는 역할에 표 머리·빈 안내·"총 0건"·쪽 크기 "10개씩"이 보인다
+  - US5-AC1: 구성원 11명 목업에서 쪽 번호 2가 있고, 누르면 `page=1&size=10` 요청이 간다
+  - 넓은 폭(@wide)에서 트리 칸과 구성원 칸의 아래 끝이 같다(`getBoundingClientRect().bottom` 차이 2px 이하)
+  - 지금 테스트의 문구("쓸 메뉴"), 체크 칸 이름, 이전·다음 단추를 새 모양에 맞춘다(원칙 V: 기대가 바뀐 곳만)
+  - 키트 목록 표에는 단위 테스트가 없다. `canSelect`·`rowLabel`·`empty`는 위 e2e(최고 관리자 계정 행 체크 칸 꺼짐, "operator2 고르기", 빈 안내 문구)로 본다
