@@ -50,7 +50,7 @@
 - 계층 규칙은 ArchitectureTest를 따른다 (research.md R10)
 
 **Scale/Scope**
-- 사용자 스토리 10개, AC 73개, 화면 5개(모집, 만들기 창, 파티, 초대 입장, 내 파티)
+- 사용자 스토리 10개, AC 74개, 화면 5개(모집, 만들기 창, 파티, 초대 입장, 내 파티)
 - REST API 21개, STOMP 구독 주소 2개
 
 ## Constitution Check
@@ -60,7 +60,7 @@
 | 원칙 | 판정 | 근거 |
 |---|---|---|
 | I. 스펙이 먼저다 | 통과 | spec.md에 `[NEEDS CLARIFICATION]`이 없다. plan에서 정한 값(공통코드 초기값)은 spec.md FR-002 표에 적었다 |
-| II. AC마다 테스트 하나 | 통과 | AC 73개마다 테스트를 하나씩 둔다. 이름에 AC 번호를 적는다. 실시간 AC는 "저장"과 "전달"을 나눠 확인한다(Testing). e2e는 핵심 흐름 3개만이다 |
+| II. AC마다 테스트 하나 | 통과 | AC 74개마다 테스트를 하나씩 둔다. 이름에 AC 번호를 적는다. 실시간 AC는 "저장"과 "전달"을 나눠 확인한다(Testing). e2e는 핵심 흐름 3개만이다 |
 | III. 키트를 따른다 | 통과 | 계층·엔터티·오류·페이지 규칙은 키트 골격을 따른다. 실시간 통신은 007이 얹은 키트 websocket 헬퍼를 고치지 않고 쓴다. 구독 권한 검사는 키트 파일 밖(파티 쪽 설정)에서 더한다 (research.md R3) |
 | IV. 기존 기능은 제자리에서 고친다 | 통과 | 004의 spec.md FR-001 표와 `AdminCodesAcceptanceTest` 기대값을 그 자리에서 고친다. 새 기능 폴더는 008 하나다 |
 | V. 테스트를 고쳐서 통과시키지 않는다 | 통과 | `AdminCodesAcceptanceTest`는 스펙(004 FR-001 표)을 먼저 고친 뒤 그에 맞춰 기대값을 바꾼다. 실패를 덮으려는 수정이 아니다 |
@@ -130,16 +130,17 @@ frontend/
 │   ├── components/notification/realtime-toasts.tsx    # 기존(007). 파티 알림의 관련 화면을 더한다 (spec.md FR-029, research.md R13)
 │   ├── lib/party-realtime.ts                           # usePartyChannel, useMyPartyQueue (기존 useRealtimeSubscription 위)
 │   ├── lib/schemas/party.ts                            # 만들기·고치기 폼 (zod)
-│   └── app/(main)/
+│   └── app/(user)/                                     # 사용자 셸. 로그인하지 않아도 열린다
 │       ├── recruit/                                    # 모집 페이지 + 파티 만들기 창
 │       ├── parties/[id]/                               # 파티 화면 (정보, 멤버, 채팅, 방장 동작, 참가 창)
-│       ├── invite/[code]/                              # 초대 입장 화면
-│       └── my-party/                                   # 내 파티
+│       └── (signed-in)/                                # 로그인이 필요한 화면 (AuthGate)
+│           ├── invite/[code]/                          # 초대 입장 화면
+│           └── my-party/                               # 내 파티
 ├── tests/unit/party-*.test.ts
 └── e2e/party.spec.ts
 ```
 
-**Structure Decision**: 백엔드는 기존 `com.moa.api` 계층을 그대로 쓰고 도메인 이름은 `party`이다. 실시간 기반은 007이 얹은 키트 `common/websocket`과 프론트 `RealtimeProvider`를 함께 쓴다. 프론트는 `(main)` 아래에 사용자 화면을 두고, 메뉴는 연결 화면(`PartyScreens`)과 서버 사용자 메뉴로 더한다 (research.md R11).
+**Structure Decision**: 백엔드는 기존 `com.moa.api` 계층을 그대로 쓰고 도메인 이름은 `party`이다. 실시간 기반은 007이 얹은 키트 `common/websocket`과 프론트 `RealtimeProvider`를 함께 쓴다. 프론트는 사용자 셸 `(user)` 아래에 화면을 두고(로그인이 필요한 화면은 `(user)/(signed-in)`), 메뉴는 연결 화면(`PartyScreens`)과 서버 사용자 메뉴로 더한다 (research.md R11).
 
 ## Complexity Tracking
 

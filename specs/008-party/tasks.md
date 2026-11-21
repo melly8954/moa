@@ -160,7 +160,7 @@ description: "파티 (party) 작업 목록"
   - `response/PartyDetailResponse.java`
 - [ ] T017 [US1] 파티 만들기 창을 만든다
   - 폼 스키마는 `FE/lib/schemas/party.ts`(zod. 제목 1~50, 소개 0~1000, 인원 2~10, 참가 방식 3종과 한 줄 설명)
-  - 창은 `FE/app/(main)/recruit/create-party-dialog.tsx`
+  - 창은 `FE/app/(user)/recruit/create-party-dialog.tsx`
     - 게임은 `CodeSelect`(`GAME`)로 고른다
     - 잘못된 칸은 옆에 이유를 보이고 입력을 지우지 않는다
     - 만들면 `/parties/{id}`로 옮겨 간다. 비공개면 초대 링크 복사를 먼저 보인다 (spec.md 화면 "파티 만들기")
@@ -181,7 +181,7 @@ description: "파티 (party) 작업 목록"
     - PRIVATE이고 멤버가 아니면 R001이다
     - `me.relation`을 채운다: NONE, MEMBER, HOST, PENDING, BANNED
   - 위치는 `ApiPartyController`, `PartyApplication`, `PartyService`, `PartyReader`다
-- [ ] T019 [US2] `FE/app/(main)/recruit/page.tsx`를 만든다 (spec.md 화면 "모집 페이지")
+- [ ] T019 [US2] `FE/app/(user)/recruit/page.tsx`를 만든다 (spec.md 화면 "모집 페이지")
   - 위쪽: 파티 만들기 버튼(T017 창), 초대 코드 입력 칸(→ `/invite/{code}`), 게임 `CodeSelect`와 모드 `CodeSelect`(`<game>_MODE`. 게임을 고른 뒤에만 고를 수 있다)
   - 카드 목록: 게임, 모드, 제목, 참가 방식, 인원, 빈 포지션, 티어 조건, 방장
   - 끝에서 다음 쪽을 불러온다
@@ -189,7 +189,7 @@ description: "파티 (party) 작업 목록"
     - 빈 목록 안내와 만들기 권유
     - 이미 파티에 속하면 만들기 대신 "내 파티로 가기"
     - 실패하면 다시 시도. `QueryState`를 쓴다
-- [ ] T020 [US2] `FE/app/(main)/parties/[id]/page.tsx`의 뼈대를 만든다
+- [ ] T020 [US2] `FE/app/(user)/parties/[id]/page.tsx`의 뼈대를 만든다
   - 파티 정보와 멤버 목록(`member-list.tsx`: 표시 이름, 방장 표시, 포지션, 적은 티어, 포지션별 빈자리)을 보인다
   - 404면 not-found로 보낸다
   - 비멤버·멤버·방장에 따라 다른 영역은 각 스토리에서 채운다 (spec.md 화면 "파티 화면" 표)
@@ -209,7 +209,7 @@ description: "파티 (party) 작업 목록"
   - OPEN이 아니면 B112
   - T009 `admit` 완성: `BE/api/service/party/PartyMemberService.java`(인원 세기, 저장과 B103 변환), `PartyJoinRequestService.cancelPendingOf(userId)`, `PartyMessageService.system(JOINED)`
   - `MEMBERS_CHANGED`와 `MESSAGE` 이벤트를 발행한다
-- [ ] T022 [US3] 파티 화면에 비멤버의 참가 버튼을 붙인다 (`FE/app/(main)/parties/[id]/join-button.tsx`)
+- [ ] T022 [US3] 파티 화면에 비멤버의 참가 버튼을 붙인다 (`FE/app/(user)/parties/[id]/join-button.tsx`)
   - 공개면 "참가"
   - 정원 참·마감·다른 파티 속함·참가 제한이면 누를 수 없게 하고 이유를 보인다. 이유는 `me.relation`과 status로 정한다. 다른 파티에 속했으면 내 파티로 가는 길도 보인다
   - 성공하면 화면을 다시 불러온다. 실패하면 오류 코드 문구를 보인다
@@ -230,14 +230,14 @@ description: "파티 (party) 작업 목록"
   - `BE/api/service/party/PartyMessageService.java`: 멤버가 아니면 A102
   - 응답은 `{items, hasMore}`이다
   - 저장한 뒤 `MESSAGE` 이벤트를 발행한다
-- [ ] T024 [US9] 채팅 패널을 만든다 (`FE/app/(main)/parties/[id]/chat-panel.tsx`, spec.md 화면 "파티 화면 - 채팅")
+- [ ] T024 [US9] 채팅 패널을 만든다 (`FE/app/(user)/parties/[id]/chat-panel.tsx`, spec.md 화면 "파티 화면 - 채팅")
   - 오래된 것이 위, 새것이 아래다. 위로 올리면 `before`로 더 불러온다. `components/ui/message-scroller.tsx`, `message.tsx`를 쓴다
   - 보낸 사람과 시각을 보이고, 내 메시지는 구별한다
   - SYSTEM은 `party.chat.system` 문구로 다르게 보인다
   - 남은 글자 수를 보이고 500자를 넘으면 보내지 못한다
   - 연결이 끊기면 "끊김"을 표시한다 (T013 연결 상태 훅)
   - 다시 이으면 `after`로 채운다
-- [ ] T025 [US9] 파티 화면에 실시간 반영을 붙인다 (`FE/app/(main)/parties/[id]/use-party-live.ts`)
+- [ ] T025 [US9] 파티 화면에 실시간 반영을 붙인다 (`FE/app/(user)/parties/[id]/use-party-live.ts`)
   - 멤버일 때만 `usePartyChannel`에 partyId를 넘긴다. 아니면 `null`이다
   - `MEMBERS_CHANGED`·`PARTY_UPDATED`는 TanStack Query 캐시를 고친다
   - `MESSAGE`는 채팅에 붙인다
@@ -257,7 +257,7 @@ description: "파티 (party) 작업 목록"
   - `GET /parties/invites/{code}`: InvitePreview(joinable, reasonCode)
   - `POST /parties/invites/{code}/members`: T009 `admit`을 via=INVITE로 부른다
   - 위치는 `ApiPartyMemberController`, `PartyApplication`이다
-- [ ] T027 [US4] `FE/app/(main)/invite/[code]/page.tsx`를 만든다 (spec.md 화면 "초대 입장 화면")
+- [ ] T027 [US4] `FE/app/(user)/(signed-in)/invite/[code]/page.tsx`를 만든다 (spec.md 화면 "초대 입장 화면")
   - 요약과 "들어가기"를 보인다
   - 이미 멤버면 파티 화면으로 바로 보낸다
   - 유효하지 않으면 안내와 모집 페이지로 가는 길을 보인다
@@ -284,7 +284,7 @@ description: "파티 (party) 작업 목록"
   - 개인 알림 (FR-029, research.md R13): 신청하면 방장에게 `PARTY_APPLIED`, 승인하면 신청한 회원에게 `PARTY_APPROVED`, 거절하면 신청한 회원에게 `PARTY_REJECTED`(연결 `/recruit`). 같은 트랜잭션에서 `NotificationApplication.notify`를 부른다. 신청 취소에는 보내지 않는다
 - [ ] T029 [US5] 화면을 붙인다
   - 비멤버 버튼에 "신청"과 "신청 대기 중 + 신청 취소"를 더한다 (T022 `join-button.tsx`)
-  - 방장의 신청 목록(`FE/app/(main)/parties/[id]/join-requests.tsx`): 대기 수, 승인·거절, `JOIN_REQUESTS_CHANGED`면 다시 불러오기
+  - 방장의 신청 목록(`FE/app/(user)/parties/[id]/join-requests.tsx`): 대기 수, 승인·거절, `JOIN_REQUESTS_CHANGED`면 다시 불러오기
 
 ---
 
@@ -318,7 +318,7 @@ description: "파티 (party) 작업 목록"
   - 해산은 T030 `dissolve`와 `PARTY_DISSOLVED`다
   - 개인 알림 (FR-029): 내보내진 회원에게 `PARTY_KICKED`(연결 `/recruit`). 해산하면 방장을 뺀 멤버와 대기 중이던 신청자에게 `PARTY_DISSOLVED`(연결 `/recruit`)를 한 사람씩 보낸다. 받는 사람은 `dissolve`가 멤버·신청을 지우기 전에 모은다. 고치기·방식 바꾸기·초대 코드·마감·재개에는 보내지 않는다
   - 고치기·방식 바꾸기는 `PARTY_UPDATED`를 보낸다
-- [ ] T033 [US7] 방장 동작을 붙인다 (`FE/app/(main)/parties/[id]/host-actions.tsx`)
+- [ ] T033 [US7] 방장 동작을 붙인다 (`FE/app/(user)/parties/[id]/host-actions.tsx`)
   - 정보 고치기 창은 T017 폼을 다시 쓴다
   - 참가 방식 바꾸기, 마감·재개, 초대 코드 새로 만들기, 해산, 멤버마다 내보내기를 둔다
   - 확인 창은 spec.md 화면 "되돌리기 어려운 동작" 5가지다
@@ -350,7 +350,7 @@ description: "파티 (party) 작업 목록"
     - 배그: 포지션 칸 없음
     - 티어 최소·최대
     - 포지션 조건을 켜면 인원이 자동 계산된다
-  - 참가 창(`FE/app/(main)/parties/[id]/join-dialog.tsx`, spec.md 화면 "참가 창")
+  - 참가 창(`FE/app/(user)/parties/[id]/join-dialog.tsx`, spec.md 화면 "참가 창")
     - 빈 포지션만 고를 수 있다
     - 티어는 선택이고 범위 밖이면 안내만 한다
     - B105면 남은 포지션을 다시 보인다
@@ -365,7 +365,7 @@ description: "파티 (party) 작업 목록"
 **Independent Test**: 내 파티 화면에서 속한 파티와 대기 신청을 본다. 자동 테스트는 T052
 
 - [ ] T037 [US8] `GET /parties/me`를 구현한다 (`ApiPartyController`, `PartyApplication.myParty`)
-- [ ] T038 [US8] `FE/app/(main)/my-party/page.tsx`를 만든다 (spec.md 화면 "내 파티")
+- [ ] T038 [US8] `FE/app/(user)/(signed-in)/my-party/page.tsx`를 만든다 (spec.md 화면 "내 파티")
   - 파티 카드와 파티 화면 버튼을 보인다
   - 대기 신청 목록과 신청 취소를 보인다
   - 둘 다 없으면 모집 페이지로 가는 길을 보인다
@@ -403,12 +403,13 @@ description: "파티 (party) 작업 목록"
   - AC3: 제목이 빔, 인원 1·11, 목록에 없는 게임 코드면 각각 400 V001이고 `errors`에 그 칸이 있다
   - AC4: 토큰이 없으면 401 A001이다
   - AC5: `GET /api/v1/codes/GAME`이 LOL, OVERWATCH, VALORANT, PUBG 순서다
-- [ ] T043 [P] [US2] `BT/api/party/PartyBrowseAcceptanceTest.java`에 US2-AC1~AC5를 쓴다. 파티는 `PartyFixtures`로 넣는다
+- [ ] T043 [P] [US2] `BT/api/party/PartyBrowseAcceptanceTest.java`에 US2-AC1~AC6을 쓴다. 파티는 `PartyFixtures`로 넣는다
   - AC1: RECRUITING인 OPEN·APPROVAL만 `id DESC`로 나온다. CLOSED와 PRIVATE은 없다. 카드 항목은 contracts PartySummary다
   - AC2: `gameCode`로, 그리고 `gameCode`+`modeCode`로 거른다
   - AC3: 상세 항목은 PartyDetail이고 `me.relation`이 NONE이다. 비멤버에게는 `invite`가 없다
   - AC4: 비멤버가 PRIVATE를 열면 404 R001이다
   - AC5: 해산된 파티는 404 R001이다
+  - AC6: 토큰 없이 `GET /parties`와 공개 파티의 `GET /parties/{id}`가 200이고 `me.relation`이 NONE이다. 로그인 화면으로 보냈다 돌아오는 것은 e2e(T056 흐름 1 앞)에서 본다
 - [ ] T044 [P] [US3] `BT/api/party/PartyJoinAcceptanceTest.java`에 US3-AC1~AC7을 쓴다
   - AC1: `POST /parties/{id}/members`가 200이고 memberCount가 +1이다
   - AC2: 마지막 자리가 차면 status CLOSED, closedByHost false가 되고 `GET /parties`에서 빠진다
@@ -499,7 +500,7 @@ description: "파티 (party) 작업 목록"
 - [ ] T054 [P] `frontend/tests/unit/party-schema.test.ts`에 T017·T036 스키마의 경계값 테스트를 쓴다 (제목 0·1·50·51자, 인원 1·2·10·11, 포지션 조건을 켜면 인원이 slots 합)
 - [ ] T055 [P] `frontend/tests/unit/party-live.test.ts`에 T025의 이벤트별 캐시 반영 테스트를 쓴다
 - [ ] T056 [P] `frontend/e2e/party.spec.ts`에 spec.md "e2e로 확인할 흐름" 3개를 쓴다
-  1. 공개 파티를 만들고 다른 회원이 참가해 채팅을 주고받는다
+  1. 공개 파티를 만들고 다른 회원이 참가해 채팅을 주고받는다. 시작은 로그인하지 않은 채 모집 페이지를 보고 "파티 만들기"를 눌러 로그인 화면을 거쳐 돌아오는 것이다 (US2-AC6)
   2. 비공개 초대 링크로 들어온다
   3. 롤 포지션을 골라 들어온다
   - REST는 `page.route`, 실시간은 `page.routeWebSocket`으로 가짜 STOMP 프레임을 보낸다(007 e2e와 같다). 로그인은 `e2e/support/api.ts`의 `signedIn`이다
@@ -508,7 +509,7 @@ description: "파티 (party) 작업 목록"
 
 ### 추적
 
-- [ ] T057 AC 추적을 확인한다. `grep -rhoE 'US[0-9]+-AC[0-9]+' backend/src/test frontend/e2e | sort -u | wc -l`이 73인지 본다. 빠진 AC가 있으면 그 스토리의 테스트를 더한다
+- [ ] T057 AC 추적을 확인한다. `grep -rhoE 'US[0-9]+-AC[0-9]+' backend/src/test frontend/e2e | sort -u | wc -l`이 74인지 본다. 빠진 AC가 있으면 그 스토리의 테스트를 더한다
 
 ---
 
