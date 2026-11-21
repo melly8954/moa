@@ -19,6 +19,7 @@
 | `enabled` | 더함 `BOOLEAN NOT NULL DEFAULT TRUE` | 꺼지면 그 그룹의 화면용 목록이 빈 목록이다 |
 | `used_by` | 뺌 | 쓰는 곳. 설명으로 합쳤다 |
 | `system` | 뺌 | 시스템 그룹. 지우지 않으므로 구분이 필요 없다 |
+| `sort_order` | 더함 `INT NOT NULL DEFAULT 0` (2026-11-21, `V5__code_group_sort_order.sql`) | 그룹 순서. 기존 그룹은 만든 순서로 채우고, 새 그룹은 맨 뒤(최대 + 1). 트리는 순서, 같으면 만든 순서 |
 
 ## 처음 구성
 
