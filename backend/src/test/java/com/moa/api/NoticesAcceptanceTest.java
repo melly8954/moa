@@ -248,7 +248,7 @@ class NoticesAcceptanceTest extends AcceptanceTest {
 	}
 
 	private MvcTestResult asAdmin(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 
 	/** 역할 없는 일반 회원 (공지 관리 권한이 없는 운영자와 같다. 운영자는 시스템 역할이 USER다) */

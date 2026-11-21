@@ -38,7 +38,8 @@ class MenuAcceptanceTest extends AcceptanceTest {
 
 	@Test
 	// moa: 관리 메뉴는 가리키는 연결 화면의 권한으로 거른다 (specs/001-admin-menus FR-002). 키트는 메뉴의 권한 키다
-	@DisplayName("메뉴: 내 메뉴는 연결 화면의 권한으로 거르고(ADMIN은 전부), 보이는 하위 메뉴가 없는 묶음 메뉴는 뺀다")
+	// moa (2026-11-21): 키트의 "ADMIN은 전부"는 "최고 관리자는 전부, 역할 없는 관리자 계정은 없음"으로 바뀌었다 (specs/003-admin-roles R21)
+	@DisplayName("메뉴: 내 메뉴는 연결 화면의 권한으로 거르고(최고 관리자는 전부, 역할 없는 관리자 계정은 없음), 보이는 하위 메뉴가 없는 묶음 메뉴는 뺀다")
 	void myMenusByPermission() {
 		long group = create(null, "업무", null, 10);
 		create(group, "코드", "ADMIN_CODES", 10);
@@ -47,10 +48,13 @@ class MenuAcceptanceTest extends AcceptanceTest {
 		create(null, "빈 묶음", null, 30);
 
 		MvcTestResult user = asUser(mvc.get().uri(MY_MENUS));
+		MvcTestResult noRole = mvc.get().uri(MY_MENUS).header(HttpHeaders.AUTHORIZATION, bearer(4L, "ADMIN"))
+			.exchange();
 		MvcTestResult admin = asAdmin(mvc.get().uri(MY_MENUS));
 
 		assertThat(user).hasStatus(200);
 		assertThat(user).bodyJson().extractingPath("$.length()").isEqualTo(0);
+		assertThat(noRole).bodyJson().extractingPath("$.length()").isEqualTo(0);
 		assertThat(admin).bodyJson().extractingPath("$.length()").isEqualTo(2);
 		assertThat(admin).bodyJson().extractingPath("$[0].children.length()").isEqualTo(2);
 	}
@@ -195,7 +199,7 @@ class MenuAcceptanceTest extends AcceptanceTest {
 	}
 
 	private MvcTestResult asAdmin(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 
 	private MvcTestResult asUser(MockMvcRequestBuilder request) {

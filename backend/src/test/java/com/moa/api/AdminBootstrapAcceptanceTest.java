@@ -20,6 +20,8 @@ import com.moa.support.TestUsers;
 
 /**
  * 첫 관리자 만들기 (AdminBootstrapRunner가 부르는 UserApplication.bootstrapAdmin)
+ * moa (specs/002-admin-users FR-001, specs/003-admin-roles research R20·R21): 만든 계정은 최고 관리자 역할을 가진다.
+ * 건너뛰는 조건은 키트의 "ADMIN이 있으면"이 아니라 "최고 관리자가 있으면"이다
  */
 class AdminBootstrapAcceptanceTest extends AcceptanceTest {
 
@@ -39,7 +41,7 @@ class AdminBootstrapAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("첫 관리자: ADMIN이 없으면 임시 비밀번호로 만들고, 로그인하면 비밀번호 변경 요구가 보인다")
+	@DisplayName("첫 관리자: 최고 관리자가 없으면 임시 비밀번호로 만들고, 로그인하면 비밀번호 변경 요구와 모든 권한이 보인다")
 	void create() {
 		assertThat(userApplication.hasAdmin()).isFalse();
 
@@ -49,15 +51,18 @@ class AdminBootstrapAcceptanceTest extends AcceptanceTest {
 		MvcTestResult login = mvc.post().uri("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
 			.content("{\"loginId\":\"root\",\"password\":\"temporary123!\"}").exchange();
 		assertThat(login).hasStatus(200);
-		assertThat(mvc.get().uri("/api/v1/users/me").header("Authorization", "Bearer "
-			+ com.jayway.jsonpath.JsonPath.read(body(login), "$.accessToken")))
+		String token = "Bearer " + com.jayway.jsonpath.JsonPath.read(body(login), "$.accessToken");
+		assertThat(mvc.get().uri("/api/v1/users/me").header("Authorization", token))
 			.bodyJson().extractingPath("$.passwordChangeRequired").isEqualTo(true);
+		assertThat(mvc.get().uri("/api/v1/users/me/permissions").header("Authorization", token))
+			.bodyJson().extractingPath("$.permissions").asArray().contains("ROLE_MANAGE", "USER_MANAGE");
 	}
 
 	@Test
-	@DisplayName("첫 관리자: ADMIN이 이미 있으면 만들지 않는다 (환경 변수를 남겨 둬도 된다)")
+	@DisplayName("첫 관리자: 최고 관리자가 이미 있으면 만들지 않는다 (환경 변수를 남겨 둬도 된다)")
 	void skipWhenAdminExists() {
 		testUsers.create(2L, "admin", "admin1234!", Role.ADMIN);
+		testUsers.makeSuperAdmin(2L);
 
 		assertThat(bootstrap("root", "temporary123!")).isFalse();
 		assertThat(bootstrap("admin", "temporary123!")).isFalse();

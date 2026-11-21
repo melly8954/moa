@@ -260,6 +260,6 @@ class AdminCodesAcceptanceTest extends AcceptanceTest {
 	}
 
 	private MvcTestResult admin(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 }

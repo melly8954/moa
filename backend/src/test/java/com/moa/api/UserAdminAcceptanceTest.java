@@ -94,11 +94,15 @@ class UserAdminAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("사용자 관리: ADMIN이 아니면 ADMIN 계정을 건드리거나 ADMIN을 줄 수 없다(A005). 역할 바꾸기는 ADMIN만")
+	// moa (specs/002-admin-users FR-005·FR-007, research R9·R12): 키트는 "ADMIN이 아니면 ADMIN 계정을 건드리거나 ADMIN을 줄 수 없다,
+	// 역할 바꾸기는 ADMIN만"이었다. moa는 계정 종류를 사용자 관리 권한으로 바꾸고, 최고 관리자 계정은 최고 관리자만 다룬다
+	@DisplayName("사용자 관리: 회원은 관리 API에서 막히고, 사용자 관리 운영자는 회원을 관리자로 바꾸지만 최고 관리자는 못 다룬다(A005)")
 	void adminProtection() {
-		String manager = bearer(3L, "USER");
-		// USER_MANAGE를 받지 않은 USER는 관리 API에서 막힌다 (rbac로 권한을 받은 사용자의 ADMIN 보호는 서비스 규칙)
-		assertThat(mvc.get().uri(USERS).header(HttpHeaders.AUTHORIZATION, manager)).hasStatus(403);
+		String member = bearer(3L, "USER");
+		assertThat(mvc.get().uri(USERS).header(HttpHeaders.AUTHORIZATION, member)).hasStatus(403);
+		String manager = operator(5L, "manager", "USER_MANAGE");
+		assertThat(mvc.put().uri(USERS + "/2/lock").header(HttpHeaders.AUTHORIZATION, manager)).hasStatus(403)
+			.bodyJson().extractingPath("$.code").isEqualTo("A005");
 
 		assertThat(asAdmin(mvc.put().uri(USERS + "/3/role").contentType(MediaType.APPLICATION_JSON)
 			.content("{\"role\":\"ADMIN\"}"))).hasStatus(200).bodyJson().extractingPath("$.role")
@@ -125,7 +129,7 @@ class UserAdminAcceptanceTest extends AcceptanceTest {
 	}
 
 	private MvcTestResult asAdmin(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 
 	private String body(MvcTestResult result) {

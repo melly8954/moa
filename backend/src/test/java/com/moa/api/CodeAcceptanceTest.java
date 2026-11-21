@@ -74,6 +74,6 @@ class CodeAcceptanceTest extends AcceptanceTest {
 
 	private MvcTestResult admin(
 		org.springframework.test.web.servlet.assertj.MockMvcTester.MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 }

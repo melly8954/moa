@@ -47,7 +47,7 @@ class AdminLoginHistoryAcceptanceTest extends AcceptanceTest {
 		login("lee", "secret456!");
 
 		MvcTestResult result = mvc.get().uri("/api/v1/admin/login-histories?loginId=kim")
-			.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN"))
+			.header(HttpHeaders.AUTHORIZATION, superAdmin())
 			.exchange();
 
 		assertThat(result).hasStatus(200);

@@ -28,6 +28,7 @@ import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import com.moa.common.security.AuthPrincipal;
+import com.moa.common.security.Role;
 import com.moa.common.security.jwt.JwtTokenProvider;
 
 /**
@@ -63,6 +64,9 @@ public abstract class RealtimeAcceptanceTest {
 	@Autowired
 	private DatabaseCleaner databaseCleaner;
 
+	@Autowired
+	private TestUsers supportUsers;
+
 	@AfterEach
 	void cleanDatabase() {
 		databaseCleaner.clean();
@@ -71,6 +75,13 @@ public abstract class RealtimeAcceptanceTest {
 	/** Authorization 헤더 값 */
 	protected String bearer(Long userId, String... roles) {
 		return "Bearer " + jwtTokenProvider.createAccessToken(new AuthPrincipal(userId, Set.of(roles)));
+	}
+
+	/** moa: 최고 관리자(id 2, admin)의 Authorization 헤더 값. AcceptanceTest.superAdmin()과 같다 (specs/003-admin-roles R21) */
+	protected String superAdmin() {
+		supportUsers.create(2L, "admin", "admin1234!", Role.ADMIN);
+		supportUsers.makeSuperAdmin(2L);
+		return bearer(2L, Role.ADMIN.name());
 	}
 
 	/** 토큰으로 연결한다. authorization이 null이면 토큰 없이 */
