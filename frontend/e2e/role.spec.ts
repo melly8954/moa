@@ -4,7 +4,8 @@ import { expectNoHorizontalOverflow, expectNoSeriousA11yViolations } from "./sup
 
 // 권한 관리 (rbac 헬퍼, moa 이름 "권한 관리"). 백엔드 대신 API를 가로챈다
 // moa (specs/003-admin-roles FR-005·FR-010·FR-011, research R21, 2026-11-21): 왼쪽 역할 목록 · 오른쪽 상세 칸(region)의 두 칸이다.
-//   좁은 폭은 목록 + 드로어(dialog). 최고 관리자 역할은 맨 위에 고정 역할로 있고, 쓸 메뉴와 구성원이 한 칸에 함께 보인다(탭 없음)
+//   좁은 폭은 목록 + 드로어(dialog). 최고 관리자 역할은 맨 위에 고정 역할로 있고, 메뉴 권한과 구성원이 한 칸에 함께 보인다(탭 없음)
+// moa (2026-11-22, FR-004·FR-006, research R27~R30): 메뉴 권한 트리는 첫 상위 메뉴만 펼쳐져 있고, 구성원은 키트 목록 표(쪽 이동 줄)다
 
 // moa: 역할은 관리 메뉴 트리로 권한을 고른다 (specs/003-admin-roles FR-004)
 const PERMISSION_TREE = {
@@ -101,6 +102,8 @@ async function mock(page: Page, onSave?: (body: unknown) => { status: number; js
       return route.fulfill({ status: 204 })
     }
     const keyword = new URL(request.url()).searchParams.get("keyword")
+    // 보안 담당(2)은 구성원이 없다
+    if (!keyword && request.url().includes("/roles/2/members")) return route.fulfill({ json: page_([]) })
     return route.fulfill({
       json: page_(
         keyword
@@ -144,7 +147,7 @@ test("US4-AC1·AC2 왼쪽은 최고 관리자가 맨 위인 역할 목록(이름
   await expect(roleButton(page, "보안 담당")).toHaveCount(0)
 })
 
-test("US4-AC3 역할 행을 누르면 오른쪽 칸에 이름·코드와 쓸 메뉴·구성원이 탭 없이 함께 보인다 @wide", async ({
+test("US4-AC3 역할 행을 누르면 오른쪽 칸에 이름·코드와 메뉴 권한·구성원이 탭 없이 함께 보인다 @wide", async ({
   page,
 }) => {
   await mock(page)
@@ -153,7 +156,7 @@ test("US4-AC3 역할 행을 누르면 오른쪽 칸에 이름·코드와 쓸 메
   const panel = detail(page, "운영 매니저")
   await expect(panel).toContainText("MANAGER")
   await expect(panel).toContainText("구성원 3명")
-  await expect(panel.getByText("쓸 메뉴", { exact: true })).toBeVisible()
+  await expect(panel.getByText("메뉴 권한", { exact: true })).toBeVisible()
   await expect(panel.getByRole("heading", { name: "구성원" })).toBeVisible()
   await expect(panel.getByRole("checkbox", { name: /^코드 관리/ })).toBeChecked()
   await expect(panel.getByRole("cell", { name: "operator", exact: true }).first()).toBeVisible()
@@ -202,7 +205,7 @@ test("내 권한 밖이면(A005) 그렇게 알린다 @wide", async ({ page }) =>
   await expect(panel.getByText("내가 가진 권한 밖의 권한이나 사용자 관리 권한은 다룰 수 없어요.")).toBeVisible()
 })
 
-test("US2-AC2 최고 관리자 역할은 쓸 메뉴가 모두 체크된 채 꺼져 있고 이름·설명을 바꾸거나 저장할 수 없다 @wide", async ({
+test("US2-AC2 최고 관리자 역할은 메뉴 권한이 모두 체크된 채 꺼져 있고 이름·설명을 바꾸거나 저장할 수 없다 @wide", async ({
   page,
 }) => {
   await mock(page)
@@ -212,6 +215,8 @@ test("US2-AC2 최고 관리자 역할은 쓸 메뉴가 모두 체크된 채 꺼�
   await expect(panel.getByText(/바꾸거나 지울 수 없고/)).toBeVisible()
   await expect(panel.getByRole("checkbox", { name: /^코드 관리/ })).toBeChecked()
   await expect(panel.getByRole("checkbox", { name: /^코드 관리/ })).toBeDisabled()
+  // 메뉴에 없는 화면은 처음에 접혀 있다. 보기만 하는 역할도 펼 수 있다
+  await panel.getByRole("button", { name: /^메뉴에 없는 화면/ }).click()
   await expect(panel.getByRole("checkbox", { name: /^공지 관리/ })).toBeChecked()
   await expect(panel.getByLabel("이름")).toBeDisabled()
   await expect(panel.getByRole("button", { name: "저장" })).toHaveCount(0)
@@ -227,9 +232,12 @@ test("US2-AC4 최고 관리자 역할의 구성원은 보기만 하고 검색·�
   const panel = detail(page, "최고 관리자")
   await expect(panel.getByText("operator").first()).toBeVisible()
   await expect(panel.getByText("최고 관리자는 한 명으로 고정이에요. 바꾸려면 개발자에게 요청해요.")).toBeVisible()
-  await expect(panel.getByLabel("관리자 계정 찾기")).toHaveCount(0)
-  await expect(panel.getByRole("checkbox", { name: /고르기$/ })).toHaveCount(0)
-  await expect(panel.getByRole("button", { name: "더하기" })).toHaveCount(0)
+  const members = panel.getByRole("region", { name: "구성원", exact: true })
+  await expect(members.getByLabel("관리자 계정 찾기")).toHaveCount(0)
+  await expect(members.getByRole("checkbox")).toHaveCount(0)
+  await expect(members.getByRole("button", { name: "더하기" })).toHaveCount(0)
+  // 늘 한 명이라 쪽 이동 줄을 두지 않는다 (Clarifications 2026-11-22)
+  await expect(members.getByRole("navigation", { name: "쪽 이동" })).toHaveCount(0)
 })
 
 test("US4-AC4 둘을 골라 지우면 사용자 수를 알리고 되물은 뒤 한꺼번에 보낸다. 최고 관리자 역할은 고를 수 없다 @wide", async ({
@@ -270,11 +278,11 @@ test("US5-AC1·AC2·AC4 구성원: 검색하면 구성원 여부가 보이고, �
   await panel.getByLabel("관리자 계정 찾기").fill("op")
   await panel.getByRole("button", { name: "찾기" }).click()
   await expect(panel.getByRole("cell", { name: "operator2", exact: true }).first()).toBeVisible()
-  await expect(panel.getByRole("checkbox", { name: "admin 고르기" })).toBeDisabled()
+  await expect(panel.getByRole("checkbox", { name: "admin 선택" })).toBeDisabled()
   await expect(panel.getByRole("cell", { name: "모든 권한" })).toBeVisible()
   await expectNoSeriousA11yViolations(page)
 
-  await panel.getByRole("checkbox", { name: "operator2 고르기" }).click()
+  await panel.getByRole("checkbox", { name: "operator2 선택" }).click()
   await panel.getByRole("toolbar", { name: "고른 사람 처리" }).getByRole("button", { name: "더하기" }).click()
   await expect.poll(() => sent.add).toEqual({ userIds: [11] })
 })
@@ -285,7 +293,7 @@ test("US5-AC3 구성원을 골라 한꺼번에 뺀다 @wide", async ({ page }) =
   await page.goto("/admin/roles")
   await roleButton(page, "운영 매니저").click()
   const panel = detail(page, "운영 매니저")
-  await panel.getByRole("checkbox", { name: "operator 고르기" }).click()
+  await panel.getByRole("checkbox", { name: "operator 선택" }).click()
   await panel.getByRole("toolbar", { name: "고른 사람 처리" }).getByRole("button", { name: "빼기" }).click()
   await expect.poll(() => sent.remove).toEqual({ userIds: [10] })
 })
@@ -297,4 +305,76 @@ test("US4-AC5 1024px보다 좁으면 목록만 보이고 상세는 드로어로 
   await expect(page.getByText("왼쪽에서 역할을 고르거나 역할을 추가해요.")).toHaveCount(0)
   await roleButton(page, "운영 매니저").click()
   await expect(page.getByRole("dialog").getByRole("cell", { name: "operator", exact: true }).first()).toBeVisible()
+})
+
+// 2026-11-22 메뉴 권한 접기 (specs/003-admin-roles FR-004, US3-AC4, Clarifications, research R27·R30)
+test("US3-AC4 메뉴 권한 트리는 첫 상위 메뉴만 펼쳐져 있고, 접힌 줄에 체크 수가 보이며, 이름을 누르면 펼쳐질 뿐 체크되지 않는다 @wide", async ({
+  page,
+}) => {
+  await mock(page)
+  await page.goto("/admin/roles")
+  await roleButton(page, "보안 담당").click()
+  const panel = detail(page, "보안 담당")
+  await expect(panel.getByRole("button", { name: /^시스템/ })).toHaveAttribute("aria-expanded", "true")
+  await expect(panel.getByRole("checkbox", { name: /^역할/ })).toBeVisible()
+  const unlisted = panel.getByRole("button", { name: /^메뉴에 없는 화면/ })
+  await expect(unlisted).toHaveAttribute("aria-expanded", "false")
+  await expect(unlisted).toContainText("0/1")
+  await expect(panel.getByRole("checkbox", { name: /^공지 관리/ })).toHaveCount(0)
+
+  await unlisted.click()
+  await expect(unlisted).toHaveAttribute("aria-expanded", "true")
+  await expect(panel.getByRole("checkbox", { name: /^공지 관리/ })).not.toBeChecked()
+  // 체크 칸은 아래 메뉴를 모두 체크하고, 접힌 줄의 수도 바뀐다
+  await panel.getByRole("checkbox", { name: "시스템 모두 고르기" }).click()
+  await expect(panel.getByRole("checkbox", { name: /^역할/ })).toBeChecked()
+  await expect(panel.getByRole("button", { name: /^시스템/ })).toContainText("1/1")
+  await expectNoSeriousA11yViolations(page)
+})
+
+test("FR-004 넓은 폭에서 메뉴 권한 칸과 구성원 칸의 아래 끝이 같다 @wide", async ({ page }) => {
+  await mock(page)
+  await page.goto("/admin/roles")
+  await roleButton(page, "운영 매니저").click()
+  const panel = detail(page, "운영 매니저")
+  await expect(panel.getByRole("cell", { name: "operator", exact: true }).first()).toBeVisible()
+  const tree = await panel.getByRole("group", { name: "메뉴 권한" }).boundingBox()
+  const members = await panel.getByRole("region", { name: "구성원", exact: true }).boundingBox()
+  expect(tree && members && Math.abs(tree.y + tree.height - (members.y + members.height))).toBeLessThanOrEqual(2)
+})
+
+// 2026-11-22 구성원은 키트 목록 표 (specs/003-admin-roles FR-006, US5-AC1·AC5, 011-list-screen, research R29·R30)
+test("US5-AC5 구성원이 없는 역할도 표 머리·빈 안내와 쪽 이동 줄(총 0건, 10개씩)이 보인다 @wide", async ({ page }) => {
+  await mock(page)
+  await page.goto("/admin/roles")
+  await roleButton(page, "보안 담당").click()
+  const members = detail(page, "보안 담당").getByRole("region", { name: "구성원", exact: true })
+  await expect(members.getByRole("columnheader", { name: "아이디" })).toBeVisible()
+  await expect(members.getByText("아직 이 역할을 가진 관리자 계정이 없어요.")).toBeVisible()
+  await expect(members).toContainText("총 0건")
+  await expect(members.getByRole("navigation", { name: "쪽 이동" })).toBeVisible()
+  await expect(members.getByLabel("한 쪽에 보일 개수")).toHaveValue("10")
+})
+
+test("US5-AC1 구성원이 10명을 넘으면 쪽으로 나뉘고, 2쪽을 누르면 page=1&size=10으로 묻는다 @wide", async ({ page }) => {
+  await mock(page)
+  const asked: string[] = []
+  await page.route("**/api/v1/admin/roles/1/members**", (route) => {
+    const url = new URL(route.request().url())
+    asked.push(`page=${url.searchParams.get("page")}&size=${url.searchParams.get("size")}`)
+    const p = Number(url.searchParams.get("page") ?? 0)
+    const content =
+      p === 0
+        ? Array.from({ length: 10 }, (_, i) => member(100 + i, `op${i}`, false, true))
+        : [member(200, "op10", false, true)]
+    return route.fulfill({ json: { content, page: p, size: 10, totalElements: 11, totalPages: 2 } })
+  })
+  await page.goto("/admin/roles")
+  await roleButton(page, "운영 매니저").click()
+  const members = detail(page, "운영 매니저").getByRole("region", { name: "구성원", exact: true })
+  await expect(members).toContainText("총 11건")
+  await members.getByRole("button", { name: "2쪽" }).click()
+  await expect(members.getByRole("cell", { name: "op10", exact: true })).toBeVisible()
+  expect(asked).toContain("page=0&size=10")
+  expect(asked).toContain("page=1&size=10")
 })
