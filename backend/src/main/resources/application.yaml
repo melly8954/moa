@@ -99,9 +99,19 @@ app:
     # 푸시 서버가 연락할 운영자 주소 (mailto:...)
     subject: ${WEB_PUSH_SUBJECT:}
 ---
-# moa: 개인정보 파기 이력 (specs/013-purge-log). 파기 이력 보관 기간과 정리 시각 (FR-006)
+# moa: 개인정보 파기 이력 (specs/013-purge-log FR-006), 소셜 로그인 제공자 설정과 현재 약관 버전 (specs/010-social-login)
 app:
   purge-log:
     # 이 기간이 지난 파기 이력은 매일 지운다. 다른 정리(04:30~05:00)가 끝난 뒤에 돈다
     retention-days: ${PURGE_LOG_RETENTION_DAYS:365}
     cleanup-cron: ${PURGE_LOG_CLEANUP_CRON:0 10 5 * * *}
+  oauth:
+    google:
+      # 셋 중 하나라도 비면 구글을 끈다 (단추 숨김, 시작·콜백 A008)
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}
+      redirect-uri: ${GOOGLE_REDIRECT_URI:}
+  terms:
+    # 가입 때 동의받는 약관 버전. 비밀 값이 아니다. 문안은 frontend/src/content/terms/에 버전마다 둔다 (잠정 draft, 배포 전 실제 버전으로)
+    service-version: draft
+    privacy-version: draft

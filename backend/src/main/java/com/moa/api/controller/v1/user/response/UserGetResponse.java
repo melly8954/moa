@@ -11,9 +11,12 @@ public record UserGetResponse(
 	@Schema(description = "로그인 아이디", example = "user") String loginId,
 	@Schema(description = "이름", example = "사용자") String name,
 	@Schema(description = "역할", example = "USER") Role role,
-	@Schema(description = "임시 비밀번호를 받아 바꿔야 한다. true면 화면이 비밀번호 변경으로 보낸다") boolean passwordChangeRequired) {
+	@Schema(description = "임시 비밀번호를 받아 바꿔야 한다. true면 화면이 비밀번호 변경으로 보낸다") boolean passwordChangeRequired,
+	@Schema(
+		description = "moa: 비밀번호가 있는지. 없으면(소셜 회원) 비밀번호 변경을 숨긴다 (010 US2-AC3)") boolean hasPassword) {
 
 	public static UserGetResponse from(UserDto user) {
-		return new UserGetResponse(user.id(), user.loginId(), user.name(), user.role(), user.passwordChangeRequired());
+		return new UserGetResponse(user.id(), user.loginId(), user.name(), user.role(), user.passwordChangeRequired(),
+			user.hasPassword());
 	}
 }

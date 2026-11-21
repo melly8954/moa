@@ -24,11 +24,14 @@ import { useSignOut } from "./use-sign-out"
 // 사이드바 바닥의 계정 줄 (moa, specs/001-admin-menus FR-005, 2026-11-21. 키트로 옮길 것)
 //   한 줄에 누구인지(이름·아이디)와 아이콘 단추 셋: 알림 벨(안 읽은 수), 톱니, 로그아웃
 //   톱니 메뉴: 화면 모드, (언어가 여럿이면) 언어, 설정, 비밀번호 변경. 로그아웃은 묻지 않고 바로 한다
+//   소셜 회원(비밀번호 없는 계정)은 아이디 줄과 비밀번호 변경을 숨긴다. 아이디가 만든 값(s_…)이고 바꿀 비밀번호가 없다 (specs/010-social-login US2-AC3)
 //   아이콘만 남게 접힌 사이드바에서는 이름을 숨기고 세 단추를 세로로 쌓는다. 단추 이름은 툴팁으로 보인다
 export function AccountBar() {
   const t = useTranslations("shell")
   const me = useMe().data
   const signOut = useSignOut()
+  // 비밀번호가 있는 계정만 아이디와 비밀번호 변경을 보인다 (moa, 010 US2-AC3). 불러오는 동안은 숨긴다
+  const hasPassword = me?.hasPassword === true
   const { state, isMobile } = useSidebar()
   const collapsed = state === "collapsed" && !isMobile
   const side = collapsed ? "right" : "top"
@@ -45,12 +48,12 @@ export function AccountBar() {
             </span>
             <span className="flex min-w-0 flex-1 flex-col leading-tight">
               <span className="truncate text-sm font-medium">{me?.name ?? t("account")}</span>
-              <span className="truncate text-xs text-muted-foreground">{me?.loginId}</span>
+              {hasPassword && <span className="truncate text-xs text-muted-foreground">{me?.loginId}</span>}
             </span>
           </TooltipTrigger>
           <TooltipContent side="top" align="start" className="flex flex-col">
             <span className="font-medium">{me?.name ?? t("account")}</span>
-            {me?.loginId && <span className="opacity-80">{me.loginId}</span>}
+            {hasPassword && me?.loginId && <span className="opacity-80">{me.loginId}</span>}
           </TooltipContent>
         </Tooltip>
       )}
@@ -82,10 +85,12 @@ export function AccountBar() {
             <SlidersHorizontal />
             {t("settings")}
           </DropdownMenuItem>
-          <DropdownMenuItem render={<Link href={PASSWORD_PATH} />}>
-            <KeyRound />
-            {t("changePassword")}
-          </DropdownMenuItem>
+          {hasPassword && (
+            <DropdownMenuItem render={<Link href={PASSWORD_PATH} />}>
+              <KeyRound />
+              {t("changePassword")}
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <Tooltip>

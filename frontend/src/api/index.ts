@@ -8,6 +8,7 @@ import { loginHistoryApi } from "./login-history"
 import { menuApi } from "./menu"
 import { notificationApi } from "./notification"
 import { noticeAdminApi, noticeApi } from "./notice"
+import { oauthApi, termsApi } from "./oauth"
 import { purgeLogApi } from "./purge-log"
 import { roleApi } from "./role"
 import { userAdminApi } from "./user-admin"
@@ -37,6 +38,8 @@ export const api = {
     notice: noticeApi,
     noticeAdmin: noticeAdminApi,
     notification: notificationApi,
+    oauth: oauthApi,
+    terms: termsApi,
     purgeLog: purgeLogApi,
     role: roleApi,
     userAdmin: userAdminApi,

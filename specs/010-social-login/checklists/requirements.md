@@ -39,5 +39,5 @@
 - 정해진 것: FR-006 연결·해제(C), FR-005 닉네임 입력과 입력 전 이탈 처리, 웹만(앱 나중), FR-007 관리자·운영자 소셜 불가·소셜 회원 역할 금지, US2-AC3 비밀번호 변경 숨김, US3-AC3 설정 없는 제공자 단추 숨김, 소셜 이름·이메일 변경 시 가입 때 값 유지
 - 2026-11-17 정해진 것: 제공자 구글+디스코드(카카오 나중), FR-013 약관·개인정보 필수 동의(US1-AC3 질문 풀림), FR-014 이메일 중복이면 가입·연결 막음(연결하는 본인 이메일은 예외), 이메일 없음·미인증이면 가입·연결 막음(Session 2026-11-16 "연결에 인증 조건 없음"을 정정), FR-015 재가입 제한(삭제 회원 재가입 질문 풀림, 연결에도 적용)
 - FR-004는 팀 확인이 끝나야 수용 기준을 붙일 수 있다 ("All functional requirements have clear acceptance criteria" 미통과의 이유)
-- "키트 `users`", "`/sign-in`" 같은 이름은 기존 스펙과 경계를 잇기 위한 참조로 두었다
+- "키트 `tb_user`", "`/sign-in`" 같은 이름은 기존 스펙과 경계를 잇기 위한 참조로 두었다
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
