@@ -20,4 +20,4 @@ Docker가 떠 있어야 한다. `backend/`에서 실행한다 (Windows는 `.\gra
 
 ## 운영 배포 때 확인
 
-- 운영 환경의 `.env`에 `LOGIN_HISTORY_RETENTION_DAYS`가 365로 남아 있지 않은지 본다. 있으면 지우거나 90으로 바꾼다 ([research.md](./research.md) R2)
+- 운영 환경의 `.env`에 `LOGIN_HISTORY_RETENTION_DAYS`가 예전 값(90)으로 남아 있지 않은지 본다. 있으면 지우거나 365로 바꾼다 ([research.md](./research.md) R2)

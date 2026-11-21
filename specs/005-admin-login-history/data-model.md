@@ -16,8 +16,8 @@
 
 | 설정 | 지금 | 바꾼 뒤 |
 |---|---|---|
-| `app.login-history.retention-days` 기본값 (`application.yaml`) | 365 | 90 |
-| `LOGIN_HISTORY_RETENTION_DAYS` (`backend/.env.example`) | 365 | 90 |
+| `app.login-history.retention-days` 기본값 (`application.yaml`) | 90 | 365 |
+| `LOGIN_HISTORY_RETENTION_DAYS` (`backend/.env.example`) | 90 | 365 |
 
 생성 시각이 "지금 − 보관 기간"보다 이전인 이력은 매일 정리 때 지워진다 (키트).
 
