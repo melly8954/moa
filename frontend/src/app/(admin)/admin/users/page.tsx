@@ -18,21 +18,15 @@ import type { AdminUser } from "@/types/user-admin"
 import { CreateUserDrawer, UserDrawer, UserStatus } from "./user-drawer"
 import { UserExtraDialogs, useUserExtraActions } from "./user-extras"
 import { rolesText } from "./user-roles"
-import {
-  RenameDialog,
-  RoleChangeDialog,
-  ROLES,
-  TemporaryPasswordDialog,
-  useInvalidateUsers,
-  useUserErrorText,
-} from "./user-dialogs"
+import { ROLES, TemporaryPasswordDialog, useInvalidateUsers, useUserErrorText } from "./user-dialogs"
 
 // 사용자 관리 (user-admin 헬퍼, 권한 USER_MANAGE)
 // moa: 관리 화면 정리 (specs/002-admin-users FR-005~FR-008, research R6·R7·R11)
-//   목록에 역할 열(최고 관리자·역할 없음·역할 이름들, 회원은 빈 칸). 아이디를 누르면 드로어에서 다룬다
+//   목록에 역할 열(최고 관리자·역할 없음·역할 이름들, 회원은 빈 칸). 행 아무 곳이나 누르면 드로어에서 다룬다
+//   (2026-11-22, FR-007. 아이디 칸은 밑줄 없는 단추로 두어 키보드로도 연다)
 //   만들기도 드로어에서 하고 임시 비밀번호를 드로어 안에 한 번 보인다. 관리자 계정의 역할도 드로어에서 준다
 // 막는 것 (서버도 막는다. 화면은 버튼을 끈다)
-//   - 내 행: 계정 종류 바꾸기·잠그기·삭제 (B001)
+//   - 내 행: 계정 종류 바꾸기·로그인 막기(잠그기)·삭제 (B001)
 //   - 다룰 수 없는 계정(protection): 최고 관리자 계정, 나보다 권한이 많은 관리자 계정 (A005)
 //   - 비밀번호 없는 계정(소셜): 비밀번호 초기화 (B001)
 const DEFAULTS = { keyword: "", role: "", locked: "" }
@@ -51,8 +45,6 @@ export default function UsersPage() {
   const extraActions = useUserExtraActions()
   const [creating, setCreating] = useState(false)
   const [openId, setOpenId] = useState<number>()
-  const [renaming, setRenaming] = useState<AdminUser>()
-  const [changingRole, setChangingRole] = useState<AdminUser>()
   const [password, setPassword] = useState<{ loginId: string; value: string }>()
 
   const run = useMutation({
@@ -104,7 +96,7 @@ export default function UsersPage() {
       key: "loginId",
       header: t("loginId"),
       cell: (u) => (
-        <button type="button" className="text-left underline-offset-4 hover:underline" onClick={() => setOpenId(u.id)}>
+        <button type="button" className="text-left" onClick={() => setOpenId(u.id)}>
           {u.loginId}
         </button>
       ),
@@ -158,21 +150,24 @@ export default function UsersPage() {
         </SearchPanel>
       }
     >
-      <DataTable caption={t("title")} columns={columns} query={users} search={search} rowKey={(u) => u.id} />
+      <DataTable
+        caption={t("title")}
+        columns={columns}
+        query={users}
+        search={search}
+        rowKey={(u) => u.id}
+        onRowClick={(u) => setOpenId(u.id)}
+      />
       <CreateUserDrawer open={creating} onOpenChange={setCreating} />
       <UserDrawer
         user={opened}
         onClose={() => setOpenId(undefined)}
         isSelf={!!opened && isSelf(opened)}
         extraActions={extraActions}
-        onRename={() => opened && setRenaming(opened)}
-        onChangeRole={() => opened && setChangingRole(opened)}
         onToggleLock={() => opened && void toggleLock(opened)}
         onResetPassword={() => opened && void resetPassword(opened)}
         onRemove={() => opened && void remove(opened)}
       />
-      <RenameDialog user={renaming} onClose={() => setRenaming(undefined)} />
-      <RoleChangeDialog user={changingRole} onClose={() => setChangingRole(undefined)} />
       <TemporaryPasswordDialog
         value={password?.value}
         loginId={password?.loginId}

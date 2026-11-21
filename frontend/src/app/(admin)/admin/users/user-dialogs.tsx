@@ -1,13 +1,9 @@
 "use client"
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import { Copy } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
-import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { api } from "@/api"
 import { toApiError } from "@/api/error"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -19,16 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { useFieldErrorText } from "@/i18n/field-error"
 import { useErrorMessages } from "@/lib/error-messages"
-import { type UserRenameInput, userRenameSchema } from "@/lib/schemas/user-admin"
 import type { Role } from "@/types/user"
-import type { AdminUser } from "@/types/user-admin"
 
-// 사용자 관리 화면의 창들: 이름 바꾸기, 역할 바꾸기, 임시 비밀번호 보이기 (만들기는 user-drawer.tsx의 드로어)
+// 사용자 관리 화면의 공용 조각: 계정 종류 목록, 오류 문구, 임시 비밀번호 보이기 (만들기·고치기는 user-drawer.tsx의 드로어)
+// moa: 이름 바꾸기·계정 종류 바꾸기 창은 없앴다. 드로어 한 폼에서 고친다 (specs/002-admin-users FR-007, 2026-11-22)
 
 export const ROLES: Role[] = ["USER", "ADMIN"]
 
@@ -97,134 +89,6 @@ export function TemporaryPasswordDialog({
         <TemporaryPasswordPanel value={value ?? ""} loginId={loginId ?? ""} />
         <DialogFooter>
           <Button onClick={onClose}>{t("done")}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-export function RenameDialog({ user, onClose }: { user?: AdminUser; onClose: () => void }) {
-  const t = useTranslations("userAdmin")
-  const fieldErrorText = useFieldErrorText()
-  const errorText = useUserErrorText()
-  const invalidate = useInvalidateUsers()
-  const [formError, setFormError] = useState<string>()
-  const form = useForm<UserRenameInput>({ resolver: zodResolver(userRenameSchema), values: { name: user?.name ?? "" } })
-  const rename = useMutation({
-    mutationFn: ({ name }: UserRenameInput) => api.v1.userAdmin.rename(user!.id, name),
-    onSuccess: async () => {
-      await invalidate()
-      toast.success(t("renamed"))
-      onClose()
-    },
-    onError: (error) => setFormError(errorText(error)),
-  })
-  return (
-    <Dialog open={!!user} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("rename")}</DialogTitle>
-          <DialogDescription>{user?.loginId}</DialogDescription>
-        </DialogHeader>
-        <form
-          noValidate
-          onSubmit={form.handleSubmit((values) => {
-            setFormError(undefined)
-            rename.mutate(values)
-          })}
-        >
-          <FieldGroup>
-            {formError && (
-              <Alert variant="destructive">
-                <AlertDescription>{formError}</AlertDescription>
-              </Alert>
-            )}
-            <Controller
-              name="name"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="rename-name">{t("name")}</FieldLabel>
-                  <Input
-                    {...field}
-                    id="rename-name"
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={fieldState.invalid ? "rename-name-error" : undefined}
-                  />
-                  {fieldState.invalid && (
-                    <FieldError id="rename-name-error" errors={fieldErrorText(fieldState.error)} />
-                  )}
-                </Field>
-              )}
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                {t("cancel")}
-              </Button>
-              <Button type="submit" disabled={rename.isPending}>
-                {t("save")}
-              </Button>
-            </DialogFooter>
-          </FieldGroup>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-export function RoleChangeDialog({ user, onClose }: { user?: AdminUser; onClose: () => void }) {
-  const t = useTranslations("userAdmin")
-  const errorText = useUserErrorText()
-  const invalidate = useInvalidateUsers()
-  const [role, setRole] = useState<Role>(user?.role ?? "USER")
-  const [lastUser, setLastUser] = useState(user)
-  if (user !== lastUser) {
-    setLastUser(user)
-    setRole(user?.role ?? "USER")
-  }
-  const change = useMutation({
-    mutationFn: () => api.v1.userAdmin.changeRole(user!.id, role),
-    onSuccess: async () => {
-      await invalidate()
-      toast.success(t("roleChanged"))
-      onClose()
-    },
-    onError: (error) => toast.error(errorText(error)),
-  })
-  return (
-    <Dialog open={!!user} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("changeRole")}</DialogTitle>
-          <DialogDescription>{t("changeRoleDescription")}</DialogDescription>
-        </DialogHeader>
-        {/* moa: 관리자 계정을 회원으로 바꾸면 받은 역할이 모두 빠진다 (specs/002-admin-users FR-005, US4-AC5) */}
-        {user?.role === "ADMIN" && role === "USER" && (user.superAdmin || user.accessRoles.length > 0) && (
-          <Alert>
-            <AlertDescription>
-              {t("demoteWarning", {
-                roles: user.superAdmin ? t("superAdmin") : user.accessRoles.map((r) => r.name).join(", "),
-              })}
-            </AlertDescription>
-          </Alert>
-        )}
-        <Field>
-          <FieldLabel htmlFor="change-role">{t("role")}</FieldLabel>
-          <NativeSelect id="change-role" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-            {ROLES.map((r) => (
-              <NativeSelectOption key={r} value={r}>
-                {t(`roles.${r}`)}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </Field>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            {t("cancel")}
-          </Button>
-          <Button disabled={change.isPending || role === user?.role} onClick={() => change.mutate()}>
-            {t("save")}
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
