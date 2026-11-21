@@ -13,11 +13,11 @@ import lombok.NoArgsConstructor;
 
 /**
  * 프로필 (최소형, specs/010-social-login data-model, specs/009-mypage research R4).
- * 닉네임은 겹쳐도 되고 (nicknameKey, nicknameTag)가 고유하다. 표시 닉네임은 users.name이다. 009가 칸을 더한다.
+ * 닉네임은 겹쳐도 되고 (nicknameKey, nicknameTag)가 고유하다. 표시 닉네임은 tb_user.name이다. 009가 칸을 더한다.
  */
 @Getter
 @Entity
-@Table(name = "user_profiles")
+@Table(name = "tb_user_profile")
 @HardDelete(reason = "회원 하나에 한 행. 탈퇴 때 처리는 회원 탈퇴 스펙이 정한다")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserProfile extends BaseTimeEntity {
@@ -26,7 +26,7 @@ public class UserProfile extends BaseTimeEntity {
 	@Column(name = "user_id")
 	private Long userId;
 
-	/** users.name의 정규화 값 (NicknamePolicy.key) */
+	/** tb_user.name의 정규화 값 (NicknamePolicy.key) */
 	@Column(name = "nickname_key", nullable = false, length = 50)
 	private String nicknameKey;
 

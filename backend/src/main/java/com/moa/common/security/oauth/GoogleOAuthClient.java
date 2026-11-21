@@ -18,6 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -87,7 +88,8 @@ public class GoogleOAuthClient implements OAuthProviderClient {
 			return Optional.of(new OAuthIdentity(SocialProvider.GOOGLE, claims.sub(), claims.email(),
 				claims.emailVerified(), claims.name()));
 		} catch (VerificationFailed ex) {
-			log.warn("구글 로그인 확인 실패: {}", ex.getMessage());
+			// 예외 메시지에는 제공자 응답 본문이 섞일 수 있어 남기지 않는다 (docs/privacy.md "파기 방법": 로그)
+			log.warn("구글 로그인 확인 실패: 이유={}, 예외={}, HTTP 상태={}", ex.reason, ex.exceptionType, ex.httpStatus);
 			return Optional.empty();
 		}
 	}
@@ -112,7 +114,7 @@ public class GoogleOAuthClient implements OAuthProviderClient {
 			}
 			return response.idToken();
 		} catch (RestClientException ex) {
-			throw failed("토큰 교환 실패: " + ex.getClass().getSimpleName());
+			throw failed("토큰 교환 실패", ex);
 		}
 	}
 
@@ -125,7 +127,7 @@ public class GoogleOAuthClient implements OAuthProviderClient {
 			byte[] payload = Base64.getUrlDecoder().decode(parts[1]);
 			return objectMapper.readValue(new String(payload, StandardCharsets.UTF_8), IdTokenClaims.class);
 		} catch (IllegalArgumentException | JacksonException ex) {
-			throw failed("ID 토큰을 읽을 수 없습니다");
+			throw failed("ID 토큰을 읽을 수 없습니다", ex);
 		}
 	}
 
@@ -148,14 +150,31 @@ public class GoogleOAuthClient implements OAuthProviderClient {
 	}
 
 	private VerificationFailed failed(String reason) {
-		return new VerificationFailed(reason);
+		return new VerificationFailed(reason, null, null);
 	}
 
-	/** 교환·확인 실패. exchange 안에서만 쓰고 밖으로 내보내지 않는다 */
+	/** 원인 예외는 종류와 (있으면) HTTP 상태만 남긴다. 메시지·응답 본문은 버린다 */
+	private VerificationFailed failed(String reason, Exception cause) {
+		Integer status = cause instanceof RestClientResponseException response
+			? response.getStatusCode().value() : null;
+		return new VerificationFailed(reason, cause.getClass().getSimpleName(), status);
+	}
+
+	/**
+	 * 교환·확인 실패. exchange 안에서만 쓰고 밖으로 내보내지 않는다.
+	 * reason은 이 클래스가 정한 고정 문구라 제공자 값이 섞이지 않는다
+	 */
 	private static final class VerificationFailed extends RuntimeException {
 
-		VerificationFailed(String reason) {
-			super(reason, null, false, false);
+		private final String reason;
+		private final String exceptionType;
+		private final Integer httpStatus;
+
+		VerificationFailed(String reason, String exceptionType, Integer httpStatus) {
+			super(null, null, false, false);
+			this.reason = reason;
+			this.exceptionType = exceptionType;
+			this.httpStatus = httpStatus;
 		}
 	}
 

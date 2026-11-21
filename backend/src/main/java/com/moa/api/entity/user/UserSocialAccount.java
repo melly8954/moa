@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "user_social_accounts")
+@Table(name = "tb_user_social_account")
 @HardDelete(reason = "연결 해제(FR-006)는 행을 지운다. 이력이 아니다")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserSocialAccount {

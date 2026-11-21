@@ -35,7 +35,7 @@ public final class NicknamePolicy {
 		return Normalizer.normalize(raw, Normalizer.Form.NFC).strip();
 	}
 
-	/** 태그 공간을 나누는 키: normalize → 소문자 (user_profiles.nickname_key) */
+	/** 태그 공간을 나누는 키: normalize → 소문자 (tb_user_profile.nickname_key) */
 	public static String key(String nickname) {
 		return normalize(nickname).toLowerCase(Locale.ROOT);
 	}

@@ -88,7 +88,7 @@ public class UserAdminService {
 	}
 
 	/**
-	 * moa: 프로필(user_profiles)이 있는 회원은 닉네임 규칙(NicknamePolicy)을 지키고 닉네임 키·태그를 함께 맞춘다
+	 * moa: 프로필(tb_user_profile)이 있는 회원은 닉네임 규칙(NicknamePolicy)을 지키고 닉네임 키·태그를 함께 맞춘다
 	 * (specs/010-social-login research R14, specs/009-mypage FR-003). 태그는 새 키에서 비어 있으면 그대로, 아니면 새로.
 	 * 프로필이 없는 회원(관리자 등)은 키트 규칙만 따른다.
 	 *

@@ -22,8 +22,8 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "user_terms_agreements")
-@HardDelete(reason = "동의 기록은 고치거나 지우지 않는다. 탈퇴 때 처리는 회원 탈퇴 스펙이 정한다")
+@Table(name = "tb_user_terms_agreement")
+@HardDelete(reason = "동의 기록은 고치지 않는다. 탈퇴 유예 30일이 지나면 행을 지운다 (docs/privacy.md \"탈퇴 회원 파기\", 회원 탈퇴 스펙)")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserTermsAgreement {
 

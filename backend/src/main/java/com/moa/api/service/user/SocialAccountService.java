@@ -2,7 +2,6 @@ package com.moa.api.service.user;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -48,7 +47,7 @@ public class SocialAccountService {
 	static final String LOGIN_ID_PREFIX = "s_";
 	private static final int LOGIN_ID_RANDOM_LENGTH = 12;
 	private static final String LOGIN_ID_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789";
-	private static final String SOCIAL_ACCOUNT_CONSTRAINT = "uk_user_social_accounts_provider_subject";
+	private static final String SOCIAL_ACCOUNT_CONSTRAINT = "uk_user_social_account_provider_subject";
 	private static final SecureRandom RANDOM = new SecureRandom();
 
 	private final UserReader userReader;
@@ -70,17 +69,6 @@ public class SocialAccountService {
 	/** 소셜 계정이 하나라도 연결된 회원인지 (FR-007) */
 	public boolean isSocialMember(Long userId) {
 		return userSocialAccountReader.existsByUserId(userId);
-	}
-
-	/**
-	 * 업무 역할을 줄 대상에 소셜 회원이 없어야 한다 (FR-007, US1-AC6). 역할 관리(rbac)가 부른다.
-	 *
-	 * @throws ServiceException 소셜 회원이 섞이면 A011
-	 */
-	public void requireNoSocialMembers(Collection<Long> userIds) {
-		if (userSocialAccountReader.existsByUserIdIn(userIds)) {
-			throw new ServiceException(ErrorCode.SOCIAL_MEMBER_ROLE_NOT_ALLOWED);
-		}
 	}
 
 	/**

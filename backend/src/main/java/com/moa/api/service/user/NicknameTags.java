@@ -18,7 +18,7 @@ import com.moa.common.exception.ServiceException;
  * 태그는 같은 닉네임 키 안에서 겹치지 않는 0001~9999 중 무작위다. 회원이 고르지 않는다.
  * <p>
  * 고른 뒤 저장할 때까지 다른 요청이 같은 번호를 가져갈 수 있다. 그때는 유일 제약
- * uk_user_profiles_nickname_tag가 막으므로, 부르는 쪽(Application)이 {@link #isTagConflict}로 알아보고
+ * uk_user_profile_nickname_key_nickname_tag가 막으므로, 부르는 쪽(Application)이 {@link #isTagConflict}로 알아보고
  * 새 트랜잭션으로 처음부터 다시 한다 (최대 {@link #MAX_ATTEMPTS}번, 그래도면 B201).
  */
 @Component
@@ -26,7 +26,7 @@ public class NicknameTags {
 
 	public static final int MAX_ATTEMPTS = 3;
 	static final int MAX_TAG = 9999;
-	static final String UNIQUE_CONSTRAINT = "uk_user_profiles_nickname_tag";
+	static final String UNIQUE_CONSTRAINT = "uk_user_profile_nickname_key_nickname_tag";
 	private static final int RANDOM_TRIES = 32;
 
 	private final UserProfileReader userProfileReader;
