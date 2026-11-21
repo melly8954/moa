@@ -49,3 +49,43 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
 ## R8. 무엇을 테스트하나 (US3)
 
 - **Decision**: API 인수 테스트(`AdminUsersAcceptanceTest`): US3-AC1(목록 응답의 `accessRoles`: 역할 받은 운영자는 "보안 담당", 없으면 빈 목록). e2e(`user-admin.spec.ts`): US3-AC1(열, 관리자 "모든 권한"), US3-AC2(행 → 드로어, 행 "관리" 단추 없음, 막는 규칙), US3-AC3(업무 역할 보기만, 역할 관리 링크), 만들기 뒤 임시 비밀번호가 드로어에 한 번. 지금 "관리" 메뉴를 쓰던 e2e는 드로어로 고친다 (원칙 V)
+
+## R9. 계정을 다루는 규칙 (FR-005·FR-007, US2·US4, 2026-11-21)
+
+- **Decision**: `UserAdminService`(키트 user-admin)의 규칙을 바꾼다. 모두 사용자 관리 권한(`USER_MANAGE`) API 안의 규칙이다
+  - 만들기(`create`): 계정 종류 `ADMIN`도 사용자 관리 권한으로 만든다. 지금의 "ADMIN은 ADMIN만 만든다"(:67)를 없앤다. 역할 없는 `ADMIN`은 권한이 없기 때문이다
+  - 계정 종류 바꾸기(`changeRole`): "ADMIN만"(:94)을 없애고 사용자 관리 권한으로 한다. `ADMIN` → `USER`면 같은 트랜잭션에서 그 계정의 역할을 모두 빼고(`003` `RoleUserService`), 그 계정의 토큰을 끊는다(잠그기와 같다). 내 행은 지금처럼 B001
+  - 다룰 수 있나(`requireManageable`, 이름 바꾸기·계정 종류·잠그기·풀기·비밀번호 초기화·삭제 모두): 대상이 최고 관리자면 행위자도 최고 관리자여야 한다. 대상이 `ADMIN`이고 행위자가 최고 관리자가 아니면 대상의 권한(역할 합집합)이 모두 행위자의 권한 안에 있어야 한다. 어기면 403 `A005`. 대상이 `USER`면 지금처럼 다룬다. 지금의 "행위자가 ADMIN이 아니면 ADMIN 행은 못 다룬다"(:154-160)를 이것으로 바꾼다
+  - 마지막 최고 관리자: 회원으로 바꾸기·잠그기·지우기가 최고 관리자를 0명으로 만들면 409 `B001` (`003` research R17의 같은 검사를 부른다)
+- **Rationale**: 사용자 관리 권한이 있는 운영자가 자기보다 권한이 많은 운영자의 비밀번호를 초기화하면 그 계정으로 로그인해 권한을 넓힐 수 있다. 키트가 역할에 쓰는 권한 상승 방지(내 권한 안쪽만)를 계정에도 같은 식으로 둔다(스펙 가정, 사용자 결정)
+- **Alternatives considered**: 관리자 계정 행은 최고 관리자만 다루기(단순하지만 운영자 계정 관리를 모두 최고 관리자가 해야 한다. 사용자가 버렸다), 비밀번호 초기화만 막기(이름 바꾸기·잠그기는 권한을 넓히지 않지만, 규칙이 둘로 나뉘면 화면 안내가 복잡해진다)
+- **키트로 옮길 것**: user-admin 헬퍼의 대상 범위 규칙과 확장점(rbac가 있을 때 권한을 비교)
+
+## R10. 응답에 더하는 칸 (FR-006·FR-007, US3·US4, 2026-11-21)
+
+- **Decision**: `UserAdminResponse`(목록·한 사람)에 `superAdmin`(최고 관리자 역할을 가졌나)과 `protection`(이 행위자가 다룰 수 없는 이유: `SUPER_ADMIN_ONLY`·`WIDER_PERMISSIONS`·null)을 더한다. 목록 한 쪽의 대상 권한은 `accessRoles`처럼 한 번에 모아 계산한다(쿼리 하나 더). 화면의 `protectedRow`(`page.tsx:66`, "내가 ADMIN이 아니면 ADMIN 행")와 `iAmAdmin`(`page.tsx:42`)은 이 칸으로 바꾼다
+- **Rationale**: 대상과 행위자의 권한 비교는 서버만 정확히 안다. 화면은 이유만 받아 단추를 끄고 안내한다 (`003` research R18과 같은 생각)
+- **Alternatives considered**: 화면이 대상 권한을 받아 비교하기(최고 관리자 규칙까지 화면에 두 벌 적는다)
+
+## R11. 사용자 드로어와 목록 (FR-005~FR-008, US3·US4, 2026-11-21)
+
+- **Decision**:
+  - 문구(`messages/ko.json` `userAdmin`): `role` "시스템 역할" → "계정 종류", `roles.USER` "사용자" → "회원", `roles.ADMIN` "관리자" 그대로, `accessRoles` "업무 역할" → "역할", `noAccessRoles` → "역할 없음", 최고 관리자 표시 "최고 관리자", `description`은 FR-008 문구. `allPermissions`·`adminOnly`·`accessRolesHint`(역할 관리 링크)는 쓰지 않게 되면 지운다
+  - 목록 역할 열: `superAdmin`이면 "최고 관리자", `ADMIN`이고 역할 없으면 "역할 없음", 있으면 이름들, `USER`면 빈 칸
+  - 드로어 위 칸: 아이디·이름·계정 종류·상태·만든 시각. 그 아래 역할 칸(관리자 계정만):
+    - 권한 관리 권한(`ROLE_MANAGE`, `useHasPermission`)이 있으면 체크 목록. 역할은 `GET /api/v1/admin/roles`(`003` R18의 `grantable`·`blockReason`·`permissionNames`), 이 계정의 역할은 `GET /api/v1/admin/users/{userId}/roles`, 저장은 `PUT` 같은 주소(지금 API, `003` 권한). 체크할 수 없는 역할은 꺼진 채 이유를 작게 보인다. 역할 이름 아래 `permissionNames`를 작게 보인다. 최고 관리자 역할 칸은 최고 관리자만 켜진다. "역할 저장" 단추는 이 칸 안에 두고 바꾼 것이 있을 때만 켠다
+    - 권한 관리 권한이 없으면 `accessRoles` 이름만 보이고 체크 칸을 끈다
+    - 회원이면 역할 칸 대신 "계정 종류를 관리자로 바꾸면 역할을 줄 수 있어요"
+  - 아래 단추: `protection`이 있으면 모두 끄고 이유를 보인다. 내 행·비밀번호 없는 계정 규칙은 그대로
+  - 계정 종류 바꾸기 대화상자: `ADMIN` → `USER`면 빠질 역할 이름을 보이고 확인을 받는다
+  - 만들기 드로어의 계정 종류는 회원·관리자 둘 다 고를 수 있다(`canGrantAdmin` 없앰)
+- **Rationale**: 미리보기로 고른 모양(체크 칸 드로어)이다. 역할을 주는 API는 `003` 것을 그대로 써서 규칙이 한 곳에 있다
+- **Alternatives considered**: 사용자 관리 API에 역할 저장을 더하기(같은 규칙의 API가 둘이 된다)
+- **키트로 옮길 것**: 드로어 역할 칸(rbac가 있을 때만 보이는 확장점)
+
+## R12. 무엇을 테스트하나 (US1~US4, 2026-11-21)
+
+- **Decision**:
+  - API 인수 테스트(`AdminUsersAcceptanceTest`): US1-AC1(부트스트랩 계정이 최고 관리자, 모든 관리 메뉴), US2-AC1(`role` = `ADMIN`으로 만들기, 역할 전에는 `/menus/me` 빈 목록), US3-AC1(`accessRoles`·`superAdmin`), US3-AC3(드로어가 쓰는 `PUT /users/{id}/roles` → 공지 관리 200), US4-AC1(사용자 관리 운영자가 회원 다루기·`ADMIN`으로 바꾸기), US4-AC2(권한이 더 많은 운영자 비밀번호 초기화 A005, `protection` = `WIDER_PERMISSIONS`), US4-AC3(최고 관리자 행 A005, `SUPER_ADMIN_ONLY`), US4-AC5(`ADMIN` → `USER`면 역할이 비고 토큰이 끊김), 마지막 최고 관리자 잠그기·지우기 B001. 지금 운영자를 `role` = `USER`로 만들던 테스트는 `ADMIN`으로 바꾼다(원칙 V)
+  - 키트 수용 테스트 `UserAdminAcceptanceTest`: `adminProtection`(ADMIN이 아니면 ADMIN 행 A005)을 R9 규칙으로 바꾼다. `search`의 `role=ADMIN` 거르기는 그대로다. 바꾼 것을 PR 설명에 적는다
+  - e2e(`user-admin.spec.ts`): US3-AC1(역할 열 세 가지), US3-AC2·AC3(체크 칸, 저장), US3-AC4(회원 드로어 안내), US4-AC2·AC3(`protection`이면 단추 꺼짐과 이유), US4-AC4(권한 관리 권한 없으면 체크 꺼짐), US4-AC5(되돌리기 확인 창에 역할 이름), "계정 종류"·"회원" 문구. "내가 관리자가 아니면 관리자 행은 모두 꺼져 있다"(:107)는 `protection` 기대로 바꾼다(원칙 V)

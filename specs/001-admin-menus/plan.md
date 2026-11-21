@@ -25,6 +25,8 @@ moa가 할 일은 키트 시드의 "관리" 그룹을 없애 메뉴를 최상위
 
 **두 칸 화면과 쉬운 말 (2026-11-20, FR-009·FR-010·FR-012, US5)**: 프론트만 바꾼다. 메뉴 관리를 공통코드처럼 좌 트리 · 우 상세 두 칸으로 바꾸고(좁은 폭은 드로어), 메뉴 폼에서 "종류" 칸을 없애고 "상위 메뉴" 칸을 둔다. 화면 문구의 "묶음"·"연결 화면"을 "상위 메뉴"·"연결 화면"으로 바꾸고, 역할 관리의 같은 문구도 맞춘다. 공통코드의 상세 패널을 공용 부품으로 옮겨 함께 쓴다. 백엔드와 API는 바꾸지 않는다 ([research.md](./research.md) R25·R26). 구현 브랜치는 `feat/001-menu-two-pane`
 
+**관리 셸은 관리자 계정이 쓴다 (2026-11-21, FR-002·FR-005·FR-006, US1-AC1)**: 관리 셸·첫 화면을 고르는 기준을 "관리 메뉴가 하나라도 있나"에서 "계정 종류가 `ADMIN`인가"로 바꾸고, 볼 메뉴가 없는 관리자 계정에게 `/admin`에서 안내를 보인다. 프론트만 바꾼다(`landing.ts`, `account-shell.tsx`, `/admin` 첫 화면). 권한 판정과 메뉴 이름("권한 관리") 변경은 `003-admin-roles` research R16·R19·R20이 하고, 같은 구현 브랜치 `feat/003-admin-accounts`에서 한다 ([research.md](./research.md) R27·R28)
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)

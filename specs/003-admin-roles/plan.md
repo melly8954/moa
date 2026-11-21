@@ -1,4 +1,4 @@
-# Implementation Plan: 운영자 역할 (admin-roles)
+# Implementation Plan: 권한 관리 (admin-roles)
 
 **Branch**: `docs/003-admin-roles` (설계), `feat/003-admin-roles` (구현) | **Date**: 2026-11-10 | **Spec**: [spec.md](./spec.md)
 
@@ -13,13 +13,15 @@ moa가 할 일은 "접속 이력만 보는 운영자" 흐름을 AC 테스트로 
 
 **관리 화면 정리 (2026-11-15, FR-005~FR-007·FR-009, US3·US4)**: 역할 관리를 역할 목록 + 드로어(기본·메뉴 / 구성원)로 바꾸고 "사용자별 역할" 탭을 없앤다. 구성원은 검색·쪽 나눔·일괄 더하기·빼기 API로 바꾸고, 역할 일괄 지우기 API를 더한다. `001-admin-menus` Phase 11의 공용 드로어·머리 안내를 쓴다 ([research.md](./research.md) R12~R15)
 
+**관리자 계정과 최고 관리자 역할, 두 칸 화면 (2026-11-21, FR-001~FR-011, US1-AC4·US2·US4·US5)**: 시스템 역할 `ADMIN`을 "모든 권한"에서 "관리자 계정"으로 바꾸고, 모든 권한은 코드 `SUPER_ADMIN`인 최고 관리자 역할(V7 마이그레이션의 행, 권한 행 없음)이 가진다. 권한 판정(`PermissionGuard`)과 역할을 주는 규칙(`RoleGrantPolicy`·`RoleUserService`)을 바꾸고, 역할 목록·구성원 응답에 칸을 더한다. 권한 관리를 메뉴 관리와 같은 두 칸 화면으로 바꾸고 이름을 "권한 관리"로 바꾼다. `002-admin-users`(사용자 드로어 역할 주기, 계정 다루기 범위)와 `001-admin-menus`(관리 셸 조건)가 이 판정에 기대므로 셋을 한 구현 브랜치 `feat/003-admin-accounts`에서 한다. 키트 골격·rbac·user-admin과 다르게 동작하고, 키트 수용 테스트 일부의 기대가 바뀐다 ([research.md](./research.md) R16~R21)
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)
 
 **Primary Dependencies**: psw-dev-kit rbac 헬퍼 (`AccessRolePermissionChecker`), menu 헬퍼 (내 메뉴 거르기)
 
-**Storage**: MariaDB `tb_access_role`, `tb_user_access_role` (`V1_8__access_roles.sql`). 새 테이블과 컬럼은 없다. 지금은 `V1__schema.sql`·`V2__seed.sql`에 합쳐져 있다 (2026-11-21)
+**Storage**: MariaDB `tb_access_role`, `tb_user_access_role` (`V1_8__access_roles.sql`). 새 테이블과 컬럼은 없다. 지금은 `V1__schema.sql`·`V2__seed.sql`에 합쳐져 있다 (2026-11-21). 최고 관리자 역할 행과 기존 데이터 옮기기는 `V7__super_admin_role.sql`이다 (R20)
 
 **Testing**: 인수 테스트 `AcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`). 화면은 키트 e2e(Playwright)
 
