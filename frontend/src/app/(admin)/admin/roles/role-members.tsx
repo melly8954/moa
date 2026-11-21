@@ -16,11 +16,12 @@ import type { Role } from "@/types/role"
 
 const SIZE = 20
 
-// 역할 드로어 "구성원" 탭 (moa, specs/003-admin-roles FR-006, US4, research R13)
-//   고르기 목록: 검색과 서버 쪽 나눔. 쪽은 드로어 안 상태로 두고 주소에 두지 않는다
-//   검색어가 없으면 구성원만, 있으면 모든 사용자에서 찾고 구성원인지 표시한다
-//   체크해서 "더하기"·"빼기"를 한꺼번에 한다. 관리자(ADMIN)는 모든 권한을 가져 체크할 수 없다
-//   하나라도 틀리면 서버가 아무것도 바꾸지 않는다 (ADMIN B001, 권한 밖 역할 A005)
+// 역할 "구성원" (moa, specs/003-admin-roles FR-006, US5, research R13·R19)
+//   고르기 목록: 검색과 서버 쪽 나눔. 쪽은 칸 안 상태로 두고 주소에 두지 않는다
+//   검색어가 없으면 구성원만, 있으면 관리자 계정에서 찾고 구성원인지 표시한다 (회원은 역할을 받지 않아 나오지 않는다)
+//   체크해서 "더하기"·"빼기"를 한꺼번에 한다. 다른 역할에서는 최고 관리자 계정을 체크할 수 없다 (모든 권한)
+//   내가 다룰 수 없는 역할(grantable false)은 보기만 한다
+//   하나라도 틀리면 서버가 아무것도 바꾸지 않는다 (회원·최고 관리자 0명 B001, 권한 밖 역할 A005)
 export function RoleMembers({ role }: { role: Role }) {
   const t = useTranslations("role")
   const queryClient = useQueryClient()
@@ -34,7 +35,8 @@ export function RoleMembers({ role }: { role: Role }) {
     queryFn: () => api.v1.role.members(role.id, { keyword: searched || undefined, page, size: SIZE }),
     placeholderData: keepPreviousData,
   })
-  const selectable = (members.data?.content ?? []).filter((u) => u.role !== "ADMIN").map((u) => u.id)
+  const blocked = (u: { superAdmin: boolean }) => !role.grantable || (!role.fixed && u.superAdmin)
+  const selectable = (members.data?.content ?? []).filter((u) => !blocked(u)).map((u) => u.id)
   const allChecked = selectable.length > 0 && selectable.every((id) => selected.includes(id))
 
   const run = useMutation({
@@ -48,9 +50,9 @@ export function RoleMembers({ role }: { role: Role }) {
       const apiError = toApiError(error)
       toast.error(
         apiError.code === "A005"
-          ? t("grantDenied")
+          ? t(role.fixed ? "blockSuperAdminOnly" : "grantDenied")
           : apiError.code === "B001"
-            ? t("adminNotAllowed")
+            ? apiError.message || describeError(apiError).message
             : describeError(apiError).message,
       )
     },
@@ -157,7 +159,7 @@ export function RoleMembers({ role }: { role: Role }) {
                         <Checkbox
                           aria-label={t("selectPerson", { loginId: u.loginId })}
                           checked={selected.includes(u.id)}
-                          disabled={u.role === "ADMIN"}
+                          disabled={blocked(u)}
                           onCheckedChange={(checked) =>
                             setSelected(checked === true ? [...selected, u.id] : selected.filter((id) => id !== u.id))
                           }
@@ -166,7 +168,7 @@ export function RoleMembers({ role }: { role: Role }) {
                       <TableCell>{u.loginId}</TableCell>
                       <TableCell>{u.name}</TableCell>
                       <TableCell className="text-muted-foreground">
-                        {u.role === "ADMIN" ? t("allPermissions") : u.member ? t("isMember") : t("notMember")}
+                        {!role.fixed && u.superAdmin ? t("allPermissions") : u.member ? t("isMember") : t("notMember")}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -34,7 +34,7 @@ public class AdminBootstrapRunner implements ApplicationRunner {
 	public void run(ApplicationArguments args) {
 		if (!properties.configured()) {
 			if (!userApplication.hasAdmin()) {
-				log.warn("ADMIN 계정이 없습니다. BOOTSTRAP_ADMIN_LOGIN_ID·BOOTSTRAP_ADMIN_PASSWORD를 주고 한 번 띄우면 만듭니다.");
+				log.warn("최고 관리자가 없습니다. BOOTSTRAP_ADMIN_LOGIN_ID·BOOTSTRAP_ADMIN_PASSWORD를 주고 한 번 띄우면 만듭니다.");
 			}
 			return;
 		}
@@ -44,7 +44,7 @@ public class AdminBootstrapRunner implements ApplicationRunner {
 			log.info("첫 관리자 {}를 만들었습니다. 첫 로그인 때 비밀번호를 바꾸고, BOOTSTRAP_ADMIN_* 환경 변수는 지웁니다.",
 				properties.loginId());
 		} else {
-			log.info("ADMIN 계정이 이미 있어 첫 관리자를 만들지 않았습니다. BOOTSTRAP_ADMIN_* 환경 변수는 지웁니다.");
+			log.info("최고 관리자가 이미 있어 첫 관리자를 만들지 않았습니다. BOOTSTRAP_ADMIN_* 환경 변수는 지웁니다.");
 		}
 	}
 }

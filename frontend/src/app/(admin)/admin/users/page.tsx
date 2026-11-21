@@ -17,6 +17,7 @@ import { useMe } from "@/lib/me"
 import type { AdminUser } from "@/types/user-admin"
 import { CreateUserDrawer, UserDrawer, UserStatus } from "./user-drawer"
 import { UserExtraDialogs, useUserExtraActions } from "./user-extras"
+import { rolesText } from "./user-roles"
 import {
   RenameDialog,
   RoleChangeDialog,
@@ -27,19 +28,18 @@ import {
 } from "./user-dialogs"
 
 // 사용자 관리 (user-admin 헬퍼, 권한 USER_MANAGE)
-// moa: 관리 화면 정리 (specs/002-admin-users FR-006~FR-008, research R6·R7)
-//   목록에 업무 역할 열(보기만, 관리자는 "모든 권한"). 아이디를 누르면 드로어에서 다룬다 (행의 "관리" 메뉴는 없앴다)
-//   만들기도 드로어에서 하고 임시 비밀번호를 드로어 안에 한 번 보인다
+// moa: 관리 화면 정리 (specs/002-admin-users FR-005~FR-008, research R6·R7·R11)
+//   목록에 역할 열(최고 관리자·역할 없음·역할 이름들, 회원은 빈 칸). 아이디를 누르면 드로어에서 다룬다
+//   만들기도 드로어에서 하고 임시 비밀번호를 드로어 안에 한 번 보인다. 관리자 계정의 역할도 드로어에서 준다
 // 막는 것 (서버도 막는다. 화면은 버튼을 끈다)
-//   - 내 행: 역할 바꾸기·잠그기·삭제 (B001)
-//   - 내가 ADMIN이 아니면 ADMIN 행 전체, ADMIN 역할 주기 (A005)
+//   - 내 행: 계정 종류 바꾸기·잠그기·삭제 (B001)
+//   - 다룰 수 없는 계정(protection): 최고 관리자 계정, 나보다 권한이 많은 관리자 계정 (A005)
 //   - 비밀번호 없는 계정(소셜): 비밀번호 초기화 (B001)
 const DEFAULTS = { keyword: "", role: "", locked: "" }
 
 export default function UsersPage() {
   const t = useTranslations("userAdmin")
   const me = useMe().data
-  const iAmAdmin = me?.role === "ADMIN"
   const search = useListSearch({ defaults: DEFAULTS })
   const users = useQuery({
     queryKey: ["admin", "users", search.params],
@@ -62,8 +62,6 @@ export default function UsersPage() {
   })
 
   const isSelf = (u: AdminUser) => u.id === me?.id
-  // 내가 ADMIN이 아니면 ADMIN 계정은 손대지 못한다
-  const protectedRow = (u: AdminUser) => !iAmAdmin && u.role === "ADMIN"
 
   const toggleLock = async (u: AdminUser) => {
     const ok = await confirm({
@@ -116,12 +114,11 @@ export default function UsersPage() {
     {
       key: "accessRoles",
       header: t("accessRoles"),
-      cell: (u) =>
-        u.role === "ADMIN" ? (
-          <span className="text-muted-foreground">{t("allPermissions")}</span>
-        ) : (
-          u.accessRoles.map((r) => r.name).join(", ")
-        ),
+      cell: (u) => (
+        <span className={u.superAdmin || u.accessRoles.length > 0 ? undefined : "text-muted-foreground"}>
+          {rolesText(u, t)}
+        </span>
+      ),
     },
     { key: "status", header: t("status"), kind: "status", cell: (u) => <UserStatus user={u} /> },
     { key: "createdAt", header: t("createdAt"), kind: "datetime" },
@@ -162,13 +159,11 @@ export default function UsersPage() {
       }
     >
       <DataTable caption={t("title")} columns={columns} query={users} search={search} rowKey={(u) => u.id} />
-      <CreateUserDrawer open={creating} onOpenChange={setCreating} canGrantAdmin={iAmAdmin} />
+      <CreateUserDrawer open={creating} onOpenChange={setCreating} />
       <UserDrawer
         user={opened}
         onClose={() => setOpenId(undefined)}
-        protectedRow={!!opened && protectedRow(opened)}
         isSelf={!!opened && isSelf(opened)}
-        iAmAdmin={iAmAdmin}
         extraActions={extraActions}
         onRename={() => opened && setRenaming(opened)}
         onChangeRole={() => opened && setChangingRole(opened)}

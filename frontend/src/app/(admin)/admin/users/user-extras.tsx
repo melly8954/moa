@@ -2,7 +2,7 @@
 
 import type { AdminUser } from "@/types/user-admin"
 // 다른 헬퍼가 사용자 관리 화면에 더하는 것
-// moa: rbac 헬퍼의 "업무 역할"은 뺐다. 업무 역할은 역할 관리에서만 준다 (specs/002-admin-users FR-005)
+// moa: rbac 헬퍼의 "업무 역할" 메뉴는 뺐다. 역할은 드로어의 역할 칸(user-roles.tsx)과 권한 관리에서 준다 (specs/002-admin-users FR-005)
 // apply가 아래 표시 위에 줄을 끼운다. 표시 줄은 지우지 않는다
 // @helpers:imports
 

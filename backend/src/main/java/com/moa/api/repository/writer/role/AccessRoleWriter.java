@@ -1,10 +1,12 @@
 package com.moa.api.repository.writer.role;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
 import com.moa.api.entity.role.AccessRole;
+import com.moa.api.entity.role.AccessRoles;
 import com.moa.api.entity.role.UserAccessRole;
 import com.moa.api.repository.jpa.role.AccessRoleRepository;
 import com.moa.api.repository.jpa.role.UserAccessRoleRepository;
@@ -20,6 +22,16 @@ public class AccessRoleWriter {
 
 	public AccessRole save(AccessRole role) {
 		return accessRoleRepository.save(role);
+	}
+
+	/**
+	 * moa: 최고 관리자 역할이 없으면 만든다 (specs/003-admin-roles FR-010). 운영에서는 V7 마이그레이션이 넣어 두므로
+	 * 첫 관리자 부트스트랩과 인수 테스트(표를 비운 뒤)에서만 만든다
+	 */
+	public AccessRole ensureSuperAdminRole() {
+		return accessRoleRepository.findByCode(AccessRoles.SUPER_ADMIN_CODE)
+			.orElseGet(() -> accessRoleRepository.save(new AccessRole(AccessRoles.SUPER_ADMIN_CODE,
+				AccessRoles.SUPER_ADMIN_NAME, AccessRoles.SUPER_ADMIN_DESCRIPTION, Set.of())));
 	}
 
 	/** 이 사용자의 역할을 통째로 바꾼다 */

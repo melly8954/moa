@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
@@ -21,17 +20,19 @@ import { type UserCreateInput, userCreateSchema } from "@/lib/schemas/user-admin
 import type { AdminUser } from "@/types/user-admin"
 import { ROLES, TemporaryPasswordPanel, useInvalidateUsers, useUserErrorText } from "./user-dialogs"
 import type { UserAction } from "./user-extras"
+import { UserRoles } from "./user-roles"
 
-// 사용자 드로어 (moa, specs/002-admin-users FR-007, US3, research R7). 목록에서 행을 누르면 열린다
-//   위: 아이디·이름·시스템 역할·상태·업무 역할(보기만, 역할 관리 링크)·만든 시각
-//   아래: 이름 바꾸기·시스템 역할 바꾸기·잠그기·비밀번호 초기화·삭제 (막는 규칙은 목록에 있던 그대로)
+// 사용자 드로어 (moa, specs/002-admin-users FR-007, US3·US4, research R7·R11). 목록에서 행을 누르면 열린다
+//   위: 아이디·이름·계정 종류·상태·만든 시각
+//   가운데: 역할 칸 (관리자 계정만 체크해서 준다, 회원은 안내. UserRoles)
+//   아래: 이름 바꾸기·계정 종류 바꾸기·잠그기·비밀번호 초기화·삭제
+//   다룰 수 없는 계정(protection: 최고 관리자 계정, 나보다 권한이 많은 관리자 계정)은 단추를 모두 끄고 이유를 보인다
+//   내 행(계정 종류·잠그기·삭제), 비밀번호 없는 계정(초기화)도 끈다. 서버도 같은 규칙으로 막는다
 //   계정을 바꾸는 일은 한 사람씩 확인하므로 일괄 처리는 두지 않는다
 export function UserDrawer({
   user,
   onClose,
-  protectedRow,
   isSelf,
-  iAmAdmin,
   extraActions,
   onRename,
   onChangeRole,
@@ -41,9 +42,7 @@ export function UserDrawer({
 }: {
   user?: AdminUser
   onClose: () => void
-  protectedRow: boolean
   isSelf: boolean
-  iAmAdmin: boolean
   extraActions: UserAction[]
   onRename: () => void
   onChangeRole: () => void
@@ -52,6 +51,7 @@ export function UserDrawer({
   onRemove: () => void
 }) {
   const t = useTranslations("userAdmin")
+  const protectedRow = !!user?.protection
 
   return (
     <SideDrawer
@@ -73,35 +73,25 @@ export function UserDrawer({
             <dd>
               <UserStatus user={user} />
             </dd>
-            <dt className="text-muted-foreground">{t("accessRoles")}</dt>
-            <dd className="flex flex-col gap-1">
-              <span>
-                {user.role === "ADMIN"
-                  ? t("allPermissions")
-                  : user.accessRoles.length > 0
-                    ? user.accessRoles.map((r) => r.name).join(", ")
-                    : t("noAccessRoles")}
-              </span>
-              {user.role !== "ADMIN" && (
-                <span className="text-muted-foreground">
-                  {t.rich("accessRolesHint", {
-                    link: (chunks) => (
-                      <Link href="/admin/roles" className="text-foreground underline underline-offset-4">
-                        {chunks}
-                      </Link>
-                    ),
-                  })}
-                </span>
-              )}
-            </dd>
             <dt className="text-muted-foreground">{t("createdAt")}</dt>
             <dd>{formatDateTime(user.createdAt)}</dd>
           </dl>
+          <section aria-label={t("accessRoles")} className="flex flex-col gap-2 border-t pt-4">
+            <h3 className="text-sm font-medium">{t("accessRoles")}</h3>
+            <UserRoles user={user} />
+          </section>
           <div className="flex flex-col gap-2 border-t pt-4">
+            {user.protection && (
+              <Alert>
+                <AlertDescription>
+                  {t(user.protection === "SUPER_ADMIN_ONLY" ? "protectedSuperAdmin" : "protectedWider")}
+                </AlertDescription>
+              </Alert>
+            )}
             <Button variant="outline" disabled={protectedRow} onClick={onRename}>
               {t("rename")}
             </Button>
-            <Button variant="outline" disabled={protectedRow || isSelf || !iAmAdmin} onClick={onChangeRole}>
+            <Button variant="outline" disabled={protectedRow || isSelf} onClick={onChangeRole}>
               {t("changeRole")}
             </Button>
             <Button variant="outline" disabled={protectedRow || isSelf} onClick={onToggleLock}>
@@ -142,16 +132,8 @@ export function UserStatus({ user }: { user: AdminUser }) {
 }
 
 // 사용자 만들기 드로어 (moa, FR-007). 저장 직후 임시 비밀번호를 드로어 안에 한 번 보이고, 닫으면 다시 볼 수 없다
-export function CreateUserDrawer({
-  open,
-  onOpenChange,
-  canGrantAdmin,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  // ADMIN 역할은 ADMIN만 줄 수 있다
-  canGrantAdmin: boolean
-}) {
+// moa: 계정 종류(회원·관리자) 모두 사용자 관리 권한으로 만든다 (specs/002-admin-users FR-005). 역할은 만든 뒤 드로어에서 준다
+export function CreateUserDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const t = useTranslations("userAdmin")
   const fieldErrorText = useFieldErrorText()
   const errorText = useUserErrorText()
@@ -253,7 +235,7 @@ export function CreateUserDrawer({
                 <Field>
                   <FieldLabel htmlFor="user-role">{t("role")}</FieldLabel>
                   <NativeSelect id="user-role" value={field.value} onChange={field.onChange}>
-                    {ROLES.filter((r) => r !== "ADMIN" || canGrantAdmin).map((r) => (
+                    {ROLES.map((r) => (
                       <NativeSelectOption key={r} value={r}>
                         {t(`roles.${r}`)}
                       </NativeSelectOption>

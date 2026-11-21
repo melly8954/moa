@@ -26,7 +26,7 @@ import com.moa.common.security.Role;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 역할 관리에서 보는 사용자 (moa, specs/003-admin-roles FR-006·R14). 사용자 관리 권한 없이 역할 관리 권한으로 쓴다.
+ * 권한 관리에서 보는 사용자 (moa, specs/003-admin-roles FR-006·R14). 사용자 관리 권한 없이 권한 관리 권한으로 쓴다.
  */
 @Service
 @RequiredArgsConstructor
@@ -36,7 +36,7 @@ public class RoleUserService {
 	private final AccessRoleReader accessRoleReader;
 
 	/**
-	 * 역할 드로어 "구성원" 탭 (moa, FR-006). keyword가 없으면 그 역할의 구성원만, 있으면 아이디·이름으로 모든 사용자. 아이디 순
+	 * 역할 "구성원" (moa, FR-006). keyword가 없으면 그 역할의 구성원만, 있으면 아이디·이름으로 관리자 계정. 아이디 순
 	 *
 	 * @throws ServiceException 없는 역할 R001
 	 */
@@ -45,16 +45,17 @@ public class RoleUserService {
 		Page<User> users = keyword == null || keyword.isBlank()
 			? roleUserReader.findMembersPage(systemActorId, roleId, pageable)
 			: roleUserReader.findSearchPage(systemActorId, keyword, pageable);
-		Map<Long, List<Long>> roleIds = users.isEmpty() ? Map.of()
-			: accessRoleReader.findRoleIdsOfUsers(users.getContent().stream().map(User::getId).toList());
+		List<Long> ids = users.getContent().stream().map(User::getId).toList();
+		Map<Long, List<Long>> roleIds = users.isEmpty() ? Map.of() : accessRoleReader.findRoleIdsOfUsers(ids);
+		Set<Long> superAdmins = accessRoleReader.findSuperAdminIds(ids);
 		return users.map(found -> new RoleMemberDto(found.getId(), found.getLoginId(), found.getName(),
-			found.getRole(), roleIds.getOrDefault(found.getId(), List.of()).contains(roleId)));
+			superAdmins.contains(found.getId()), roleIds.getOrDefault(found.getId(), List.of()).contains(roleId)));
 	}
 
 	/**
-	 * 업무 역할을 주거나 뺄 사용자들이 모두 있고 ADMIN이 아닌지 본다 (moa, FR-006).
+	 * 역할을 주거나 뺄 사용자들이 모두 있고 관리자 계정인지 본다 (moa, FR-006, 2026-11-21).
 	 *
-	 * @throws ServiceException 없는 사용자 R001, ADMIN이 섞이면 B001
+	 * @throws ServiceException 없는 사용자 R001, 회원(USER)이 섞이면 B001
 	 */
 	public void requireTargets(Long systemActorId, Collection<Long> userIds) {
 		Set<Long> ids = new HashSet<>(userIds);
@@ -62,7 +63,7 @@ public class RoleUserService {
 		if (users.size() != ids.size()) {
 			throw new ServiceException(ErrorCode.NOT_FOUND, "없는 사용자가 있습니다.");
 		}
-		users.forEach(found -> requireNotAdmin(found.getRole()));
+		users.forEach(found -> requireAdminAccount(found.getRole()));
 	}
 
 	/** 사용자 ID → 받은 업무 역할 (만든 순서). 사용자 관리 목록의 업무 역할 열이 쓴다 (`002-admin-users` FR-006) */
@@ -71,13 +72,13 @@ public class RoleUserService {
 	}
 
 	/**
-	 * ADMIN은 모든 권한을 가져 업무 역할을 주거나 빼지 않는다 (specs/003-admin-roles Edge Cases).
+	 * 회원(USER)은 역할을 받지 않는다 (moa, specs/003-admin-roles FR-002, 2026-11-21. 그 전에는 "ADMIN이면 B001"이었다).
 	 *
-	 * @throws ServiceException 대상이 ADMIN이면 B001
+	 * @throws ServiceException 대상이 USER면 B001
 	 */
-	public void requireNotAdmin(Role role) {
-		if (role == Role.ADMIN) {
-			throw new ServiceException(ErrorCode.INVALID_STATE, "관리자에게는 업무 역할을 주거나 빼지 않습니다.");
+	public void requireAdminAccount(Role role) {
+		if (role != Role.ADMIN) {
+			throw new ServiceException(ErrorCode.INVALID_STATE, "회원에게는 역할을 줄 수 없어요. 계정 종류를 관리자로 바꿔 주세요.");
 		}
 	}
 

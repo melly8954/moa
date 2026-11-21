@@ -14,6 +14,6 @@ public class RoleScreens implements ScreenSource {
 
 	@Override
 	public List<ScreenDefinition> screens() {
-		return List.of(ScreenDefinition.admin("ADMIN_ROLES", "역할 관리", "/admin/roles", RolePermissions.MANAGE));
+		return List.of(ScreenDefinition.admin("ADMIN_ROLES", "권한 관리", "/admin/roles", RolePermissions.MANAGE));
 	}
 }
