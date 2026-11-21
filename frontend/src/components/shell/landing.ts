@@ -12,10 +12,10 @@ export const ADMIN_HOME = "/admin"
 //   예전에는 관리 메뉴(/menus/me)가 하나라도 있는지로 골랐다. 역할을 다 뺀 운영자가 회원처럼 사용자 셸로 가지 않게 바꿨다
 // 로그인 화면에서 로그인한 때와, 첫 화면(/)을 열어 리프레시 토큰으로 로그인이 이어진 때(AuthGate) 함께 쓴다
 
-// 위에서부터 처음 만나는 주소 있는 메뉴
+// 위에서부터 처음 만나는, 들어갈 수 있는 주소 있는 메뉴 (moa: 권한 없는 메뉴도 오므로 건너뛴다, 001 FR-006 2026-11-22)
 export function firstMenuPath(menus: MyMenu[]): string | undefined {
   for (const menu of menus) {
-    if (menu.path) return menu.path
+    if (menu.path && menu.accessible !== false) return menu.path
     const child = firstMenuPath(menu.children)
     if (child) return child
   }

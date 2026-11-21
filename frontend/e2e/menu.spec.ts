@@ -154,6 +154,17 @@ const SIX_ADMIN_MENUS = [
 ]
 const SIX_NAMES = SIX_ADMIN_MENUS.flatMap((g) => g.children.map((m) => m.name))
 
+// moa (2026-11-22, FR-002): 관리자 계정은 관리 메뉴를 모두 받고, 권한 없는 화면 메뉴는 accessible: false다
+//   상위 메뉴는 하위 메뉴 중 하나라도 들어갈 수 있으면 accessible이다
+type Menu = { id: number; name: string; path: string | null; icon: string; children: Menu[] }
+function lockedExcept(menus: Menu[], open: string[]): unknown[] {
+  return menus.map((menu) => {
+    const children = lockedExcept(menu.children, open) as { accessible: boolean }[]
+    const accessible = menu.path ? open.includes(menu.name) : children.some((child) => child.accessible)
+    return { ...menu, accessible, children }
+  })
+}
+
 async function signIn(page: Page, menus: unknown[]) {
   await signedIn(page, { menus })
   await page.route("**/api/v1/auth/login", (route) =>
@@ -304,7 +315,8 @@ test("US2-AC4 일반 회원은 로그인하면 사용자 셸 첫 화면이 열�
 test("FR-005 역할이 없는 관리자 계정은 로그인하면 관리 셸에서 받은 권한이 없다는 안내를 본다 @wide", async ({
   page,
 }) => {
-  await signedIn(page, { me: { role: "ADMIN" }, menus: [] })
+  // 관리 메뉴는 모두 오지만 모두 잠겨 있다 (FR-002, 2026-11-22)
+  await signedIn(page, { me: { role: "ADMIN" }, menus: lockedExcept(SIX_ADMIN_MENUS, []) })
   await page.route("**/api/v1/auth/login", (route) =>
     route.fulfill({ json: { accessToken: "e2e-token", tokenType: "Bearer", expiresIn: 900 } }),
   )
@@ -316,6 +328,39 @@ test("FR-005 역할이 없는 관리자 계정은 로그인하면 관리 셸에�
   await expect(page.getByRole("heading", { name: "받은 권한이 없어요" })).toBeVisible()
   await expect(page.getByText("최고 관리자에게 역할을 받으세요.")).toBeVisible()
   await expect(menuLinks(page)).toHaveCount(0)
+  await expect(menuGroup(page, "운영")).toBeVisible()
+  await expect(menuGroup(page, "설정")).toBeVisible()
+})
+
+// moa (specs/001-admin-menus FR-002·FR-006, 2026-11-22): 권한 없는 메뉴도 흐리게 보이고, 첫 화면은 메뉴 순서상 권한 있는 첫 메뉴다
+test("FR-002 FR-006 접속 이력만 받은 운영자는 로그인하면 접속 이력이 열리고, 나머지 메뉴는 자물쇠와 함께 보이며 누르면 토스트만 띄운다 @wide", async ({
+  page,
+}) => {
+  await signIn(page, lockedExcept(SIX_ADMIN_MENUS, ["접속 이력"]))
+  await expect(page).toHaveURL(/\/admin\/login-histories$/)
+  const nav = page.getByRole("navigation", { name: "메뉴" })
+  await expect(menuLinks(page)).toHaveText(["접속 이력"])
+  // 잠긴 메뉴는 링크가 아니라 단추이고, 화면 읽기 프로그램에는 "권한 없음"으로 읽힌다
+  const users = nav.getByRole("button", { name: /^사용자 관리/ })
+  await expect(users).toContainText("권한 없음")
+  await expect(nav.getByText("권한 없음")).toHaveCount(2)
+
+  // 자물쇠는 메뉴명 길이와 상관없이 같은 열에 선다
+  const locks = nav.locator("svg.lucide-lock")
+  await expect(locks).toHaveCount(2)
+  const rights = await locks.evaluateAll((svgs) => svgs.map((svg) => Math.round(svg.getBoundingClientRect().right)))
+  expect(new Set(rights).size).toBe(1)
+
+  // 들어갈 수 있는 하위 메뉴가 없는 상위 메뉴도 펼 수 있고, 그 안 메뉴는 모두 잠겨 있다
+  await menuGroup(page, "설정").click()
+  await expect(locks).toHaveCount(5)
+  await expect(menuLinks(page)).toHaveText(["접속 이력"])
+  // 흐린 글자도 대비를 지킨다. 토스트가 나타나는 중(반투명)에 재면 대비가 틀리게 나와 토스트 전에 잰다
+  await expectNoSeriousA11yViolations(page)
+
+  await users.click()
+  await expect(page.getByText("접근 권한이 없습니다.")).toBeVisible()
+  await expect(page).toHaveURL(/\/admin\/login-histories$/)
 })
 
 test("관리자의 계정 화면(설정)은 관리 셸 안에 열린다 @wide", async ({ page }) => {

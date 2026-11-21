@@ -51,7 +51,9 @@
     "collapseSidebar": "사이드바 접기",
     "expandSidebar": "사이드바 펼치기",
     "notifications": "알림",
-    "preferences": "설정 메뉴"
+    "preferences": "설정 메뉴",
+    "noAccess": "접근 권한이 없습니다.",
+    "locked": "권한 없음"
   },
   "menu": {
     "home": "홈",

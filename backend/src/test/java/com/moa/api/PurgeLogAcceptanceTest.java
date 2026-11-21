@@ -198,8 +198,8 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 			.hasStatus2xxSuccessful();
 
 		MvcTestResult menus = asOperator(mvc.get().uri("/api/v1/menus/me"));
-		assertThat(menus).bodyJson().extractingPath("$[*].name").asArray().containsExactly("운영");
-		assertThat(menus).bodyJson().extractingPath("$[0].children[*].name").asArray().containsExactly("파기 기록");
+		assertThat(menus).bodyJson().extractingPath("$..[?(@.accessible == true)].name").asArray()
+			.containsExactlyInAnyOrder("운영", "파기 기록");
 		assertThat(asOperator(mvc.get().uri(PURGE_LOGS))).hasStatus(200);
 	}
 

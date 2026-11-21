@@ -1,9 +1,10 @@
 "use client"
 
-import { ChevronRight, LogIn, PanelLeft } from "lucide-react"
+import { ChevronRight, Lock, LogIn, PanelLeft } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import { LinkButton } from "@/components/kit/link-button"
 import { NotificationBell } from "@/components/notification/notification-bell"
 import { Button } from "@/components/ui/button"
@@ -132,6 +133,7 @@ export function SidebarShell({
 //   펴짐 = 브라우저에 기억한 값 ?? 지금 화면이 그 안인가. 자동으로 펴진 묶음도 펴진 채로 기억한다 (US1-AC8)
 //   접힌 하위 목록은 그리지 않는다. 아이콘만 남게 접혔을 때 묶음을 누르면 사이드바를 펼치고 그 묶음을 편다
 function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) {
+  const t = useTranslations()
   const { state, isMobile, setOpen } = useSidebar()
   const { openMenus, setMenuOpen, rememberOpen } = useOpenMenus()
   const isGroup = (item: MenuItem) => !item.href && !!item.children?.length
@@ -139,6 +141,9 @@ function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) 
   useEffect(() => {
     if (activeGroup) rememberOpen(activeGroup)
   }, [activeGroup, rememberOpen])
+
+  // moa: 권한 없는 메뉴를 누르면 지금 화면에 머물고 토스트로 알린다 (001 FR-002, 2026-11-22)
+  const noAccess = () => toast.error(t("shell.noAccess"))
 
   return (
     <SidebarMenu>
@@ -152,16 +157,20 @@ function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) 
             setMenuOpen(item.key, true)
           } else setMenuOpen(item.key, !open)
         }
+        // moa: 권한 없는 화면 메뉴는 링크가 아니라 토스트를 띄우는 단추다 (001 FR-002, 2026-11-22)
+        const lockedScreen = !group && item.locked
         return (
           <SidebarMenuItem key={item.key}>
             <SidebarMenuButton
-              className="relative"
-              isActive={isActive(item, pathname)}
+              className={cn("relative", item.locked && LOCKED)}
+              isActive={!lockedScreen && isActive(item, pathname)}
               tooltip={item.label}
-              render={item.href ? <Link href={item.href} /> : undefined}
+              render={item.href && !lockedScreen ? <Link href={item.href} /> : undefined}
+              {...(lockedScreen && { onClick: noAccess })}
               {...(group && { "aria-expanded": open, "aria-controls": open ? subId : undefined, onClick: toggle })}
             >
               {item.icon && <item.icon />}
+              {lockedScreen && <LockMark />}
               {/* 새 소식 점 (moa 006 R12): 펼치면 이름 오른쪽, 접으면 아이콘 오른쪽 위. 이름 칸이 마지막이어야 말줄임이 된다 */}
               {item.badge && (
                 <i
@@ -182,6 +191,7 @@ function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) 
               <span>
                 {item.label}
                 {item.badge && <span className="sr-only">, {item.badge}</span>}
+                {lockedScreen && <span className="sr-only">, {t("shell.locked")}</span>}
               </span>
             </SidebarMenuButton>
             {item.children && open && (
@@ -189,12 +199,23 @@ function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) 
                 {item.children.map((child) => (
                   <SidebarMenuSubItem key={child.key}>
                     <SidebarMenuSubButton
-                      isActive={isActive(child, pathname)}
-                      render={child.href ? <Link href={child.href} /> : undefined}
+                      className={cn("w-full", child.locked && LOCKED)}
+                      isActive={!child.locked && isActive(child, pathname)}
+                      render={
+                        child.locked ? (
+                          <button type="button" onClick={noAccess} />
+                        ) : child.href ? (
+                          <Link href={child.href} />
+                        ) : undefined
+                      }
                     >
                       {/* moa: 하위 메뉴도 아이콘이 있으면 보인다 (specs/001-admin-menus FR-005, 2026-11-21) */}
                       {child.icon && <child.icon />}
-                      <span>{child.label}</span>
+                      {child.locked && <LockMark />}
+                      <span>
+                        {child.label}
+                        {child.locked && <span className="sr-only">, {t("shell.locked")}</span>}
+                      </span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 ))}
@@ -205,6 +226,17 @@ function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) 
       })}
     </SidebarMenu>
   )
+}
+
+// moa: 권한 없는 메뉴 모양. 글자와 아이콘을 흐리게 (001 FR-002, 2026-11-22)
+//   반투명(…/50)은 대비가 3.7:1로 모자라 흐린 글자 색(muted-foreground, 대비 4.5:1 이상)을 쓴다
+//   aria-disabled는 쓰지 않는다: 사이드바 단추는 aria-disabled면 클릭을 막아(pointer-events: none) 토스트를 띄울 수 없다
+const LOCKED = "text-muted-foreground hover:text-sidebar-foreground/80 [&_svg]:text-muted-foreground"
+
+// 자물쇠: 메뉴명 길이와 상관없이 줄 오른쪽 끝에 두어 같은 단계의 메뉴끼리 같은 열에 선다. 아이콘만 남게 접으면 숨긴다
+//   화면 읽기 프로그램에는 이름 칸 안의 ", 권한 없음"으로 메뉴명 뒤에 읽힌다 (새 소식 점과 같은 방식)
+function LockMark() {
+  return <Lock aria-hidden className="order-last ml-auto size-3.5! shrink-0 group-data-[collapsible=icon]:hidden" />
 }
 
 // 사이드바 로고 줄. 펼쳤을 때: 로고(첫 화면 링크)와 접기 단추. 아이콘만 남게 접었을 때: 로고 자리가 펼치기 단추

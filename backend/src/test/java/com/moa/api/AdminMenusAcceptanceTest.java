@@ -236,8 +236,8 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).hasStatus(200);
 		assertThat(result).bodyJson().extractingPath("$[?(@.name == '시스템')].children[*].path").asArray()
 			.containsExactly("/admin/codes");
-		assertThat(result).bodyJson().extractingPath("$[*].name").asArray()
-			.containsExactly("설정", "시스템");
+		assertThat(result).bodyJson().extractingPath("$..[?(@.accessible == true)].name").asArray()
+			.containsExactlyInAnyOrder("설정", "코드 관리", "시스템", "코드");
 	}
 
 	@Test

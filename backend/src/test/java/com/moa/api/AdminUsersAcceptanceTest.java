@@ -90,7 +90,7 @@ class AdminUsersAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US2-AC1 관리자가 계정 종류 '관리자'로 운영자 계정을 만들면 임시 비밀번호가 한 번 보이고, 첫 로그인 때 변경을 요구하며, 역할 전에는 관리 메뉴가 없다")
+	@DisplayName("US2-AC1 관리자가 계정 종류 '관리자'로 운영자 계정을 만들면 임시 비밀번호가 한 번 보이고, 첫 로그인 때 변경을 요구하며, 역할 전에는 관리 메뉴가 모두 잠겨 있다")
 	void adminCreatesOperatorWithTemporaryPassword() {
 		testUsers.create(1L, "system", null, Role.USER);
 		testUsers.create(2L, "admin", "admin1234!", Role.ADMIN);
@@ -116,7 +116,7 @@ class AdminUsersAcceptanceTest extends AcceptanceTest {
 		assertThat(me(accessTokenOf(operatorLogin))).bodyJson().extractingPath("$.passwordChangeRequired")
 			.isEqualTo(true);
 		assertThat(mvc.get().uri("/api/v1/menus/me").header(HttpHeaders.AUTHORIZATION, accessTokenOf(operatorLogin)))
-			.hasStatus(200).bodyJson().extractingPath("$.length()").isEqualTo(0);
+			.hasStatus(200).bodyJson().extractingPath("$..[?(@.accessible == true)].name").asArray().isEmpty();
 	}
 
 	@Test

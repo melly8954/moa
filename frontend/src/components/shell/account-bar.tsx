@@ -34,17 +34,25 @@ export function AccountBar() {
   const side = collapsed ? "right" : "top"
 
   return (
-    <div className={cn("flex items-center gap-1", collapsed ? "flex-col" : "px-1 py-0.5")}>
+    <div className={cn("flex items-center gap-0.5", collapsed ? "flex-col" : "py-0.5 pl-1")}>
+      {/* 이름·아이디는 사람 아이콘 오른쪽부터 알림 벨 왼쪽까지 남는 칸을 모두 쓰고, 넘치면 말줄임한다.
+          그 칸에 마우스를 올리면 툴팁으로 전체 이름과 아이디를 보인다 (001 FR-005, 2026-11-22) */}
       {!collapsed && (
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-sidebar-accent">
-            <UserRound aria-hidden="true" className="size-4" />
-          </span>
-          <span className="flex min-w-0 flex-col leading-tight">
-            <span className="truncate text-sm font-medium">{me?.name ?? t("account")}</span>
-            <span className="truncate text-xs text-muted-foreground">{me?.loginId}</span>
-          </span>
-        </div>
+        <Tooltip>
+          <TooltipTrigger render={<div className="flex min-w-0 flex-1 cursor-default items-center gap-1.5" />}>
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-sidebar-accent">
+              <UserRound aria-hidden="true" className="size-4" />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col leading-tight">
+              <span className="truncate text-sm font-medium">{me?.name ?? t("account")}</span>
+              <span className="truncate text-xs text-muted-foreground">{me?.loginId}</span>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" align="start" className="flex flex-col">
+            <span className="font-medium">{me?.name ?? t("account")}</span>
+            {me?.loginId && <span className="opacity-80">{me.loginId}</span>}
+          </TooltipContent>
+        </Tooltip>
       )}
       {/* 알림 벨: 단추 이름(안 읽은 수 포함)은 벨이 정한다 */}
       <Tooltip>
