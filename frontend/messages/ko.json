@@ -109,10 +109,11 @@
     "from": "시작일",
     "to": "종료일",
     "today": "오늘",
-    "last7Days": "최근 7일",
-    "last30Days": "최근 30일",
+    "last7Days": "7일",
     "thisMonth": "이번 달",
-    "lastMonth": "지난달"
+    "quick": "빠른 기간",
+    "last3Months": "3개월",
+    "lastYear": "1년"
   },
   "search": {
     "panel": "검색 조건",

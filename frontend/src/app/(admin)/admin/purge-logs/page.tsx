@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl"
 import { api } from "@/api"
 import { type Column, DataTable } from "@/components/kit/data-table"
 import { ListPage } from "@/components/kit/page-header"
-import { ChoiceFilter, PeriodFilter, SearchField, SearchPanel, SearchRow } from "@/components/kit/search-panel"
+import { ChoiceFilter, PeriodFilter, SearchField, SearchPanel } from "@/components/kit/search-panel"
 import { formatDateTime } from "@/lib/format"
 import { useListSearch } from "@/lib/list-search"
 import type { PurgeLog, PurgeTarget } from "@/types/purge-log"
@@ -44,17 +44,16 @@ export default function PurgeLogsPage() {
       description={t.rich("description", { link: (chunks) => <Link href="/admin/login-histories">{chunks}</Link> })}
       search={
         <SearchPanel search={search}>
-          <SearchRow>
-            <SearchField label={t("period")}>
-              <PeriodFilter from="from" to="to" />
-            </SearchField>
-            <SearchField label={t("target")}>
-              <ChoiceFilter
-                name="target"
-                options={TARGETS.map((target) => ({ value: target, label: t(`targets.${target}`) }))}
-              />
-            </SearchField>
-          </SearchRow>
+          {/* 기간은 빠른 단추와 날짜 칸이 한 줄에 놓이게 한 줄을 다 쓴다 (011 FR-010) */}
+          <SearchField label={t("period")}>
+            <PeriodFilter from="from" to="to" />
+          </SearchField>
+          <SearchField label={t("target")}>
+            <ChoiceFilter
+              name="target"
+              options={TARGETS.map((target) => ({ value: target, label: t(`targets.${target}`) }))}
+            />
+          </SearchField>
         </SearchPanel>
       }
     >

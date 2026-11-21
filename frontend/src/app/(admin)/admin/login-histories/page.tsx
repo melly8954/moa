@@ -65,10 +65,11 @@ export default function LoginHistoriesPage() {
       description={t.rich("description", { link: (chunks) => <Link href="/admin/users">{chunks}</Link> })}
       search={
         <SearchPanel search={search}>
+          {/* 기간은 빠른 단추와 날짜 칸이 한 줄에 놓이게 한 줄을 다 쓴다 (011 FR-010) */}
+          <SearchField label={t("period")}>
+            <PeriodFilter from="from" to="to" />
+          </SearchField>
           <SearchRow>
-            <SearchField label={t("period")}>
-              <PeriodFilter from="from" to="to" />
-            </SearchField>
             <SearchField label={t("result")}>
               <ChoiceFilter
                 name="success"
@@ -78,10 +79,10 @@ export default function LoginHistoriesPage() {
                 ]}
               />
             </SearchField>
+            <SearchField label={t("loginId")}>
+              <KeywordFilter name="loginId" placeholder={t("loginIdPlaceholder")} />
+            </SearchField>
           </SearchRow>
-          <SearchField label={t("loginId")}>
-            <KeywordFilter name="loginId" placeholder={t("loginIdPlaceholder")} />
-          </SearchField>
         </SearchPanel>
       }
     >
