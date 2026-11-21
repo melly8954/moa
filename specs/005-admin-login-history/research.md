@@ -10,11 +10,11 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
 
 ## R2. 보관 기간을 바꾸는 곳
 
-- **Decision**: `application.yaml`의 `${LOGIN_HISTORY_RETENTION_DAYS:365}`를 `:90`으로, `backend/.env.example`의 `LOGIN_HISTORY_RETENTION_DAYS=365`를 `90`으로 바꾼다
-- **Rationale**: 환경 변수를 주지 않은 배포가 90일이 되고, `.env.example`을 복사해 쓰는 배포도 90일이 된다
-- **환경 변수는 남긴다**: 운영에서 값을 덮을 수 있다. 다만 90일이 스펙이므로, 다른 값으로 바꾸려면 FR-002를 먼저 고친다
+- **Decision**: `application.yaml`의 `${LOGIN_HISTORY_RETENTION_DAYS:...}` 기본값과 `backend/.env.example`의 `LOGIN_HISTORY_RETENTION_DAYS`를 FR-002의 365로 둔다 (2026-11-21 90에서 365로 바꿈)
+- **Rationale**: 환경 변수를 주지 않은 배포가 365일이 되고, `.env.example`을 복사해 쓰는 배포도 365일이 된다
+- **환경 변수는 남긴다**: 운영에서 값을 덮을 수 있다. 다만 365일이 스펙이므로, 다른 값으로 바꾸려면 FR-002를 먼저 고친다
 - **키트 코드의 기본값**: `LoginHistoryCleaner`의 `@Value(... :365)`는 설정이 없을 때만 쓰인다. `application.yaml`에 항상 값이 있으므로 고치지 않는다 (원칙 III)
-- **이미 배포된 환경**: `.env`에 365가 들어 있으면 그 값이 이긴다. 운영 `.env`에서 이 변수를 지우거나 90으로 바꿔야 한다. 운영 배포가 아직 없으면 할 일이 없다
+- **이미 배포된 환경**: `.env`에 다른 값(예전 90)이 들어 있으면 그 값이 이긴다. 운영 `.env`에서 이 변수를 지우거나 365로 바꿔야 한다. 운영 배포가 아직 없으면 할 일이 없다
 - **Alternatives considered**: 키트 `LoginHistoryCleaner`의 기본값 고치기. 키트 코드를 고치게 되고, 설정만으로 충분하다
 
 ## R3. US1-AC1을 확인하는 방법
