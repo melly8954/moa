@@ -175,9 +175,10 @@ export function RolePanel({
           ))}
         </FieldGroup>
       </form>
-      {/* 쓸 메뉴와 구성원을 나란히 (좁은 폭의 드로어 안에서는 위아래) */}
+      {/* 메뉴 권한과 구성원을 나란히 (좁은 폭의 드로어 안에서는 위아래)
+          옆에 구성원 표가 있으면 넓은 폭에서 트리 칸이 구성원 칸 높이를 따른다. 없으면(최고 관리자, 저장 전) 최대 높이 (R28) */}
       <div className="grid gap-6 xl:grid-cols-2">
-        <div className="min-w-0">
+        <div className="flex min-w-0 flex-col">
           <Controller
             name="permissions"
             control={form.control}
@@ -188,6 +189,7 @@ export function RolePanel({
                   value={role?.fixed ? allKeys(tree.data) : field.value}
                   onChange={field.onChange}
                   disabled={locked}
+                  fill={editing && !role?.fixed}
                 />
               ) : (
                 <></>
