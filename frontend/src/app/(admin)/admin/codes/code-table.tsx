@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Pencil, Plus } from "lucide-react"
+import { Pencil, Plus, Trash2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { type FormEvent, useState } from "react"
 import { toApiError } from "@/api/error"
@@ -37,6 +37,8 @@ import type { Code, CodeGroupTree } from "@/types/code"
 //   이름은 눌러 표 안에서 고친다: 엔터·칸 벗어나기는 저장, Esc는 되돌리기. 코드는 고치지 않는다
 //   사용은 스위치로 바로 저장한다. 맨 아래 추가 줄에서 코드(필수)와 이름을 적어 맨 뒤에 만든다
 //   항목 순서는 손잡이로 바꾼다(키보드도). 다른 그룹으로는 옮기지 않는다
+//   사용 안 함 항목 줄 끝에만 삭제 단추를 둔다 (FR-008, 2026-11-21). 확인은 부르는 쪽(onDelete)이 받는다
+//   추가 줄 예시 글자는 그룹마다: 항목이 있으면 그룹 이름과 첫 항목, 없으면 그룹 이름과 적는 규칙
 
 // 치는 대로 대문자로, -와 빈칸은 _로, 대문자·숫자·밑줄 밖의 글자는 받지 않는다 (FR-009)
 const toCode = (value: string) =>
@@ -53,6 +55,7 @@ export function CodeTable({
   onRename,
   onToggle,
   onAdd,
+  onDelete,
   disabled,
 }: {
   group: CodeGroupTree
@@ -63,6 +66,7 @@ export function CodeTable({
   onToggle: (code: Code, enabled: boolean) => void
   // 만들기. 실패하면 던진다 (겹치는 코드는 R002)
   onAdd: (code: string, name: string) => Promise<unknown>
+  onDelete: (code: Code) => void
   disabled: boolean
 }) {
   const t = useTranslations("code")
@@ -112,9 +116,9 @@ export function CodeTable({
             <TableHead className="w-9 sm:w-10">
               <span className="sr-only">{t("dragColumn")}</span>
             </TableHead>
-            <TableHead className="w-24 sm:w-[34%]">{t("code")}</TableHead>
+            <TableHead className="w-24 sm:w-[40%]">{t("code")}</TableHead>
             <TableHead>{t("name")}</TableHead>
-            <TableHead className="w-16 text-right sm:w-20">{t("enabled")}</TableHead>
+            <TableHead className="w-24 text-right sm:w-28">{t("enabled")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -127,6 +131,7 @@ export function CodeTable({
                 onCheck={(c) => onCheckedChange(c ? [...checked, code.code] : checked.filter((x) => x !== code.code))}
                 onRename={(name) => onRename(code, name)}
                 onToggle={(enabled) => onToggle(code, enabled)}
+                onDelete={() => onDelete(code)}
                 disabled={disabled}
               />
             ))}
@@ -140,7 +145,7 @@ export function CodeTable({
           )}
         </TableBody>
         <TableFooter className="bg-transparent">
-          <AddRow key={group.groupCode} onAdd={onAdd} />
+          <AddRow key={group.groupCode} group={group} onAdd={onAdd} />
         </TableFooter>
       </Table>
     </DndContext>
@@ -153,6 +158,7 @@ function SortableCodeRow({
   onCheck,
   onRename,
   onToggle,
+  onDelete,
   disabled,
 }: {
   code: Code
@@ -160,6 +166,7 @@ function SortableCodeRow({
   onCheck: (checked: boolean) => void
   onRename: (name: string) => Promise<unknown>
   onToggle: (enabled: boolean) => void
+  onDelete: () => void
   disabled: boolean
 }) {
   const t = useTranslations("code")
@@ -253,21 +260,37 @@ function SortableCodeRow({
         )}
       </TableCell>
       {/* 스위치의 누름 영역이 칸 밖으로 나가 가로 스크롤이 생기지 않게 오른쪽 여백을 둔다 */}
-      <TableCell className="pr-4 text-right">
-        <Switch
-          aria-label={t("enabledOf", { name: code.name })}
-          checked={code.enabled}
-          disabled={disabled}
-          onCheckedChange={(c) => onToggle(c === true)}
-        />
+      <TableCell className="pr-4">
+        <div className="flex items-center justify-end gap-1">
+          {/* 사용 안 함 항목만 지운다 (FR-008) */}
+          {!code.enabled && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("deleteOf", { name: code.name })}
+              disabled={disabled}
+              onClick={onDelete}
+            >
+              <Trash2 />
+            </Button>
+          )}
+          <Switch
+            aria-label={t("enabledOf", { name: code.name })}
+            checked={code.enabled}
+            disabled={disabled}
+            onCheckedChange={(c) => onToggle(c === true)}
+          />
+        </div>
       </TableCell>
     </TableRow>
   )
 }
 
 // 맨 아래 추가 줄: 코드(필수)와 이름을 적고 엔터나 "추가"로 맨 뒤에 만든다. 오류는 그 칸 아래에 보인다
-function AddRow({ onAdd }: { onAdd: (code: string, name: string) => Promise<unknown> }) {
+function AddRow({ group, onAdd }: { group: CodeGroupTree; onAdd: (code: string, name: string) => Promise<unknown> }) {
   const t = useTranslations("code")
+  const first = group.codes[0]
   const fieldErrorText = useFieldErrorText()
   const [code, setCode] = useState("")
   const [name, setName] = useState("")
@@ -314,14 +337,18 @@ function AddRow({ onAdd }: { onAdd: (code: string, name: string) => Promise<unkn
           id="code-add-code"
           form="code-add-form"
           aria-label={t("code")}
-          placeholder={t("codePlaceholder")}
+          placeholder={
+            first
+              ? t("codePlaceholderOf", { group: group.name, example: first.code })
+              : t("codePlaceholderRule", { group: group.name })
+          }
           value={code}
           onChange={(e) => setCode(toCode(e.target.value))}
           maxLength={50}
           autoCapitalize="characters"
           autoComplete="off"
           spellCheck={false}
-          className="h-8 font-mono"
+          className="h-8 font-mono placeholder:font-sans placeholder:text-xs"
           aria-invalid={!!errors.code}
           aria-describedby={errors.code ? "code-add-code-error" : undefined}
         />
@@ -331,11 +358,11 @@ function AddRow({ onAdd }: { onAdd: (code: string, name: string) => Promise<unkn
         <Input
           form="code-add-form"
           aria-label={t("name")}
-          placeholder={t("namePlaceholder")}
+          placeholder={first ? t("namePlaceholderOf", { example: first.name }) : t("namePlaceholder")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={100}
-          className="h-8"
+          className="h-8 placeholder:text-xs"
           aria-invalid={!!errors.name}
           aria-describedby={errors.name ? "code-add-name-error" : undefined}
         />

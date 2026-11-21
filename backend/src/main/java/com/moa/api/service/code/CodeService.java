@@ -164,6 +164,19 @@ public class CodeService {
 		return codeReader.findGroup(groupCode).orElseThrow(() -> new ServiceException(ErrorCode.NOT_FOUND));
 	}
 
+	/**
+	 * moa: 사용 안 함 항목만 지운다(소프트 삭제, specs/004-admin-codes FR-008 2026-11-21). 지운 코드는 다시 만들 수 있다
+	 *
+	 * @throws ServiceException 그룹·코드가 없으면 R001, 사용 중이면 B001
+	 */
+	public void deleteCode(String groupCode, String code, Long actorId) {
+		Code target = requireCode(groupCode, code);
+		if (target.isEnabled()) {
+			throw new ServiceException(ErrorCode.INVALID_STATE, "사용 중인 코드는 지울 수 없습니다: " + groupCode + "." + code);
+		}
+		target.delete(actorId);
+	}
+
 	private Code requireCode(String groupCode, String code) {
 		requireGroup(groupCode);
 		return codeReader.findCode(groupCode, code).orElseThrow(() -> new ServiceException(ErrorCode.NOT_FOUND));
