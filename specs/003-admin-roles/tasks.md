@@ -151,18 +151,18 @@ description: "권한 관리 (admin-roles) 작업 목록"
 
 **백엔드**
 
-- [ ] T049 backend/src/main/resources/db/migration/V8__single_super_admin.sql: 최고 관리자 역할 ID 읽기, 여럿이면 ID가 가장 작은 한 명만 남기기, `super_slot` 생성 열(그 ID를 박은 식, COMMENT)과 `uk_user_access_role_super_slot`(PREPARE/EXECUTE), 역할이 없으면 SIGNAL로 실패 (R22)
-- [ ] T050 backend/src/main/java/com/moa/api/service/role/AccessRoleService.java·PermissionCeilingGrantPolicy.java: 최고 관리자 역할 구성원 더하기·빼기 B001, `replaceRolesOfUser`에서 최고 관리자 역할이 바뀌면 B001, `requireSuperAdminRemains`와 "최고 관리자에 더하면 다른 역할 빼기" 없앰, 최고 관리자 역할의 `blockReason` = `FIXED`(backend/src/main/java/com/moa/api/dto/role/GrantBlock.java에 값 더하기), 유일 제약 위반은 B001로 (R23)
+- [X] T049 backend/src/main/resources/db/migration/V8__single_super_admin.sql: 최고 관리자 역할 ID 읽기, 여럿이면 ID가 가장 작은 한 명만 남기기, `super_slot` 생성 열(그 ID를 박은 식, COMMENT)과 `uk_user_access_role_super_slot`(PREPARE/EXECUTE), 역할이 없으면 PREPARE가 실패해 멈춤 (R22)
+- [X] T050 backend/src/main/java/com/moa/api/service/role/AccessRoleService.java·PermissionCeilingGrantPolicy.java: 최고 관리자 역할 구성원 더하기·빼기 B001, `replaceRolesOfUser`에서 최고 관리자 역할이 바뀌면 B001, `requireSuperAdminRemains`와 "최고 관리자에 더하면 다른 역할 빼기" 없앰, 최고 관리자 역할의 `blockReason` = `FIXED`(backend/src/main/java/com/moa/api/dto/role/GrantBlock.java에 값 더하기) (R23)
 
 **프론트**
 
-- [ ] T051 frontend/src/types/role.ts `GrantBlock`에 `FIXED`, frontend/src/app/(admin)/admin/roles/role-members.tsx: `role.fixed`면 검색·체크·일괄 줄 없이 구성원과 안내만, role-panel.tsx 막힌 이유에 `FIXED`, frontend/messages/ko.json 안내 문구와 `role.fixedHint` 고치기 (R24)
+- [X] T051 frontend/src/types/role.ts `GrantBlock`에 `FIXED`, frontend/src/app/(admin)/admin/roles/role-members.tsx: `role.fixed`면 검색·체크·일괄 줄 없이 구성원과 안내만, role-panel.tsx 막힌 이유에 `FIXED`, frontend/messages/ko.json 안내 문구와 `role.fixedHint` 고치기 (R24)
 
 **테스트 (마지막)**
 
-- [ ] T052 backend/src/test/java/com/moa/support/TestUsers.java: 최고 관리자 역할을 마이그레이션 직후의 ID로 다시 만든다 (R25)
-- [ ] T053 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java를 contracts/admin-roles.md의 US2-AC4·AC5, FR-010·SC-006 줄대로 고친다. `lastSuperAdminStays`·`superAdminDropsOtherRoles`를 새 규칙으로 바꾼다 (원칙 V, R25)
-- [ ] T054 frontend/e2e/role.spec.ts: 최고 관리자 역할 구성원은 보기만(검색 칸·체크박스 없음, 안내) (R25)
+- [X] T052 backend/src/test/java/com/moa/support/TestUsers.java: 최고 관리자 역할을 마이그레이션 직후의 ID로 다시 만든다 (R25)
+- [X] T053 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java를 contracts/admin-roles.md의 US2-AC4·AC5, FR-010·SC-006 줄대로 고친다. `lastSuperAdminStays`·`superAdminDropsOtherRoles`를 새 규칙으로 바꾼다 (원칙 V, R25)
+- [X] T054 frontend/e2e/role.spec.ts: 최고 관리자 역할 구성원은 보기만(검색 칸·체크박스 없음, 안내) (R25)
 - [ ] T055 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, 한 번 `bootRun`으로 V8 적용과 `validate` 확인(공유 local DB 주의: 이 브랜치를 쓰는 작업 사본에서만), frontend/에서 `npm run format`, `npm run check`. dbTest·e2e는 PR CI로 본다
 - [ ] T056 specs/003-admin-roles/quickstart.md "화면 확인"에 최고 관리자 구성원 보기만을 더하고 사람이 확인한다
 

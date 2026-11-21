@@ -182,7 +182,7 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
   2. 최고 관리자 줄이 둘 이상이면 `user_id`가 가장 작은 줄만 남기고 지운다. 같은 표를 하위 쿼리로 읽으므로 MariaDB 제약을 피해 파생 표(`SELECT m FROM (SELECT MIN(user_id) m ...) t`)로 감싼다. 지운 계정은 역할 없는 관리자 계정이 된다 (최고 관리자는 다른 역할을 함께 갖지 않았다)
   3. `tb_user_access_role`에 생성 열 `super_slot TINYINT AS (IF(access_role_id = <최고 관리자 역할 ID>, 1, NULL)) VIRTUAL COMMENT '최고 관리자 자리 (1: 최고 관리자 줄, NULL: 그 밖)'`과 유일 제약 `uk_user_access_role_super_slot (super_slot)`을 더한다
   - 생성 열 식은 다른 표를 볼 수 없어 역할 ID를 숫자로 박는다. DB마다 ID가 다를 수 있으므로 1에서 읽은 값으로 `ALTER` 문을 만들어 `PREPARE`·`EXECUTE`한다. 최고 관리자 역할은 지우거나 다시 만들 수 없어(FR-010) 박은 숫자가 바뀌지 않는다
-  - 역할 행이 없는 DB(있을 수 없지만)는 `@super`가 NULL이라 식이 늘 NULL이 된다. 그런 DB는 마이그레이션을 실패시켜 드러낸다(`SIGNAL`)
+  - 역할 행이 없는 DB(있을 수 없지만)는 `@super`가 NULL이라 식이 늘 NULL이 된다. 그런 DB는 `CONCAT`이 NULL이 되어 `PREPARE`가 실패하므로 마이그레이션이 멈춰 드러난다(따로 `SIGNAL`을 쓰지 않는다)
   - 엔터티(`UserAccessRole`)에는 이 열을 매핑하지 않는다. `ddl-auto: validate`는 매핑한 열만 본다 (`active_key`와 같다)
 - **Rationale**: 앱 검사만으로는 DB 절차(`002-admin-users` FR-009)를 잘못 실행했을 때 둘이 될 수 있다. 생성 열 + 유일 제약은 moa가 `active_key`로 이미 쓰는 방식이고, NULL은 유일 제약에서 여러 개 허용된다
 - **Alternatives considered**: 트리거(moa는 DB 로직을 두지 않는다. FK도 두지 않는다), 최고 관리자를 따로 담는 한 행짜리 표(역할 모델과 두 곳이 된다), 서버 시작 때 수 세기만(들어가는 것은 못 막는다)
@@ -195,7 +195,7 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
   - `replaceRolesOfUser`: 바뀌는 역할(더해지거나 빠지는 것)에 최고 관리자 역할이 있으면 B001. 최고 관리자 계정의 역할 목록 자체를 바꾸려 해도 B001(최고 관리자는 다른 역할을 받지 않는다)
   - `RoleGrantPolicy.blockReason`: 최고 관리자 역할 행은 누구에게나 `FIXED`(새 값)를 준다. `grantable`은 늘 false. 최고 관리자도 이 역할을 주거나 뺄 수 없기 때문이다. 사용자 관리 권한이 든 역할은 지금처럼 `SUPER_ADMIN_ONLY`
   - `addSuperAdmin`(첫 관리자 부트스트랩)은 그대로 둔다. 화면·API가 아닌 서버 안의 길이고, 최고 관리자가 없을 때만 돈다
-  - DB 유일 제약(R22)에 걸리는 일은 앱 검사가 먼저 막아 생기지 않는다. 생기면 500이 아니라 409 `B001`로 바꿔 알린다(`DataIntegrityViolationException`을 그 자리에서 잡는다)
+  - DB 유일 제약(R22)에 걸리는 일은 앱 검사가 먼저 막아 생기지 않는다. 위반은 트랜잭션을 끝낼 때(flush·commit) 나와 서비스 안에서 잡을 자리가 없으므로 B001로 바꾸지 않는다. 걸리면 500으로 드러나고, 그것은 앱 검사가 빠졌다는 뜻이다
 - **Rationale**: 스펙 2026-11-21 한 명 고정. 넘기는 길을 화면과 API에서 모두 없앤다
 
 ## R24. 화면: 최고 관리자 구성원은 보기만 (FR-006, US2-AC4)

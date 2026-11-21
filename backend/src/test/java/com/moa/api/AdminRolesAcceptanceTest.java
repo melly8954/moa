@@ -1,6 +1,7 @@
 package com.moa.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -12,8 +13,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.assertj.MockMvcTester.MockMvcRequestBuilder;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
@@ -44,6 +47,9 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 
 	@Autowired
 	private TestUsers testUsers;
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	/** 메뉴 처음 구성에서, 관리자가 접속 이력 조회 권한만 묶은 역할을 만들어 운영자에게 준 상태로 시작한다 */
 	@BeforeEach
@@ -290,29 +296,40 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US2-AC4 최고 관리자 역할의 마지막 구성원은 뺄 수 없다(B001)")
-	void lastSuperAdminStays() {
+	// 2026-11-21 한 명 고정: 예전 "마지막 구성원은 뺄 수 없다"를 "최고 관리자 자신도 더하거나 빼지 못한다"로 바꿨다 (원칙 V, research R25)
+	@DisplayName("US2-AC4 최고 관리자 역할의 구성원은 최고 관리자 자신도 더하거나 빼지 못한다(B001). 구성원은 그대로 한 명")
+	void superAdminMembersAreFixed() {
 		Number superRole = superRoleId();
 
+		assertThat(addMembers(superRole, List.of(OPERATOR_ID))).hasStatus(409)
+			.bodyJson().extractingPath("$.code").isEqualTo("B001");
 		assertThat(asAdmin(mvc.post().uri(ROLES + "/" + superRole + "/members/remove")
 			.contentType(MediaType.APPLICATION_JSON).content("{\"userIds\":[2]}"))).hasStatus(409)
 			.bodyJson().extractingPath("$.code").isEqualTo("B001");
-		assertThat(asAdmin(mvc.put().uri("/api/v1/admin/users/2/roles").contentType(MediaType.APPLICATION_JSON)
-			.content("{\"roleIds\":[" + securityRoleId + "]}"))).hasStatus(409);
+		assertThat(asAdmin(mvc.get().uri(ROLES + "/" + superRole + "/members"))).bodyJson()
+			.extractingPath("$.content[*].loginId").asArray().containsExactly("admin");
 	}
 
 	@Test
-	@DisplayName("US2-AC5 권한 관리 권한을 받은 운영자는 최고 관리자 역할의 구성원을 더하거나 뺄 수 없다(A005)")
-	void operatorCannotTouchSuperAdminRole() {
+	@DisplayName("US2-AC5 최고 관리자 역할은 누구도 주거나 빼지 못한다(B001). 목록의 막힌 이유는 FIXED")
+	void superAdminRoleCannotBeGiven() {
+		Number superRole = superRoleId();
 		Number roles = createRole("ROLES", "역할 담당", "ROLE_MANAGE");
 		giveRoles(OPERATOR_ID, securityRoleId, roles);
 		testUsers.create(OPERATOR2_ID, "operator2", "operator123!", Role.ADMIN);
 
-		assertThat(asOperator(mvc.post().uri(ROLES + "/" + superRoleId() + "/members")
+		assertThat(asAdmin(mvc.put().uri("/api/v1/admin/users/" + OPERATOR2_ID + "/roles")
+			.contentType(MediaType.APPLICATION_JSON).content("{\"roleIds\":[" + superRole + "]}"))).hasStatus(409)
+			.bodyJson().extractingPath("$.code").isEqualTo("B001");
+		assertThat(asAdmin(mvc.put().uri("/api/v1/admin/users/2/roles").contentType(MediaType.APPLICATION_JSON)
+			.content("{\"roleIds\":[" + securityRoleId + "]}"))).hasStatus(409);
+		assertThat(asOperator(mvc.post().uri(ROLES + "/" + superRole + "/members")
 			.contentType(MediaType.APPLICATION_JSON).content("{\"userIds\":[" + OPERATOR2_ID + "]}")))
-			.hasStatus(403).bodyJson().extractingPath("$.code").isEqualTo("A005");
+			.hasStatus(409).bodyJson().extractingPath("$.code").isEqualTo("B001");
+		assertThat(asAdmin(mvc.get().uri(ROLES))).bodyJson()
+			.extractingPath("$[?(@.code == 'SUPER_ADMIN')].blockReason").asArray().containsExactly("FIXED");
 		assertThat(asOperator(mvc.get().uri(ROLES))).bodyJson()
-			.extractingPath("$[?(@.code == 'SUPER_ADMIN')].blockReason").asArray().containsExactly("SUPER_ADMIN_ONLY");
+			.extractingPath("$[?(@.code == 'SUPER_ADMIN')].grantable").asArray().containsExactly(false);
 	}
 
 	@Test
@@ -328,13 +345,14 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("FR-010 다른 역할을 가진 운영자를 최고 관리자 역할에 더하면 다른 역할은 빠진다")
-	void superAdminDropsOtherRoles() {
-		assertThat(addMembers(superRoleId(), List.of(OPERATOR_ID))).hasStatus(204);
+	// 2026-11-22: 예전 "더하면 다른 역할이 빠진다"는 더하기 자체가 막혀 없앴다. DB 유일 제약을 본다 (원칙 V, research R25)
+	@DisplayName("FR-010·SC-006 DB에 최고 관리자 줄을 하나 더 넣으면 DB가 거부한다 (유일 제약 super_slot)")
+	void databaseKeepsOneSuperAdmin() {
+		Number superRole = superRoleId();
 
-		assertThat(asAdmin(mvc.get().uri("/api/v1/admin/users/" + OPERATOR_ID + "/roles"))).bodyJson()
-			.extractingPath("$[*].code").asArray().containsExactly("SUPER_ADMIN");
-		assertThat(asOperator(mvc.get().uri("/api/v1/admin/users"))).hasStatus(200);
+		assertThatThrownBy(() -> jdbcTemplate.update("insert into tb_user_access_role (user_id, access_role_id, "
+			+ "created_at, updated_at, created_by, updated_by) values (?, ?, now(6), now(6), 1, 1)", OPERATOR_ID,
+			superRole)).isInstanceOf(DuplicateKeyException.class);
 	}
 
 	private Number superRoleId() {

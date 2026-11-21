@@ -162,6 +162,18 @@ public class UserAdminService {
 		}
 	}
 
+	/**
+	 * moa: 최고 관리자 계정은 이름 바꾸기 말고는 누구도 바꾸지 못한다 (specs/002-admin-users FR-007, 2026-11-21 한 명 고정).
+	 * 되돌리기는 개발자 DB 절차다 (FR-009)
+	 *
+	 * @throws ServiceException 최고 관리자 계정이면 B001
+	 */
+	public void requireNotSuperAdmin(boolean superAdmin) {
+		if (superAdmin) {
+			throw new ServiceException(ErrorCode.INVALID_STATE, "최고 관리자 계정은 바꿀 수 없어요. 개발자에게 요청해요.");
+		}
+	}
+
 	/** 다룰 수 있는지는 {@link #requireNotProtected}가 먼저 본다 (moa) */
 	private User requireManageable(AuthPrincipal actor, Long id) {
 		return require(id);

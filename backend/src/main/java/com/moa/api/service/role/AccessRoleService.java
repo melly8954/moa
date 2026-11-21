@@ -28,8 +28,8 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 업무 역할 관리 (선택 헬퍼 rbac). 바꾸는 요청은 RoleGrantPolicy로 권한 상승을 막는다 (거부하면 A005).
- * moa: 최고 관리자 역할은 바꾸거나 지울 수 없고, 구성원이 늘 한 명 이상이며, 그 구성원은 다른 역할을 받지 않는다
- * (specs/003-admin-roles FR-010, research R16·R17)
+ * moa: 최고 관리자 역할은 바꾸거나 지울 수 없고, 구성원은 첫 관리자 한 명으로 고정이며 화면·API로 더하거나 빼지 못한다.
+ * 그 구성원은 다른 역할을 받지 않는다 (specs/003-admin-roles FR-010, research R16·R17·R23). DB도 유일 제약으로 한 명을 지킨다 (V8)
  */
 @Service
 @RequiredArgsConstructor
@@ -144,20 +144,17 @@ public class AccessRoleService {
 		if (found.size() != requested.size()) {
 			throw new ServiceException(ErrorCode.NOT_FOUND, "없는 역할이 있습니다.");
 		}
-		// moa: 최고 관리자 역할을 고르면 그 역할만 남긴다. 모든 권한이라 다른 역할은 뜻이 없다 (FR-010)
-		found.stream().filter(role -> AccessRoles.isSuperAdmin(role.getCode())).findFirst().ifPresent(superAdmin -> {
-			requested.clear();
-			requested.add(superAdmin.getId());
-		});
-		if (accessRoleReader.isSuperAdmin(userId)
-			&& found.stream().noneMatch(role -> AccessRoles.isSuperAdmin(role.getCode()))) {
-			requireSuperAdminRemains(List.of(userId));
-		}
 		Set<Long> current = new HashSet<>(accessRoleReader.findRoleIdsOfUser(userId));
 		Set<Long> changed = new HashSet<>(requested);
 		changed.addAll(current);
 		changed.removeIf(id -> requested.contains(id) && current.contains(id));
-		accessRoleReader.findAll(changed).forEach(role -> checkManage(actor, dto(role, Map.of())));
+		List<AccessRole> changedRoles = accessRoleReader.findAll(changed);
+		// moa: 최고 관리자 역할을 주거나 빼는 요청은 누구든 막는다. 최고 관리자 계정은 다른 역할도 받지 않는다 (FR-010)
+		if (changedRoles.stream().anyMatch(role -> AccessRoles.isSuperAdmin(role.getCode()))
+			|| (!changed.isEmpty() && accessRoleReader.isSuperAdmin(userId))) {
+			throw new ServiceException(ErrorCode.INVALID_STATE, "최고 관리자는 한 명으로 고정이에요. 바꾸려면 개발자에게 요청해요.");
+		}
+		changedRoles.forEach(role -> checkManage(actor, dto(role, Map.of())));
 		accessRoleWriter.replaceRolesOfUser(userId, requested);
 	}
 
@@ -169,13 +166,8 @@ public class AccessRoleService {
 	 */
 	public void addMembers(AuthPrincipal actor, Long roleId, Collection<Long> userIds) {
 		AccessRole role = require(roleId);
+		requireMembersChangeable(role);
 		checkManage(actor, dto(role, Map.of()));
-		if (AccessRoles.isSuperAdmin(role.getCode())) {
-			// moa: 최고 관리자에 더하면 그 계정의 다른 역할은 뺀다 (FR-010)
-			new LinkedHashSet<>(userIds)
-				.forEach(userId -> accessRoleWriter.replaceRolesOfUser(userId, List.of(roleId)));
-			return;
-		}
 		if (!accessRoleReader.findSuperAdminIds(userIds).isEmpty()) {
 			throw new ServiceException(ErrorCode.INVALID_STATE, "최고 관리자는 다른 역할을 받지 않아요. 이미 모든 권한을 가졌어요.");
 		}
@@ -193,10 +185,8 @@ public class AccessRoleService {
 	 */
 	public void removeMembers(AuthPrincipal actor, Long roleId, Collection<Long> userIds) {
 		AccessRole role = require(roleId);
+		requireMembersChangeable(role);
 		checkManage(actor, dto(role, Map.of()));
-		if (AccessRoles.isSuperAdmin(role.getCode())) {
-			requireSuperAdminRemains(userIds);
-		}
 		new LinkedHashSet<>(userIds).forEach(userId -> accessRoleWriter.removeRoleFromUser(userId, roleId));
 	}
 
@@ -249,18 +239,11 @@ public class AccessRoleService {
 		accessRoleWriter.replaceRolesOfUser(userId, List.of());
 	}
 
-	/**
-	 * moa: 이 계정들이 빠져도(역할을 빼거나, 회원으로 바꾸거나, 잠그거나, 지워도) 최고 관리자가 한 명은 남는지 본다 (FR-010)
-	 *
-	 * @throws ServiceException 0명이 되면 B001
-	 */
-	public void requireSuperAdminRemains(Collection<Long> leavingUserIds) {
-		accessRoleReader.findSuperAdminRole().ifPresent(role -> {
-			long leaving = accessRoleReader.findSuperAdminIds(leavingUserIds).size();
-			if (leaving > 0 && accessRoleReader.countMembers(role.getId()) - leaving < 1) {
-				throw new ServiceException(ErrorCode.INVALID_STATE, "최고 관리자는 한 명은 있어야 해요.");
-			}
-		});
+	/** moa: 최고 관리자 역할의 구성원은 화면·API로 바꾸지 못한다. 최고 관리자 자신도 (FR-010, 2026-11-21 한 명 고정) */
+	private void requireMembersChangeable(AccessRole role) {
+		if (AccessRoles.isSuperAdmin(role.getCode())) {
+			throw new ServiceException(ErrorCode.INVALID_STATE, "최고 관리자는 한 명으로 고정이에요. 바꾸려면 개발자에게 요청해요.");
+		}
 	}
 
 	private void requireNotFixed(AccessRole role) {
