@@ -145,9 +145,33 @@ description: "권한 관리 (admin-roles) 작업 목록"
 
 ---
 
+## Phase 8: 최고 관리자 한 명 고정 (2026-11-21·22 FR-006·FR-007·FR-010, US2-AC4·AC5, Clarifications)
+
+**Purpose**: 최고 관리자 역할의 구성원을 화면·API로 바꾸지 못하게 하고 DB 유일 제약으로 한 명을 지킨다 (research.md R22~R25). `002-admin-users` Phase 8과 한 구현 브랜치 `feat/003-single-super-admin`에서 한다
+
+**백엔드**
+
+- [ ] T049 backend/src/main/resources/db/migration/V8__single_super_admin.sql: 최고 관리자 역할 ID 읽기, 여럿이면 ID가 가장 작은 한 명만 남기기, `super_slot` 생성 열(그 ID를 박은 식, COMMENT)과 `uk_user_access_role_super_slot`(PREPARE/EXECUTE), 역할이 없으면 SIGNAL로 실패 (R22)
+- [ ] T050 backend/src/main/java/com/moa/api/service/role/AccessRoleService.java·PermissionCeilingGrantPolicy.java: 최고 관리자 역할 구성원 더하기·빼기 B001, `replaceRolesOfUser`에서 최고 관리자 역할이 바뀌면 B001, `requireSuperAdminRemains`와 "최고 관리자에 더하면 다른 역할 빼기" 없앰, 최고 관리자 역할의 `blockReason` = `FIXED`(backend/src/main/java/com/moa/api/dto/role/GrantBlock.java에 값 더하기), 유일 제약 위반은 B001로 (R23)
+
+**프론트**
+
+- [ ] T051 frontend/src/types/role.ts `GrantBlock`에 `FIXED`, frontend/src/app/(admin)/admin/roles/role-members.tsx: `role.fixed`면 검색·체크·일괄 줄 없이 구성원과 안내만, role-panel.tsx 막힌 이유에 `FIXED`, frontend/messages/ko.json 안내 문구와 `role.fixedHint` 고치기 (R24)
+
+**테스트 (마지막)**
+
+- [ ] T052 backend/src/test/java/com/moa/support/TestUsers.java: 최고 관리자 역할을 마이그레이션 직후의 ID로 다시 만든다 (R25)
+- [ ] T053 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java를 contracts/admin-roles.md의 US2-AC4·AC5, FR-010·SC-006 줄대로 고친다. `lastSuperAdminStays`·`superAdminDropsOtherRoles`를 새 규칙으로 바꾼다 (원칙 V, R25)
+- [ ] T054 frontend/e2e/role.spec.ts: 최고 관리자 역할 구성원은 보기만(검색 칸·체크박스 없음, 안내) (R25)
+- [ ] T055 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, 한 번 `bootRun`으로 V8 적용과 `validate` 확인(공유 local DB 주의: 이 브랜치를 쓰는 작업 사본에서만), frontend/에서 `npm run format`, `npm run check`. dbTest·e2e는 PR CI로 본다
+- [ ] T056 specs/003-admin-roles/quickstart.md "화면 확인"에 최고 관리자 구성원 보기만을 더하고 사람이 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 → T002·T003 → T004 → T005 → T006~T008 → T009 → T010, T011
+- Phase 8: T049 → T050 → (`002-admin-users` T020) → T051 → (`002-admin-users` T021) → T052 → T053 → T054 → (`002-admin-users` T022~T023) → T055 → T056, `002-admin-users` T024. 기능 코드를 둘 모두 끝낸 뒤 테스트를 한다
 - Phase 7: T033 → T034 → T035 → T036, T037, T038 → T039 → T040, T041 → T042 → (`002-admin-users` T013~T016, `001-admin-menus` T089~T093) → T043 → T044 → T045 → T046 → (002·001 테스트) → T047 → T048. 기능 코드를 셋 모두 끝낸 뒤 테스트를 한다(CLAUDE.md "작업 흐름")
 - Phase 6: `001-admin-menus` T071 → T024 → T025 → T026 → T027 → T028, T029 → T030 → T031 → T032
 - Phase 5: `001-admin-menus` T052~T060 → T012 → T013, T014 → T015 → T016 → T017, T018 → T019 → T020 → T021 → T022, T023. T013·T014는 다른 파일이 섞이지 않으면 나란히 해도 된다

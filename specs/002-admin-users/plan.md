@@ -13,6 +13,8 @@ moa가 할 일은 스펙의 두 흐름을 AC 테스트로 고정하는 것이다
 
 **관리자 계정과 드로어 역할 주기 (2026-11-21, FR-001·FR-003·FR-005~FR-008, US1~US4)**: `ADMIN`을 관리자 계정, `USER`를 회원으로 쓰고 화면에서 "계정 종류"로 부른다. 계정 종류 바꾸기와 관리자 계정 만들기를 사용자 관리 권한으로 열고, 최고 관리자가 아니면 내 권한 안쪽의 관리자 계정만 다루게 바꾼다(`UserAdminService`). 응답에 `superAdmin`·`protection`을 더하고, 드로어에 역할 체크 칸을 둔다(역할 저장은 `003`의 지금 API). 최고 관리자 판정과 역할 규칙은 `003-admin-roles` research R16·R17에 기대므로 같은 구현 브랜치 `feat/003-admin-accounts`에서 한다 ([research.md](./research.md) R9~R12)
 
+**최고 관리자 계정 고정과 개발자 DB 절차 (2026-11-21·22, FR-007·FR-009, US1-AC2·AC3, US4-AC3, Clarifications)**: 최고 관리자 계정 행은 본인 이름 바꾸기만 되고 나머지는 누구든 B001로 막는다. 되돌리기는 서버 코드가 아니라 `backend/src/main/resources/db/ops/`의 SQL 파일 두 개(비밀번호 되돌리기, 최고 관리자 바꾸기)와 quickstart 안내로 둔다. 인수 테스트가 같은 파일을 실행해 확인한다. `003-admin-roles` Phase 8과 한 구현 브랜치 `feat/003-single-super-admin` ([research.md](./research.md) R13~R15)
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)

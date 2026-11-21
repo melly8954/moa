@@ -174,3 +174,42 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
   - 키트 수용 테스트의 기대를 바꾼다: `PermissionAcceptanceTest`(ADMIN이 모든 권한 → 최고 관리자가 모든 권한, 역할 없는 ADMIN은 빈 권한), `RbacAcceptanceTest`(역할을 `USER`에게 주던 것 → `ADMIN` 계정, `USER`에게 주면 B001), `MenuAcceptanceTest.myMenusByPermission`, `AdminBootstrapAcceptanceTest`(만든 계정이 최고 관리자 구성원). 스펙이 바뀐 만큼만 고친다(원칙 V). 바꾼 테스트 목록을 PR 설명에 적는다
   - `AdminRolesAcceptanceTest`: US1-AC4(역할 없는 ADMIN → `/menus/me` 빈 목록, 관리 API 403), US2-AC1(부트스트랩 뒤 목록 맨 앞 `fixed`), US2-AC2(최고 관리자 역할 수정·삭제 B001), US2-AC3(테스트 연결 화면(`TestScreens`)의 권한도 최고 관리자 200), US2-AC4(마지막 구성원 빼기 B001), US2-AC5(권한 관리 운영자가 최고 관리자 구성원 더하기 A005), US4-AC4(최고 관리자 역할 bulk-delete 섞으면 아무것도 안 지워짐), US5-AC4(검색에 회원 없음, `superAdmin` 표시, 최고 관리자 계정을 다른 역할에 더하기 B001), 사용자 관리 권한이 든 역할을 운영자가 만들기 A005. 지금 `adminGetsNoAccessRole`·`addingAdminFailsWholly`(ADMIN이면 B001)는 USER면 B001로 뒤집는다(원칙 V)
   - e2e(`role.spec.ts`): 두 칸(왼쪽 목록, 오른쪽 안내), 행을 누르면 쓸 메뉴와 구성원이 한 칸에 함께(탭 없음), 최고 관리자 행 맨 위·체크 꺼짐·트리 모두 체크 꺼짐, 좁은 폭 드로어, 머리 안내 문구, 메뉴명 "권한 관리". 지금 탭·드로어를 찾던 기대는 두 칸에 맞춘다(원칙 V)
+
+## R22. 마이그레이션 V8: 한 명으로 줄이고 DB가 지킨다 (FR-010, Clarifications 2026-11-22)
+
+- **Decision**: `V8__single_super_admin.sql` 하나에 둔다 (`docs/db.md` "마이그레이션", 지금 마지막은 V7)
+  1. 이 DB의 최고 관리자 역할 ID를 읽는다: `SET @super := (SELECT id FROM tb_access_role WHERE code = 'SUPER_ADMIN' AND deleted_at IS NULL)`
+  2. 최고 관리자 줄이 둘 이상이면 `user_id`가 가장 작은 줄만 남기고 지운다. 같은 표를 하위 쿼리로 읽으므로 MariaDB 제약을 피해 파생 표(`SELECT m FROM (SELECT MIN(user_id) m ...) t`)로 감싼다. 지운 계정은 역할 없는 관리자 계정이 된다 (최고 관리자는 다른 역할을 함께 갖지 않았다)
+  3. `tb_user_access_role`에 생성 열 `super_slot TINYINT AS (IF(access_role_id = <최고 관리자 역할 ID>, 1, NULL)) VIRTUAL COMMENT '최고 관리자 자리 (1: 최고 관리자 줄, NULL: 그 밖)'`과 유일 제약 `uk_user_access_role_super_slot (super_slot)`을 더한다
+  - 생성 열 식은 다른 표를 볼 수 없어 역할 ID를 숫자로 박는다. DB마다 ID가 다를 수 있으므로 1에서 읽은 값으로 `ALTER` 문을 만들어 `PREPARE`·`EXECUTE`한다. 최고 관리자 역할은 지우거나 다시 만들 수 없어(FR-010) 박은 숫자가 바뀌지 않는다
+  - 역할 행이 없는 DB(있을 수 없지만)는 `@super`가 NULL이라 식이 늘 NULL이 된다. 그런 DB는 마이그레이션을 실패시켜 드러낸다(`SIGNAL`)
+  - 엔터티(`UserAccessRole`)에는 이 열을 매핑하지 않는다. `ddl-auto: validate`는 매핑한 열만 본다 (`active_key`와 같다)
+- **Rationale**: 앱 검사만으로는 DB 절차(`002-admin-users` FR-009)를 잘못 실행했을 때 둘이 될 수 있다. 생성 열 + 유일 제약은 moa가 `active_key`로 이미 쓰는 방식이고, NULL은 유일 제약에서 여러 개 허용된다
+- **Alternatives considered**: 트리거(moa는 DB 로직을 두지 않는다. FK도 두지 않는다), 최고 관리자를 따로 담는 한 행짜리 표(역할 모델과 두 곳이 된다), 서버 시작 때 수 세기만(들어가는 것은 못 막는다)
+- **같이 볼 것**: `bootRun`으로 한 번 띄워 V8 적용과 `validate`를 본다 (`docs/db.md`)
+
+## R23. 최고 관리자 역할의 구성원을 바꾸지 못하게 (FR-006·FR-007·FR-010, US2-AC4·AC5)
+
+- **Decision**: R17의 규칙을 바꾼다
+  - `AccessRoleService.addMembers`·`removeMembers`: 대상 역할이 최고 관리자 역할이면 누구든 409 `B001`("최고 관리자는 한 명으로 고정이에요. 바꾸려면 개발자에게 요청해요."). 지금의 "최고 관리자에 더하면 다른 역할 빼기"와 "마지막 구성원 검사"(`requireSuperAdminRemains`)는 없앤다
+  - `replaceRolesOfUser`: 바뀌는 역할(더해지거나 빠지는 것)에 최고 관리자 역할이 있으면 B001. 최고 관리자 계정의 역할 목록 자체를 바꾸려 해도 B001(최고 관리자는 다른 역할을 받지 않는다)
+  - `RoleGrantPolicy.blockReason`: 최고 관리자 역할 행은 누구에게나 `FIXED`(새 값)를 준다. `grantable`은 늘 false. 최고 관리자도 이 역할을 주거나 뺄 수 없기 때문이다. 사용자 관리 권한이 든 역할은 지금처럼 `SUPER_ADMIN_ONLY`
+  - `addSuperAdmin`(첫 관리자 부트스트랩)은 그대로 둔다. 화면·API가 아닌 서버 안의 길이고, 최고 관리자가 없을 때만 돈다
+  - DB 유일 제약(R22)에 걸리는 일은 앱 검사가 먼저 막아 생기지 않는다. 생기면 500이 아니라 409 `B001`로 바꿔 알린다(`DataIntegrityViolationException`을 그 자리에서 잡는다)
+- **Rationale**: 스펙 2026-11-21 한 명 고정. 넘기는 길을 화면과 API에서 모두 없앤다
+
+## R24. 화면: 최고 관리자 구성원은 보기만 (FR-006, US2-AC4)
+
+- **Decision**:
+  - `role-members.tsx`: `role.fixed`면 검색 칸·체크박스·일괄 줄을 그리지 않고 구성원 한 명과 안내("최고 관리자는 한 명으로 고정이에요. 바꾸려면 개발자에게 요청해요.")만 보인다
+  - `role-panel.tsx`의 막힌 이유 문구에 `FIXED`를 더한다. 최고 관리자 역할은 지금도 "고정 역할" 안내(`fixedHint`)를 보이므로 그 문구를 "구성원도 바꿀 수 없다"로 고친다
+  - 타입 `GrantBlock`에 `FIXED`를 더한다 (`types/role.ts`)
+- **Rationale**: 보이는 단추가 있는데 누르면 막히는 것보다 처음부터 없는 편이 헷갈리지 않는다
+
+## R25. 무엇을 테스트하나 (US2-AC4·AC5, FR-010, SC-006, 2026-11-22)
+
+- **Decision**:
+  - 테스트 지원: `TestUsers.superAdminRole()`은 역할을 다시 만들 때 **마이그레이션 직후의 최고 관리자 역할 ID를 지정해** 넣는다(`MenuSeed`처럼 처음 한 번 읽어 둔다). V8의 생성 열이 그 ID를 박았으므로, 다른 ID로 다시 만들면 엉뚱한 역할이 한 명만 받게 된다
+  - `AdminRolesAcceptanceTest`: US2-AC4(최고 관리자 역할 구성원 더하기·빼기 B001, 최고 관리자 자신도), US2-AC5(`PUT /users/{id}/roles`로 최고 관리자 역할을 주거나 최고 관리자에게서 빼기 B001, 목록의 최고 관리자 역할 `blockReason` = `FIXED`). 지금의 `lastSuperAdminStays`·`superAdminDropsOtherRoles`(FR-010 옛 규칙)는 새 규칙으로 바꾼다(원칙 V)
+  - SC-006: JdbcTemplate으로 최고 관리자 줄을 하나 더 넣으면 DB가 거부한다(`DuplicateKeyException`)
+  - e2e(`role.spec.ts`): 최고 관리자 역할을 고르면 구성원에 검색 칸·체크박스가 없고 안내가 보인다

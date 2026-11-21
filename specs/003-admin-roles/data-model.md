@@ -48,3 +48,15 @@
 | 회원 | `tb_user.role` = `USER` | `tb_user_access_role` 행이 없다 |
 
 옮기기 (V7): 역할을 가진 `USER`는 `ADMIN`으로, 그 전부터 `ADMIN`이던 계정은 최고 관리자 구성원으로. 메뉴 `ADMIN_ROLES`의 이름이 "역할 관리"면 "권한 관리"로.
+
+## 최고 관리자 한 명 고정 (2026-11-22)
+
+`V8__single_super_admin.sql` (research R22).
+
+| 열 | 타입 | 뜻 |
+|---|---|---|
+| `tb_user_access_role.super_slot` | `TINYINT` 생성 열(VIRTUAL) | 최고 관리자 역할 줄이면 1, 그 밖은 NULL. 식에 최고 관리자 역할 ID를 숫자로 박는다 |
+| `uk_user_access_role_super_slot` | 유일 제약 | `super_slot`이 1인 줄은 표 전체에서 하나. NULL은 여러 개 허용 |
+
+- 이미 최고 관리자가 여럿이면 제약을 걸기 전에 `user_id`가 가장 작은 줄만 남긴다
+- 엔터티에는 매핑하지 않는다 (`active_key`와 같다)
