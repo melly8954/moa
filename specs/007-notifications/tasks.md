@@ -146,12 +146,13 @@ description: "알림 (notifications) 작업 목록"
 
 ---
 
-## Phase 10: 브라우저 알림 문구와 아이콘 (2026-11-22 FR-008 변경)
+## Phase 10: 알림 문구, 아이콘, 토스트 생략 (2026-11-22 FR-007·FR-008 변경)
 
 - [ ] T047 moa 로고로 만든 192×192 PNG 알림 아이콘을 frontend/public/icons/notification-192.png에 둔다. 사람이 파일을 준다 (research R13)
 - [ ] T048 backend/src/main/java/com/moa/api/application/v1/notification/NotificationPushListener.java의 페이로드를 {id, type, link}로 바꾼다. `title`은 보내지 않는다 (contracts/realtime.md "웹 푸시 페이로드")
 - [ ] T049 frontend/public/sw.js의 `push`가 제목 "moa", 본문(`type`이 `MESSAGE`면 "새 메시지가 있습니다", 아니면 "새 알림이 있습니다"), `icon: "/icons/notification-192.png"`로 띄우게 한다 (research R13)
-- [ ] T050 바뀐 페이로드에 맞춰 NotificationsAcceptanceTest.java·e2e를 확인하고 고칠 것이 있으면 고친다. 브라우저 알림 표시(아이콘, 문구)는 quickstart.md "화면 확인" 7번으로 사람이 확인한다
+- [ ] T050 frontend/src/components/notification/realtime-toasts.tsx가 개인 알림의 `link`와 지금 주소가 같으면 토스트를 띄우지 않게 한다. 벨 숫자 다시 읽기는 그대로 둔다. 기능이 관련 화면을 더할 자리(종류별 판정)를 frontend/src/lib/notification.ts에 둔다 (research R14)
+- [ ] T051 바뀐 페이로드에 맞춰 NotificationsAcceptanceTest.java·e2e를 확인하고 고칠 것이 있으면 고친다. frontend/e2e/notifications.spec.ts에 US3-AC4(연결과 같은 주소에서는 토스트 없음, 벨 숫자 증가)를 더한다. 브라우저 알림 표시(아이콘, 문구)는 quickstart.md "화면 확인" 7번으로 사람이 확인한다
 
 ---
 

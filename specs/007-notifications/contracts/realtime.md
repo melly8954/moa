@@ -43,5 +43,6 @@
 | US3-AC1 | `notify` → 그 사용자 `/user/queue/notifications`로 받음 | 메시지 → 토스트, 벨 숫자 하나 증가 |
 | US3-AC2 | 두 사용자 연결, 한 사람에게 `notify` → 다른 사람은 받지 않음 | |
 | US3-AC3 | 같은 사용자로 두 연결 → 둘 다 받음 | |
+| US3-AC4 | | 연결과 같은 주소를 연 채 STOMP 흉내로 메시지 → 토스트 없음, 벨 숫자 하나 증가 |
 | US4-AC4 | | `Notification.permission = "denied"` 흉내 → 꺼짐 + 브라우저 설정 안내 |
 | US4-AC2 | (화면 직접 확인) 브라우저 알림 누르면 관련 화면 | |
