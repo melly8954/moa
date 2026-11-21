@@ -96,6 +96,8 @@ function SortableGroup({
     id: group.groupCode,
     disabled,
   })
+  // 작은 보조 글자: 고른 줄의 배경 위에서는 대비(4.5:1)가 모자라 더 진하게 쓴다
+  const sub = active ? "text-foreground/70" : "text-muted-foreground"
   return (
     <li
       ref={setNodeRef}
@@ -119,13 +121,11 @@ function SortableGroup({
         onClick={onSelect}
       >
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className={cn("truncate text-sm font-medium", !group.enabled && "text-muted-foreground")}>
-            {group.name}
-          </span>
-          <span className="truncate font-mono text-xs text-muted-foreground">{group.groupCode}</span>
+          <span className={cn("truncate text-sm font-medium", !group.enabled && sub)}>{group.name}</span>
+          <span className={cn("truncate font-mono text-xs", sub)}>{group.groupCode}</span>
         </span>
-        {!group.enabled && <span className="shrink-0 text-xs text-muted-foreground">{t("notInUse")}</span>}
-        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+        {!group.enabled && <span className={cn("shrink-0 text-xs", sub)}>{t("notInUse")}</span>}
+        <span className={cn("shrink-0 text-xs tabular-nums", sub)}>
           {t("itemCount", { count: group.codes.length })}
         </span>
       </button>
