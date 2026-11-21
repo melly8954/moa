@@ -76,7 +76,7 @@
 ## PUT `/api/v1/users/me/nickname` — 닉네임 바꾸기
 
 - 요청 `{ "nickname": "string" }`
-- 처리: 앞뒤 공백 제거 → 같은 값이면 그대로 200(시각 안 바뀜) → 규칙(V001) → 변경 제한(B202) → 태그 맞추기(새 `nickname_key`에서 지금 태그가 비어 있으면 그대로, 아니면 새로. 다 차면 B201) → `users.name` 바꾸기, `nickname_key`·`nickname_tag`, `nickname_changed_at` = 지금 (research R4·R5)
+- 처리: 앞뒤 공백 제거 → 같은 값이면 그대로 200(시각 안 바뀜) → 규칙(V001) → 변경 제한(B202) → 태그 맞추기(새 `nickname_key`에서 지금 태그가 비어 있으면 그대로, 아니면 새로. 다 차면 B201) → `tb_user.name` 바꾸기, `nickname_key`·`nickname_tag`, `nickname_changed_at` = 지금 (research R4·R5)
 - 200 `{ "nickname": "string", "nicknameTag": "0421", "nicknameChangeAvailableAt": "…" }` (US2-AC1·AC5~AC7)
 - 409 B201 그 닉네임의 태그가 다 참 (US2-AC8)
 - 409 B202 응답의 `data.availableAt`으로 화면이 "언제부터"를 보인다 (US2-AC4)
