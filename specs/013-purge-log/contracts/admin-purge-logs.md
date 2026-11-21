@@ -1,10 +1,10 @@
-# API: 관리자 파기 기록
+# API: 관리자 파기 이력
 
 권한 `PURGE_LOG_READ`가 있어야 한다. 없으면 `001-admin-menus` FR-003대로 401(로그인 안 함) 또는 403(권한 없음).
 
 ## GET /api/v1/admin/purge-logs
 
-파기 기록 목록. 최신순(`createdAt` 내림차순). 조건은 모두 선택이고 함께 주면 AND.
+파기 이력 목록. 최신순(`createdAt` 내림차순). 조건은 모두 선택이고 함께 주면 AND.
 
 ### 쿼리
 
@@ -22,7 +22,7 @@
 
 | 필드 | 타입 | 뜻 |
 |---|---|---|
-| `id` | 정수 | 파기 기록 ID |
+| `id` | 정수 | 파기 이력 ID |
 | `createdAt` | 시각 (시간대 포함) | 파기 일시 |
 | `target` | 문자열 (위 enum) | 대상 종류 |
 | `method` | `ROW_DELETE` \| `COLUMN_ERASE` | 방법 |

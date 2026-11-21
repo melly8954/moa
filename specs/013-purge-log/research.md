@@ -1,13 +1,13 @@
-# Research: 개인정보 파기 기록 (purge-log)
+# Research: 개인정보 파기 이력 (purge-log)
 
 Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것이다 (2026-11-21).
 
-## R1. 정리기가 파기 기록을 남기는 방법
+## R1. 정리기가 파기 이력을 남기는 방법
 
-- **Decision**: 정리기가 지운 뒤 같은 트랜잭션 안에서 이벤트 `PersonalDataPurgedEvent(대상 종류, 방법, 건수)`를 낸다. `common/purgelog`의 `PurgeLogRecorder`가 `@EventListener`(동기)로 받아 파기 기록을 저장한다. 건수가 0 이하면 저장하지 않는다(FR-003). 저장이 실패하면 예외를 그대로 던져 정리의 트랜잭션이 되돌려진다(FR-004)
+- **Decision**: 정리기가 지운 뒤 같은 트랜잭션 안에서 이벤트 `PersonalDataPurgedEvent(대상 종류, 방법, 건수)`를 낸다. `common/purgelog`의 `PurgeLogRecorder`가 `@EventListener`(동기)로 받아 파기 이력을 저장한다. 건수가 0 이하면 저장하지 않는다(FR-003). 저장이 실패하면 예외를 그대로 던져 정리의 트랜잭션이 되돌려진다(FR-004)
 - **Rationale**: 키트 정리기 3개(`common/helper/loginhistory`, `common/security/token`, `common/helper/richtext`)가 고칠 것은 이벤트를 내는 한 줄뿐이다. 키트 쪽은 받는 쪽이 없어도 동작하므로 키트로 옮기기 쉽다. 기록 규칙(0건 무시, 실패 전파)은 받는 쪽 한 곳에 모인다
 - **Alternatives considered**: 정리기가 기록기를 직접 부르기 — 키트 코드가 moa 클래스에 묶인다. 정리기에 AOP 걸기 — 지운 건수를 얻을 수 없다(키트 정리기는 `void`). 로그 줄을 잡아 저장하기 — 로그 문구가 바뀌면 깨진다
-- **접속 이력 기록기와 다른 점**: `LoginHistoryRecorder`는 저장 실패를 삼킨다(로그인을 막지 않으려고). 파기 기록은 반대로 실패를 던진다(기록 없는 삭제를 막으려고, FR-004)
+- **접속 이력 기록기와 다른 점**: `LoginHistoryRecorder`는 저장 실패를 삼킨다(로그인을 막지 않으려고). 파기 이력은 반대로 실패를 던진다(기록 없는 삭제를 막으려고, FR-004)
 
 ## R2. 트랜잭션 경계
 
@@ -24,14 +24,14 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
 
 ## R4. 저장 위치와 계층
 
-- **Decision**: 파기 기록 엔터티·저장소·기록기·정리기는 `common/purgelog`에 둔다. 관리 화면 조회는 접속 이력과 같은 계층으로 `api`에 둔다 (컨트롤러 → Application → Service → Reader → `common/purgelog`의 Repository)
+- **Decision**: 파기 이력 엔터티·저장소·기록기·정리기는 `common/purgelog`에 둔다. 관리 화면 조회는 접속 이력과 같은 계층으로 `api`에 둔다 (컨트롤러 → Application → Service → Reader → `common/purgelog`의 Repository)
 - **Rationale**: 키트 정리기(`common`)가 `api`에 기대지 않게 한다. 접속 이력(`common/helper/loginhistory` + `api` 조회)과 같은 모양이라 읽기 쉽다. `ArchitectureTest`의 계층 규칙은 `api.*`만 보므로 `common`은 규칙 밖이다
 - **Alternatives considered**: `api/entity`에 엔터티 — 키트 정리기가 `api`에 기대게 된다
 
-## R5. 파기 기록 정리 (FR-006)
+## R5. 파기 이력 정리 (FR-006)
 
 - **Decision**: `common/purgelog/PurgeLogCleaner`가 매일 `app.purge-log.cleanup-cron`(기본 `0 10 5 * * *`)에 `created_at`이 `app.purge-log.retention-days`(기본 365)일보다 오래된 기록을 지운다. 이 정리는 이벤트를 내지 않는다
-- **Rationale**: 다른 정리(04:30~05:00)가 끝난 뒤에 돈다. 파기 기록에는 개인정보가 없어 기록 없이 지운다 (`docs/privacy.md`)
+- **Rationale**: 다른 정리(04:30~05:00)가 끝난 뒤에 돈다. 파기 이력에는 개인정보가 없어 기록 없이 지운다 (`docs/privacy.md`)
 
 ## R6. 목록 API (FR-008, FR-009)
 
@@ -41,9 +41,9 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
 ## R7. 메뉴·연결 화면·권한 (FR-007, FR-008)
 
 - **Decision**
-  - 권한: `PurgeLogPermissions.READ = "PURGE_LOG_READ"`, 이름 "파기 기록 조회", 묶음 "파기 기록"
-  - 연결 화면: `PurgeLogScreens` — `ADMIN_PURGE_LOGS`, "파기 기록", `/admin/purge-logs`, `@Order(45)` (접속 이력 40 다음)
-  - 메뉴: 마이그레이션 `V<다음 번호>__purge_log.sql`이 `tb_purge_log`를 만들고, `tb_menu`에 운영(id 10) 아래 순서 40, 아이콘 `file`인 "파기 기록" 행을 더한다. 번호는 PR 직전에 정한다 (`docs/db.md`)
+  - 권한: `PurgeLogPermissions.READ = "PURGE_LOG_READ"`, 이름 "파기 이력 조회", 묶음 "파기 이력"
+  - 연결 화면: `PurgeLogScreens` — `ADMIN_PURGE_LOGS`, "파기 이력", `/admin/purge-logs`, `@Order(45)` (접속 이력 40 다음)
+  - 메뉴: 마이그레이션 `V<다음 번호>__purge_log.sql`이 `tb_purge_log`를 만들고, `tb_menu`에 운영(id 10) 아래 순서 40, 아이콘 `file`인 "파기 이력" 행을 더한다. 번호는 PR 직전에 정한다 (`docs/db.md`)
 - **Rationale**: 접속 이력의 권한·연결 화면·시드와 같은 방식이다. 아이콘은 이미 있는 목록(`frontend/src/components/menu/icons.ts`)에서 고른다
 
 ## R8. 화면 (FR-009, FR-010)

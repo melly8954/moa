@@ -1,8 +1,8 @@
-# Data Model: 개인정보 파기 기록 (purge-log)
+# Data Model: 개인정보 파기 이력 (purge-log)
 
-## 파기 기록 (`tb_purge_log`)
+## 파기 이력 (`tb_purge_log`)
 
-엔터티 `PurgeLog` (`common/purgelog`). `BaseTimeEntity`(로그·토큰: `created_at`, `updated_at`)를 상속하고 `@HardDelete(reason = "보관 기간(1년)이 지난 파기 기록은 정리기가 지운다. 개인정보가 없어 기록 없이 지운다")`를 붙인다. 이름·COMMENT는 `docs/db.md`를 따른다.
+엔터티 `PurgeLog` (`common/purgelog`). `BaseTimeEntity`(로그·토큰: `created_at`, `updated_at`)를 상속하고 `@HardDelete(reason = "보관 기간(1년)이 지난 파기 이력은 정리기가 지운다. 개인정보가 없어 기록 없이 지운다")`를 붙인다. 이름·COMMENT는 `docs/db.md`를 따른다.
 
 | 열 | 타입 | NULL | 뜻 (COMMENT) |
 |---|---|---|---|
@@ -16,7 +16,7 @@
 | `created_at` | `DATETIME(6)` | 아님 | 파기 일시 (감사 열이라 COMMENT 없음) |
 | `updated_at` | `DATETIME(6)` | 아님 | 감사 열 |
 
-- 테이블 COMMENT: `'개인정보 파기 기록 (개인정보 없음)'`
+- 테이블 COMMENT: `'개인정보 파기 이력 (개인정보 없음)'`
 - 인덱스: `idx_purge_log_created_at (created_at)` — 정리(FR-006)와 최신순 목록. `idx_purge_log_target_created_at (target, created_at)` — 종류 조건 목록
 - `actor_user_id`·`target_user_id`는 다른 행을 가리키지만 외래 키를 걸지 않는다(`docs/db.md`). 이번에는 쓰는 곳이 없어 따로 인덱스를 두지 않는다. 회원 탈퇴 스펙이 이 열로 찾게 되면 그때 더한다
 
@@ -55,13 +55,13 @@
 
 | 무엇 | 값 |
 |---|---|
-| 권한 | `PURGE_LOG_READ` "파기 기록 조회" (묶음 "파기 기록") |
-| 연결 화면 | `ADMIN_PURGE_LOGS` "파기 기록" `/admin/purge-logs` |
-| 메뉴 (`tb_menu`) | 상위 운영(id 10), 이름 "파기 기록", `screen_key` `ADMIN_PURGE_LOGS`, 아이콘 `file`, 순서 40, 대상 ADMIN |
+| 권한 | `PURGE_LOG_READ` "파기 이력 조회" (묶음 "파기 이력") |
+| 연결 화면 | `ADMIN_PURGE_LOGS` "파기 이력" `/admin/purge-logs` |
+| 메뉴 (`tb_menu`) | 상위 운영(id 10), 이름 "파기 이력"(V6은 "파기 기록"으로 넣었고 2026-11-22 마이그레이션이 바꾼다), `screen_key` `ADMIN_PURGE_LOGS`, 아이콘 `file`, 순서 40, 대상 ADMIN |
 
 ## 설정
 
 | 키 | 기본값 | 뜻 |
 |---|---|---|
-| `app.purge-log.retention-days` | 365 | 파기 기록 보관 일수 (FR-006) |
-| `app.purge-log.cleanup-cron` | `0 10 5 * * *` | 파기 기록 정리 시각 |
+| `app.purge-log.retention-days` | 365 | 파기 이력 보관 일수 (FR-006) |
+| `app.purge-log.cleanup-cron` | `0 10 5 * * *` | 파기 이력 정리 시각 |
