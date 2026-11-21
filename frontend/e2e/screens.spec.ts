@@ -85,6 +85,15 @@ test("계정 줄은 한 줄에 이름·아이디와 알림·설정 메뉴·로�
   await expectNoSeriousA11yViolations(page)
 })
 
+test("관리자 계정이 사용자 화면(공지)을 열면 관리 셸 첫 화면으로 보낸다 (moa 001 FR-005)", async ({ page }) => {
+  await signedIn(page, {
+    me: { role: "ADMIN" },
+    menus: [{ id: 1, name: "사용자 관리", path: "/admin/users", icon: "users", children: [] }],
+  })
+  await page.goto("/notices")
+  await expect(page).toHaveURL(/\/admin\/users$/)
+})
+
 test("로그인하지 않았으면 로그인 화면으로 보낸다", async ({ page }) => {
   await signedOut(page)
   await page.goto("/")
