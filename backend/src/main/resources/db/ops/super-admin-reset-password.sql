@@ -7,10 +7,11 @@ SET @hash := '{bcrypt}$2y$10$replace.with.bcrypt.hash.of.temporary.password.xxxx
 START TRANSACTION;
 
 SET @super := (SELECT id FROM tb_access_role WHERE code = 'SUPER_ADMIN' AND deleted_at IS NULL);
+-- 변수는 연결의 정렬 규칙을 따르므로 표의 정렬 규칙(utf8mb4_unicode_ci, docs/db.md)으로 바꿔 비교한다
 SET @user_id := (SELECT u.id
                  FROM tb_user u
                           JOIN tb_user_access_role r ON r.user_id = u.id AND r.access_role_id = @super
-                 WHERE u.login_id = @login
+                 WHERE u.login_id = CONVERT(@login USING utf8mb4) COLLATE utf8mb4_unicode_ci
                    AND u.deleted_at IS NULL);
 
 -- 확인: 아이디가 지금 최고 관리자가 아니거나 값이 bcrypt가 아니면 여기서 멈춘다 ("Column 'ok' cannot be null"). 아무것도 바뀌지 않는다

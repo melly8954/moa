@@ -6,7 +6,8 @@ SET @to := 'new-admin';
 START TRANSACTION;
 
 SET @super := (SELECT id FROM tb_access_role WHERE code = 'SUPER_ADMIN' AND deleted_at IS NULL);
-SET @to_id := (SELECT id FROM tb_user WHERE login_id = @to AND role = 'ADMIN' AND deleted_at IS NULL);
+-- 변수는 연결의 정렬 규칙을 따르므로 표의 정렬 규칙(utf8mb4_unicode_ci, docs/db.md)으로 바꿔 비교한다
+SET @to_id := (SELECT id FROM tb_user WHERE login_id = CONVERT(@to USING utf8mb4) COLLATE utf8mb4_unicode_ci AND role = 'ADMIN' AND deleted_at IS NULL);
 SET @from_id := (SELECT user_id FROM tb_user_access_role WHERE access_role_id = @super);
 
 -- 확인: 새 사람이 없는 아이디·회원·지운 계정이면 여기서 멈춘다 ("Column 'ok' cannot be null"). 아무것도 바뀌지 않는다

@@ -286,9 +286,11 @@ class AdminUsersAcceptanceTest extends AcceptanceTest {
 		testUsers.create(31L, "member", "member1234!", Role.USER);
 
 		assertThatThrownBy(() -> runOps("super-admin-transfer.sql", "SET @to := 'member';"))
-			.isInstanceOf(ScriptException.class);
+			.isInstanceOf(ScriptException.class)
+			.hasStackTraceContaining("Column 'ok' cannot be null");
 		assertThatThrownBy(() -> runOps("super-admin-transfer.sql", "SET @to := 'nobody';"))
-			.isInstanceOf(ScriptException.class);
+			.isInstanceOf(ScriptException.class)
+			.hasStackTraceContaining("Column 'ok' cannot be null");
 		assertThat(mvc.get().uri("/api/v1/users/me/permissions").header(HttpHeaders.AUTHORIZATION, admin).exchange())
 			.bodyJson().extractingPath("$.permissions").asArray().contains("USER_MANAGE");
 	}
