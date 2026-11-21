@@ -50,7 +50,7 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 
 | 도메인 | 기능 | 출처 | 스펙 | 상태 |
 |---|---|---|---|---|
-| 화면 | 업무 목록의 쪽 이동·빈 결과 (쪽 크기, 아래 줄 배치, 표 높이) | 키트 web-next 골격 | `011-list-screen` | 기획 중 |
+| 화면 | 업무 목록의 쪽 이동·빈 결과 (쪽 크기, 아래 줄 배치, 표 높이), 기간 빠른 단추 | 키트 web-next 골격 | `011-list-screen` | 기획 중 |
 
 ## 맞춰야 할 경계
 
