@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
 import { signedIn } from "./support/api"
+import { keyboardMoveUp } from "./support/drag"
 import { expectNoHorizontalOverflow, expectNoSeriousA11yViolations } from "./support/layout"
 
 // 공통코드 (code 헬퍼). 백엔드 대신 API를 가로챈다
@@ -195,15 +196,7 @@ test("US1-AC5 키보드로 항목을 옮기면 그 그룹의 순서를 한 번�
   const sent: Sent = {}
   await mockCodes(page, sent)
   await page.goto("/admin/codes")
-  const handle = page.getByRole("button", { name: "RPG 옮기기" })
-  await handle.focus()
-  // 키를 너무 빨리 누르면 끌기 센서가 집기 전에 다음 키를 받는다. 화면 낭독기 안내(live region)로 단계를 기다린다
-  const live = page.locator('[id^="DndLiveRegion"]')
-  await page.keyboard.press("Space")
-  await expect(live).toContainText("옮기는 중")
-  await page.keyboard.press("ArrowUp")
-  await expect(live).toContainText("FPS 자리로")
-  await page.keyboard.press("Space")
+  await keyboardMoveUp(page, page.getByRole("button", { name: "RPG 옮기기" }), "RPG", "FPS")
   await expect
     .poll(() => sent.order)
     .toEqual([
@@ -219,14 +212,7 @@ test("US1-AC5 키보드로 그룹을 옮기면 그룹 순서를 한 번에 보�
   await page.goto("/admin/codes")
   // 접어 두어 그룹 행끼리 맞닿게 한다 (펼쳐 있으면 위의 항목 자리로 가도 그 그룹 자리로 본다)
   await page.getByRole("button", { name: "게임 장르 접기" }).click()
-  const handle = page.getByRole("button", { name: "신고 사유 옮기기" })
-  await handle.focus()
-  const live = page.locator('[id^="DndLiveRegion"]')
-  await page.keyboard.press("Space")
-  await expect(live).toContainText("옮기는 중")
-  await page.keyboard.press("ArrowUp")
-  await expect(live).toContainText("게임 장르 자리로")
-  await page.keyboard.press("Space")
+  await keyboardMoveUp(page, page.getByRole("button", { name: "신고 사유 옮기기" }), "신고 사유", "게임 장르")
   await expect
     .poll(() => sent.orderGroups)
     .toEqual([
