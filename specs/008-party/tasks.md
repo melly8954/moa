@@ -70,12 +70,12 @@ description: "파티 (party) 작업 목록"
 
 ### 백엔드
 
-- [ ] T003 `BE/common/exception/ErrorCode.java`에 contracts/party-api.md "오류 코드" 표의 15개를 그 상태값 그대로 더한다
-  - `A101` 403 방장만, `A102` 403 멤버만
+- [ ] T003 `BE/common/exception/ErrorCode.java`에 contracts/party-api.md "오류 코드" 표의 16개를 그 상태값 그대로 더한다
+  - `A101` 403 방장만, `A102` 403 멤버만, `A103` 403 관리자 계정은 파티를 쓸 수 없음 (FR-012)
   - `B101` 409 정원 참, `B102` 409 마감, `B103` 409 이미 파티에 속함, `B104` 409 참가 제한, `B105` 409 포지션 참
   - `B106` 400 포지션 필요, `B107` 404 유효하지 않은 초대, `B108` 409 대기 신청 있음, `B109` 409 인원을 지금보다 작게
   - `B110` 409 차지된 포지션 빼기·줄이기, `B111` 409 게임 바꾸기 불가, `B112` 409 이 참가 방식으로는 못 들어옴, `B113` 409 자기 자신 내보내기
-- [ ] T004 [P] frontend/messages/ko.json의 `errors`에 T003의 15개 코드 문구를 더한다
+- [ ] T004 [P] frontend/messages/ko.json의 `errors`에 T003의 16개 코드 문구를 더한다
 - [ ] T005 [P] `BE/api/entity/party/`에 엔터티 6개를 만든다
   - `Party`: `SoftDeleteEntity` + `@SQLRestriction(SoftDeleteEntity.NOT_DELETED)`
   - `PartyPosition`, `PartyMember`, `PartyJoinRequest`, `PartyBan`, `PartyMessage`: `@HardDelete(reason)`. reason은 data-model.md 각 테이블 머리의 문장이다
@@ -104,6 +104,7 @@ description: "파티 (party) 작업 목록"
     10. 정원이 차면 `close(false)`
     11. JOINED 안내 메시지
     12. 이벤트 발행
+  - 관리자 계정 막기 (FR-012, research.md R14): 만들기·`admit`(참가, 승인 대상, 초대 입장)·신청·내 파티 앞에서 `MemberActivityPolicy.isManagerAccount(userId)`면 A103이다. 승인은 신청자 쪽을 본다
   - 멤버 저장의 `DataIntegrityViolationException`은 `PartyMemberService`가 받아 B103으로 바꾼다 (research.md R6)
 
 - [ ] T010 `BE/api/controller/ws/party/`에 구독 권한 검사를 만든다 (research.md R3)
@@ -397,12 +398,13 @@ description: "파티 (party) 작업 목록"
 
 ### 백엔드 인수 테스트
 
-- [ ] T042 [P] [US1] `BT/api/party/PartyCreateAcceptanceTest.java`에 US1-AC1~AC5를 하나씩 쓴다
+- [ ] T042 [P] [US1] `BT/api/party/PartyCreateAcceptanceTest.java`에 US1-AC1~AC6을 하나씩 쓴다
   - AC1: `POST /api/v1/parties`가 201이고, `role`이 HOST인 멤버가 1명이다. `GET /parties`에 나온다
   - AC2: PRIVATE이면 응답에 `invite.code`(8자)가 있고, `GET /parties`에는 없다
   - AC3: 제목이 빔, 인원 1·11, 목록에 없는 게임 코드면 각각 400 V001이고 `errors`에 그 칸이 있다
   - AC4: 토큰이 없으면 401 A001이다
   - AC5: `GET /api/v1/codes/GAME`이 LOL, OVERWATCH, VALORANT, PUBG 순서다
+  - AC6: `ADMIN` 계정이 만들기, 참가, 신청, 초대 입장, `GET /parties/me`를 하면 각각 403 A103이고 멤버·신청 행이 생기지 않는다
 - [ ] T043 [P] [US2] `BT/api/party/PartyBrowseAcceptanceTest.java`에 US2-AC1~AC6을 쓴다. 파티는 `PartyFixtures`로 넣는다
   - AC1: RECRUITING인 OPEN·APPROVAL만 `id DESC`로 나온다. CLOSED와 PRIVATE은 없다. 카드 항목은 contracts PartySummary다
   - AC2: `gameCode`로, 그리고 `gameCode`+`modeCode`로 거른다
@@ -509,7 +511,7 @@ description: "파티 (party) 작업 목록"
 
 ### 추적
 
-- [ ] T057 AC 추적을 확인한다. `grep -rhoE 'US[0-9]+-AC[0-9]+' backend/src/test frontend/e2e | sort -u | wc -l`이 74인지 본다. 빠진 AC가 있으면 그 스토리의 테스트를 더한다
+- [ ] T057 AC 추적을 확인한다. `grep -rhoE 'US[0-9]+-AC[0-9]+' backend/src/test frontend/e2e | sort -u | wc -l`이 75인지 본다. 빠진 AC가 있으면 그 스토리의 테스트를 더한다
 
 ---
 
@@ -519,7 +521,7 @@ description: "파티 (party) 작업 목록"
   - ArchitectureTest가 실패하면 research.md R10의 배치를 다시 본다
   - 인수 테스트(`dbTest`)와 e2e는 PR CI 결과로 보고, 실패하면 그때 고친다. 테스트를 고쳐서 통과시키지 않는다 (원칙 V)
 - [ ] T059 specs/README.md 사용자 쪽 표에서 `008-party` 상태를 `스펙 작성 중`에서 `구현됨`으로 바꾼다
-- [ ] T060 quickstart.md "화면 확인"을 사람이 직접 한다. 시험 계정 비밀번호가 필요하므로 에이전트는 하지 않는다 (원칙 VI)
+- [ ] T060 quickstart.md "화면 확인"을 사람이 직접 한다. 시험 계정 비밀번호가 필요하므로 에이전트는 하지 않는다 (원칙 VI). 회원 계정이 둘 필요해 "준비"의 `user2`도 사람이 더한다
 
 ---
 

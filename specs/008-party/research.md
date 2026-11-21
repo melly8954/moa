@@ -129,3 +129,13 @@ Technical Context의 미결은 실시간 통신 하나였다. 처음(2026-11-15)
 - **Rationale**: `notify`는 부르는 쪽 트랜잭션에서 저장하고 커밋 뒤에 실시간·웹 푸시를 보낸다(`NotificationApplication` 주석). 그래서 파티 일이 롤백되면 알림도 나가지 않는다. Application끼리 부르는 것은 같은 계층 안이라 `ArchitectureTest`의 "Application은 Controller·Scheduler만 부른다"(다른 계층에서 들어오는 의존)에 걸리지 않는다
 - **implement에서 확인할 것**: `./gradlew build`의 ArchitectureTest가 `PartyApplication` → `NotificationApplication`을 통과시키는지. 막히면 007 담당과 부르는 길을 정한다
 - **근거**: 007 담당의 전달 문서(2026-11-22)와 `007-notifications` FR-004·FR-007·FR-012
+
+## R14. 관리자·운영자 계정 막기 (FR-012)
+
+- **Decision** (2026-11-22)
+  - "관리자·운영자 계정" = 시스템 역할 `ADMIN`인 계정이다. `009-mypage` research R2와 같은 정의다
+  - 판단은 `009-mypage`가 만드는 공용 클래스 `MemberActivityPolicy.isManagerAccount(userId)`를 쓴다. 파티가 009보다 먼저 구현되면 파티가 이 클래스를 009의 설계대로 만들고, 009는 그것을 쓴다
+  - 서버가 막는다: 파티 만들기, 참가, 신청, 초대 입장, 내 파티는 403 `A103`(`PARTY_NOT_ALLOWED`). 승인은 신청자가 관리자 계정이 될 수 없으므로 따로 막지 않는다
+  - 목록·상세·초대 미리보기는 "누구나"라 막지 않는다. 관리자 계정은 사용자 셸 화면을 열 수 없어 화면으로는 오지 않는다 (`001-admin-menus` FR-005)
+- **Rationale**: 2026-11-22에 관리자 계정이 사용자 셸에 들어오지 못하게 되었다. 화면만 막으면 API를 직접 부를 수 있으므로 서버에서도 막는다 (009 R2와 같은 이유). 오류 코드는 파티 권한 오류 대역(`A1xx`, R9)의 다음 번호다
+- **이전 결정**: 2026-11-14에는 관리자·운영자도 회원과 똑같이 쓰기로 했다 (FR-012 옛 문구)

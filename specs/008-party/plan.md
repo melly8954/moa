@@ -50,7 +50,7 @@
 - 계층 규칙은 ArchitectureTest를 따른다 (research.md R10)
 
 **Scale/Scope**
-- 사용자 스토리 10개, AC 74개, 화면 5개(모집, 만들기 창, 파티, 초대 입장, 내 파티)
+- 사용자 스토리 10개, AC 75개, 화면 5개(모집, 만들기 창, 파티, 초대 입장, 내 파티)
 - REST API 21개, STOMP 구독 주소 2개
 
 ## Constitution Check
@@ -60,7 +60,7 @@
 | 원칙 | 판정 | 근거 |
 |---|---|---|
 | I. 스펙이 먼저다 | 통과 | spec.md에 `[NEEDS CLARIFICATION]`이 없다. plan에서 정한 값(공통코드 초기값)은 spec.md FR-002 표에 적었다 |
-| II. AC마다 테스트 하나 | 통과 | AC 74개마다 테스트를 하나씩 둔다. 이름에 AC 번호를 적는다. 실시간 AC는 "저장"과 "전달"을 나눠 확인한다(Testing). e2e는 핵심 흐름 3개만이다 |
+| II. AC마다 테스트 하나 | 통과 | AC 75개마다 테스트를 하나씩 둔다. 이름에 AC 번호를 적는다. 실시간 AC는 "저장"과 "전달"을 나눠 확인한다(Testing). e2e는 핵심 흐름 3개만이다 |
 | III. 키트를 따른다 | 통과 | 계층·엔터티·오류·페이지 규칙은 키트 골격을 따른다. 실시간 통신은 007이 얹은 키트 websocket 헬퍼를 고치지 않고 쓴다. 구독 권한 검사는 키트 파일 밖(파티 쪽 설정)에서 더한다 (research.md R3) |
 | IV. 기존 기능은 제자리에서 고친다 | 통과 | 004의 spec.md FR-001 표와 `AdminCodesAcceptanceTest` 기대값을 그 자리에서 고친다. 새 기능 폴더는 008 하나다 |
 | V. 테스트를 고쳐서 통과시키지 않는다 | 통과 | `AdminCodesAcceptanceTest`는 스펙(004 FR-001 표)을 먼저 고친 뒤 그에 맞춰 기대값을 바꾼다. 실패를 덮으려는 수정이 아니다 |
@@ -96,7 +96,7 @@ specs/008-party/
 backend/
 ├── src/main/java/com/moa/
 │   ├── common/websocket/                               # 키트 그대로 (007이 얹음). 고치지 않는다
-│   ├── common/exception/ErrorCode.java                 # A101~A102, B101~B113
+│   ├── common/exception/ErrorCode.java                 # A101~A103, B101~B113
 │   └── api/
 │       ├── controller/v1/party/                        # ApiPartyController, ApiPartyMemberController,
 │       │   ├── request/                                #   ApiPartyJoinRequestController, ApiPartyMessageController
