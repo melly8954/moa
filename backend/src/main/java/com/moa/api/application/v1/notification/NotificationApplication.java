@@ -10,6 +10,8 @@ import com.moa.api.dto.notification.NotificationDto;
 import com.moa.api.dto.notification.NotificationType;
 import com.moa.api.service.notification.NotificationService;
 import com.moa.common.helper.webpush.WebPushSender;
+import com.moa.common.purgelog.PersonalDataPurgedEvent;
+import com.moa.common.purgelog.PurgeTarget;
 
 import lombok.RequiredArgsConstructor;
 
@@ -72,9 +74,11 @@ public class NotificationApplication {
 		notificationService.unsubscribe(userId, endpoint);
 	}
 
-	/** 보관 기간이 지난 알림을 지운다 (정리기가 부른다) */
+	/** 보관 기간이 지난 알림을 지운다 (정리기가 부른다). 같은 트랜잭션에서 파기 이력을 남긴다 (specs/013-purge-log) */
 	@Transactional
 	public int deleteExpired(int retentionDays) {
-		return notificationService.deleteOlderThan(retentionDays);
+		int deleted = notificationService.deleteOlderThan(retentionDays);
+		eventPublisher.publishEvent(PersonalDataPurgedEvent.byScheduler(PurgeTarget.NOTIFICATION, deleted));
+		return deleted;
 	}
 }

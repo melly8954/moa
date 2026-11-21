@@ -299,7 +299,7 @@ class NotificationsAcceptanceTest extends RealtimeAcceptanceTest {
 
 		notificationCleaner.deleteExpired();
 
-		List<String> titles = jdbcTemplate.queryForList("select title from notifications", String.class);
+		List<String> titles = jdbcTemplate.queryForList("select title from tb_notification", String.class);
 		assertThat(titles).containsExactly("89일 전");
 	}
 
@@ -329,12 +329,13 @@ class NotificationsAcceptanceTest extends RealtimeAcceptanceTest {
 	}
 
 	private void insertNotification(long userId, String title, LocalDateTime createdAt) {
-		jdbcTemplate.update("insert into notifications (user_id, type, title, link, created_at) values (?, ?, ?, ?, ?)",
-			userId, "SYSTEM", title, "/notices", createdAt);
+		jdbcTemplate.update(
+			"insert into tb_notification (user_id, type, title, link, created_at) values (?, ?, ?, ?, ?)", userId,
+			"SYSTEM", title, "/notices", createdAt);
 	}
 
 	private MvcTestResult asAdmin(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 
 	private MvcTestResult asMember(MockMvcRequestBuilder request) {

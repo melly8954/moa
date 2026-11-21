@@ -11,10 +11,12 @@ import com.moa.api.application.v1.menu.command.ModifyMenuCommand;
 import com.moa.api.dto.menu.MenuAudience;
 import com.moa.api.dto.menu.MenuDto;
 import com.moa.api.dto.menu.MenuOrderDto;
-import com.moa.api.dto.menu.ProgramDto;
+import com.moa.api.dto.menu.MyMenuDto;
+import com.moa.api.dto.menu.ScreenDto;
 import com.moa.api.service.menu.MenuService;
 import com.moa.common.audit.CurrentActor;
 import com.moa.common.security.AuthPrincipal;
+import com.moa.common.security.Role;
 import com.moa.common.security.permission.PermissionGuard;
 
 import lombok.RequiredArgsConstructor;
@@ -30,9 +32,17 @@ public class MenuApplication {
 	private final CurrentActor currentActor;
 	private final PermissionGuard permissionGuard;
 
+	/**
+	 * moa: 관리자 계정은 사용 중인 관리 메뉴를 모두 받고, 메뉴마다 권한이 있는지(accessible)를 받는다.
+	 * 회원은 빈 목록이다 (specs/001-admin-menus FR-002, 2026-11-22. 예전에는 권한 있는 메뉴만 줬다)
+	 */
 	@Transactional(readOnly = true)
-	public List<MenuDto> getMyMenus(AuthPrincipal principal) {
-		return menuService.getVisibleTree(MenuAudience.ADMIN, permissionGuard.permissions(principal), true);
+	public List<MyMenuDto> getMyMenus(AuthPrincipal principal) {
+		if (!principal.roles().contains(Role.ADMIN.name())) {
+			return List.of();
+		}
+		Set<String> permissions = permissionGuard.permissions(principal);
+		return menuService.getAdminTree().stream().map(menu -> MyMenuDto.of(menu, permissions)).toList();
 	}
 
 	/** 사용자 셸 메뉴 (moa, specs/001-admin-menus FR-007). 공개 범위로 거른다. 로그인하지 않았으면 principal은 null */
@@ -41,9 +51,9 @@ public class MenuApplication {
 		return menuService.getVisibleTree(MenuAudience.USER, Set.of(), principal != null);
 	}
 
-	/** 메뉴에 걸 수 있는 프로그램 (moa, specs/001-admin-menus FR-008) */
-	public List<ProgramDto> getPrograms() {
-		return menuService.getPrograms();
+	/** 메뉴에 걸 수 있는 연결 화면 (moa, specs/001-admin-menus FR-008) */
+	public List<ScreenDto> getScreens() {
+		return menuService.getScreens();
 	}
 
 	@Transactional(readOnly = true)
@@ -53,13 +63,13 @@ public class MenuApplication {
 
 	@Transactional
 	public MenuDto create(CreateMenuCommand command) {
-		return menuService.create(command.parentId(), command.name(), command.programKey(), command.icon(),
+		return menuService.create(command.parentId(), command.name(), command.screenKey(), command.icon(),
 			command.sortOrder(), command.audience(), command.visibility());
 	}
 
 	@Transactional
 	public MenuDto modify(ModifyMenuCommand command) {
-		return menuService.modify(command.id(), command.parentId(), command.name(), command.programKey(),
+		return menuService.modify(command.id(), command.parentId(), command.name(), command.screenKey(),
 			command.icon(), command.sortOrder(), command.enabled(), command.audience(), command.visibility());
 	}
 

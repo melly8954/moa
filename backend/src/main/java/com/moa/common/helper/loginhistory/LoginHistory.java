@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "login_histories")
+@Table(name = "tb_login_history")
 @HardDelete(reason = "보관 기간(app.login-history.retention-days)이 지난 이력은 지운다")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class LoginHistory extends BaseTimeEntity {

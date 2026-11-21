@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "moa: 역할 창에서 권한을 고르는 트리 (specs/003-admin-roles FR-004)")
 public record PermissionTreeResponse(
 	@Schema(description = "관리 메뉴 트리. 메뉴 관리와 같은 순서·묶음이고 꺼진 메뉴도 들어 있다") List<Node> menus,
-	@Schema(description = "어느 관리 메뉴도 가리키지 않는 관리 프로그램") List<Unlisted> unlisted) {
+	@Schema(description = "어느 관리 메뉴도 가리키지 않는 관리 연결 화면") List<Unlisted> unlisted) {
 
 	public static PermissionTreeResponse from(PermissionTreeDto tree) {
 		return new PermissionTreeResponse(tree.menus().stream().map(Node::from).toList(),
@@ -33,14 +33,14 @@ public record PermissionTreeResponse(
 		}
 	}
 
-	@Schema(description = "메뉴에 없는 관리 프로그램")
+	@Schema(description = "메뉴에 없는 관리 연결 화면")
 	public record Unlisted(
-		@Schema(description = "프로그램 키", example = "ADMIN_CODES") String programKey,
+		@Schema(description = "연결 화면 키", example = "ADMIN_CODES") String screenKey,
 		@Schema(description = "이름", example = "코드 관리") String name,
 		@Schema(description = "권한") PermissionRef permission) {
 
 		static Unlisted from(PermissionTreeDto.Unlisted unlisted) {
-			return new Unlisted(unlisted.programKey(), unlisted.name(),
+			return new Unlisted(unlisted.screenKey(), unlisted.name(),
 				new PermissionRef(unlisted.permission(), unlisted.permissionName()));
 		}
 	}

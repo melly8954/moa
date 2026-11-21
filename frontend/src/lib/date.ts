@@ -63,24 +63,44 @@ export function inRange(value: DateString, min?: DateString, max?: DateString): 
   return (!min || value >= min) && (!max || value <= max)
 }
 
-// 기간 빠른 선택. 끝은 모두 오늘(이번 달·지난달은 그 달 안)
-export const QUICK_RANGES = ["today", "last7Days", "last30Days", "thisMonth", "lastMonth"] as const
+// months달 앞(음수) 또는 뒤의 같은 날. 그 날이 없는 달이면 그 달 마지막 날 (예: 05-31의 3달 앞 → 02-28)
+export function addMonths(value: DateString, months: number): DateString {
+  const date = toCalendarDate(value)
+  if (!date) return ""
+  const day = date.getDate()
+  const target = new Date(date.getFullYear(), date.getMonth() + months, 1)
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()
+  target.setDate(Math.min(day, lastDay))
+  return fromCalendarDate(target)
+}
+
+// 기간 빠른 단추 (moa, specs/011-list-screen FR-010·FR-011, 2026-11-21)
+//   전체: 두 날짜 칸을 비운다(기간 조건의 기본값) / 나머지는 오늘을 포함한다
+//   오늘: 오늘 하루 / 7일: 오늘까지 7일 / 이번 달: 1일부터 오늘 / 3개월: 3개월 전 날짜의 다음 날부터 오늘
+//   2026-11-22: 전체를 더하고 1년을 뺐다. 기간 조건이 있는 화면(접속 이력·파기 이력)은 1년이 지나면 지워 1년이 전체와 같다
+export const QUICK_RANGES = ["all", "today", "last7Days", "thisMonth", "last3Months"] as const
 export type QuickRange = (typeof QUICK_RANGES)[number]
 
 export function quickRange(kind: QuickRange, now: Date = new Date()): DateRange {
   const end = today(now)
-  const [y, m] = end.split("-").map(Number)
-  const firstOfMonth = (year: number, month: number) => fromCalendarDate(new Date(year, month - 1, 1))
   switch (kind) {
+    case "all":
+      return { from: "", to: "" }
     case "today":
       return { from: end, to: end }
     case "last7Days":
       return { from: addDays(end, -6), to: end }
-    case "last30Days":
-      return { from: addDays(end, -29), to: end }
     case "thisMonth":
-      return { from: firstOfMonth(y, m), to: end }
-    case "lastMonth":
-      return { from: firstOfMonth(y, m - 1), to: addDays(firstOfMonth(y, m), -1) }
+      return { from: `${end.slice(0, 8)}01`, to: end }
+    case "last3Months":
+      return { from: addDays(addMonths(end, -3), 1), to: end }
   }
+}
+
+// 지금 기간과 같은 빠른 단추. 없으면 undefined (날짜를 직접 고른 경우)
+export function matchingQuickRange(range: DateRange, now: Date = new Date()): QuickRange | undefined {
+  return QUICK_RANGES.find((kind) => {
+    const candidate = quickRange(kind, now)
+    return candidate.from === range.from && candidate.to === range.to
+  })
 }

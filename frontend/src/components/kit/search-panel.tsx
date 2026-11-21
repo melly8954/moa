@@ -1,15 +1,15 @@
 "use client"
 
-import { RotateCcw, Search } from "lucide-react"
+import { RotateCcw } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { createContext, useContext, useId } from "react"
+import { createContext, useContext, useEffect, useId, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import type { ListSearch } from "@/lib/list-search"
 import { cn } from "@/lib/utils"
 import { DateRangePicker } from "./date-picker"
+import { SegmentedButtons } from "./segmented-buttons"
 
 // 목록 화면 검색 영역: 라벨 열 조건표
 //   <SearchPanel search={search}>
@@ -19,7 +19,7 @@ import { DateRangePicker } from "./date-picker"
 //     </SearchRow>
 //     <SearchField label={t("keyword")}><KeywordFilter name="keyword" /></SearchField>
 //   </SearchPanel>
-// 조건은 search.draft에 쌓이고 조회(또는 검색어 칸에서 Enter)를 눌러야 반영된다 (lib/list-search.ts)
+// moa: 조회 단추가 없다. 고르기·기간·선택 상자는 바꾸는 즉시, 검색어는 엔터나 0.5초 멈춤 뒤 조회한다 (lib/list-search.ts, specs/011-list-screen FR-012·FR-013)
 // 어떤 조건을 고를지
 //   Period: 기간 / Choice: 선택지 2~4개 (누름 단추) / Select: 선택지 5개 이상 (선택 상자) / Keyword: 검색어
 // 한 줄에 조건 둘까지 (SearchRow). 좁은 화면에서는 한 줄에 하나씩 쌓인다
@@ -60,20 +60,16 @@ export function SearchPanel<F extends Record<string, string>>({
         aria-label={t("panel")}
         noValidate
         className={cn("flex flex-col gap-3", className)}
-        onSubmit={(e) => {
-          e.preventDefault()
-          search.submit()
-        }}
+        // 조건마다 스스로 조회하므로 폼 제출(칸에서 엔터)은 막기만 한다
+        onSubmit={(e) => e.preventDefault()}
       >
-        <div className="divide-y overflow-hidden rounded-lg border">{children}</div>
+        {/* moa: 조건 둘을 한 줄에 두는지는 화면 폭이 아니라 이 영역의 폭으로 정한다 (container query, specs/011-list-screen Edge Cases) */}
+        <div className="@container/search divide-y overflow-hidden rounded-lg border">{children}</div>
+        {/* moa: 조회 단추는 없다. 조건을 바꾸면 바로 조회한다 (specs/011-list-screen FR-012, 2026-11-22) */}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={search.reset}>
             <RotateCcw />
             {t("reset")}
-          </Button>
-          <Button type="submit">
-            <Search />
-            {t("submit")}
           </Button>
         </div>
       </form>
@@ -81,9 +77,12 @@ export function SearchPanel<F extends Record<string, string>>({
   )
 }
 
-// 조건 둘을 한 줄에 (넓은 화면)
+// 조건 둘을 한 줄에 (검색 영역이 넓을 때, 약 672px 이상)
+// moa: 화면 폭(md) 기준이면 사이드바 때문에 본문이 좁은 768px 화면에서 한 칸이 좁아 조건이 옆 칸으로 넘쳤다
 export function SearchRow({ children }: { children: React.ReactNode }) {
-  return <div className="grid divide-y md:grid-cols-2 md:divide-x md:divide-y-0">{children}</div>
+  return (
+    <div className="grid divide-y @2xl/search:grid-cols-2 @2xl/search:divide-x @2xl/search:divide-y-0">{children}</div>
+  )
 }
 
 // 조건 한 칸: 왼쪽 라벨 칸(폭 --label-width) + 오른쪽 입력
@@ -106,42 +105,66 @@ export function SearchField({ label, children }: { label: string; children: Reac
   )
 }
 
-// 검색어. Enter로 조회한다
+// 검색어. 엔터는 바로, 치기를 멈추고 0.5초 뒤 조회한다 (moa, specs/011-list-screen FR-013, 2026-11-22)
+//   한글 조합 중에는 기다린다. 0.5초 뒤 조회는 방문 기록을 새로 쌓지 않는다(replace), 엔터는 쌓는다
+const KEYWORD_DELAY = 500
+
 export function KeywordFilter({ name, placeholder }: { name: string; placeholder?: string }) {
   const search = useSearch()
   const { inputId } = useField()
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const composing = useRef(false)
+  const value = search.draft[name] ?? ""
+  useEffect(() => () => clearTimeout(timer.current), [])
+  const later = (next: string) => {
+    clearTimeout(timer.current)
+    timer.current = setTimeout(() => {
+      if (next !== (search.filters[name] ?? "")) search.submit({ [name]: next }, { replace: true })
+    }, KEYWORD_DELAY)
+  }
   return (
     <Input
       id={inputId}
       type="search"
       className="w-full max-w-sm"
       placeholder={placeholder}
-      value={search.draft[name] ?? ""}
-      onChange={(e) => search.setDraft({ [name]: e.target.value })}
+      value={value}
+      onChange={(e) => {
+        search.setDraft({ [name]: e.target.value })
+        if (!composing.current) later(e.target.value)
+      }}
+      onCompositionStart={() => {
+        composing.current = true
+        clearTimeout(timer.current)
+      }}
+      onCompositionEnd={(e) => {
+        composing.current = false
+        later(e.currentTarget.value)
+      }}
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" || e.nativeEvent.isComposing) return
+        e.preventDefault()
+        clearTimeout(timer.current)
+        search.submit({ [name]: e.currentTarget.value })
+      }}
     />
   )
 }
 
 // 선택지 2~4개. "전체"(빈 값)가 맨 앞에 붙는다
+// moa: 기간 빠른 단추와 같은 나눔 단추로 보인다 (specs/011-list-screen FR-010, 2026-11-21)
+//   예전 base-ui ToggleGroup은 빈 값을 자동 id로 바꿔, "전체"를 누르면 조건에 base-ui-… 값이 들어가 조회가 V001로 막혔다
 export function ChoiceFilter({ name, options }: { name: string; options: Option[] }) {
   const t = useTranslations("search")
   const search = useSearch()
   const { labelId } = useField()
-  const value = search.draft[name] ?? ""
   return (
-    <ToggleGroup
+    <SegmentedButtons
       aria-labelledby={labelId}
-      variant="outline"
-      size="sm"
-      value={[value]}
-      onValueChange={(next: string[]) => search.setDraft({ [name]: next[0] ?? "" })}
-    >
-      {[{ value: "", label: t("all") }, ...options].map((option) => (
-        <ToggleGroupItem key={option.value} value={option.value}>
-          {option.label}
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
+      items={[{ value: "", label: t("all") }, ...options]}
+      value={search.draft[name] ?? ""}
+      onChange={(value) => search.submit({ [name]: value })}
+    />
   )
 }
 
@@ -154,7 +177,7 @@ export function SelectFilter({ name, options }: { name: string; options: Option[
     <NativeSelect
       id={inputId}
       value={search.draft[name] ?? ""}
-      onChange={(e) => search.setDraft({ [name]: e.target.value })}
+      onChange={(e) => search.submit({ [name]: e.target.value })}
     >
       <NativeSelectOption value="">{t("all")}</NativeSelectOption>
       {options.map((option) => (
@@ -175,6 +198,11 @@ export function PeriodFilter({ from, to, min, max }: { from: string; to: string;
     <DateRangePicker
       value={{ from: search.draft[from] ?? "", to: search.draft[to] ?? "" }}
       onChange={(range) => search.setDraft({ [from]: range.from, [to]: range.to })}
+      // 기간이 정해지면 바로 조회한다. 시작이 끝보다 늦으면 조회하지 않는다 (FR-012)
+      onSettle={(range) => {
+        if (range.from !== "" && range.to !== "" && range.from > range.to) return
+        search.submit({ [from]: range.from, [to]: range.to })
+      }}
       min={min}
       max={max}
       fromLabel={`${label} ${t("from")}`}

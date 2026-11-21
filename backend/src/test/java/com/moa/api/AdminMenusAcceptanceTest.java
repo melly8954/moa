@@ -19,7 +19,7 @@ import com.jayway.jsonpath.JsonPath;
 import com.moa.common.security.Role;
 import com.moa.support.AcceptanceTest;
 import com.moa.support.MenuSeed;
-import com.moa.support.TestPrograms;
+import com.moa.support.TestScreens;
 import com.moa.support.TestUsers;
 
 /**
@@ -30,12 +30,13 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	private static final String MY_MENUS = "/api/v1/menus/me";
 	private static final String USER_MENUS = "/api/v1/menus/user";
 	private static final String ADMIN_MENUS = "/api/v1/admin/menus";
-	private static final String PROGRAMS = "/api/v1/admin/programs";
+	private static final String SCREENS = "/api/v1/admin/screens";
 	private static final List<String> ADMIN_LIST_APIS = List.of(
 		"/api/v1/admin/users",
 		ADMIN_MENUS,
 		"/api/v1/admin/code-groups",
 		"/api/v1/admin/login-histories",
+		"/api/v1/admin/purge-logs",
 		"/api/v1/admin/roles",
 		"/api/v1/admin/notices");
 	private static final long OPERATOR_ID = 10L;
@@ -53,23 +54,25 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC1 관리자는 관리 메뉴 6개를 운영·설정 묶음 아래에서 정해진 순서로 본다")
+	@DisplayName("US1-AC1 관리자는 관리 메뉴 7개를 운영·설정 묶음 아래에서 정해진 순서로 본다")
 	void adminSeesMenusInOrder() {
 		MvcTestResult result = asAdmin(mvc.get().uri(MY_MENUS));
 
 		assertThat(result).hasStatus(200);
 		assertThat(result).bodyJson().extractingPath("$[*].name").asArray().containsExactly("운영", "설정");
 		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
-			.containsExactly("사용자 관리", "공지 관리", "접속 이력");
+			.containsExactly("사용자 관리", "공지 관리", "접속 이력", "파기 이력");
 		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
-			.containsExactly("역할 관리", "메뉴 관리", "공통코드");
+			.containsExactly("권한 관리", "메뉴 관리", "코드 관리");
 		assertThat(result).bodyJson().extractingPath("$[*].children[*].path").asArray()
-			.containsExactly("/admin/users", "/admin/notices", "/admin/login-histories", "/admin/roles", "/admin/menus",
+			.containsExactly("/admin/users", "/admin/notices", "/admin/login-histories", "/admin/purge-logs",
+				"/admin/roles",
+				"/admin/menus",
 				"/admin/codes");
 	}
 
 	@Test
-	@DisplayName("US1-AC2 관리자는 관리 화면 6개의 목록을 연다")
+	@DisplayName("US1-AC2 관리자는 관리 화면 7개의 목록을 연다")
 	void adminOpensEveryList() {
 		for (String api : ADMIN_LIST_APIS) {
 			assertThat(asAdmin(mvc.get().uri(api))).as(api).hasStatus(200);
@@ -117,7 +120,8 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].name").asArray()
 			.containsExactlyInAnyOrder("운영", "설정");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].children[*].name").asArray()
-			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "공통코드", "접속 이력", "역할 관리", "공지 관리");
+			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "권한 관리", "공지 관리",
+				"파기 이력");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'USER')].name").asArray()
 			.containsExactlyInAnyOrder("홈", "공지");
 	}
@@ -142,7 +146,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		Number id = createMenu(null, "이벤트", "NOTICES", "USER", "PUBLIC");
 
 		assertThat(asAdmin(mvc.put().uri(ADMIN_MENUS + "/" + id).contentType(MediaType.APPLICATION_JSON)
-			.content("{\"name\":\"이벤트\",\"programKey\":\"NOTICES\",\"visibility\":\"PUBLIC\",\"sortOrder\":30,"
+			.content("{\"name\":\"이벤트\",\"screenKey\":\"NOTICES\",\"visibility\":\"PUBLIC\",\"sortOrder\":30,"
 				+ "\"enabled\":false}")))
 			.hasStatus(200);
 
@@ -165,7 +169,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	@Test
 	@DisplayName("US3-AC5 공개 범위 '회원만'으로 더한 사용자 메뉴는 로그인하지 않은 사람에게는 없고 일반 회원에게는 보인다")
 	void memberUserMenuIsHiddenFromAnonymous() {
-		createMenu(null, "내 활동", TestPrograms.MEMBER_ONLY, "USER", "MEMBER");
+		createMenu(null, "내 활동", TestScreens.MEMBER_ONLY, "USER", "MEMBER");
 
 		assertThat(mvc.get().uri(USER_MENUS).exchange()).bodyJson().extractingPath("$[*].name").asArray()
 			.containsExactly("홈", "공지");
@@ -174,54 +178,55 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US4-AC1 관리자는 등록된 프로그램 목록을 이름·경로·대상·권한과 함께 보고, 목록을 고치는 API는 없다")
-	void adminSeesPrograms() {
-		MvcTestResult result = asAdmin(mvc.get().uri(PROGRAMS));
+	@DisplayName("US4-AC1 관리자는 등록된 연결 화면 목록을 이름·경로·대상·권한과 함께 보고, 목록을 고치는 API는 없다")
+	void adminSeesScreens() {
+		MvcTestResult result = asAdmin(mvc.get().uri(SCREENS));
 
 		assertThat(result).hasStatus(200);
 		assertThat(result).bodyJson().extractingPath("$[?(@.key =~ /^(?!TEST_).*/)].key").asArray()
-			.containsExactly("ADMIN_USERS", "ADMIN_MENUS", "ADMIN_CODES", "ADMIN_LOGIN_HISTORIES", "ADMIN_ROLES",
+			.containsExactly("ADMIN_USERS", "ADMIN_MENUS", "ADMIN_CODES", "ADMIN_LOGIN_HISTORIES", "ADMIN_PURGE_LOGS",
+				"ADMIN_ROLES",
 				"ADMIN_NOTICES", "HOME", "NOTICES");
 		assertThat(result).bodyJson().extractingPath("$[?(@.key == 'ADMIN_CODES')].permission.name").asArray()
-			.containsExactly("공통코드 관리");
+			.containsExactly("코드 관리");
 		assertThat(result).bodyJson().extractingPath("$[?(@.key == 'NOTICES')].path").asArray()
 			.containsExactly("/notices");
 		assertThat(result).bodyJson().extractingPath("$[?(@.key == 'NOTICES')].signInRequired").asArray()
 			.containsExactly(false);
 
-		assertThat(asUser(mvc.get().uri(PROGRAMS))).hasStatus(403)
+		assertThat(asUser(mvc.get().uri(SCREENS))).hasStatus(403)
 			.bodyJson().extractingPath("$.code").isEqualTo("A005");
-		assertThat(asAdmin(mvc.post().uri(PROGRAMS).contentType(MediaType.APPLICATION_JSON).content("{}")))
+		assertThat(asAdmin(mvc.post().uri(SCREENS).contentType(MediaType.APPLICATION_JSON).content("{}")))
 			.hasStatus(405);
 	}
 
 	@Test
-	@DisplayName("US4-AC2 관리 메뉴는 관리 프로그램만 고르고, 경로와 권한은 고른 프로그램을 따른다")
-	void adminMenuFollowsProgram() {
+	@DisplayName("US4-AC2 관리 메뉴는 관리 연결 화면만 고르고, 경로와 권한은 고른 연결 화면을 따른다")
+	void adminMenuFollowsScreen() {
 		assertThat(post(json(null, "공지", "NOTICES", "ADMIN", null))).hasStatus(400)
 			.bodyJson().extractingPath("$.code").isEqualTo("V001");
 
 		MvcTestResult created = post(json(null, "코드 도구", "ADMIN_CODES", "ADMIN", null));
 
 		assertThat(created).hasStatus(201);
-		assertThat(created).bodyJson().extractingPath("$.program.path").isEqualTo("/admin/codes");
-		assertThat(created).bodyJson().extractingPath("$.program.permissionName").isEqualTo("공통코드 관리");
-		assertThat(created).bodyJson().extractingPath("$.programKey").isEqualTo("ADMIN_CODES");
+		assertThat(created).bodyJson().extractingPath("$.screen.path").isEqualTo("/admin/codes");
+		assertThat(created).bodyJson().extractingPath("$.screen.permissionName").isEqualTo("코드 관리");
+		assertThat(created).bodyJson().extractingPath("$.screenKey").isEqualTo("ADMIN_CODES");
 		assertThat(created).bodyJson().doesNotHavePath("$.path");
 		assertThat(created).bodyJson().doesNotHavePath("$.permission");
 	}
 
 	@Test
-	@DisplayName("US4-AC3 로그인이 필요한 사용자 프로그램은 공개 범위를 '회원만'으로만 고를 수 있다")
-	void signInRequiredProgramIsMemberOnly() {
-		assertThat(post(json(null, "내 활동", TestPrograms.MEMBER_ONLY, "USER", "PUBLIC"))).hasStatus(400)
+	@DisplayName("US4-AC3 로그인이 필요한 사용자 연결 화면은 공개 범위를 '회원만'으로만 고를 수 있다")
+	void signInRequiredScreenIsMemberOnly() {
+		assertThat(post(json(null, "내 활동", TestScreens.MEMBER_ONLY, "USER", "PUBLIC"))).hasStatus(400)
 			.bodyJson().extractingPath("$.code").isEqualTo("V001");
-		assertThat(post(json(null, "내 활동", TestPrograms.MEMBER_ONLY, "USER", "MEMBER"))).hasStatus(201);
+		assertThat(post(json(null, "내 활동", TestScreens.MEMBER_ONLY, "USER", "MEMBER"))).hasStatus(201);
 	}
 
 	@Test
 	@DisplayName("US4-AC4 묶음 메뉴 아래 코드 관리 메뉴는 코드 관리 권한만 받은 운영자에게 묶음과 함께 보인다")
-	void groupedProgramMenuIsVisibleToOperator() {
+	void groupedScreenMenuIsVisibleToOperator() {
 		giveOperatorRole("CODE_MANAGE");
 		Number group = createMenu(null, "시스템", null, "ADMIN", null);
 		createMenu(group, "코드", "ADMIN_CODES", null, null);
@@ -231,12 +236,12 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).hasStatus(200);
 		assertThat(result).bodyJson().extractingPath("$[?(@.name == '시스템')].children[*].path").asArray()
 			.containsExactly("/admin/codes");
-		assertThat(result).bodyJson().extractingPath("$[*].name").asArray()
-			.containsExactly("설정", "시스템");
+		assertThat(result).bodyJson().extractingPath("$..[?(@.accessible == true)].name").asArray()
+			.containsExactlyInAnyOrder("설정", "코드 관리", "시스템", "코드");
 	}
 
 	@Test
-	@DisplayName("US4-AC5 프로그램 없이 묶음 메뉴를 만들 수 있고, 보이는 하위 메뉴가 없으면 사이드바에 보이지 않는다")
+	@DisplayName("US4-AC5 연결 화면 없이 묶음 메뉴를 만들 수 있고, 보이는 하위 메뉴가 없으면 사이드바에 보이지 않는다")
 	void emptyGroupIsHidden() {
 		createMenu(null, "빈 묶음", null, "ADMIN", null);
 
@@ -257,9 +262,9 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 
 		MvcTestResult result = asAdmin(mvc.get().uri(MY_MENUS));
 		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
-			.containsExactly("사용자 관리", "공지 관리");
+			.containsExactly("사용자 관리", "공지 관리", "파기 이력");
 		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
-			.containsExactly("역할 관리", "메뉴 관리", "공통코드", "접속 이력");
+			.containsExactly("권한 관리", "메뉴 관리", "코드 관리", "접속 이력");
 	}
 
 	@Test
@@ -270,7 +275,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 			.hasStatus(204);
 
 		assertThat(asAdmin(mvc.get().uri(MY_MENUS))).bodyJson().extractingPath("$[0].children[*].name").asArray()
-			.containsExactly("사용자 관리");
+			.containsExactly("사용자 관리", "파기 이력");
 	}
 
 	@Test
@@ -295,7 +300,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	private void giveOperatorRole(String permission) {
 		testUsers.create(1L, "system", null, Role.USER);
 		testUsers.create(2L, "admin", "admin1234!", Role.ADMIN);
-		testUsers.create(OPERATOR_ID, "operator", "operator123!", Role.USER);
+		testUsers.create(OPERATOR_ID, "operator", "operator123!", Role.ADMIN);
 		MvcTestResult role = asAdmin(mvc.post().uri("/api/v1/admin/roles").contentType(MediaType.APPLICATION_JSON)
 			.content("{\"code\":\"OPERATOR\",\"name\":\"운영\",\"permissions\":[\"" + permission + "\"]}"));
 		assertThat(role).hasStatus(201);
@@ -306,8 +311,8 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	/** 메뉴를 만들고 ID를 돌려준다 */
-	private Number createMenu(Number parentId, String name, String programKey, String audience, String visibility) {
-		MvcTestResult result = post(json(parentId, name, programKey, audience, visibility));
+	private Number createMenu(Number parentId, String name, String screenKey, String audience, String visibility) {
+		MvcTestResult result = post(json(parentId, name, screenKey, audience, visibility));
 		assertThat(result).hasStatus(201);
 		return JsonPath.read(body(result), "$.id");
 	}
@@ -316,8 +321,8 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		return asAdmin(mvc.post().uri(ADMIN_MENUS).contentType(MediaType.APPLICATION_JSON).content(json));
 	}
 
-	private String json(Number parentId, String name, String programKey, String audience, String visibility) {
-		return "{\"parentId\":" + parentId + ",\"name\":\"" + name + "\",\"programKey\":" + quote(programKey)
+	private String json(Number parentId, String name, String screenKey, String audience, String visibility) {
+		return "{\"parentId\":" + parentId + ",\"name\":\"" + name + "\",\"screenKey\":" + quote(screenKey)
 			+ ",\"sortOrder\":30,\"audience\":" + quote(audience) + ",\"visibility\":" + quote(visibility) + "}";
 	}
 
@@ -334,7 +339,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	private MvcTestResult asAdmin(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 
 	private MvcTestResult asUser(MockMvcRequestBuilder request) {
@@ -342,6 +347,6 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	private MvcTestResult asOperator(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(OPERATOR_ID, "USER")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, bearer(OPERATOR_ID, "ADMIN")).exchange();
 	}
 }

@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.moa.api.application.v1.code.CodeApplication;
 import com.moa.api.controller.v1.admin.code.request.CodeCreateRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeEnabledRequest;
+import com.moa.api.controller.v1.admin.code.request.CodeGroupCreateRequest;
+import com.moa.api.controller.v1.admin.code.request.CodeGroupModifyRequest;
+import com.moa.api.controller.v1.admin.code.request.CodeGroupOrderRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeModifyRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeOrderRequest;
-import com.moa.api.controller.v1.admin.code.request.CodesRequest;
 import com.moa.api.controller.v1.admin.code.response.CodeGroupListResponse;
 import com.moa.api.controller.v1.admin.code.response.CodeGroupTreeResponse;
 import com.moa.api.controller.v1.code.response.CodeListResponse;
@@ -33,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 공통코드 관리 (선택 헬퍼 code). 관리자만. 코드를 바꾸면 그 그룹의 화면용 캐시를 지운다.
+ * moa: 그룹과 항목은 지우지 않는다. 지우는 API가 없고 사용 여부로 끈다 (specs/004-admin-codes FR-008)
  */
 @Tag(name = "관리자 공통코드 API")
 @RequirePermission(CodePermissions.MANAGE)
@@ -49,9 +52,30 @@ public class ApiAdminCodeController {
 		return ResponseEntity.ok(codeApplication.getGroups().stream().map(CodeGroupListResponse::from).toList());
 	}
 
-	// moa: 그룹은 코드에 등록한다 (specs/004-admin-codes FR-004). 그룹 만들기 API는 없앴다
+	@Operation(summary = "코드 그룹 만들기",
+		description = "moa: 사용 중으로 만든다. 그룹 코드가 겹치면 R002 (specs/004-admin-codes FR-004)")
+	@PostMapping("/code-groups")
+	public ResponseEntity<CodeGroupListResponse> createGroup(@Valid @RequestBody CodeGroupCreateRequest request) {
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(CodeGroupListResponse.from(codeApplication.createGroup(request.toCommand())));
+	}
 
-	@Operation(summary = "moa: 공통코드 트리", description = "등록된 그룹마다 항목(사용 안 함 포함, 정렬 순서대로)")
+	@Operation(summary = "moa: 코드 그룹 바꾸기", description = "이름, 설명, 사용 여부. 그룹 코드는 바꾸지 않는다")
+	@PutMapping("/code-groups/{groupCode}")
+	public ResponseEntity<CodeGroupListResponse> modifyGroup(@PathVariable String groupCode,
+		@Valid @RequestBody CodeGroupModifyRequest request) {
+		return ResponseEntity.ok(CodeGroupListResponse.from(codeApplication.modifyGroup(request.toCommand(groupCode))));
+	}
+
+	@Operation(summary = "moa: 그룹 순서 한꺼번에",
+		description = "없는 그룹이 섞이면 R001, 아무것도 바꾸지 않는다 (specs/004-admin-codes FR-005)")
+	@PutMapping("/code-groups/order")
+	public ResponseEntity<Void> reorderGroups(@RequestBody @NotEmpty List<@Valid CodeGroupOrderRequest> request) {
+		codeApplication.reorderGroups(request.stream().map(CodeGroupOrderRequest::toDto).toList());
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "moa: 공통코드 트리", description = "그룹마다(그룹 순서, 같으면 만든 순서) 항목(사용 안 함 포함, 정렬 순서대로)")
 	@GetMapping("/code-groups/tree")
 	public ResponseEntity<List<CodeGroupTreeResponse>> getTree() {
 		return ResponseEntity.ok(codeApplication.getTree().stream().map(CodeGroupTreeResponse::from).toList());
@@ -80,6 +104,14 @@ public class ApiAdminCodeController {
 		return ResponseEntity.ok(CodeListResponse.from(codeApplication.modifyCode(request.toCommand(groupCode, code))));
 	}
 
+	@Operation(summary = "moa: 사용 안 함 코드 지우기",
+		description = "사용 안 함 항목만 지운다(소프트 삭제). 사용 중이면 B001, 없으면 R001 (specs/004-admin-codes FR-008)")
+	@DeleteMapping("/code-groups/{groupCode}/codes/{code}")
+	public ResponseEntity<Void> deleteCode(@PathVariable String groupCode, @PathVariable String code) {
+		codeApplication.deleteCode(groupCode, code);
+		return ResponseEntity.noContent().build();
+	}
+
 	@Operation(summary = "moa: 그룹 안 순서 한꺼번에", description = "다른 그룹의 코드가 섞이면 R001, 아무것도 바꾸지 않는다")
 	@PutMapping("/code-groups/{groupCode}/codes/order")
 	public ResponseEntity<Void> reorder(@PathVariable String groupCode,
@@ -96,17 +128,4 @@ public class ApiAdminCodeController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@Operation(summary = "moa: 그룹 안 여러 항목 지우기", description = "소프트 삭제. 하나라도 없으면 R001, 아무것도 지우지 않는다")
-	@PostMapping("/code-groups/{groupCode}/codes/bulk-delete")
-	public ResponseEntity<Void> deleteAll(@PathVariable String groupCode, @Valid @RequestBody CodesRequest request) {
-		codeApplication.deleteAll(groupCode, request.codes());
-		return ResponseEntity.noContent().build();
-	}
-
-	@Operation(summary = "코드 지우기", description = "소프트 삭제. 같은 코드로 다시 만들 수 있다")
-	@DeleteMapping("/code-groups/{groupCode}/codes/{code}")
-	public ResponseEntity<Void> deleteCode(@PathVariable String groupCode, @PathVariable String code) {
-		codeApplication.deleteCode(groupCode, code);
-		return ResponseEntity.noContent().build();
-	}
 }

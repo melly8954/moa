@@ -148,25 +148,24 @@ export function ListDemo() {
       }
       search={
         <SearchPanel search={search}>
+          {/* moa: 기간은 빠른 단추와 날짜 칸이 한 줄에 놓이게 한 줄을 다 쓴다 (specs/011-list-screen FR-010) */}
+          <SearchField label="가입일">
+            <PeriodFilter from="from" to="to" />
+          </SearchField>
           <SearchRow>
-            <SearchField label="가입일">
-              <PeriodFilter from="from" to="to" />
-            </SearchField>
             <SearchField label="상태">
               <ChoiceFilter
                 name="status"
                 options={Object.entries(STATUS).map(([value, s]) => ({ value, label: s.label }))}
               />
             </SearchField>
-          </SearchRow>
-          <SearchRow>
             <SearchField label="등급">
               <SelectFilter name="grade" options={GRADES.map((g) => ({ value: g, label: g }))} />
             </SearchField>
-            <SearchField label="이름">
-              <KeywordFilter name="keyword" placeholder="이름 일부" />
-            </SearchField>
           </SearchRow>
+          <SearchField label="이름">
+            <KeywordFilter name="keyword" placeholder="이름 일부" />
+          </SearchField>
         </SearchPanel>
       }
     >

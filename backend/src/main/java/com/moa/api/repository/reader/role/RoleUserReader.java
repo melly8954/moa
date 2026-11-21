@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.moa.api.entity.user.User;
+import com.moa.common.security.Role;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -19,8 +20,8 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 역할 관리에서 사용자 찾기 (moa, specs/003-admin-roles FR-006). 지운 사용자와 시스템 계정은 빠진다.
- * 사용자 관리(user-admin) 권한 없이 역할 관리 권한으로 쓴다.
+ * 권한 관리에서 관리자 계정 찾기 (moa, specs/003-admin-roles FR-006). 지운 사용자와 시스템 계정은 빠진다.
+ * 사용자 관리(user-admin) 권한 없이 권한 관리 권한(ROLE_MANAGE)으로 쓴다.
  */
 @Component
 @RequiredArgsConstructor
@@ -35,11 +36,15 @@ public class RoleUserReader {
 			.where(userAccessRole.accessRoleId.eq(roleId)))), pageable);
 	}
 
-	/** 아이디·이름에 이 글자가 든 모든 사용자, 아이디 순 쪽 */
+	/**
+	 * 아이디·이름에 이 글자가 든 관리자 계정, 아이디 순 쪽. moa: 회원(USER)은 역할을 받지 않으므로 찾지 않는다
+	 * (specs/003-admin-roles FR-006, 2026-11-21)
+	 */
 	public Page<User> findSearchPage(Long systemActorId, String keyword, Pageable pageable) {
 		String trimmed = keyword.trim();
-		return page(user.id.ne(systemActorId).and(user.loginId.contains(trimmed).or(user.name.contains(trimmed))),
-			pageable);
+		return page(user.id.ne(systemActorId)
+			.and(user.role.eq(Role.ADMIN))
+			.and(user.loginId.contains(trimmed).or(user.name.contains(trimmed))), pageable);
 	}
 
 	/** 이 ID의 사용자들 (지운 사용자·시스템 계정은 빠진다) */

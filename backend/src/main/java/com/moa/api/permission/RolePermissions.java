@@ -15,6 +15,6 @@ public class RolePermissions implements PermissionSource {
 
 	@Override
 	public List<PermissionDefinition> permissions() {
-		return List.of(new PermissionDefinition(MANAGE, "역할 관리", "역할"));
+		return List.of(new PermissionDefinition(MANAGE, "권한 관리", "권한"));
 	}
 }

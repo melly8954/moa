@@ -4,11 +4,11 @@ US1은 키트 API를 moa의 AC에 맞춰 어떻게 확인하는지만 적는다.
 
 ## 메뉴 트리 (US2, 새로)
 
-`GET /api/v1/admin/roles/permission-tree` — `menus`(`menuId`, `name`, `enabled`, `permission`(`key`, `name`), `children`), `unlisted`(`programKey`, `name`, `permission`)
+`GET /api/v1/admin/roles/permission-tree` — `menus`(`menuId`, `name`, `enabled`, `permission`(`key`, `name`), `children`), `unlisted`(`screenKey`, `name`, `permission`)
 
 | AC | 준비 | 기대 |
 |---|---|---|
-| US2-AC1 | 메뉴 처음 구성 | 200. `menus`가 관리 메뉴 6개를 `001` FR-001 순서와 각 프로그램의 권한으로, `unlisted`는 빈 목록 |
+| US2-AC1 | 메뉴 처음 구성 | 200. `menus`가 관리 메뉴 6개를 `001` FR-001 순서와 각 연결 화면의 권한으로, `unlisted`는 빈 목록 |
 | US2-AC2 | `POST /api/v1/admin/roles` (`permissions` = `["LOGIN_HISTORY_READ"]`) | `GET /api/v1/admin/roles/{id}`의 `permissions`가 그것 하나, `GET /api/v1/admin/roles`의 그 역할 권한 수 1 |
 | US2-AC3 | 코드 관리 메뉴를 지운다 | `menus`에 코드 관리가 없고 `unlisted`에 `ADMIN_CODES`(권한 `CODE_MANAGE`) |
 
@@ -23,6 +23,28 @@ US1은 키트 API를 moa의 AC에 맞춰 어떻게 확인하는지만 적는다.
 | US4-AC2 | `GET .../members?keyword=op` → `POST .../members` (`userIds` 둘) | 검색 결과에 `member` 표시. 204, 두 사람 접속 이력 200 |
 | US4-AC3 | `POST .../members/remove` (`userIds` 둘) | 204. 두 사람 접속 이력 403 `A005` |
 | US4-AC4 | `POST .../members` (`userIds`에 관리자 포함) | 409 `B001`. 아무도 안 더해짐 |
+
+## 관리자 계정과 최고 관리자 역할 (2026-11-21, research R16~R18)
+
+이 절이 위 "관리 화면 정리"의 US4-AC4(`ADMIN`이면 B001)를 바꾼다. 이제 `USER`면 B001이다. 아래 "운영자"는 그 권한을 묶은 역할을 받은 `ADMIN` 계정이다.
+
+응답에 더하는 칸:
+
+- `GET /api/v1/admin/roles` 항목: `fixed`, `permissionNames`, `grantable`, `blockReason`(`SUPER_ADMIN_ONLY`·`WIDER_PERMISSIONS`·null). 최고 관리자 역할이 맨 앞
+- `GET /api/v1/admin/roles/{id}/members` 항목: `role`을 빼고 `superAdmin`. 검색은 `ADMIN` 계정만
+
+| AC | 호출 | 기대 |
+|---|---|---|
+| US1-AC4 | 역할 없는 `ADMIN`으로 `GET /api/v1/menus/me`, `GET /api/v1/admin/login-histories` | 200 빈 목록, 403 `A005` |
+| US2-AC1 | 부트스트랩 뒤 `GET /api/v1/admin/roles` | 첫 항목 `code` = `SUPER_ADMIN`, `fixed` = true. `GET .../members`에 첫 관리자 |
+| US2-AC2 | 최고 관리자 역할에 `PUT /api/v1/admin/roles/{id}`, `DELETE`, `bulk-delete`(다른 역할과 섞어) | 409 `B001`. 아무것도 안 바뀜 |
+| US2-AC3 | 테스트 연결 화면을 등록한 뒤 최고 관리자로 그 화면의 API | 200 |
+| US2-AC4 | 최고 관리자 자신이 최고 관리자 역할에 `POST .../members`, `POST .../members/remove` (2026-11-22 한 명 고정) | 409 `B001`. 구성원은 그대로 한 명 |
+| US2-AC5 | 최고 관리자가 `PUT /api/v1/admin/users/{운영자}/roles`에 최고 관리자 역할을 넣기, `PUT /api/v1/admin/users/2/roles`로 최고 관리자 역할 빼기. 목록의 최고 관리자 역할 | 409 `B001`. 최고 관리자 역할 `grantable` = false, `blockReason` = `FIXED` |
+| US5-AC4 | `GET .../members?keyword=` (회원·최고 관리자 섞임), 다른 역할에 최고 관리자 계정 `POST .../members` | 회원 없음, 최고 관리자 행 `superAdmin` = true. 409 `B001` |
+| FR-002 | 회원에게 `POST .../members`, `PUT /api/v1/admin/users/{userId}/roles` | 409 `B001` |
+| FR-008 | 사용자 관리·권한 관리 권한을 가진 운영자가 `USER_MANAGE`를 담은 `POST /api/v1/admin/roles` | 403 `A005` |
+| FR-010·SC-006 | DB에 최고 관리자 역할 줄을 하나 더 넣는다(SQL) | DB가 거부(유일 제약 `uk_user_access_role_super_slot`) |
 
 ## 사용자별 역할 (US3, 새로 — 2026-11-15 관리 화면 정리로 없앰)
 

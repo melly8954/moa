@@ -24,6 +24,7 @@ import { useErrorMessages } from "@/lib/error-messages"
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format"
 import { type ListSearch, PAGE_SIZES, type PageSize } from "@/lib/list-search"
 import { cn } from "@/lib/utils"
+import { openOnRowClick, ROW_CLICKABLE } from "./row-click"
 import type { PageResponse } from "@/types/api"
 
 // 목록 표: 서버가 나눈 쪽(PageResponse)을 그린다. 쪽 번호, 서버 정렬, 쪽 크기(10·20·50), 행 선택
@@ -43,6 +44,8 @@ import type { PageResponse } from "@/types/api"
 //   본문은 데이터·빈 결과·로딩·오류 모두 --table-row-height × min(쪽 크기, 10)을 확보해 아래 줄이 움직이지 않는다
 //   주소의 쪽이 전체 쪽 수를 넘으면 마지막 쪽으로 바꾼다 (방문 기록 없이)
 //   조건이 걸린 빈 결과에는 "조건 초기화"를 둔다 (검색 영역의 초기화와 같다)
+//   search는 주소가 아니어도 된다: 드로어·칸 안의 고르기 목록은 컴포넌트 상태로 같은 모양을 만들어 넘긴다
+//     (moa 003-admin-roles 구성원, research R29)
 
 export type ColumnKind = "text" | "number" | "date" | "datetime" | "status" | "actions"
 
@@ -57,6 +60,10 @@ export type Column<T> = {
 }
 
 type Id = string | number
+
+// moa: 칸 좌우 여백 12px. 열 사이 글자 간격이 24px가 된다 (specs/011-list-screen FR-015, 2026-11-22)
+//   shadcn 표 칸은 8px라 내용만큼 넓어지는 열(예: 아이디)이 옆 열과 붙어 보였다
+const CELL_X = "px-3"
 
 const WIDTH: Record<ColumnKind, string> = {
   text: "",
@@ -84,10 +91,12 @@ function defaultCell(kind: ColumnKind, value: unknown): React.ReactNode {
 export function DataTable<T>({
   columns,
   query,
+  onRowClick,
   search,
   rowKey,
   selection,
   caption,
+  empty,
 }: {
   columns: Column<T>[]
   query: Pick<UseQueryResult<PageResponse<T>>, "data" | "error" | "isPending" | "isError" | "refetch">
@@ -97,9 +106,21 @@ export function DataTable<T>({
   >
   rowKey: (row: T) => Id
   // 행 선택: 고른 id 목록과 바꾸는 함수. 주면 맨 앞에 선택 칸이 생긴다 (이 쪽 안에서만 고른다)
-  selection?: { selected: Id[]; onChange: (selected: Id[]) => void }
+  //   canSelect: false인 행은 선택 칸이 꺼지고 "모두 고르기"에서도 빠진다
+  //   rowLabel: 선택 칸 이름에 쓸 행 이름 (주지 않으면 id)
+  selection?: {
+    selected: Id[]
+    onChange: (selected: Id[]) => void
+    canSelect?: (row: T) => boolean
+    rowLabel?: (row: T) => string
+  }
+  // 빈 결과 안내 (주지 않으면 조건이 걸렸나에 따라 "검색 결과 없음"·"데이터 없음")
+  empty?: string
   // 표 이름 (화면 낭독기). 보통 화면 제목
   caption?: string
+  // moa: 행 아무 곳이나 눌러 상세를 연다 (specs/002-admin-users FR-007, 2026-11-22)
+  //   행 안의 단추·입력은 건너뛴다(row-click.ts). 키보드는 행 안의 단추(예: 아이디 칸)로 연다
+  onRowClick?: (row: T) => void
 }) {
   const t = useTranslations("table")
   const { describeError } = useErrorMessages()
@@ -119,8 +140,9 @@ export function DataTable<T>({
   }, [data, search])
 
   const rowIds = rows.map(rowKey)
-  const selectedOnPage = selection ? rowIds.filter((id) => selection.selected.includes(id)) : []
-  const allSelected = rows.length > 0 && selectedOnPage.length === rows.length
+  const selectableIds = rows.filter((row) => selection?.canSelect?.(row) ?? true).map(rowKey)
+  const selectedOnPage = selection ? selectableIds.filter((id) => selection.selected.includes(id)) : []
+  const allSelected = selectableIds.length > 0 && selectedOnPage.length === selectableIds.length
 
   const toggleSort = (key: string) => {
     const current = search.sort?.field === key ? search.sort.direction : undefined
@@ -168,7 +190,7 @@ export function DataTable<T>({
         <TableCell colSpan={colSpan} className="whitespace-normal" style={{ height: bodyHeight }}>
           <Empty>
             <EmptyHeader>
-              <EmptyDescription>{search.isFiltered ? t("noResults") : t("empty")}</EmptyDescription>
+              <EmptyDescription>{empty ?? (search.isFiltered ? t("noResults") : t("empty"))}</EmptyDescription>
             </EmptyHeader>
             {search.isFiltered && (
               <EmptyContent>
@@ -187,12 +209,18 @@ export function DataTable<T>({
       const id = rowIds[index]
       const selected = selection?.selected.includes(id) ?? false
       return (
-        <TableRow key={id} className="h-(--table-row-height)" data-state={selected ? "selected" : undefined}>
+        <TableRow
+          key={id}
+          className={cn("h-(--table-row-height)", onRowClick && ROW_CLICKABLE)}
+          data-state={selected ? "selected" : undefined}
+          onClick={onRowClick && openOnRowClick(() => onRowClick(row))}
+        >
           {selection && (
             <TableCell className="w-(--col-select)">
               <Checkbox
-                aria-label={t("selectRow", { row: String(id) })}
+                aria-label={t("selectRow", { row: selection.rowLabel?.(row) ?? String(id) })}
                 checked={selected}
+                disabled={!(selection.canSelect?.(row) ?? true)}
                 onCheckedChange={(checked) =>
                   selection.onChange(checked ? [...selection.selected, id] : selection.selected.filter((s) => s !== id))
                 }
@@ -202,7 +230,7 @@ export function DataTable<T>({
           {columns.map((column) => {
             const kind = column.kind ?? "text"
             return (
-              <TableCell key={column.key} className={cn(WIDTH[kind], column.className)}>
+              <TableCell key={column.key} className={cn(CELL_X, WIDTH[kind], column.className)}>
                 {kind === "text" ? (
                   <div className="max-w-(--col-text-max) truncate">{cellContent(column, row)}</div>
                 ) : (
@@ -238,12 +266,12 @@ export function DataTable<T>({
                       aria-label={t("selectAll")}
                       checked={allSelected}
                       indeterminate={selectedOnPage.length > 0 && !allSelected}
-                      disabled={rows.length === 0}
+                      disabled={selectableIds.length === 0}
                       onCheckedChange={(checked) =>
                         selection.onChange(
                           checked
-                            ? [...new Set([...selection.selected, ...rowIds])]
-                            : selection.selected.filter((s) => !rowIds.includes(s)),
+                            ? [...new Set([...selection.selected, ...selectableIds])]
+                            : selection.selected.filter((s) => !selectableIds.includes(s)),
                         )
                       }
                     />
@@ -256,14 +284,15 @@ export function DataTable<T>({
                   return (
                     <TableHead
                       key={column.key}
-                      className={cn(WIDTH[kind], column.className)}
+                      className={cn(CELL_X, WIDTH[kind], column.className)}
                       aria-sort={direction === "asc" ? "ascending" : direction === "desc" ? "descending" : undefined}
                     >
                       {column.sortable ? (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className={cn("-mx-2", kind === "number" && "flex-row-reverse")}
+                          // 단추 안 글자가 본문 글자와 같은 자리에서 시작하게 단추 여백(10px)만큼 당긴다
+                          className={cn("-mx-2.5", kind === "number" && "flex-row-reverse")}
                           onClick={() => toggleSort(column.key)}
                         >
                           {column.header}

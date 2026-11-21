@@ -18,7 +18,7 @@ export function BulkToolbar({
     <div
       role="toolbar"
       aria-label={label}
-      className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted px-3 py-2"
+      className="flex min-h-11 flex-wrap items-center gap-2 rounded-lg border bg-muted px-3 py-2"
     >
       <span className="text-sm font-medium">{selected}</span>
       <span className="flex-1" />

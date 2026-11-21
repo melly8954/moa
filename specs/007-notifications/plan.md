@@ -7,7 +7,7 @@
 ## Summary
 
 키트 websocket 헬퍼(`springboot/v0.5.0`)를 얹어 실시간 연결을 열고, 그 위에 두 갈래 알림을 만든다.
-전체 알림은 공지 게시 때 `/topic/notices`로 보내고(`006-notices` US4), 개인 알림은 `notifications` 테이블에 쌓은 뒤 `/user/queue/notifications`와 브라우저 알림(웹 푸시)으로 보낸다.
+전체 알림은 공지 게시 때 `/topic/notices`로 보내고(`006-notices` US4), 개인 알림은 `tb_notification` 테이블에 쌓은 뒤 `/user/queue/notifications`와 브라우저 알림(웹 푸시)으로 보낸다.
 다른 기능은 `NotificationApplication.notify(...)` 하나로 개인 알림을 보낸다.
 프론트는 로그인하면 실시간 연결을 열고, 토스트와 표시(공지 점, 계정 줄 벨)를 바꾸며, 설정 화면에서 브라우저 알림을 켜고 끈다(2026-11-15에 알림 화면에서 옮김).
 프론트 실시간 연결, 웹 푸시, 셸 벨은 키트에 없어 moa에서 먼저 만든다 ([research.md](./research.md) R1, R2, R6, R10).
@@ -18,7 +18,7 @@
 
 **Primary Dependencies**: 키트 websocket 헬퍼(`spring-boot-starter-websocket`, STOMP), 웹 푸시 라이브러리(백엔드, R6), `@stomp/stompjs`(프론트, R3)
 
-**Storage**: MariaDB. `notifications`, `push_subscriptions` (moa `V2_3`). 전체 알림은 저장하지 않는다
+**Storage**: MariaDB. `tb_notification`, `tb_push_subscription` (moa `V2_3`). 전체 알림은 저장하지 않는다. 지금은 `V1__schema.sql`·`V2__seed.sql`에 합쳐져 있다 (2026-11-21)
 
 **Testing**: 인수 테스트 `NotificationsAcceptanceTest` (실제 포트로 띄워 STOMP 클라이언트와 MockMvc를 함께 쓴다, 웹 푸시는 가짜 푸시 서버로 받는다, `./gradlew dbTest`). 키트 `WebSocketAcceptanceTest`를 함께 얹는다. 프론트는 단위 테스트와 핵심 흐름 e2e(Playwright `routeWebSocket`으로 STOMP를 흉내 낸다)
 
@@ -30,7 +30,7 @@
 
 **Constraints**: 키트 코드는 고치지 않는다 (셸 파일은 006 R12처럼 moa에서 먼저). 서버 한 대 전제(키트 simple broker). VAPID 키는 환경 변수로만 받는다 (원칙 VI)
 
-**Scale/Scope**: 백엔드 API 7개, STOMP 구독 경로 2개, 프론트 화면 1개(`/notifications`) + 셸 벨 + 서비스 워커, AC 18개
+**Scale/Scope**: 백엔드 API 7개, STOMP 구독 경로 2개, 프론트 화면 1개(`/notifications`) + 셸 벨 + 서비스 워커, AC 19개
 
 ## Constitution Check
 
@@ -39,7 +39,7 @@
 | 원칙 | 판정 | 근거 |
 |---|---|---|
 | I. 스펙이 먼저다 | 통과 | spec.md에 `[NEEDS CLARIFICATION]`이 없다. 미결 3개와 검토 4개는 2026-11-15 사용자 결정 |
-| II. AC마다 테스트 하나 | 통과 | US1~US4의 AC 18개에 테스트를 하나씩 둔다. 브라우저·화면에서만 보이는 AC(토스트, 권한 안내, 서비스 워커)는 e2e로, 운영체제 알림 표시는 화면 직접 확인으로 남긴다 (R11, SC-006) |
+| II. AC마다 테스트 하나 | 통과 | US1~US4의 AC 19개에 테스트를 하나씩 둔다. 브라우저·화면에서만 보이는 AC(토스트, 권한 안내, 서비스 워커)는 e2e로, 운영체제 알림 표시는 화면 직접 확인으로 남긴다 (R11, SC-006) |
 | III. 키트를 따른다 | 통과 | websocket 헬퍼를 키트 그대로 얹는다. 프론트 실시간 연결·웹 푸시·셸 벨은 키트에 없어 moa에서 먼저 만들고 키트로 옮길 목록에 올린다 (사용자 결정) |
 | IV. 기존 기능은 제자리에서 고친다 | 통과 | 공지 게시 알림은 `006-notices` US4로 이루고, 006 tasks T041~T043을 이 구현에서 체크한다. 006 R9의 "게시 이벤트는 007에서 정한다"를 R4로 정한다 |
 | V. 테스트를 고쳐서 통과시키지 않는다 | 통과 | 기존 테스트를 바꾸지 않는다. 키트 `use-sign-out.ts`·셸은 동작을 더할 뿐이다 |

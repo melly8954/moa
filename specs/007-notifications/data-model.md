@@ -1,8 +1,10 @@
 # Data Model: 알림 (notifications)
 
+> 2026-11-21: 지금 스키마는 `V1__schema.sql`, 처음 데이터는 `V2__seed.sql`에 합쳐져 있다 (`docs/db.md`). 아래 마이그레이션 파일 이름은 합치기 전 기록이다.
+
 moa 마이그레이션 `V2_3__notifications.sql`을 더한다. 전체 알림(공지 게시)은 저장하지 않는다.
 
-## 개인 알림 (`notifications`)
+## 개인 알림 (`tb_notification`)
 
 | 칸 | 형식 | 규칙 |
 |---|---|---|
@@ -27,13 +29,13 @@ moa 마이그레이션 `V2_3__notifications.sql`을 더한다. 전체 알림(공
 
 - 이미 읽은 알림을 다시 누르면 `read_at`을 바꾸지 않는다
 
-## 브라우저 알림 구독 (`push_subscriptions`)
+## 브라우저 알림 구독 (`tb_push_subscription`)
 
 | 칸 | 형식 | 규칙 |
 |---|---|---|
 | `id` | BIGINT, 자동 증가 | |
 | `user_id` | BIGINT | 구독한 사용자 |
-| `endpoint` | VARCHAR(1000) | 브라우저 푸시 서비스 주소. 유일 (`uk_push_subscriptions_endpoint`, 앞 1000자) |
+| `endpoint` | VARCHAR(1000) | 브라우저 푸시 서비스 주소. 유일 (`uk_push_subscription_endpoint`, 앞 1000자) |
 | `p256dh` | VARCHAR(200) | 브라우저 공개 키 |
 | `auth` | VARCHAR(100) | 인증 비밀 |
 | `created_at` | DATETIME(6) | |

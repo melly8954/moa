@@ -38,7 +38,7 @@ class UserAccountAcceptanceTest extends AcceptanceTest {
 	@Test
 	@DisplayName("계정: 잠긴 계정은 비밀번호가 맞으면 A007, 틀리면 그대로 A006")
 	void lockedLogin() {
-		jdbcTemplate.update("update users set locked_at = now(6) where id = 10");
+		jdbcTemplate.update("update tb_user set locked_at = now(6) where id = 10");
 
 		assertThat(login("kim", "secret123!")).hasStatus(401).bodyJson().extractingPath("$.code").isEqualTo("A007");
 		assertThat(login("kim", "wrong-password")).hasStatus(401).bodyJson().extractingPath("$.code")
@@ -48,7 +48,7 @@ class UserAccountAcceptanceTest extends AcceptanceTest {
 	@Test
 	@DisplayName("계정: 임시 비밀번호를 받으면 내 정보에 passwordChangeRequired가 보이고, 바꾸면 풀린다")
 	void changeRequired() {
-		jdbcTemplate.update("update users set password_change_required = true where id = 10");
+		jdbcTemplate.update("update tb_user set password_change_required = true where id = 10");
 		String user = bearer(10L, "USER");
 
 		assertThat(mvc.get().uri(ME).header(HttpHeaders.AUTHORIZATION, user)).bodyJson()

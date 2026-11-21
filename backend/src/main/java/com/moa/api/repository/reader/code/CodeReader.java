@@ -7,18 +7,34 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 import com.moa.api.entity.code.Code;
+import com.moa.api.entity.code.CodeGroup;
+import com.moa.api.repository.jpa.code.CodeGroupRepository;
 import com.moa.api.repository.jpa.code.CodeRepository;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * 공통코드 항목. 그룹은 DB가 아니라 코드에 등록한다 (moa, CodeGroupRegistry)
+ * 공통코드 그룹과 항목 (moa: 그룹은 DB의 code_groups, specs/004-admin-codes FR-004)
  */
 @Component
 @RequiredArgsConstructor
 public class CodeReader {
 
+	private final CodeGroupRepository codeGroupRepository;
 	private final CodeRepository codeRepository;
+
+	/** moa: 그룹 순서, 같으면 만든 순서 (FR-005) */
+	public List<CodeGroup> findGroups() {
+		return codeGroupRepository.findAllByOrderBySortOrderAscIdAsc();
+	}
+
+	public Optional<CodeGroup> findGroup(String groupCode) {
+		return codeGroupRepository.findByGroupCode(groupCode);
+	}
+
+	public boolean existsGroup(String groupCode) {
+		return codeGroupRepository.existsByGroupCode(groupCode);
+	}
 
 	public boolean existsCode(String groupCode, String code) {
 		return codeRepository.existsByGroupCodeAndCode(groupCode, code);
@@ -42,12 +58,6 @@ public class CodeReader {
 	/** 사용하는 코드만, 정렬 순서대로 */
 	public List<Code> findEnabledCodes(String groupCode) {
 		return codeRepository.findByGroupCodeAndEnabledTrueOrderBySortOrderAscCodeAsc(groupCode);
-	}
-
-	/** moa: 지운 항목까지 센 숫자 코드의 가장 큰 값. 없으면 0 */
-	public long findMaxNumericCode(String groupCode) {
-		Long max = codeRepository.findMaxNumericCode(groupCode);
-		return max == null ? 0 : max;
 	}
 
 	/** moa: 그룹의 가장 큰 정렬 순서. 항목이 없으면 -1 */

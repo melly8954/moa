@@ -79,8 +79,69 @@ description: "관리자·운영자 계정 (admin-users) 작업 목록"
 
 ---
 
+## Phase 7: 관리자 계정과 드로어 역할 주기 (2026-11-21 FR-001·FR-003·FR-005~FR-008, US1~US4 변경)
+
+**Purpose**: 계정 종류(회원·관리자), 드로어 역할 체크, 내 권한 안쪽 계정만 다루기 (research.md R9~R12). `003-admin-roles` Phase 7과 한 구현 브랜치 `feat/003-admin-accounts`에서, 그 백엔드(T033~T038) 뒤에 한다
+
+**백엔드**
+
+- [X] T013 backend/src/main/java/com/moa/api/service/user/UserAdminService.java: `create`·`changeRole`의 "ADMIN만"을 없애고, `ADMIN` → `USER`면 역할을 모두 빼고 토큰을 끊는다. `requireManageable`을 최고 관리자 대상은 최고 관리자만, `ADMIN` 대상은 권한이 내 안쪽일 때만으로 바꾸고, 마지막 최고 관리자를 잠그기·지우기·회원으로 바꾸기 B001 (R9)
+- [X] T014 backend/src/main/java/com/moa/api/controller/v1/admin/user/response/UserAdminResponse.java에 `superAdmin`·`protection`을 더하고 backend/src/main/java/com/moa/api/application/v1/user/UserAdminApplication.java의 목록·한 사람이 한 번에 모아 붙인다. 응답 설명의 "ADMIN은 accessRoles가 빈다"를 고친다 (R10)
+
+**프론트**
+
+- [X] T015 frontend/src/app/(admin)/admin/users/user-drawer.tsx: 위 칸(계정 종류), 관리자 계정의 역할 칸(권한 관리 권한이 있으면 체크 목록·이유·`permissionNames`·역할 저장, 없으면 이름만), 회원 안내, `protection`이면 단추 끄고 이유. user-dialogs.tsx의 계정 종류 바꾸기에 빠질 역할 확인, `CreateUserDrawer`의 `canGrantAdmin` 없앰. frontend/src/types/user-admin.ts에 `superAdmin`·`protection` (R11)
+- [X] T016 frontend/src/app/(admin)/admin/users/page.tsx: 역할 열(최고 관리자·역할 없음·이름들·빈 칸), `protectedRow`·`iAmAdmin`을 `protection`으로 바꾼다. frontend/messages/ko.json `userAdmin`의 계정 종류·회원·역할·머리 안내(FR-008) 문구, 쓰지 않는 키 지우기 (R11)
+
+**테스트 (마지막)**
+
+- [X] T017 backend/src/test/java/com/moa/api/AdminUsersAcceptanceTest.java를 contracts/admin-accounts.md "관리자 계정과 다루기 범위" 표대로 고치고 더한다. 운영자는 `ADMIN` 계정으로 만든다. backend/src/test/java/com/moa/api/UserAdminAcceptanceTest.java `adminProtection`을 R9 규칙으로 바꾸고 PR 설명에 적는다 (원칙 V, R12)
+- [X] T018 frontend/e2e/user-admin.spec.ts를 R12대로 고친다 (원칙 V)
+- [ ] T019 specs/002-admin-users/quickstart.md "화면 확인"에 계정 종류·드로어 역할 체크·막힌 행 절차를 더하고 사람이 확인한다 (T012를 갈음한다)
+
+---
+
+## Phase 8: 최고 관리자 계정 고정과 개발자 DB 절차 (2026-11-21·22 FR-007·FR-009, US1-AC2·AC3, US4-AC3)
+
+**Purpose**: 최고 관리자 계정 행은 본인 이름 바꾸기만, 되돌리기는 DB SQL 절차 (research.md R13~R15). `003-admin-roles` Phase 8과 한 구현 브랜치 `feat/003-single-super-admin`
+
+**백엔드**
+
+- [X] T020 backend/src/main/java/com/moa/api/application/v1/user/UserAdminApplication.java·backend/src/main/java/com/moa/api/service/user/UserAdminService.java: 최고 관리자 대상의 계정 종류·잠그기·풀기·초기화·삭제 B001(`requireNotSuperAdmin`), 이름 바꾸기는 본인만, `requireSuperAdminRemains` 호출 없앰 (R13)
+- [X] T021 backend/src/main/resources/db/ops/super-admin-reset-password.sql·super-admin-transfer.sql(맨 위 값 줄, 한 트랜잭션, 확인 표 검사, 지우기 먼저, 토큰 폐기, 끝에 수 확인), specs/002-admin-users/quickstart.md "운영: 최고 관리자 되돌리기"와 맞추기 (R14)
+
+**프론트**
+
+- [X] T022 frontend/src/app/(admin)/admin/users/user-drawer.tsx(최고 관리자 행: 이름 바꾸기만, 본인 안내)·user-roles.tsx(최고 관리자 역할 체크 칸 늘 꺼짐과 이유, 최고 관리자 계정은 "최고 관리자 (모든 권한)"만), frontend/messages/ko.json 문구 (R13)
+
+**테스트 (마지막)**
+
+- [X] T023 backend/src/test/java/com/moa/api/AdminUsersAcceptanceTest.java: US1-AC2·AC3(SQL 파일 실행), US4-AC3·FR-007(최고 관리자 행 B001·A005, 본인 이름 200), 절차 멈춤. `lastSuperAdminIsProtected`를 바꾼다. frontend/e2e/user-admin.spec.ts 최고 관리자 행·역할 칸 (원칙 V, R15)
+- [ ] T024 specs/002-admin-users/quickstart.md "화면 확인"에 최고 관리자 본인 행을 더하고, "운영: 최고 관리자 되돌리기"를 개발자가 한 번 따라 해 본다 (사람 확인)
+
+---
+
+## Phase 9: 드로어 한 폼과 행 클릭 (2026-11-22 FR-007·FR-008, US3·US4)
+
+**Purpose**: 행 아무 곳이나 눌러 열고, 드로어를 계정 정보 한 폼 + 계정 상태 + 계정 삭제 구역으로 (research.md R16). 백엔드는 바꾸지 않는다. 구현 브랜치 `feat/002-user-drawer-form`
+
+**프론트**
+
+- [ ] T025 frontend/src/components/kit/data-table.tsx에 `onRowClick`(행에 `ROW_CLICKABLE`·`openOnRowClick`), frontend/src/app/(admin)/admin/users/page.tsx 아이디 칸을 밑줄 없는 단추로, 행 클릭으로 드로어 열기 (R16)
+- [ ] T026 frontend/src/app/(admin)/admin/users/user-drawer.tsx·user-roles.tsx: 이름 입력란·계정 종류 나눔 단추·역할 체크 칸 한 폼과 아래 저장·취소(바꾼 채 닫으면 묻기, 계정 종류가 바뀌면 확인 창), 역할 목록에서 최고 관리자 역할 빼기, 계정 상태 구역(로그인 막기 스위치·비밀번호 초기화), 계정 삭제 구역. user-dialogs.tsx의 `RenameDialog`·`RoleChangeDialog` 없애기 (R16)
+- [ ] T027 frontend/messages/ko.json `userAdmin`: 머리 설명(FR-008), 로그인 막기·계정 상태·계정 삭제·저장 문구, 쓰지 않는 키 지우기 (R16)
+
+**테스트 (마지막)**
+
+- [ ] T028 frontend/e2e/user-admin.spec.ts: 행을 눌러 열기, 한 폼 저장(이름·역할 한 번에), 계정 종류 확인 창, 최고 관리자 역할이 목록에 없음, 로그인 막기 스위치, 막힌 행에서 칸·스위치·단추 꺼짐. 기존 "역할 저장"·"이름 바꾸기" 단추 테스트를 고친다 (원칙 V)
+- [ ] T029 specs/002-admin-users/quickstart.md "화면 확인" 6·10을 새 드로어로 사람이 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
+- Phase 8: `003-admin-roles` T049~T050 → T020 → T021 → `003-admin-roles` T051 → T022 → `003-admin-roles` T052~T054 → T023 → `003-admin-roles` T055 → T024
+- Phase 7: `003-admin-roles` T033~T039 → T013 → T014 → T015 → T016 → (`001-admin-menus` T089~T093) → `003-admin-roles` T043~T046 → T017 → T018 → `003-admin-roles` T047 → T019
 - Phase 6: `001-admin-menus` T071, `003-admin-roles` T024 → T007 → T008 → T009 → T010 → T011 → T012
 - T001 → US1(T002)·US2(T003) → T004 → T005, T006
 - US1과 US2는 서로 기대지 않는다

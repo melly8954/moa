@@ -20,11 +20,11 @@ import lombok.NoArgsConstructor;
 
 /**
  * 메뉴 (선택 헬퍼 menu). 1단계(parentId 없음)는 묶음 메뉴이거나 화면 메뉴, 2단계는 묶음 아래 화면 메뉴다.
- * 화면 메뉴는 프로그램을 가리킨다 (moa, specs/001-admin-menus FR-009).
+ * 화면 메뉴는 연결 화면을 가리킨다 (moa, specs/001-admin-menus FR-009).
  */
 @Getter
 @Entity
-@Table(name = "menus")
+@Table(name = "tb_menu")
 @SQLRestriction(SoftDeleteEntity.NOT_DELETED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Menu extends SoftDeleteEntity {
@@ -39,9 +39,9 @@ public class Menu extends SoftDeleteEntity {
 	@Column(nullable = false, length = 50)
 	private String name;
 
-	/** 가리키는 프로그램 키 (moa, specs/001-admin-menus FR-009). null이면 묶음 메뉴다 */
-	@Column(name = "program_key", length = 50)
-	private String programKey;
+	/** 가리키는 연결 화면 키 (moa, specs/001-admin-menus FR-009). null이면 묶음 메뉴다 */
+	@Column(name = "screen_key", length = 50)
+	private String screenKey;
 
 	@Column(length = 50)
 	private String icon;
@@ -62,11 +62,11 @@ public class Menu extends SoftDeleteEntity {
 	@Column(length = 10)
 	private MenuVisibility visibility;
 
-	public Menu(Long parentId, String name, String programKey, String icon, int sortOrder, MenuAudience audience,
+	public Menu(Long parentId, String name, String screenKey, String icon, int sortOrder, MenuAudience audience,
 		MenuVisibility visibility) {
 		this.parentId = parentId;
 		this.name = name;
-		this.programKey = programKey;
+		this.screenKey = screenKey;
 		this.icon = icon;
 		this.sortOrder = sortOrder;
 		this.enabled = true;
@@ -74,11 +74,11 @@ public class Menu extends SoftDeleteEntity {
 		this.visibility = visibility;
 	}
 
-	public void modify(Long parentId, String name, String programKey, String icon, int sortOrder, boolean enabled,
+	public void modify(Long parentId, String name, String screenKey, String icon, int sortOrder, boolean enabled,
 		MenuAudience audience, MenuVisibility visibility) {
 		this.parentId = parentId;
 		this.name = name;
-		this.programKey = programKey;
+		this.screenKey = screenKey;
 		this.icon = icon;
 		this.sortOrder = sortOrder;
 		this.enabled = enabled;

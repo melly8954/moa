@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "user_access_roles")
+@Table(name = "tb_user_access_role")
 @HardDelete(reason = "역할을 빼면 지운다. 누가 바꿨는지는 역할을 다시 줄 때의 감사 열에 남는다")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserAccessRole extends BaseEntity {

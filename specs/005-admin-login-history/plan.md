@@ -7,7 +7,7 @@
 ## Summary
 
 로그인 성공·실패 기록, 관리자 목록 조회, 보관 기간이 지난 이력의 매일 정리는 키트(`springboot/v0.3.1` login-history 헬퍼, `web-next/v0.3.0` login-history 헬퍼)에 이미 있다.
-moa가 바꿀 것은 보관 기간 하나다. 지금 기본값이 키트 기본 365일이라 FR-002의 90일로 고친다. 그리고 US1-AC1과 FR-002를 테스트로 고정한다 ([research.md](./research.md) R1, R2).
+moa가 정하는 것은 보관 기간 하나다. 설정 기본값을 FR-002의 365일로 둔다 (2026-11-21 90일에서 바꿈). 그리고 US1-AC1과 FR-002를 테스트로 고정한다 ([research.md](./research.md) R1, R2).
 
 ## Technical Context
 
@@ -15,7 +15,7 @@ moa가 바꿀 것은 보관 기간 하나다. 지금 기본값이 키트 기본 
 
 **Primary Dependencies**: psw-dev-kit login-history 헬퍼 (`LoginHistoryCleaner`, `ApiAdminLoginHistoryController`)
 
-**Storage**: MariaDB `login_histories`. 새 테이블과 컬럼은 없다
+**Storage**: MariaDB `tb_login_history`. 새 테이블과 컬럼은 없다
 
 **Testing**: 인수 테스트 `AcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`)
 
@@ -62,8 +62,8 @@ specs/005-admin-login-history/
 
 ```text
 backend/
-├── .env.example                                    # LOGIN_HISTORY_RETENTION_DAYS 365 → 90
-├── src/main/resources/application.yaml             # retention-days 기본값 365 → 90
+├── .env.example                                    # LOGIN_HISTORY_RETENTION_DAYS 90 → 365
+├── src/main/resources/application.yaml             # retention-days 기본값 90 → 365
 └── src/test/java/com/moa/api/
     └── AdminLoginHistoryAcceptanceTest.java        # 새 파일. AC와 FR-002 테스트
 ```

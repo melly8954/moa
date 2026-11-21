@@ -16,7 +16,9 @@ export const USER_MENUS = [
 
 // 백엔드 없이 로그인한 상태로 화면을 연다: 재발급 요청에 토큰을, 내 정보·내 권한에 정해 둔 값을 돌려준다
 // 화면이 부르는 다른 API도 page.route로 가로채 첫 화면 상태를 정한다
-// menus: 내 관리 메뉴(/menus/me). 비면 사용자 셸, 있으면 관리 셸을 쓰는 사용자다 (moa: specs/001-admin-menus FR-005)
+// menus: 내 관리 메뉴(/menus/me). me.role을 주지 않으면 메뉴가 있을 때 관리자 계정(ADMIN), 없을 때 회원(USER)이다
+//   moa (specs/001-admin-menus FR-005, research R28): 셸은 메뉴가 아니라 계정 종류(me.role)로 고른다.
+//   역할 없는 관리자 계정은 me: { role: "ADMIN" }과 빈 menus로 연다
 //   나중에 page.route로 다시 가로채면 그것이 먼저다
 export async function signedIn(
   page: Page,
@@ -31,7 +33,8 @@ export async function signedIn(
   await page.route("**/api/v1/auth/token/refresh", (route) =>
     route.fulfill({ json: { accessToken: "e2e-token", tokenType: "Bearer", expiresIn: 900 } }),
   )
-  await page.route("**/api/v1/users/me", (route) => route.fulfill({ json: { ...E2E_ME, ...me } }))
+  const role = me.role ?? (menus.length > 0 ? "ADMIN" : "USER")
+  await page.route("**/api/v1/users/me", (route) => route.fulfill({ json: { ...E2E_ME, role, ...me } }))
   await page.route("**/api/v1/users/me/permissions", (route) => route.fulfill({ json: { permissions } }))
 }
 

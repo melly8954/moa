@@ -36,7 +36,7 @@ class LoginHistoryAcceptanceTest extends AcceptanceTest {
 		login("kim", "secret123!");
 		login("kim", "wrong-password");
 
-		var result = mvc.get().uri(HISTORIES).header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		var result = mvc.get().uri(HISTORIES).header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 
 		assertThat(result).hasStatus(200);
 		assertThat(result).bodyJson().extractingPath("$.totalElements").isEqualTo(2);
@@ -101,12 +101,12 @@ class LoginHistoryAcceptanceTest extends AcceptanceTest {
 	}
 
 	private MvcTestResult search(String query) {
-		return mvc.get().uri(HISTORIES + "?" + query).header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return mvc.get().uri(HISTORIES + "?" + query).header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 
 	/** 시각을 정해 이력을 넣는다 (로그인으로 남기면 시각이 지금이라 기간을 시험할 수 없다) */
 	private void history(Long userId, String loginId, boolean success, String createdAt) {
-		jdbcTemplate.update("insert into login_histories (user_id, login_id, success, failure_code, device_type, os, "
+		jdbcTemplate.update("insert into tb_login_history (user_id, login_id, success, failure_code, device_type, os, "
 			+ "browser, created_at, updated_at) values (?, ?, ?, ?, 'PC', 'Windows', 'Chrome', ?, ?)",
 			userId, loginId, success, success ? null : "A006", createdAt, createdAt);
 	}

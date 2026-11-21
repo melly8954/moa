@@ -1,4 +1,4 @@
-# Implementation Plan: 운영자 역할 (admin-roles)
+# Implementation Plan: 권한 관리 (admin-roles)
 
 **Branch**: `docs/003-admin-roles` (설계), `feat/003-admin-roles` (구현) | **Date**: 2026-11-10 | **Spec**: [spec.md](./spec.md)
 
@@ -9,9 +9,15 @@
 역할 만들기, 사용자에게 역할 주기, 권한 합집합 판정은 키트(`springboot/v0.3.1` rbac 헬퍼, `web-next/v0.3.0` rbac 헬퍼)에 이미 있다. 처음 배포할 때 역할 시드도 없다 (FR-003).
 moa가 할 일은 "접속 이력만 보는 운영자" 흐름을 AC 테스트로 고정하는 것이다. 운영 코드와 마이그레이션은 바꾸지 않는다 ([research.md](./research.md) R1).
 
-**메뉴 트리와 사용자 화면 (2026-11-15, FR-004~FR-008)**: 역할 창의 권한을 관리 메뉴 트리로 고르게 하고, 역할 관리에 사용자별 역할 탭과 역할별 구성원을 더한다. 역할 저장(권한 키 목록)과 권한 판정은 그대로다. 백엔드 API 다섯 개(트리, 사용자별 목록, 구성원 조회·더하기·빼기)와 화면을 더하고, 사용자 관리의 역할 주기를 뺀다. 테이블은 바뀌지 않는다. `001-admin-menus`의 프로그램(그 research R13~R15)에 기댄다. 키트 rbac 헬퍼를 moa에서 먼저 고치고 키트로 옮긴다 ([research.md](./research.md) R6~R11).
+**메뉴 트리와 사용자 화면 (2026-11-15, FR-004~FR-008)**: 역할 창의 권한을 관리 메뉴 트리로 고르게 하고, 역할 관리에 사용자별 역할 탭과 역할별 구성원을 더한다. 역할 저장(권한 키 목록)과 권한 판정은 그대로다. 백엔드 API 다섯 개(트리, 사용자별 목록, 구성원 조회·더하기·빼기)와 화면을 더하고, 사용자 관리의 역할 주기를 뺀다. 테이블은 바뀌지 않는다. `001-admin-menus`의 연결 화면(그 research R13~R15)에 기댄다. 키트 rbac 헬퍼를 moa에서 먼저 고치고 키트로 옮긴다 ([research.md](./research.md) R6~R11).
 
 **관리 화면 정리 (2026-11-15, FR-005~FR-007·FR-009, US3·US4)**: 역할 관리를 역할 목록 + 드로어(기본·메뉴 / 구성원)로 바꾸고 "사용자별 역할" 탭을 없앤다. 구성원은 검색·쪽 나눔·일괄 더하기·빼기 API로 바꾸고, 역할 일괄 지우기 API를 더한다. `001-admin-menus` Phase 11의 공용 드로어·머리 안내를 쓴다 ([research.md](./research.md) R12~R15)
+
+**관리자 계정과 최고 관리자 역할, 두 칸 화면 (2026-11-21, FR-001~FR-011, US1-AC4·US2·US4·US5)**: 시스템 역할 `ADMIN`을 "모든 권한"에서 "관리자 계정"으로 바꾸고, 모든 권한은 코드 `SUPER_ADMIN`인 최고 관리자 역할(V7 마이그레이션의 행, 권한 행 없음)이 가진다. 권한 판정(`PermissionGuard`)과 역할을 주는 규칙(`RoleGrantPolicy`·`RoleUserService`)을 바꾸고, 역할 목록·구성원 응답에 칸을 더한다. 권한 관리를 메뉴 관리와 같은 두 칸 화면으로 바꾸고 이름을 "권한 관리"로 바꾼다. `002-admin-users`(사용자 드로어 역할 주기, 계정 다루기 범위)와 `001-admin-menus`(관리 셸 조건)가 이 판정에 기대므로 셋을 한 구현 브랜치 `feat/003-admin-accounts`에서 한다. 키트 골격·rbac·user-admin과 다르게 동작하고, 키트 수용 테스트 일부의 기대가 바뀐다 ([research.md](./research.md) R16~R21)
+
+**최고 관리자 한 명 고정 (2026-11-21·22, FR-006·FR-007·FR-010, US2, Clarifications)**: 최고 관리자 역할의 구성원을 화면·API로 더하거나 빼지 못하게 하고(B001, 막힌 이유 `FIXED`), 구성원 칸을 보기만 하게 바꾼다. `V8__single_super_admin.sql`이 이미 여럿인 DB를 ID가 가장 작은 한 명으로 줄이고, `tb_user_access_role`에 생성 열 `super_slot`과 유일 제약을 걸어 DB도 한 명을 지킨다. 되돌리기(`002-admin-users` FR-009)는 DB 절차라 코드를 더하지 않는다. `002-admin-users`(최고 관리자 계정 행)와 한 구현 브랜치 `feat/003-single-super-admin`에서 한다 ([research.md](./research.md) R22~R25)
+
+**메뉴 권한과 구성원 목록 (2026-11-22, FR-004~FR-006, US3-AC4·US5, Clarifications)**: 오른쪽 칸의 "쓸 메뉴"를 "메뉴 권한"으로 부르고, 트리의 상위 메뉴를 접기 줄(처음엔 첫 상위 메뉴만 펼침, 접힌 줄에 체크 수)로 바꾸며, 트리 칸 높이를 나란히일 때 구성원 칸에 맞추고 그 밖에는 최대 높이로 둔다. 구성원 목록은 손으로 만든 표를 키트 목록 표(`DataTable`)로 바꿔 `011-list-screen`의 쪽 이동 줄·10줄 높이·기본 10개를 따른다. 화면만 바뀌고 API·DB는 그대로다. 키트 목록 표에 선택 사항(`canSelect`·`rowLabel`·`empty`)을 더한다. 구현 브랜치 `feat/003-role-menu-permission` ([research.md](./research.md) R26~R30)
 
 ## Technical Context
 
@@ -19,7 +25,7 @@ moa가 할 일은 "접속 이력만 보는 운영자" 흐름을 AC 테스트로 
 
 **Primary Dependencies**: psw-dev-kit rbac 헬퍼 (`AccessRolePermissionChecker`), menu 헬퍼 (내 메뉴 거르기)
 
-**Storage**: MariaDB `access_roles`, `user_access_roles` (`V1_8__access_roles.sql`). 새 테이블과 컬럼은 없다
+**Storage**: MariaDB `tb_access_role`, `tb_user_access_role` (`V1_8__access_roles.sql`). 새 테이블과 컬럼은 없다. 지금은 `V1__schema.sql`·`V2__seed.sql`에 합쳐져 있다 (2026-11-21). 최고 관리자 역할 행과 기존 데이터 옮기기는 `V7__super_admin_role.sql`이다 (R20). 한 명으로 줄이기와 `tb_user_access_role.super_slot`(생성 열 + 유일 제약)은 `V8__single_super_admin.sql`이다 (R22)
 
 **Testing**: 인수 테스트 `AcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`). 화면은 키트 e2e(Playwright)
 
@@ -78,7 +84,7 @@ backend/src/test/java/com/moa/
 backend/src/main/java/com/moa/api/
 ├── controller/v1/admin/role/ApiAdminRoleController.java        # permission-tree, roles/users, members (R6~R8)
 ├── controller/v1/admin/role/{request,response}/**              # 트리·사용자·구성원 응답, 구성원 더하기 요청
-├── application/v1/role/AccessRoleApplication.java              # 메뉴 트리와 프로그램을 읽어 권한 트리를 만든다 (R6)
+├── application/v1/role/AccessRoleApplication.java              # 메뉴 트리와 연결 화면을 읽어 권한 트리를 만든다 (R6)
 ├── service/role/AccessRoleService.java                         # 구성원 더하기·빼기 (권한 상승 방지) (R8)
 ├── service/role/RoleUserService.java                            # 사용자별 역할·구성원 조회, ADMIN 대상 B001 (R7, R8)
 └── repository/reader/role/{AccessRoleReader, RoleUserReader}.java # 역할 있는 사용자·ADMIN, 검색, 구성원

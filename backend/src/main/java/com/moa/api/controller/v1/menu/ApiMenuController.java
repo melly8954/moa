@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.moa.api.application.v1.menu.MenuApplication;
 import com.moa.api.controller.v1.menu.response.MyMenuResponse;
+import com.moa.api.dto.menu.MyMenuDto;
 import com.moa.common.security.AuthPrincipal;
 import com.moa.common.security.CurrentUser;
 
@@ -30,8 +31,9 @@ public class ApiMenuController {
 	private final MenuApplication menuApplication;
 
 	@Operation(summary = "내 메뉴",
-		description = "사용 중이고 내 권한으로 볼 수 있는 관리 메뉴 트리 (2단계, moa: 대상 ADMIN만). "
-			+ "메뉴가 가리키는 프로그램의 권한으로 거른다. ADMIN은 모두 본다. 보이는 하위 메뉴가 없는 묶음 메뉴는 빠진다")
+		description = "사용 중인 관리 메뉴 트리 (2단계, moa: 대상 ADMIN만). moa: 관리자 계정은 권한과 상관없이 모두 받고 "
+			+ "메뉴마다 accessible(연결 화면의 권한이 있는가)을 받는다. 회원은 빈 목록이다. 하위 메뉴가 없는 묶음 메뉴는 빠진다 "
+			+ "(specs/001-admin-menus FR-002, 2026-11-22)")
 	@GetMapping("/me")
 	public ResponseEntity<List<MyMenuResponse>> me(@CurrentUser AuthPrincipal user) {
 		return ResponseEntity.ok(menuApplication.getMyMenus(user).stream().map(MyMenuResponse::from).toList());
@@ -44,6 +46,7 @@ public class ApiMenuController {
 	@SecurityRequirements
 	@GetMapping("/user")
 	public ResponseEntity<List<MyMenuResponse>> user(@CurrentUser AuthPrincipal user) {
-		return ResponseEntity.ok(menuApplication.getUserMenus(user).stream().map(MyMenuResponse::from).toList());
+		return ResponseEntity.ok(
+			menuApplication.getUserMenus(user).stream().map(MyMenuDto::open).map(MyMenuResponse::from).toList());
 	}
 }

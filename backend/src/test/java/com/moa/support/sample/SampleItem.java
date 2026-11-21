@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 /** 골격 검증용 소프트 삭제 엔터티. 테스트에서만 쓴다 */
 @Getter
 @Entity
-@Table(name = "sample_items")
+@Table(name = "tb_sample_item")
 @SQLRestriction(SoftDeleteEntity.NOT_DELETED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SampleItem extends SoftDeleteEntity {

@@ -23,12 +23,12 @@ test("목록 화면: 가로 넘침·접근성 (밝은·어두운 화면)", async
   await expectNoSeriousA11yViolations(page)
 })
 
-test("조건은 조회를 눌러야 반영되고, 주소에 남고, 1쪽으로 돌아간다", async ({ page }) => {
+test("조건을 바꾸면 조회 단추 없이 바로 반영되고, 주소에 남고, 1쪽으로 돌아간다 (moa 011 US5)", async ({ page }) => {
   await open(page, "?page=3")
+  // 조회 단추는 없고 초기화만 있다 (US5-AC1)
+  await expect(page.getByRole("button", { name: "조회", exact: true })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "초기화", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "중지", exact: true }).click()
-  await expect(page).toHaveURL(/\?page=3$/)
-
-  await page.getByRole("button", { name: "조회" }).click()
   await expect(page).toHaveURL(/\?status=STOPPED$/)
   await expect(page.getByText("총 21건")).toBeVisible()
   for (const text of await statusCells(page).allInnerTexts()) expect(text).toContain("중지")
@@ -45,6 +45,27 @@ test("검색어 칸에서 Enter로 조회하고, 결과가 없으면 '조건에 
   await page.getByLabel("이름").press("Enter")
   await expect(page).toHaveURL(/keyword=/)
   await expect(page.getByText("조건에 맞는 결과가 없어요.")).toBeVisible()
+})
+
+test("검색어는 치기를 멈추고 0.5초 뒤 조회하고, 그 조회는 방문 기록을 쌓지 않는다 (moa 011 US5-AC4·AC5)", async ({
+  page,
+}) => {
+  await open(page)
+  const before = await page.evaluate(() => history.length)
+  await page.getByLabel("이름").pressSequentially("없는", { delay: 50 })
+  // 치는 동안에는 조회하지 않는다
+  await expect(page).not.toHaveURL(/keyword=/)
+  await expect(page).toHaveURL(/keyword=/, { timeout: 3_000 })
+  await expect(page.getByText("조건에 맞는 결과가 없어요.")).toBeVisible()
+  expect(await page.evaluate(() => history.length)).toBe(before)
+})
+
+test("두 조건을 연달아 바꿔도 둘 다 반영된다 (moa 011 US5)", async ({ page }) => {
+  await open(page)
+  await page.getByRole("button", { name: "중지", exact: true }).click()
+  await page.getByLabel("등급").selectOption({ index: 1 })
+  await expect(page).toHaveURL(/status=STOPPED/)
+  await expect(page).toHaveURL(/grade=/)
 })
 
 test("초기화는 기본값으로 되돌리고 바로 조회한다", async ({ page }) => {
@@ -126,16 +147,39 @@ test("열 이름을 누르면 서버 정렬: 오름차순 → 내림차순 → �
   await expect(header).toHaveAttribute("aria-sort", "descending")
 })
 
-test("기간: 빠른 선택은 두 칸을 채우고, 직접 친 날짜는 칸을 떠날 때 맞춘다", async ({ page }) => {
+test("기간: 날짜 칸 앞 빠른 단추는 두 칸을 채우고, 직접 친 날짜는 칸을 떠날 때 맞춘다 (moa 011 US4)", async ({
+  page,
+}) => {
   await open(page)
-  await page.getByRole("button", { name: "기간 고르기" }).click()
-  await page.getByRole("button", { name: "최근 7일" }).click()
+  const quick = page.getByRole("group", { name: "빠른 기간" })
+  // 맨 앞은 전체이고, 기간이 비어 있는 처음에는 전체가 골라져 있다 (US4-AC1, 2026-11-22)
+  await expect(quick.getByRole("button")).toHaveText(["전체", "오늘", "7일", "이번 달", "3개월"])
+  await expect(quick.getByRole("button", { name: "전체" })).toHaveAttribute("aria-pressed", "true")
+  await quick.getByRole("button", { name: "7일" }).click()
+  await expect(quick.getByRole("button", { name: "7일" })).toHaveAttribute("aria-pressed", "true")
   await expect(page.getByLabel("가입일 시작일")).toHaveValue(/^\d{4}-\d{2}-\d{2}$/)
   await expect(page.getByLabel("가입일 종료일")).toHaveValue(/^\d{4}-\d{2}-\d{2}$/)
+  // 단추 줄과 날짜 칸은 높이가 같다 (US4-AC1)
+  const quickBox = await quick.boundingBox()
+  const inputBox = await page.getByLabel("가입일 시작일").locator("..").boundingBox()
+  expect(quickBox?.height).toBe(inputBox?.height)
+  // 전체를 누르면 두 칸을 비우고 기간 없이 조회한다 (US4-AC6)
+  await quick.getByRole("button", { name: "전체" }).click()
+  await expect(page.getByLabel("가입일 시작일")).toHaveValue("")
+  await expect(page.getByLabel("가입일 종료일")).toHaveValue("")
+  await expect(page).not.toHaveURL(/from=/)
+  await expect(quick.getByRole("button", { name: "전체" })).toHaveAttribute("aria-pressed", "true")
+  // 달력 창 안에는 빠른 선택이 없다
+  await page.getByRole("button", { name: "기간 고르기" }).click()
+  // (달력의 날짜 단추 이름에도 "7일"이 들어가므로 빠른 기간 묶음이 없는지로 본다)
+  await expect(page.getByRole("dialog").getByRole("group", { name: "빠른 기간" })).toHaveCount(0)
+  await page.keyboard.press("Escape")
 
   await page.getByLabel("가입일 시작일").fill("2026.1.5")
   await page.getByLabel("가입일 시작일").blur()
   await expect(page.getByLabel("가입일 시작일")).toHaveValue("2026-01-05")
+  // 직접 고친 기간은 어떤 단추와도 같지 않다 (US4-AC4)
+  await expect(quick.getByRole("button", { name: "7일" })).toHaveAttribute("aria-pressed", "false")
 
   await page.getByLabel("가입일 종료일").fill("2026-13-40")
   await page.getByLabel("가입일 종료일").blur()

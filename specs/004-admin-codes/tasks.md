@@ -82,20 +82,43 @@ description: "공통코드 (admin-codes) 작업 목록"
 
 **백엔드**
 
-- [ ] T013 backend/src/main/resources/db/migration/V2_8__code_groups_on_screen.sql로 `code_groups`를 다시 만든다. 열은 키트 `V1_4__codes.sql`의 `code_groups`에 `used_by VARCHAR(200) NULL`, `system BOOLEAN NOT NULL DEFAULT FALSE`를 더한다. 파일 첫 줄 주석에 `004-admin-codes` FR-004·FR-008을 적는다. 번호는 dev의 마지막 마이그레이션을 다시 보고 정한다 (data-model.md)
-- [ ] T014 `CodeGroup` 엔티티·저장소를 두고 backend/src/main/java/com/moa/api/codegroup/(`CodeGroupDefinition`·`CodeGroupSource`·`CodeGroupRegistry`·`LocalCodeGroups`)를 지운다. 코드 서비스·트리·항목 API·화면용 목록이 `code_groups`를 그룹 기준으로 쓰게 한다(없거나 지운 그룹은 R001). 트리·목록 응답에 `system`, 그룹은 만든 순서 (R9)
-- [ ] T015 `POST /api/v1/admin/code-groups`(일반 그룹, 형식 V001, 겹침 R002), `PUT /api/v1/admin/code-groups/{groupCode}`(이름·설명·쓰는 곳), `DELETE /api/v1/admin/code-groups/{groupCode}`(항목과 함께 소프트 삭제, 시스템 그룹 B001)를 둔다 (R9)
-- [ ] T016 backend/src/main/resources/db/localdata/에 local 시험 그룹 SQL(`INSERT IGNORE`)을 둔다: 시스템 그룹 `LOCAL_GAME_GENRE`, 일반 그룹 `LOCAL_REPORT_REASON` (R9)
+- [x] T013 backend/src/main/resources/db/migration/V2_8__code_groups_on_screen.sql로 `code_groups`를 다시 만든다. 열은 키트 `V1_4__codes.sql`의 `code_groups`에 `used_by VARCHAR(200) NULL`, `system BOOLEAN NOT NULL DEFAULT FALSE`를 더한다. 파일 첫 줄 주석에 `004-admin-codes` FR-004·FR-008을 적는다. 번호는 dev의 마지막 마이그레이션을 다시 보고 정한다 (data-model.md)
+- [x] T014 `CodeGroup` 엔티티·저장소를 두고 backend/src/main/java/com/moa/api/codegroup/(`CodeGroupDefinition`·`CodeGroupSource`·`CodeGroupRegistry`·`LocalCodeGroups`)를 지운다. 코드 서비스·트리·항목 API·화면용 목록이 `code_groups`를 그룹 기준으로 쓰게 한다(없거나 지운 그룹은 R001). 트리·목록 응답에 `system`, 그룹은 만든 순서 (R9)
+- [x] T015 `POST /api/v1/admin/code-groups`(일반 그룹, 형식 V001, 겹침 R002), `PUT /api/v1/admin/code-groups/{groupCode}`(이름·설명·쓰는 곳), `DELETE /api/v1/admin/code-groups/{groupCode}`(항목과 함께 소프트 삭제, 시스템 그룹 B001)를 둔다 (R9)
+- [x] T016 backend/src/main/resources/db/localdata/에 local 시험 그룹 SQL(`INSERT IGNORE`)을 둔다: 시스템 그룹 `LOCAL_GAME_GENRE`, 일반 그룹 `LOCAL_REPORT_REASON` (R9)
 
 **프론트**
 
-- [ ] T017 frontend/src/app/(admin)/admin/codes/: 머리 "그룹 추가", 그룹 이름을 누르면 그룹 드로어(그룹 코드는 만들 때만, 이름, 설명, 쓰는 곳), 일반 그룹 드로어의 "그룹 삭제"(확인 창에 항목 수), 시스템 그룹 행 잠금 표시와 드로어 안내, 빈 안내·머리 안내 문구(spec.md US1-AC6·FR-007). frontend/src/api·types의 code를 새 API에 맞추고 문구는 ko.json에 둔다 (R9)
+- [x] T017 frontend/src/app/(admin)/admin/codes/: 머리 "그룹 추가", 그룹 이름을 누르면 그룹 드로어(그룹 코드는 만들 때만, 이름, 설명, 쓰는 곳), 일반 그룹 드로어의 "그룹 삭제"(확인 창에 항목 수), 시스템 그룹 행 잠금 표시와 드로어 안내, 빈 안내·머리 안내 문구(spec.md US1-AC6·FR-007). frontend/src/api·types의 code를 새 API에 맞추고 문구는 ko.json에 둔다 (R9)
 
 **테스트 (마지막)**
 
-- [ ] T018 backend/src/test/java/com/moa/support/TestCodeGroups.java와 `CodeGroupRegistryTest`를 지우고, backend/src/test/java/com/moa/api/AdminCodesAcceptanceTest.java를 R10대로 고친다(US1-AC1·AC6 바뀜, US1-AC7~AC10 더함). 시스템 그룹은 JDBC로 넣는다 (원칙 V: 스펙이 바뀌어 고친다)
-- [ ] T019 frontend/e2e/code.spec.ts를 R10대로 고친다
+- [x] T018 backend/src/test/java/com/moa/support/TestCodeGroups.java와 `CodeGroupRegistryTest`를 지우고, backend/src/test/java/com/moa/api/AdminCodesAcceptanceTest.java를 R10대로 고친다(US1-AC1·AC6 바뀜, US1-AC7~AC10 더함). 시스템 그룹은 JDBC로 넣는다 (원칙 V: 스펙이 바뀌어 고친다)
+- [x] T019 frontend/e2e/code.spec.ts를 R10대로 고친다
 - [ ] T020 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, frontend/에서 `npm run format`, `npm run check`. 인수 테스트와 e2e는 PR CI로 본다. 그 뒤 quickstart.md "화면 확인"을 사람이 확인한다
+
+---
+
+## Phase 7: 흔한 방식과 두 칸 화면 (2026-11-20 FR-002·FR-004·FR-005·FR-007~FR-009, US1)
+
+**Purpose**: 시스템 그룹과 삭제를 없애고 그룹·항목을 사용 여부로만 끈다. 쓰는 곳은 설명으로 합친다. 화면을 좌 트리 · 우 상세 두 칸으로 바꾼다 (research.md R11~R13). 구현 브랜치는 `feat/004-code-standard`. 화면 미리보기는 `design/code-tree-align` 브랜치의 커밋 `a947aab`(정렬)과 stash "preview: 004 공통코드 두 칸 화면"에 있다
+
+**백엔드**
+
+- [x] T021 backend/src/main/resources/db/migration/V2_9__code_groups_enabled.sql: `code_groups`에서 `used_by`·`system`을 지우고 `enabled BOOLEAN NOT NULL DEFAULT TRUE`를 더한다. 첫 줄 주석에 `004-admin-codes` FR-008을 적는다. 번호는 dev의 마지막 마이그레이션을 다시 보고 정한다 (data-model.md)
+- [x] T022 `CodeGroup`·`CodeGroupDto`·요청·응답에서 `usedBy`·`system`을 빼고 `enabled`를 더한다. `PUT /api/v1/admin/code-groups/{groupCode}`가 `enabled`를 받는다. 그룹 지우기·항목 지우기·항목 일괄 지우기 API와 서비스 메서드를 없앤다. 화면용 목록은 꺼진 그룹이면 빈 목록(`includeDisabled=true`면 모든 항목) (R11)
+- [x] T023 backend/src/main/resources/db/localdata/R__local_code_groups.sql을 새 열에 맞춘다 (시험 그룹 둘, 둘 다 사용 중)
+
+**프론트**
+
+- [x] T024 frontend/src/app/(admin)/admin/codes/: 두 칸 화면, 상세 패널(`DetailPanel`)과 좁은 폭 드로어, 저장하지 않은 변경 묻기, 일괄 처리 줄 고정(사용·사용 안 함), 그룹 체크(모두·일부, 항목 없으면 없음), 트리 안 그룹 추가, 그룹 패널(그룹 코드·이름·설명·사용, 삭제 없음), 꺼진 그룹 흐림, 코드 입력 거르기, 머리 안내(FR-007). 미리보기 stash를 바탕으로 한다 (R12)
+- [x] T025 frontend/src/app/theme.css·globals.css에 `success` 색, src/components/kit/status-text.tsx positive를 초록으로, src/components/kit/bulk-toolbar.tsx 높이 고정. frontend/src/api·types의 code에서 그룹·항목 지우기와 `usedBy`·`system`을 빼고 `enabled`를 더한다
+
+**테스트 (마지막)**
+
+- [x] T026 backend/src/test/java/com/moa/api/AdminCodesAcceptanceTest.java를 R13대로 고친다(US1-AC1·AC4·AC6~AC9). backend/src/test/java/com/moa/api/CodeAcceptanceTest.java의 코드 지우기 부분을 지운다 (원칙 V: 스펙이 바뀌어 고친다)
+- [x] T027 frontend/e2e/code.spec.ts를 R13대로 고친다(US1-AC1~AC10, 좁은 폭 드로어)
+- [ ] T028 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, frontend/에서 `npm run format`, `npm run check`. 인수 테스트와 e2e는 PR CI로 본다. 그 뒤 quickstart.md "화면 확인"을 사람이 확인한다 (T020의 화면 확인을 갈음한다)
 
 ---
 
@@ -103,6 +126,7 @@ description: "공통코드 (admin-codes) 작업 목록"
 
 - Phase 5: `001-admin-menus` T071·T073 → T006 → T007 → T008 → T009 → T010 → T011 → T012
 - Phase 6: T013 → T014 → T015 → T016 → T017 → T018 → T019 → T020. T012는 T020으로 갈음한다
+- Phase 7: T021 → T022 → T023 → T024 → T025 → T026 → T027 → T028. T020의 화면 확인은 T028로 갈음한다
 - T001 → T002 → T003 → T004, T005
 
 ## Parallel Example

@@ -197,3 +197,52 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
 - **Alternatives considered**: UI `Collapsible`로 감싸기(접힌 내용을 DOM에 남겨 상태 계산과 테스트 기대가 gongbu와 달라진다), 서버에 저장하기(기기마다 달라도 되는 화면 상태다)
 - **테스트**: e2e(`menu.spec.ts`) US1-AC4~AC8. 하위 링크 수를 세던 US1-AC1·US1-AC3, `notifications.spec.ts`의 사이드바 링크 기대는 펴짐 규칙대로 고친다 (원칙 V). 접힌 하위 링크는 0개를 기대한다
 - **키트로 옮길 것**: 묶음 펴기·접기와 경계선
+
+## R25. 메뉴 관리 두 칸 화면과 쉬운 말 (FR-009·FR-010·FR-012, US5, 2026-11-20)
+
+- **Decision**:
+  - 화면 틀은 공통코드(`004-admin-codes` research R12)와 같다. 넓은 폭(`lg` 이상)은 두 칸 그리드(`lg:grid-cols-2`, `lg:grid-rows-[minmax(0,1fr)]`, `flex-1 basis-0 min-h-0`). 왼쪽은 대상 탭 + 일괄 처리 줄 + 트리(칸 안 스크롤), 오른쪽은 상세 패널. 좁은 폭은 트리만 보이고 상세를 `SideDrawer`로 연다
+  - 공통코드의 `app/(admin)/admin/codes/detail-panel.tsx`(`DetailPanel`, `usePanelGuard`, `PanelGuardContext`)를 `components/kit/detail-panel.tsx`로 옮겨 두 화면이 함께 쓴다. 동작은 바꾸지 않는다
+  - `menu-drawer.tsx`는 공통코드의 드로어처럼 `SideDrawer` 대신 `ResponsivePanel`(넓은 폭은 패널, 좁은 폭은 드로어)로 감싼다. 폼을 따로 떼지 않는다. 패널은 dirty를 `PanelGuardContext`로 알리고, 화면은 다른 행을 고르거나 대상 탭을 바꾸기 전에 `confirmLeave()`를 부른다
+  - 폼 칸: 이름, 아이콘, 상위 메뉴, 연결 화면, 공개 범위(사용자 메뉴), 사용. "종류" 라디오를 없앤다
+    - 상위 메뉴: `NativeSelect`. "없음(맨 위)" + 같은 대상의 맨 위 메뉴 중 연결 화면이 없는 것(자기 자신 빼고). 고치기에도 보인다(예전에는 새 메뉴에만 "넣을 곳"이 있었다). 하위 메뉴가 있는 메뉴는 "없음(맨 위)"만 고를 수 있고 안내를 붙인다
+    - 연결 화면: 상위 메뉴를 고르면 필수. 맨 위면 "없음(상위 메뉴로 써요)"을 첫 항목으로 두고 비울 수 있다. 하위 메뉴가 있는 메뉴는 "없음"으로 고정하고 안내를 붙인다
+    - 새 메뉴의 상위 메뉴 처음 값: 지금 고른 메뉴가 상위 메뉴면 그 메뉴, 하위 메뉴면 그 부모, 맨 위 화면 메뉴거나 고른 것이 없으면 "없음(맨 위)"
+    - 상위 메뉴를 바꿔 저장하면 `PUT /api/v1/admin/menus/{id}`에 새 `parentId`와 새 부모의 맨 뒤 `sortOrder`를 보낸다. 서버의 2단계·대상 검사(`MenuService.modify`의 `checkParent`·`checkProgram`)를 그대로 쓴다. API는 바꾸지 않는다
+  - 일괄 처리 줄(`BulkToolbar`)은 늘 그린다(공통코드와 같은 고정 높이). 단추: 사용, 사용 안 함, 상위 메뉴로 옮기기, 삭제
+  - 트리 행은 체크박스·손잡이·이름·보이는 사람·사용이다. 반 폭에 맞게 예전의 프로그램 열은 뺀다(상세 칸에 보인다). "없는 화면"은 이름 옆에 보인다. 패널에 열린 행은 배경과 `aria-current`로 강조한다. 행에 아이콘으로 상위 메뉴(폴더)와 화면 메뉴(문서)를 구분한다
+  - 일괄 처리 안내 문구는 넓은 폭에서 단추 넷과 한 줄에 들어가게 짧게 둔다("체크해서 한꺼번에 처리해요."). 줄 높이가 고르기 전후에 같아야 한다
+  - 문구(`messages/ko.json` `menuAdmin`): "묶음"이 든 문구를 "상위 메뉴"로, "프로그램"을 "연결 화면"으로 바꾼다. "없는 프로그램"은 "없는 화면"으로. 머리 안내는 FR-011 문구대로. 역할 관리(`role`)의 `unlistedPrograms`("메뉴에 없는 프로그램")는 "메뉴에 없는 화면"으로, `permissionTreeHint`의 "묶음 메뉴"는 "상위 메뉴"로 바꾼다(`003-admin-roles` US2-AC3)
+- **Rationale**: 드로어는 트리를 가리고 메뉴마다 열고 닫아야 한다. 연결 화면이 있고 없음이 곧 종류라 "종류" 칸은 같은 것을 두 번 묻는다. 공통코드와 같은 틀이면 관리자가 한 번 익혀 두 화면을 쓴다
+- **Alternatives considered**: 추가 단추를 "상위 메뉴 추가"·"하위 메뉴 추가"로 나누기(맨 위 화면 메뉴인 홈·공지를 부를 말이 없다), 패널 부품을 메뉴 화면에 복사하기(같은 동작을 두 벌 고쳐야 한다), 상위 메뉴를 끌기로만 바꾸기(R22. 폼에서 자리를 볼 수 없어 처음 쓰는 관리자가 헷갈린다)
+- **키트로 옮길 것**: `detail-panel.tsx`, 메뉴 관리 두 칸 화면
+
+## R26. 무엇을 테스트하나 (US5, 2026-11-20)
+
+- **Decision**: 화면만 바뀌어 e2e(`menu.spec.ts`)로 본다. API 인수 테스트는 그대로다
+  - US5-AC1: 두 칸, 오른쪽 고르라는 안내, 행 단추 없음
+  - US5-AC2: 이름을 누르면 오른쪽 칸에 상위 메뉴·연결 화면 칸, "종류" 없음, 열린 행 강조, 저장하면 트리에 반영
+  - US5-AC3~AC5: 지금 테스트를 두 칸 화면에 맞춘다(원칙 V). 일괄 처리 줄이 고르기 전후에 같은 자리
+  - US5-AC6: 메뉴 추가 → 맨 위 + 연결 화면 비움 → 상위 메뉴 생성. "운영"을 고르면 연결 화면 필수 안내
+  - US5-AC7: 이름을 고치고 다른 행을 누르면 묻고, 그만두면 고치던 값이 남는다
+  - US5-AC8: 좁은 폭에서 드로어로 열린다
+  - "묶음"·"프로그램" 문구를 찾던 기대(`menu.spec.ts`, 역할 관리 `role.spec.ts`)를 새 문구로 고친다(원칙 V)
+
+## R27. 관리 셸과 첫 화면을 계정 종류로 고른다 (FR-005·FR-006, 2026-11-21)
+
+- **Decision**:
+  - `components/shell/landing.ts` `landingPath`·`fetchLandingPath`: 내 정보(`GET /api/v1/users/me`의 `role`)가 `ADMIN`이면 `/admin`, `USER`면 `/`. 지금은 `/menus/me`에 관리 메뉴가 있으면 `/admin`이다. 부르는 곳(`sign-in/page.tsx`, `providers/auth-gate.tsx`)은 그대로 둔다
+  - `components/shell/account-shell.tsx`: 계정 화면의 셸을 `menus.data.length > 0` 대신 `useMe().role === "ADMIN"`으로 고른다
+  - `app/(admin)/admin/page.tsx`: `ADMIN`이면 볼 수 있는 첫 관리 메뉴로 보내고, 없으면 안내("받은 권한이 없어요. 최고 관리자에게 역할을 받으세요.")를 본문에 보인다. `USER`면 지금처럼 `/`로 보낸다. 안내 문구는 `messages/ko.json`에 둔다
+  - `app/(admin)/layout.tsx`는 그대로다. 회원이 관리 화면 주소로 바로 들어오면 지금처럼 API가 막고 권한 없음 안내가 보인다(FR-003)
+  - 백엔드 `/menus/me`는 바꾸지 않는다. 역할 없는 `ADMIN`·`USER` 모두 빈 목록이다(권한 판정은 `003` research R16)
+- **Rationale**: 관리 메뉴가 있는지로 고르면 역할을 다 뺀 운영자가 회원처럼 사용자 셸에 떨어져, 자기가 관리자 계정인지 모른다(스펙 가정)
+- **Alternatives considered**: `/menus/me`에 계정 종류를 함께 내기(내 정보에 이미 있다), 회원이 `/admin/...`에 오면 레이아웃에서 `/`로 보내기(지금 FR-003 안내 동작이 바뀌고 이 변경의 범위가 아니다)
+- **키트로 옮길 것**: 셸 고르기 기준(계정 종류)
+
+## R28. 무엇을 테스트하나 (US1-AC1, FR-005·FR-006, 2026-11-21)
+
+- **Decision**:
+  - 단위 테스트 `tests/unit/landing.test.ts`: "관리 메뉴가 있으면 /admin"을 "`ADMIN`이면 /admin, `USER`면 /"로 바꾼다(원칙 V)
+  - e2e 지원 `e2e/support/api.ts` `signedIn`: 셸을 `menus`가 아니라 `me.role`로 고르게 되므로, 관리 화면을 여는 테스트는 `me.role = "ADMIN"`을 준다. `menu.spec.ts`(셸 테스트, 관리자 계정 화면이 관리 셸), `auth.spec.ts`·`screens.spec.ts`의 첫 화면 기대를 바꾸고, 역할 없는 `ADMIN`이 `/admin`에서 안내를 보는 테스트를 더한다. `menu.spec.ts`의 "역할 관리" 링크 이름은 "권한 관리"로(원칙 V)
+  - API 인수 테스트 `AdminMenusAcceptanceTest`: US1-AC1의 메뉴 이름 "권한 관리", 운영자 준비(`giveOperatorRole`)를 `ADMIN` 계정으로, `userSeesNoAdminMenu`·`userIsForbidden`은 그대로. 테스트 지원 `MenuSeed`의 메뉴 이름을 V7 뒤 구성으로 맞춘다

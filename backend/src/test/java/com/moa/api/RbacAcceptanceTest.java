@@ -20,6 +20,8 @@ import com.moa.support.TestUsers;
 
 /**
  * 역할·권한 (선택 헬퍼 rbac)
+ * moa (specs/003-admin-roles FR-002·FR-010, research R21): 역할은 관리자 계정(ADMIN)이 받는다. 회원(USER)에게 주면 B001.
+ * 키트의 "ADMIN은 역할 없이 모든 권한"은 "최고 관리자 역할이 모든 권한"으로 바뀌었다. 목록 맨 앞은 최고 관리자 역할이다
  */
 class RbacAcceptanceTest extends AcceptanceTest {
 
@@ -30,10 +32,10 @@ class RbacAcceptanceTest extends AcceptanceTest {
 	@Autowired
 	private TestUsers testUsers;
 
-	/** 역할을 줄 사용자 (id 3) */
+	/** 역할을 줄 관리자 계정 (id 3). moa: 회원은 역할을 받지 않는다 */
 	@BeforeEach
 	void createUser() {
-		testUsers.create(3L, "user", "password1!", Role.USER);
+		testUsers.create(3L, "operator", "password1!", Role.ADMIN);
 	}
 
 	@Test
@@ -48,7 +50,8 @@ class RbacAcceptanceTest extends AcceptanceTest {
 		assertThat(asUser(mvc.get().uri(MY_PERMISSIONS))).bodyJson().extractingPath("$.permissions")
 			.asArray().containsExactly("ROLE_MANAGE");
 		assertThat(asAdmin(mvc.get().uri(USER_ROLES))).bodyJson().extractingPath("$[0].code").isEqualTo("MANAGER");
-		assertThat(asAdmin(mvc.get().uri(ROLES))).bodyJson().extractingPath("$[0].userCount").isEqualTo(1);
+		assertThat(asAdmin(mvc.get().uri(ROLES))).bodyJson().extractingPath("$[?(@.code=='MANAGER')].userCount")
+			.asArray().containsExactly(1);
 
 		assertThat(replaceUserRoles("[]")).hasStatus(204);
 		assertThat(asUser(mvc.get().uri(ROLES))).hasStatus(403).bodyJson().extractingPath("$.code").isEqualTo("A005");
@@ -90,7 +93,7 @@ class RbacAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("rbac: ADMIN이 아니면 가진 권한까지만 다룬다. 없는 권한을 넣거나, 그런 역할을 주거나 지우면 A005")
+	@DisplayName("rbac: 최고 관리자가 아니면 가진 권한까지만 다룬다. 없는 권한을 넣거나, 그런 역할을 주거나 지우면 A005")
 	void noEscalation() {
 		long manager = createRole("MANAGER", "[\"ROLE_MANAGE\"]");
 		long coder = createRole("CODER", "[\"CODE_MANAGE\"]");
@@ -111,7 +114,17 @@ class RbacAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("rbac: 권한 목록은 코드에 등록된 것 전부이고, ADMIN은 역할 없이도 모든 권한을 갖는다")
+	@DisplayName("rbac: 회원(USER)에게는 역할을 줄 수 없다 (moa, B001)")
+	void memberGetsNoRole() {
+		testUsers.create(4L, "member", "password1!", Role.USER);
+		long manager = createRole("MANAGER", "[\"ROLE_MANAGE\"]");
+		assertThat(asAdmin(mvc.put().uri("/api/v1/admin/users/4/roles").contentType(MediaType.APPLICATION_JSON)
+			.content("{\"roleIds\":[" + manager + "]}"))).hasStatus(409)
+			.bodyJson().extractingPath("$.code").isEqualTo("B001");
+	}
+
+	@Test
+	@DisplayName("rbac: 권한 목록은 코드에 등록된 것 전부이고, 최고 관리자는 모든 권한을 갖는다")
 	void permissionsAndAdmin() {
 		assertThat(asAdmin(mvc.get().uri("/api/v1/admin/permissions"))).hasStatus(200)
 			.bodyJson().extractingPath("$[*].key").asArray().contains("ROLE_MANAGE");
@@ -140,11 +153,11 @@ class RbacAcceptanceTest extends AcceptanceTest {
 	}
 
 	private MvcTestResult asAdmin(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 
 	private MvcTestResult asUser(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(3L, "USER")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, bearer(3L, "ADMIN")).exchange();
 	}
 
 	private String body(MvcTestResult result) {

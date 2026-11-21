@@ -16,12 +16,12 @@ import com.moa.api.dto.menu.MenuAudience;
 import com.moa.api.dto.menu.MenuDto;
 import com.moa.api.dto.menu.MenuOrderDto;
 import com.moa.api.dto.menu.MenuVisibility;
-import com.moa.api.dto.menu.ProgramDto;
+import com.moa.api.dto.menu.ScreenDto;
 import com.moa.api.entity.menu.Menu;
-import com.moa.api.program.ProgramDefinition;
-import com.moa.api.program.ProgramRegistry;
 import com.moa.api.repository.reader.menu.MenuReader;
 import com.moa.api.repository.writer.menu.MenuWriter;
+import com.moa.api.screen.ScreenDefinition;
+import com.moa.api.screen.ScreenRegistry;
 import com.moa.common.exception.ErrorCode;
 import com.moa.common.exception.ServiceException;
 import com.moa.common.security.permission.PermissionRegistry;
@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 메뉴 권한 (선택 헬퍼 menu). 깊이는 2단계(묶음 → 화면 메뉴)까지다.
- * 화면 메뉴는 등록된 프로그램을 가리키고, 경로와 권한은 프로그램을 따른다 (moa, specs/001-admin-menus FR-008·FR-009).
+ * 화면 메뉴는 등록된 연결 화면을 가리키고, 경로와 권한은 연결 화면을 따른다 (moa, specs/001-admin-menus FR-008·FR-009).
  */
 @Service
 @RequiredArgsConstructor
@@ -38,12 +38,12 @@ public class MenuService {
 
 	private final MenuReader menuReader;
 	private final MenuWriter menuWriter;
-	private final ProgramRegistry programRegistry;
+	private final ScreenRegistry screenRegistry;
 	private final PermissionRegistry permissionRegistry;
 
-	/** 등록된 프로그램 전부. 관리 프로그램 먼저 */
-	public List<ProgramDto> getPrograms() {
-		return programRegistry.all().stream().map(this::program).toList();
+	/** 등록된 연결 화면 전부. 관리 연결 화면 먼저 */
+	public List<ScreenDto> getScreens() {
+		return screenRegistry.all().stream().map(this::screen).toList();
 	}
 
 	/** 전체 트리 (사용 안 함 포함) */
@@ -53,8 +53,8 @@ public class MenuService {
 
 	/**
 	 * 사용 중이고 볼 수 있는 이 대상의 메뉴 트리 (moa, specs/001-admin-menus FR-002·FR-007).
-	 * 관리 메뉴는 프로그램의 권한을 가졌을 때, 사용자 메뉴는 공개 범위가 PUBLIC이거나 로그인했을 때 보인다.
-	 * 없는 프로그램을 가리키는 메뉴는 보이지 않고, 보이는 하위 메뉴가 없는 묶음 메뉴는 뺀다.
+	 * 관리 메뉴는 연결 화면의 권한을 가졌을 때, 사용자 메뉴는 공개 범위가 PUBLIC이거나 로그인했을 때 보인다.
+	 * 없는 연결 화면을 가리키는 메뉴는 보이지 않고, 보이는 하위 메뉴가 없는 묶음 메뉴는 뺀다.
 	 *
 	 * @param permissions 내 권한 (ADMIN은 등록된 모든 권한)
 	 */
@@ -62,34 +62,42 @@ public class MenuService {
 		List<MenuDto> visible = tree(menuReader.findAll(), menu -> menu.isEnabled()
 			&& menu.getAudience() == audience
 			&& isVisible(menu, permissions, signedIn));
-		return visible.stream().filter(menu -> menu.programKey() != null || !menu.children().isEmpty()).toList();
+		return visible.stream().filter(menu -> menu.screenKey() != null || !menu.children().isEmpty()).toList();
+	}
+
+	/**
+	 * moa: 사용 중인 관리 메뉴 트리 전체 (권한으로 거르지 않는다). 내 메뉴가 권한 없는 메뉴도 흐리게 보이려고 쓴다
+	 * (specs/001-admin-menus FR-002, 2026-11-22). 없는 연결 화면을 가리키는 메뉴와 하위 메뉴가 없는 묶음 메뉴는 뺀다
+	 */
+	public List<MenuDto> getAdminTree() {
+		return getVisibleTree(MenuAudience.ADMIN, permissionRegistry.keys(), true);
 	}
 
 	/**
 	 * 하위 메뉴의 대상은 보낸 값과 상관없이 부모를 따른다. 1단계 메뉴의 대상을 비우면 관리 메뉴(ADMIN)다.
 	 *
-	 * @throws ServiceException 프로그램·공개 범위가 틀리면 V001, 부모가 없으면 R001, 3단계가 되면 B001
+	 * @throws ServiceException 연결 화면·공개 범위가 틀리면 V001, 부모가 없으면 R001, 3단계가 되면 B001
 	 */
-	public MenuDto create(Long parentId, String name, String programKey, String icon, int sortOrder,
+	public MenuDto create(Long parentId, String name, String screenKey, String icon, int sortOrder,
 		MenuAudience audience, MenuVisibility visibility) {
 		checkParent(null, parentId, false);
 		MenuAudience resolved = parentId != null ? require(parentId).getAudience()
 			: audience != null ? audience : MenuAudience.ADMIN;
-		ProgramDefinition program = checkProgram(programKey, resolved, parentId != null);
-		MenuVisibility checkedVisibility = checkVisibility(program, resolved, visibility);
+		ScreenDefinition screen = checkScreen(screenKey, resolved, parentId != null);
+		MenuVisibility checkedVisibility = checkVisibility(screen, resolved, visibility);
 		Menu saved = menuWriter.save(
-			new Menu(parentId, name, key(program), icon, sortOrder, resolved, checkedVisibility));
-		return MenuDto.of(saved, program(program), List.of());
+			new Menu(parentId, name, key(screen), icon, sortOrder, resolved, checkedVisibility));
+		return MenuDto.of(saved, screen(screen), List.of());
 	}
 
 	/**
 	 * 하위 메뉴의 대상은 부모를 따른다. 대상을 비우면 그대로 둔다. 하위 메뉴가 있는 메뉴는 대상을 바꿀 수 없다
-	 * (하위 메뉴의 프로그램 대상이 메뉴 대상이다, FR-009).
+	 * (하위 메뉴의 연결 화면 대상이 메뉴 대상이다, FR-009).
 	 *
-	 * @throws ServiceException 메뉴·부모가 없으면 R001, 프로그램·공개 범위 V001,
+	 * @throws ServiceException 메뉴·부모가 없으면 R001, 연결 화면·공개 범위 V001,
 	 *     3단계·자기 부모·하위 메뉴가 있는 메뉴의 대상 바꾸기 B001
 	 */
-	public MenuDto modify(Long id, Long parentId, String name, String programKey, String icon, int sortOrder,
+	public MenuDto modify(Long id, Long parentId, String name, String screenKey, String icon, int sortOrder,
 		boolean enabled, MenuAudience audience, MenuVisibility visibility) {
 		Menu menu = require(id);
 		boolean hasChildren = menuReader.hasChildren(id);
@@ -99,10 +107,10 @@ public class MenuService {
 		if (resolved != menu.getAudience() && hasChildren) {
 			throw new ServiceException(ErrorCode.INVALID_STATE, "하위 메뉴가 있는 메뉴는 대상을 바꿀 수 없습니다.");
 		}
-		ProgramDefinition program = checkProgram(programKey, resolved, parentId != null);
-		MenuVisibility checkedVisibility = checkVisibility(program, resolved, visibility);
-		menu.modify(parentId, name, key(program), icon, sortOrder, enabled, resolved, checkedVisibility);
-		return MenuDto.of(menu, program(program), List.of());
+		ScreenDefinition screen = checkScreen(screenKey, resolved, parentId != null);
+		MenuVisibility checkedVisibility = checkVisibility(screen, resolved, visibility);
+		menu.modify(parentId, name, key(screen), icon, sortOrder, enabled, resolved, checkedVisibility);
+		return MenuDto.of(menu, screen(screen), List.of());
 	}
 
 	/**
@@ -171,10 +179,10 @@ public class MenuService {
 			if (parent.getId().equals(menu.getId()) || parent.getParentId() != null) {
 				throw new ServiceException(ErrorCode.INVALID_STATE, "메뉴는 2단계까지만 둘 수 있습니다: " + menu.getId());
 			}
-			if (menu.getProgramKey() == null) {
+			if (menu.getScreenKey() == null) {
 				throw new ServiceException(ErrorCode.INVALID_STATE, "묶음 메뉴는 하위 메뉴가 될 수 없습니다: " + menu.getId());
 			}
-			// 메뉴 대상은 프로그램의 대상이라 다른 대상의 부모 아래로는 옮기지 않는다 (FR-009)
+			// 메뉴 대상은 연결 화면의 대상이라 다른 대상의 부모 아래로는 옮기지 않는다 (FR-009)
 			if (parent.getAudience() != menu.getAudience()) {
 				throw new ServiceException(ErrorCode.INVALID_STATE, "대상이 다른 메뉴 아래로 옮길 수 없습니다: " + menu.getId());
 			}
@@ -201,50 +209,50 @@ public class MenuService {
 	}
 
 	private boolean isVisible(Menu menu, Set<String> permissions, boolean signedIn) {
-		if (menu.getProgramKey() == null) {
+		if (menu.getScreenKey() == null) {
 			return true; // 묶음 메뉴: 보이는 하위 메뉴가 있을 때만 남는다
 		}
-		return programRegistry.find(menu.getProgramKey())
-			.map(program -> menu.getAudience() == MenuAudience.ADMIN
-				? permissions.contains(program.permission())
+		return screenRegistry.find(menu.getScreenKey())
+			.map(screen -> menu.getAudience() == MenuAudience.ADMIN
+				? permissions.contains(screen.permission())
 				: menu.getVisibility() == MenuVisibility.PUBLIC || signedIn)
 			.orElse(false);
 	}
 
 	/**
-	 * 프로그램은 비울 수 있다(묶음 메뉴, 1단계만). 있으면 등록된 프로그램이고 메뉴와 대상이 같다.
-	 * 없는 프로그램(MISSING 등)은 받지 않는다. 다른 프로그램으로 바꾸거나 지운다.
+	 * 연결 화면은 비울 수 있다(묶음 메뉴, 1단계만). 있으면 등록된 연결 화면이고 메뉴와 대상이 같다.
+	 * 없는 연결 화면(MISSING 등)은 받지 않는다. 다른 연결 화면으로 바꾸거나 지운다.
 	 */
-	private ProgramDefinition checkProgram(String programKey, MenuAudience audience, boolean child) {
-		if (programKey == null || programKey.isBlank()) {
+	private ScreenDefinition checkScreen(String screenKey, MenuAudience audience, boolean child) {
+		if (screenKey == null || screenKey.isBlank()) {
 			if (child) {
-				throw new ServiceException(ErrorCode.INVALID_INPUT, "하위 메뉴는 프로그램을 골라야 합니다.");
+				throw new ServiceException(ErrorCode.INVALID_INPUT, "하위 메뉴는 연결 화면을 골라야 합니다.");
 			}
 			return null;
 		}
-		ProgramDefinition program = programRegistry.find(programKey.trim())
-			.orElseThrow(() -> new ServiceException(ErrorCode.INVALID_INPUT, "등록되지 않은 프로그램입니다: " + programKey));
-		if (program.audience() != audience) {
-			throw new ServiceException(ErrorCode.INVALID_INPUT, "메뉴와 대상이 다른 프로그램입니다: " + program.key());
+		ScreenDefinition screen = screenRegistry.find(screenKey.trim())
+			.orElseThrow(() -> new ServiceException(ErrorCode.INVALID_INPUT, "등록되지 않은 연결 화면입니다: " + screenKey));
+		if (screen.audience() != audience) {
+			throw new ServiceException(ErrorCode.INVALID_INPUT, "메뉴와 대상이 다른 연결 화면입니다: " + screen.key());
 		}
-		return program;
+		return screen;
 	}
 
 	/**
-	 * 사용자 화면 메뉴는 공개 범위가 있어야 하고, 로그인이 필요한 프로그램이면 MEMBER만 된다.
+	 * 사용자 화면 메뉴는 공개 범위가 있어야 하고, 로그인이 필요한 연결 화면이면 MEMBER만 된다.
 	 * 관리 메뉴와 묶음 메뉴는 공개 범위를 갖지 않는다 (보낸 값은 버린다).
 	 */
-	private MenuVisibility checkVisibility(ProgramDefinition program, MenuAudience audience,
+	private MenuVisibility checkVisibility(ScreenDefinition screen, MenuAudience audience,
 		MenuVisibility visibility) {
-		if (program == null || audience == MenuAudience.ADMIN) {
+		if (screen == null || audience == MenuAudience.ADMIN) {
 			return null;
 		}
 		if (visibility == null) {
 			throw new ServiceException(ErrorCode.INVALID_INPUT, "사용자 메뉴는 공개 범위를 골라야 합니다.");
 		}
-		if (program.signInRequired() && visibility == MenuVisibility.PUBLIC) {
+		if (screen.signInRequired() && visibility == MenuVisibility.PUBLIC) {
 			throw new ServiceException(ErrorCode.INVALID_INPUT,
-				"로그인이 필요한 프로그램은 회원에게만 보일 수 있습니다: " + program.key());
+				"로그인이 필요한 연결 화면은 회원에게만 보일 수 있습니다: " + screen.key());
 		}
 		return visibility;
 	}
@@ -263,8 +271,8 @@ public class MenuService {
 		}
 	}
 
-	private String key(ProgramDefinition program) {
-		return program == null ? null : program.key();
+	private String key(ScreenDefinition screen) {
+		return screen == null ? null : screen.key();
 	}
 
 	/** 1단계와 그 자식으로 묶는다. 조건에 맞지 않는 1단계 메뉴는 자식과 함께 뺀다 */
@@ -282,11 +290,11 @@ public class MenuService {
 	}
 
 	private MenuDto dto(Menu menu, List<MenuDto> children) {
-		return MenuDto.of(menu, programRegistry.find(menu.getProgramKey()).map(this::program).orElse(null),
+		return MenuDto.of(menu, screenRegistry.find(menu.getScreenKey()).map(this::screen).orElse(null),
 			children);
 	}
 
-	private ProgramDto program(ProgramDefinition program) {
-		return program == null ? null : ProgramDto.of(program, permissionRegistry);
+	private ScreenDto screen(ScreenDefinition screen) {
+		return screen == null ? null : ScreenDto.of(screen, permissionRegistry);
 	}
 }

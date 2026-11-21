@@ -47,6 +47,23 @@ test("접속 이력: 가로 넘침·접근성", async ({ page }) => {
   await expectNoSeriousA11yViolations(page)
 })
 
+// moa (2026-11-22): 시간 열은 "<무슨 일> 시각"(011 FR-014), 칸 좌우 여백 12px로 열 사이 글자 간격 24px 이상(011 FR-015)
+test("열 이름은 접속 시각부터이고, 열 사이 글자 간격은 24px 이상이다 @wide", async ({ page }) => {
+  await mock(page)
+  await page.goto("/admin/login-histories")
+  await expect(page.getByRole("columnheader")).toHaveText(["접속 시각", "아이디", "결과", "IP", "기기"])
+  const gaps = await page.getByRole("row", { name: /10\.0\.0\.2/ }).evaluate((row) => {
+    const textBox = (cell: Element) => {
+      const range = document.createRange()
+      range.selectNodeContents(cell)
+      return range.getBoundingClientRect()
+    }
+    const cells = [...row.querySelectorAll("td")]
+    return cells.slice(1).map((cell, i) => textBox(cell).left - textBox(cells[i]).right)
+  })
+  for (const gap of gaps) expect(gap).toBeGreaterThanOrEqual(24)
+})
+
 test("실패는 짧은 사유로, 시각은 초까지 보인다", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/login-histories")
@@ -55,14 +72,30 @@ test("실패는 짧은 사유로, 시각은 초까지 보인다", async ({ page 
   await expect(page.getByRole("row", { name: /10\.0\.0\.1/ })).toContainText("성공")
 })
 
-test("조건(결과·아이디)을 API에 넘긴다", async ({ page }) => {
+test("결과 '전체'를 고르면 결과 조건을 보내지 않는다 (moa 011 FR-010)", async ({ page }) => {
+  const requests: URL[] = []
+  await mock(page, requests)
+  await page.goto("/admin/login-histories?success=false")
+  // 기간 빠른 단추에도 "전체"가 있어 결과 묶음 안에서 찾는다 (011 FR-010, 2026-11-22)
+  const all = page.getByRole("group", { name: "결과" }).getByRole("button", { name: "전체", exact: true })
+  await all.click()
+  await expect(all).toHaveAttribute("aria-pressed", "true")
+  await expect(page).not.toHaveURL(/success=/)
+  await expect.poll(() => requests.at(-1)?.searchParams.has("success")).toBe(false)
+  await expect(page.getByText("입력한 내용을 확인해 주세요.")).toHaveCount(0)
+})
+
+test("조건(결과·아이디)을 API에 넘긴다. 결과는 누르면 바로, 아이디는 엔터로 조회한다 (moa 011 US5)", async ({
+  page,
+}) => {
   const requests: URL[] = []
   await mock(page, requests)
   await page.goto("/admin/login-histories")
   await page.getByRole("button", { name: "실패", exact: true }).click()
-  await page.getByLabel("아이디").fill("kim")
-  await page.getByRole("button", { name: "조회" }).click()
   await expect(page).toHaveURL(/success=false/)
+  await page.getByLabel("아이디").fill("kim")
+  await page.getByLabel("아이디").press("Enter")
+  await expect(page).toHaveURL(/loginId=kim/)
   await expect
     .poll(() => requests.at(-1)?.searchParams.toString())
     .toMatch(/success=false.*loginId=kim|loginId=kim.*success=false/)

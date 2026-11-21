@@ -66,8 +66,8 @@ logging:
 # 선택 헬퍼: login-history. apply.sh가 src/main/resources/application.yaml 끝에 문서로 덧붙인다
 app:
   login-history:
-    # 이 기간이 지난 접속 이력은 매일 새벽에 지운다. 90일은 specs/005-admin-login-history FR-002가 정한다
-    retention-days: ${LOGIN_HISTORY_RETENTION_DAYS:90}
+    # 이 기간이 지난 접속 이력은 매일 새벽에 지운다. 1년(365일)은 specs/005-admin-login-history FR-002가 정한다
+    retention-days: ${LOGIN_HISTORY_RETENTION_DAYS:365}
 ---
 # 선택 헬퍼: rich-text. apply.sh가 src/main/resources/application.yaml 끝에 문서로 덧붙인다
 app:
@@ -99,8 +99,12 @@ app:
     # 푸시 서버가 연락할 운영자 주소 (mailto:...)
     subject: ${WEB_PUSH_SUBJECT:}
 ---
-# moa: 소셜 로그인 (specs/010-social-login). 제공자 설정과 현재 약관 버전
+# moa: 개인정보 파기 이력 (specs/013-purge-log FR-006), 소셜 로그인 제공자 설정과 현재 약관 버전 (specs/010-social-login)
 app:
+  purge-log:
+    # 이 기간이 지난 파기 이력은 매일 지운다. 다른 정리(04:30~05:00)가 끝난 뒤에 돈다
+    retention-days: ${PURGE_LOG_RETENTION_DAYS:365}
+    cleanup-cron: ${PURGE_LOG_CLEANUP_CRON:0 10 5 * * *}
   oauth:
     google:
       # 셋 중 하나라도 비면 구글을 끈다 (단추 숨김, 시작·콜백 A008)

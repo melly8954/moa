@@ -85,7 +85,7 @@ class RichTextImageAcceptanceTest extends AcceptanceTest {
 		inTransaction(() -> richTextImageService.attach("NOTICE", 1L,
 			"<p><img src=\"/api/v1/rich-text/images/" + used + "\"></p>"));
 
-		jdbcTemplate.update("update rich_text_images set updated_at = now(6) - interval 2 day");
+		jdbcTemplate.update("update tb_rich_text_image set updated_at = now(6) - interval 2 day");
 		SystemActor.run(richTextImageCleaner::deleteExpired);
 
 		assertThat(mvc.get().uri(IMAGES + "/" + used)).hasStatus(200);
@@ -93,7 +93,7 @@ class RichTextImageAcceptanceTest extends AcceptanceTest {
 		assertThat(mvc.get().uri(IMAGES + "/" + never)).hasStatus(404);
 
 		inTransaction(() -> richTextImageService.detach("NOTICE", 1L));
-		jdbcTemplate.update("update rich_text_images set updated_at = now(6) - interval 2 day");
+		jdbcTemplate.update("update tb_rich_text_image set updated_at = now(6) - interval 2 day");
 		SystemActor.run(richTextImageCleaner::deleteExpired);
 		assertThat(mvc.get().uri(IMAGES + "/" + used)).hasStatus(404);
 	}

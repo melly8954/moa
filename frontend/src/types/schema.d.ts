@@ -21,6 +21,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 알림 읽음
+         * @description 이미 읽었으면 그대로. 내 알림이 아니거나 없으면 R001
+         */
+        put: operations["read"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** 모두 읽음 */
+        put: operations["readAll"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notices/seen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 공지 목록 확인
+         * @description 지금(서버 시각)을 공지 목록을 마지막으로 연 시각으로 기록한다
+         */
+        put: operations["markSeen"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users/{userId}/roles": {
         parameters: {
             query?: never;
@@ -35,7 +92,7 @@ export interface paths {
         get: operations["getRolesOfUser"];
         /**
          * 사용자의 역할 바꾸기
-         * @description 보낸 역할로 통째로 바꾼다. 다음 요청부터 바로 반영된다. 없는 사용자·역할 R001, 주거나 빼는 역할을 다룰 수 없으면 A005
+         * @description 보낸 역할로 통째로 바꾼다. 다음 요청부터 바로 반영된다. 없는 사용자·역할 R001, 주거나 빼는 역할을 다룰 수 없으면 A005. moa: 대상이 ADMIN이면 B001
          */
         put: operations["replaceRolesOfUser"];
         post?: never;
@@ -145,6 +202,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/notices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지 하나
+         * @description 없으면 R001
+         */
+        get: operations["get_1"];
+        /**
+         * 공지 고치기
+         * @description 제목과 본문. 상태와 게시 시각은 그대로다. 없으면 R001
+         */
+        put: operations["modify_1"];
+        post?: never;
+        /**
+         * 공지 지우기
+         * @description 소프트 삭제. 본문 이미지는 임시로 돌아가 정리된다. 없으면 R001
+         */
+        delete: operations["delete_2"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices/{id}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 공지 고정·풀기
+         * @description 없으면 R001
+         */
+        put: operations["pin"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/menus/{id}": {
         parameters: {
             query?: never;
@@ -155,15 +260,15 @@ export interface paths {
         get?: never;
         /**
          * 메뉴 바꾸기
-         * @description 없는 메뉴 R001, 그 밖의 오류는 만들기와 같다. 자기 자신을 부모로 B001
+         * @description 없는 메뉴 R001, 그 밖의 오류는 만들기와 같다. 자기 자신을 부모로, 하위 메뉴가 있는 메뉴의 대상 바꾸기 B001
          */
-        put: operations["modify_1"];
+        put: operations["modify_2"];
         post?: never;
         /**
          * 메뉴 지우기
          * @description 소프트 삭제. 하위 메뉴가 있으면 B001
          */
-        delete: operations["delete_2"];
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -179,9 +284,49 @@ export interface paths {
         get?: never;
         /**
          * 순서 한 번에 바꾸기
-         * @description 보낸 메뉴의 부모와 순서를 한 트랜잭션으로 바꾼다. 하나라도 틀리면 아무것도 바꾸지 않는다
+         * @description 보낸 메뉴의 부모와 순서를 한 트랜잭션으로 바꾼다. 하나라도 틀리면 아무것도 바꾸지 않는다. 묶음 메뉴를 하위로, 대상이 다른 부모 아래로 옮기면 B001
          */
         put: operations["reorder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/menus/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 사용 여부 한꺼번에 바꾸기
+         * @description moa (specs/001-admin-menus FR-010): 한 트랜잭션. 없는 메뉴가 하나라도 있으면 R001, 아무것도 바꾸지 않는다
+         */
+        put: operations["setEnabled"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/code-groups/{groupCode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * moa: 코드 그룹 바꾸기
+         * @description 이름, 설명, 사용 여부. 그룹 코드는 바꾸지 않는다
+         */
+        put: operations["modifyGroup"];
         post?: never;
         delete?: never;
         options?: never;
@@ -199,15 +344,119 @@ export interface paths {
         get?: never;
         /**
          * 코드 바꾸기
-         * @description 이름, 정렬 순서, 사용 여부
+         * @description 이름, 정렬 순서(moa: 비우면 그대로), 사용 여부
          */
         put: operations["modifyCode"];
         post?: never;
         /**
-         * 코드 지우기
-         * @description 소프트 삭제. 같은 코드로 다시 만들 수 있다
+         * moa: 사용 안 함 코드 지우기
+         * @description 사용 안 함 항목만 지운다(소프트 삭제). 사용 중이면 B001, 없으면 R001 (specs/004-admin-codes FR-008)
          */
         delete: operations["deleteCode"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/code-groups/{groupCode}/codes/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * moa: 그룹 안 순서 한꺼번에
+         * @description 다른 그룹의 코드가 섞이면 R001, 아무것도 바꾸지 않는다
+         */
+        put: operations["reorder_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/code-groups/{groupCode}/codes/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * moa: 그룹 안 여러 항목 사용 여부
+         * @description 하나라도 없으면 R001, 아무것도 바꾸지 않는다
+         */
+        put: operations["setEnabled_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/code-groups/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * moa: 그룹 순서 한꺼번에
+         * @description 없는 그룹이 섞이면 R001, 아무것도 바꾸지 않는다 (specs/004-admin-codes FR-005)
+         */
+        put: operations["reorderGroups"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rich-text/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 본문 이미지 올리기
+         * @description png, jpg, gif, webp만 (파일 내용으로 판별, SVG 안 됨). 크기 초과·형식 오류·빈 파일 V001. 올린 이미지는 임시이고, 글을 저장할 때 본문에 쓰이면 남는다
+         */
+        post: operations["upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/push-subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 이 브라우저 구독 저장
+         * @description 같은 endpoint면 내 것으로 바꾼다
+         */
+        post: operations["subscribe"];
+        /**
+         * 이 브라우저 구독 지우기
+         * @description 끄기와 로그아웃 전에 부른다. 없으면 그대로
+         */
+        delete: operations["unsubscribe"];
         options?: never;
         head?: never;
         patch?: never;
@@ -341,6 +590,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/roles/{id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 역할의 구성원
+         * @description moa (FR-006): 아이디 순 쪽. keyword가 없으면 구성원만, 있으면 아이디·이름으로 모든 사용자와 구성원 여부. 지운 사용자·시스템 계정은 빠진다. 없는 역할 R001
+         */
+        get: operations["getMembers"];
+        put?: never;
+        /**
+         * 구성원 더하기
+         * @description moa (FR-006): 한 트랜잭션. 이미 구성원이면 그대로. 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, ADMIN이 섞이면 B001 (아무도 더하지 않는다)
+         */
+        post: operations["addMembers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/roles/{id}/members/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 구성원 빼기
+         * @description moa (FR-006): 한 트랜잭션. 구성원이 아니면 그대로. 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, ADMIN이 섞이면 B001 (아무도 빼지 않는다)
+         */
+        post: operations["removeMembers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/roles/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 한꺼번에 지우기
+         * @description moa (specs/003-admin-roles FR-005): 한 트랜잭션. 없는 역할 R001, 다룰 수 없는 역할 A005가 하나라도 있으면 아무것도 지우지 않는다
+         */
+        post: operations["deleteAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지 목록
+         * @description 임시 저장 포함, 고친 최신순 페이징
+         */
+        get: operations["search_1"];
+        put?: never;
+        /**
+         * 공지 만들기
+         * @description publish=true면 바로 게시, 아니면 임시 저장. 본문은 걸러 저장한다
+         */
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 공지 게시
+         * @description 임시 저장 공지를 게시한다. 이미 게시했으면 B001, 없으면 R001
+         */
+        post: operations["publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/menus": {
         parameters: {
             query?: never;
@@ -353,9 +710,29 @@ export interface paths {
         put?: never;
         /**
          * 메뉴 만들기
-         * @description 경로 형식·등록되지 않은 권한 V001, 경로 중복 R002, 없는 부모 R001, 3단계가 되는 부모 B001
+         * @description 등록되지 않았거나 대상이 다른 연결 화면·공개 범위 V001, 없는 부모 R001, 3단계가 되는 부모 B001
          */
-        post: operations["create_2"];
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/menus/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 한꺼번에 지우기
+         * @description moa (FR-010): 소프트 삭제, 한 트랜잭션. 고른 것끼리 부모·자식이면 함께 지운다. 없는 메뉴 R001, 고르지 않은 하위 메뉴가 남는 묶음 B001 (아무것도 지우지 않는다)
+         */
+        post: operations["deleteAll_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -374,7 +751,7 @@ export interface paths {
         put?: never;
         /**
          * 코드 그룹 만들기
-         * @description 같은 그룹 코드가 있으면 R002
+         * @description moa: 사용 중으로 만든다. 그룹 코드가 겹치면 R002 (specs/004-admin-codes FR-004)
          */
         post: operations["createGroup"];
         delete?: never;
@@ -395,7 +772,7 @@ export interface paths {
         put?: never;
         /**
          * 코드 만들기
-         * @description 그룹이 없으면 R001, 같은 코드가 있으면 R002
+         * @description 그룹이 없으면 R001, 같은 코드가 있으면 R002. moa: 코드를 비우면 자동 순번, 순서를 비우면 맨 뒤
          */
         post: operations["createCode"];
         delete?: never;
@@ -444,6 +821,163 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/rich-text/images/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 본문 이미지 보여 주기
+         * @description 로그인 없이 연다. 없으면 R001
+         */
+        get: operations["show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 알림 목록
+         * @description 최신순 페이징. 벨 펼침은 size=10
+         */
+        get: operations["getPage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 안 읽은 알림 수 */
+        get: operations["unreadCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/push/public-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 브라우저 알림 공개 키
+         * @description 웹 푸시를 끈 서버면 publicKey가 없다
+         */
+        get: operations["pushPublicKey"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지 목록
+         * @description 게시한 공지만. 고정 먼저, 그다음 게시 최신순
+         */
+        get: operations["getPage_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지 하나
+         * @description 게시한 공지만. 임시 저장·지운 공지·없는 공지는 R001
+         */
+        get: operations["get_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notices/new": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 새 공지 여부
+         * @description 공지 목록을 마지막으로 연 뒤 게시된 공지가 있나. 연 적이 없으면 게시한 공지가 하나라도 있나
+         */
+        get: operations["hasNew"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/menus/user": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 사용자 메뉴
+         * @description moa: 사용자 셸 메뉴 (대상 USER, specs/001-admin-menus FR-007). 로그인하지 않아도 부른다. 공개 범위가 PUBLIC이면 모두가, MEMBER면 로그인한 사용자만 본다
+         */
+        get: operations["user"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/menus/me": {
         parameters: {
             query?: never;
@@ -453,7 +987,7 @@ export interface paths {
         };
         /**
          * 내 메뉴
-         * @description 사용 중이고 내 권한으로 볼 수 있는 메뉴 트리 (2단계). 권한 키가 없는 메뉴는 모두가 본다. ADMIN은 모두 본다. 보이는 하위 메뉴가 없는 그룹은 빠진다
+         * @description 사용 중이고 내 권한으로 볼 수 있는 관리 메뉴 트리 (2단계, moa: 대상 ADMIN만). 메뉴가 가리키는 연결 화면의 권한으로 거른다. ADMIN은 모두 본다. 보이는 하위 메뉴가 없는 묶음 메뉴는 빠진다
          */
         get: operations["me_1"];
         put?: never;
@@ -473,9 +1007,69 @@ export interface paths {
         };
         /**
          * 그룹의 코드 목록
-         * @description 선택 상자 등에 쓴다. includeDisabled=true면 사용 안 함 코드도 enabled=false로 준다 (예전 데이터의 코드 이름을 보일 때). 지운 코드는 주지 않는다. 그룹이 없으면 R001
+         * @description 선택 상자 등에 쓴다. includeDisabled=true면 사용 안 함 코드도 enabled=false로 준다 (예전 데이터의 코드 이름을 보일 때). 그룹이 없으면 R001. moa: 그룹이 꺼져 있으면 빈 목록이다 (includeDisabled=true면 그대로 준다, specs/004-admin-codes FR-008)
          */
         get: operations["getCodes_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/screens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 연결 화면 목록
+         * @description 메뉴에 걸 수 있는 화면. 관리 연결 화면 먼저, 그 안에서는 등록 순서
+         */
+        get: operations["getScreens"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/roles/permission-tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 권한 트리
+         * @description moa: 역할 창에서 권한을 고르는 관리 메뉴 트리(꺼진 메뉴 포함)와 메뉴에 없는 관리 연결 화면 (specs/003-admin-roles FR-004)
+         */
+        get: operations["getPermissionTree"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/purge-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 파기 이력 목록
+         * @description 최신순. 조건(target, from, to)은 모두 선택이고 함께 주면 AND. from이 to보다 늦으면 V001
+         */
+        get: operations["getPage_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -515,7 +1109,27 @@ export interface paths {
          * 접속 이력 목록
          * @description 최신순. 조건(userId, loginId, success, from, to)은 모두 선택이고 함께 주면 AND. from이 to보다 늦으면 V001
          */
-        get: operations["getPage"];
+        get: operations["getPage_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/code-groups/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * moa: 공통코드 트리
+         * @description 그룹마다(그룹 순서, 같으면 만든 순서) 항목(사용 안 함 포함, 정렬 순서대로)
+         */
+        get: operations["getTree"];
         put?: never;
         post?: never;
         delete?: never;
@@ -551,6 +1165,19 @@ export interface components {
             /**
              * @description 이름
              * @example 홍길동
+             */
+            name: string;
+        };
+        /** @description 업무 역할 */
+        AccessRoleRef: {
+            /**
+             * Format: int64
+             * @description 역할 ID
+             */
+            id: number;
+            /**
+             * @description 이름
+             * @example 보안 담당
              */
             name: string;
         };
@@ -593,6 +1220,8 @@ export interface components {
              * @description 만든 시각 (시간대 포함)
              */
             createdAt: string;
+            /** @description moa: 받은 업무 역할 (보기만, specs/002-admin-users FR-006). 목록·하나 조회에서만 채우고 바꾸기 응답에서는 비어 있다. 관리자(ADMIN)는 모든 권한을 가져 비어 있다 */
+            accessRoles: components["schemas"]["AccessRoleRef"][];
         };
         /** @description 시스템 역할 바꾸기 요청 */
         UserRoleChangeRequest: {
@@ -653,6 +1282,55 @@ export interface components {
              */
             userCount: number;
         };
+        /** @description 공지 고치기. 상태와 게시 시각은 그대로다 */
+        NoticeModifyRequest: {
+            /**
+             * @description 제목
+             * @example 점검 안내
+             */
+            title: string;
+            /** @description 본문 HTML. 허용한 서식만 남기고 걸러 저장한다 (rich-text) */
+            content: string;
+        };
+        /** @description 공지 (관리) */
+        NoticeAdminResponse: {
+            /**
+             * Format: int64
+             * @description 공지 ID
+             */
+            id: number;
+            /** @description 제목 */
+            title: string;
+            /** @description 본문 HTML (저장 때 걸렀다) */
+            content: string;
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status: "DRAFT" | "PUBLISHED";
+            /** @description 상단 고정 */
+            pinned: boolean;
+            /**
+             * Format: date-time
+             * @description 게시 시각. 임시 저장이면 없다
+             */
+            publishedAt?: string;
+            /**
+             * Format: date-time
+             * @description 만든 시각
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description 고친 시각
+             */
+            updatedAt: string;
+        };
+        /** @description 공지 고정·풀기 */
+        NoticePinRequest: {
+            /** @description 상단 고정 */
+            pinned: boolean;
+        };
         /** @description 메뉴 바꾸기 요청 */
         MenuModifyRequest: {
             /**
@@ -666,10 +1344,10 @@ export interface components {
              */
             name: string;
             /**
-             * @description 화면 경로 (/로 시작). 그룹이면 비운다
-             * @example /admin/codes
+             * @description moa: 가리키는 연결 화면 키 (GET /api/v1/admin/screens). 비우면 묶음 메뉴(1단계만). 등록되지 않았거나 대상이 다르면 V001
+             * @example ADMIN_CODES
              */
-            path?: string;
+            screenKey?: string;
             /**
              * @description 아이콘 이름
              * @example list
@@ -684,10 +1362,42 @@ export interface components {
             /** @description 사용 여부. false면 내 메뉴에서 빠진다 */
             enabled: boolean;
             /**
-             * @description 볼 때 필요한 권한 키. 비우면 로그인한 사용자 모두가 본다. 등록되지 않은 키는 V001
+             * @description moa: 메뉴 대상 (ADMIN 관리 셸, USER 사용자 셸). 비우면 그대로 둔다. 1단계 메뉴를 바꾸면 하위 메뉴도 바뀌고, 하위 메뉴는 부모를 따른다
+             * @example ADMIN
+             * @enum {string}
+             */
+            audience?: "ADMIN" | "USER";
+            /**
+             * @description moa: 사용자 화면 메뉴의 공개 범위 (PUBLIC 모두, MEMBER 로그인한 사용자). 사용자 화면 메뉴는 필수, 로그인이 필요한 연결 화면은 MEMBER만(V001). 관리 메뉴·묶음 메뉴는 버린다
+             * @example PUBLIC
+             * @enum {string}
+             */
+            visibility?: "PUBLIC" | "MEMBER";
+        };
+        /** @description 메뉴가 가리키는 연결 화면 */
+        MenuScreen: {
+            /**
+             * @description 이름
+             * @example 코드 관리
+             */
+            name: string;
+            /**
+             * @description 화면 경로
+             * @example /admin/codes
+             */
+            path: string;
+            /**
+             * @description 관리 연결 화면의 권한 키. 사용자 연결 화면은 없다
              * @example CODE_MANAGE
              */
             permission?: string;
+            /**
+             * @description 관리 연결 화면의 권한 이름
+             * @example 공통코드 관리
+             */
+            permissionName?: string;
+            /** @description 로그인이 필요한가. 관리 연결 화면은 언제나 true */
+            signInRequired: boolean;
         };
         /** @description 메뉴 (관리) */
         MenuTreeResponse: {
@@ -707,11 +1417,6 @@ export interface components {
              */
             name: string;
             /**
-             * @description 화면 경로. 그룹이면 없다
-             * @example /admin/codes
-             */
-            path?: string;
-            /**
              * @description 아이콘 이름
              * @example list
              */
@@ -725,10 +1430,26 @@ export interface components {
             /** @description 사용 여부 */
             enabled: boolean;
             /**
-             * @description 볼 때 필요한 권한 키. 없으면 로그인한 사용자 모두
-             * @example CODE_MANAGE
+             * @description moa: 메뉴 대상 (ADMIN 관리 셸, USER 사용자 셸)
+             * @example ADMIN
+             * @enum {string}
              */
-            permission?: string;
+            audience: "ADMIN" | "USER";
+            /**
+             * @description moa: 가리키는 연결 화면 키. 묶음 메뉴면 없다
+             * @example ADMIN_CODES
+             */
+            screenKey?: string;
+            /** @description moa: 가리키는 연결 화면. 묶음 메뉴이거나 없는 연결 화면이면 없다 */
+            screen?: components["schemas"]["MenuScreen"];
+            /** @description moa: 연결 화면 키가 있는데 등록된 연결 화면이 없다 (코드에서 빠졌다). 사이드바에 보이지 않는다 */
+            missingScreen: boolean;
+            /**
+             * @description moa: 사용자 화면 메뉴의 공개 범위. 관리 메뉴·묶음 메뉴는 없다
+             * @example PUBLIC
+             * @enum {string}
+             */
+            visibility?: "PUBLIC" | "MEMBER";
             /** @description 하위 메뉴 */
             children: components["schemas"]["MenuTreeResponse"][];
         };
@@ -751,6 +1472,48 @@ export interface components {
              */
             sortOrder: number;
         };
+        /** @description moa: 여러 메뉴의 사용 여부 한꺼번에 바꾸기 요청 */
+        MenuEnabledRequest: {
+            /**
+             * @description 메뉴 ID들
+             * @example [
+             *       3,
+             *       4
+             *     ]
+             */
+            ids: number[];
+            /** @description 사용 여부 */
+            enabled: boolean;
+        };
+        /** @description moa: 코드 그룹 바꾸기 요청. 그룹 코드는 바꾸지 않는다 */
+        CodeGroupModifyRequest: {
+            /**
+             * @description 이름
+             * @example 이벤트 분류
+             */
+            name: string;
+            /** @description 설명 */
+            description?: string;
+            /** @description 사용 여부. false면 화면용 목록이 빈 목록이다 */
+            enabled: boolean;
+        };
+        /** @description 코드 그룹 (moa: specs/004-admin-codes FR-004·FR-008) */
+        CodeGroupListResponse: {
+            /**
+             * @description 그룹 코드
+             * @example GAME_GENRE
+             */
+            groupCode: string;
+            /**
+             * @description 이름
+             * @example 게임 장르
+             */
+            name: string;
+            /** @description 설명 */
+            description?: string;
+            /** @description moa: 사용 여부. false면 화면용 목록이 빈 목록이다 */
+            enabled: boolean;
+        };
         /** @description 코드 바꾸기 요청. 코드 값 자체는 바꾸지 않는다 */
         CodeModifyRequest: {
             /**
@@ -760,10 +1523,10 @@ export interface components {
             name: string;
             /**
              * Format: int32
-             * @description 정렬 순서
+             * @description 정렬 순서. moa: 비우면 그대로
              * @example 10
              */
-            sortOrder: number;
+            sortOrder?: number;
             /** @description 사용 여부. false면 화면 목록에서 빠진다 */
             enabled: boolean;
         };
@@ -787,6 +1550,72 @@ export interface components {
             sortOrder: number;
             /** @description 사용 여부 */
             enabled: boolean;
+        };
+        /** @description moa: 그룹 안 순서 바꾸기 한 줄 */
+        CodeOrderRequest: {
+            /**
+             * @description 코드
+             * @example 001
+             */
+            code: string;
+            /**
+             * Format: int32
+             * @description 정렬 순서
+             * @example 0
+             */
+            sortOrder: number;
+        };
+        /** @description moa: 한 그룹 안 여러 항목의 사용 여부 한꺼번에 바꾸기 요청 */
+        CodeEnabledRequest: {
+            /**
+             * @description 코드들
+             * @example [
+             *       "001",
+             *       "002"
+             *     ]
+             */
+            codes: string[];
+            /** @description 사용 여부 */
+            enabled: boolean;
+        };
+        /** @description moa: 그룹 순서 바꾸기 한 줄 (specs/004-admin-codes FR-005) */
+        CodeGroupOrderRequest: {
+            /**
+             * @description 그룹 코드
+             * @example GAME_GENRE
+             */
+            groupCode: string;
+            /**
+             * Format: int32
+             * @description 그룹 순서
+             * @example 0
+             */
+            sortOrder: number;
+        };
+        /** @description 올린 본문 이미지 */
+        RichTextImageUploadResponse: {
+            /**
+             * @description 이미지 ID
+             * @example 3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c
+             */
+            id: string;
+            /**
+             * @description 본문 img src에 그대로 넣을 주소
+             * @example /api/v1/rich-text/images/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c
+             */
+            url: string;
+        };
+        /** @description 구독 키 (base64url) */
+        Keys: {
+            p256dh: string;
+            auth: string;
+        };
+        /** @description 이 브라우저의 웹 푸시 구독 (PushSubscription.toJSON()) */
+        PushSubscriptionRequest: {
+            /** @description 브라우저 푸시 서비스 주소 */
+            endpoint: string;
+            /** @description 구독 키 */
+            keys: components["schemas"]["Keys"];
         };
         /** @description 오류 응답 */
         ErrorResponse: {
@@ -923,6 +1752,42 @@ export interface components {
              */
             permissions: string[];
         };
+        /** @description moa: 구성원으로 더하거나 뺄 사용자 ID 목록 */
+        RoleMembersRequest: {
+            /**
+             * @description 사용자 ID들
+             * @example [
+             *       10,
+             *       11
+             *     ]
+             */
+            userIds: number[];
+        };
+        /** @description moa: 역할 ID 목록 (한꺼번에 지우기) */
+        RoleIdsRequest: {
+            /**
+             * @description 역할 ID들
+             * @example [
+             *       1,
+             *       2
+             *     ]
+             */
+            ids: number[];
+        };
+        /** @description 공지 만들기 */
+        NoticeCreateRequest: {
+            /**
+             * @description 제목
+             * @example 점검 안내
+             */
+            title: string;
+            /** @description 본문 HTML. 허용한 서식만 남기고 걸러 저장한다 (rich-text) */
+            content: string;
+            /** @description 상단 고정 */
+            pinned: boolean;
+            /** @description true면 바로 게시, false면 임시 저장 */
+            publish: boolean;
+        };
         /** @description 메뉴 만들기 요청 */
         MenuCreateRequest: {
             /**
@@ -936,10 +1801,10 @@ export interface components {
              */
             name: string;
             /**
-             * @description 화면 경로 (/로 시작). 그룹이면 비운다
-             * @example /admin/codes
+             * @description moa: 가리키는 연결 화면 키 (GET /api/v1/admin/screens). 비우면 묶음 메뉴(1단계만). 등록되지 않았거나 대상이 다르면 V001
+             * @example ADMIN_CODES
              */
-            path?: string;
+            screenKey?: string;
             /**
              * @description 아이콘 이름
              * @example list
@@ -952,36 +1817,39 @@ export interface components {
              */
             sortOrder: number;
             /**
-             * @description 볼 때 필요한 권한 키. 비우면 로그인한 사용자 모두가 본다. 등록되지 않은 키는 V001
-             * @example CODE_MANAGE
+             * @description moa: 메뉴 대상 (ADMIN 관리 셸, USER 사용자 셸). 비우면 ADMIN. 하위 메뉴는 보낸 값과 상관없이 부모를 따른다
+             * @example ADMIN
+             * @enum {string}
              */
-            permission?: string;
+            audience?: "ADMIN" | "USER";
+            /**
+             * @description moa: 사용자 화면 메뉴의 공개 범위 (PUBLIC 모두, MEMBER 로그인한 사용자). 사용자 화면 메뉴는 필수, 로그인이 필요한 연결 화면은 MEMBER만(V001). 관리 메뉴·묶음 메뉴는 버린다
+             * @example PUBLIC
+             * @enum {string}
+             */
+            visibility?: "PUBLIC" | "MEMBER";
         };
-        /** @description 코드 그룹 만들기 요청 */
+        /** @description moa: 메뉴 ID 목록 (한꺼번에 지우기) */
+        MenuIdsRequest: {
+            /**
+             * @description 메뉴 ID들
+             * @example [
+             *       3,
+             *       4
+             *     ]
+             */
+            ids: number[];
+        };
+        /** @description 코드 그룹 만들기 요청. moa: 사용 중으로 만든다 */
         CodeGroupCreateRequest: {
             /**
-             * @description 그룹 코드. 영문 대문자·숫자·밑줄
-             * @example ORDER_STATUS
+             * @description 그룹 코드. 영문 대문자로 시작, 대문자·숫자·밑줄. 만든 뒤 바꾸지 않는다
+             * @example EVENT_TYPE
              */
             groupCode: string;
             /**
              * @description 이름
-             * @example 주문 상태
-             */
-            name: string;
-            /** @description 설명 */
-            description?: string;
-        };
-        /** @description 코드 그룹 */
-        CodeGroupListResponse: {
-            /**
-             * @description 그룹 코드
-             * @example ORDER_STATUS
-             */
-            groupCode: string;
-            /**
-             * @description 이름
-             * @example 주문 상태
+             * @example 이벤트 분류
              */
             name: string;
             /** @description 설명 */
@@ -990,7 +1858,7 @@ export interface components {
         /** @description 코드 만들기 요청 */
         CodeCreateRequest: {
             /**
-             * @description 코드. 영문 대문자·숫자·밑줄
+             * @description 코드. 영문 대문자·숫자·밑줄. moa: 필수(자동 순번 없음, specs/004-admin-codes FR-006)
              * @example PAID
              */
             code: string;
@@ -1001,10 +1869,10 @@ export interface components {
             name: string;
             /**
              * Format: int32
-             * @description 정렬 순서. 작을수록 앞
+             * @description 정렬 순서. 작을수록 앞. moa: 비우면 그룹 맨 뒤
              * @example 10
              */
-            sortOrder: number;
+            sortOrder?: number;
         };
         /** @description 사용자 */
         UserGetResponse: {
@@ -1035,6 +1903,142 @@ export interface components {
         };
         MyPermissionResponse: {
             permissions: string[];
+        };
+        /** @description 개인 알림 */
+        NotificationResponse: {
+            /**
+             * Format: int64
+             * @description 알림 ID
+             */
+            id: number;
+            /**
+             * @description 종류
+             * @enum {string}
+             */
+            type: "SYSTEM";
+            /** @description 제목 */
+            title: string;
+            /**
+             * @description 관련 화면 경로
+             * @example /notices/7
+             */
+            link: string;
+            /**
+             * Format: date-time
+             * @description 만든 시각
+             */
+            createdAt: string;
+            /** @description 읽었나 */
+            read: boolean;
+        };
+        /** @description 페이징 응답 */
+        PageResponseNotificationResponse: {
+            /** @description 항목 */
+            content: components["schemas"]["NotificationResponse"][];
+            /**
+             * Format: int32
+             * @description 페이지 번호 (0부터)
+             */
+            page: number;
+            /**
+             * Format: int32
+             * @description 페이지 크기
+             */
+            size: number;
+            /**
+             * Format: int64
+             * @description 전체 항목 수
+             */
+            totalElements: number;
+            /**
+             * Format: int32
+             * @description 전체 페이지 수
+             */
+            totalPages: number;
+        };
+        /** @description 안 읽은 개인 알림 수 */
+        UnreadCountResponse: {
+            /**
+             * Format: int64
+             * @description 안 읽은 수
+             */
+            count: number;
+        };
+        /** @description 브라우저 알림(웹 푸시) VAPID 공개 키 */
+        PushPublicKeyResponse: {
+            /** @description base64url 공개 키. 서버에서 웹 푸시를 끄면 없다 */
+            publicKey?: string;
+        };
+        /** @description 공지 목록 항목 */
+        NoticeListResponse: {
+            /**
+             * Format: int64
+             * @description 공지 ID
+             */
+            id: number;
+            /**
+             * Format: int64
+             * @description 게시 순번. 처음 게시한 공지가 1, 지운 공지는 세지 않는다
+             */
+            number: number;
+            /** @description 제목 */
+            title: string;
+            /** @description 상단 고정. 화면은 번호 대신 고정 표시를 보인다 */
+            pinned: boolean;
+            /**
+             * Format: date-time
+             * @description 게시 시각
+             */
+            publishedAt: string;
+        };
+        /** @description 페이징 응답 */
+        PageResponseNoticeListResponse: {
+            /** @description 항목 */
+            content: components["schemas"]["NoticeListResponse"][];
+            /**
+             * Format: int32
+             * @description 페이지 번호 (0부터)
+             */
+            page: number;
+            /**
+             * Format: int32
+             * @description 페이지 크기
+             */
+            size: number;
+            /**
+             * Format: int64
+             * @description 전체 항목 수
+             */
+            totalElements: number;
+            /**
+             * Format: int32
+             * @description 전체 페이지 수
+             */
+            totalPages: number;
+        };
+        /** @description 공지 */
+        NoticeResponse: {
+            /**
+             * Format: int64
+             * @description 공지 ID
+             */
+            id: number;
+            /** @description 제목 */
+            title: string;
+            /** @description 본문 HTML (저장 때 걸렀다) */
+            content: string;
+            /** @description 상단 고정 */
+            pinned: boolean;
+            /**
+             * Format: date-time
+             * @description 게시 시각
+             */
+            publishedAt: string;
+        };
+        /** @description 새 공지 여부 */
+        NoticeNewResponse: {
+            /** @description 공지 목록을 마지막으로 연 뒤 게시된 공지가 있다 */
+            hasNew: boolean;
         };
         /** @description 내 메뉴 */
         MyMenuResponse: {
@@ -1102,6 +2106,231 @@ export interface components {
              */
             totalPages: number;
         };
+        /** @description 권한 */
+        ScreenPermission: {
+            /**
+             * @description 권한 키
+             * @example CODE_MANAGE
+             */
+            key: string;
+            /**
+             * @description 권한 이름
+             * @example 공통코드 관리
+             */
+            name: string;
+        };
+        /** @description 연결 화면 (메뉴에 걸 수 있는 화면) */
+        ScreenResponse: {
+            /**
+             * @description 연결 화면 키
+             * @example ADMIN_CODES
+             */
+            key: string;
+            /**
+             * @description 이름
+             * @example 코드 관리
+             */
+            name: string;
+            /**
+             * @description 화면 경로
+             * @example /admin/codes
+             */
+            path: string;
+            /**
+             * @description 대상 (ADMIN 관리 셸, USER 사용자 셸)
+             * @example ADMIN
+             * @enum {string}
+             */
+            audience: "ADMIN" | "USER";
+            /** @description 관리 연결 화면의 권한. 사용자 연결 화면은 없다 */
+            permission?: components["schemas"]["ScreenPermission"];
+            /** @description 로그인이 필요한가. 관리 연결 화면은 언제나 true */
+            signInRequired: boolean;
+        };
+        /** @description 페이징 응답 */
+        PageResponseRoleMemberResponse: {
+            /** @description 항목 */
+            content: components["schemas"]["RoleMemberResponse"][];
+            /**
+             * Format: int32
+             * @description 페이지 번호 (0부터)
+             */
+            page: number;
+            /**
+             * Format: int32
+             * @description 페이지 크기
+             */
+            size: number;
+            /**
+             * Format: int64
+             * @description 전체 항목 수
+             */
+            totalElements: number;
+            /**
+             * Format: int32
+             * @description 전체 페이지 수
+             */
+            totalPages: number;
+        };
+        /** @description moa: 역할 드로어 구성원 탭의 사용자 (specs/003-admin-roles FR-006) */
+        RoleMemberResponse: {
+            /**
+             * Format: int64
+             * @description 사용자 ID
+             */
+            id: number;
+            /**
+             * @description 아이디
+             * @example operator
+             */
+            loginId: string;
+            /**
+             * @description 이름
+             * @example 김운영
+             */
+            name: string;
+            /**
+             * @description 시스템 역할. ADMIN은 업무 역할을 받지 않는다
+             * @example USER
+             * @enum {string}
+             */
+            role: "USER" | "ADMIN";
+            /** @description 이 역할의 구성원인가 */
+            member: boolean;
+        };
+        /** @description 관리 메뉴 */
+        Node: {
+            /**
+             * Format: int64
+             * @description 메뉴 ID
+             */
+            menuId: number;
+            /**
+             * @description 이름
+             * @example 코드 관리
+             */
+            name: string;
+            /** @description 사용 여부 */
+            enabled: boolean;
+            /** @description 화면 메뉴의 권한. 묶음 메뉴는 없다 */
+            permission?: components["schemas"]["PermissionRef"];
+            /** @description 묶음 메뉴의 하위 메뉴 */
+            children: components["schemas"]["Node"][];
+        };
+        /** @description 권한 */
+        PermissionRef: {
+            /**
+             * @description 권한 키
+             * @example CODE_MANAGE
+             */
+            key: string;
+            /**
+             * @description 권한 이름
+             * @example 공통코드 관리
+             */
+            name: string;
+        };
+        /** @description moa: 역할 창에서 권한을 고르는 트리 (specs/003-admin-roles FR-004) */
+        PermissionTreeResponse: {
+            /** @description 관리 메뉴 트리. 메뉴 관리와 같은 순서·묶음이고 꺼진 메뉴도 들어 있다 */
+            menus: components["schemas"]["Node"][];
+            /** @description 어느 관리 메뉴도 가리키지 않는 관리 연결 화면 */
+            unlisted: components["schemas"]["Unlisted"][];
+        };
+        /** @description 메뉴에 없는 관리 연결 화면 */
+        Unlisted: {
+            /**
+             * @description 연결 화면 키
+             * @example ADMIN_CODES
+             */
+            screenKey: string;
+            /**
+             * @description 이름
+             * @example 코드 관리
+             */
+            name: string;
+            /** @description 권한 */
+            permission: components["schemas"]["PermissionRef"];
+        };
+        /** @description 파기 이력 검색 조건 */
+        PurgeLogSearchRequest: {
+            /**
+             * @description 대상 종류. 없으면 전체
+             * @enum {string}
+             */
+            target?: "LOGIN_HISTORY" | "NOTIFICATION" | "REFRESH_TOKEN" | "RICH_TEXT_IMAGE";
+            /**
+             * Format: date
+             * @description 시작일 (포함)
+             * @example 2026-11-01
+             */
+            from?: string;
+            /**
+             * Format: date
+             * @description 종료일 (포함, 그날 끝까지). from보다 이르면 V001
+             * @example 2026-11-30
+             */
+            to?: string;
+        };
+        /** @description 페이징 응답 */
+        PageResponsePurgeLogListResponse: {
+            /** @description 항목 */
+            content: components["schemas"]["PurgeLogListResponse"][];
+            /**
+             * Format: int32
+             * @description 페이지 번호 (0부터)
+             */
+            page: number;
+            /**
+             * Format: int32
+             * @description 페이지 크기
+             */
+            size: number;
+            /**
+             * Format: int64
+             * @description 전체 항목 수
+             */
+            totalElements: number;
+            /**
+             * Format: int32
+             * @description 전체 페이지 수
+             */
+            totalPages: number;
+        };
+        /** @description 파기 이력 */
+        PurgeLogListResponse: {
+            /**
+             * Format: int64
+             * @description 파기 이력 ID
+             */
+            id: number;
+            /**
+             * Format: date-time
+             * @description 파기 일시 (시간대 포함)
+             */
+            createdAt: string;
+            /**
+             * @description 대상 종류
+             * @enum {string}
+             */
+            target: "LOGIN_HISTORY" | "NOTIFICATION" | "REFRESH_TOKEN" | "RICH_TEXT_IMAGE";
+            /**
+             * @description 방법
+             * @enum {string}
+             */
+            method: "ROW_DELETE" | "COLUMN_ERASE";
+            /**
+             * Format: int32
+             * @description 건수
+             * @example 3
+             */
+            count: number;
+            /**
+             * @description 처리자
+             * @enum {string}
+             */
+            actor: "SCHEDULER" | "PERSON";
+        };
         /** @description 권한 (코드에 등록된 것) */
         PermissionResponse: {
             /**
@@ -1119,6 +2348,71 @@ export interface components {
              * @example 공통코드
              */
             group: string;
+        };
+        /** @description 공지 관리 검색 조건. 모두 선택 */
+        NoticeSearchRequest: {
+            /**
+             * @description 제목에 들어 있는 글자
+             * @example 점검
+             */
+            keyword?: string;
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status?: "DRAFT" | "PUBLISHED";
+        };
+        /** @description 공지 관리 목록 항목 */
+        NoticeAdminListResponse: {
+            /**
+             * Format: int64
+             * @description 공지 ID
+             */
+            id: number;
+            /** @description 제목 */
+            title: string;
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status: "DRAFT" | "PUBLISHED";
+            /** @description 상단 고정 */
+            pinned: boolean;
+            /**
+             * Format: date-time
+             * @description 게시 시각. 임시 저장이면 없다
+             */
+            publishedAt?: string;
+            /**
+             * Format: date-time
+             * @description 고친 시각
+             */
+            updatedAt: string;
+        };
+        /** @description 페이징 응답 */
+        PageResponseNoticeAdminListResponse: {
+            /** @description 항목 */
+            content: components["schemas"]["NoticeAdminListResponse"][];
+            /**
+             * Format: int32
+             * @description 페이지 번호 (0부터)
+             */
+            page: number;
+            /**
+             * Format: int32
+             * @description 페이지 크기
+             */
+            size: number;
+            /**
+             * Format: int64
+             * @description 전체 항목 수
+             */
+            totalElements: number;
+            /**
+             * Format: int32
+             * @description 전체 페이지 수
+             */
+            totalPages: number;
         };
         /** @description 접속 이력 검색 조건 */
         LoginHistorySearchRequest: {
@@ -1216,6 +2510,25 @@ export interface components {
              */
             totalPages: number;
         };
+        /** @description moa: 공통코드 트리 표의 그룹 하나 (specs/004-admin-codes FR-005) */
+        CodeGroupTreeResponse: {
+            /**
+             * @description 그룹 코드
+             * @example GAME_GENRE
+             */
+            groupCode: string;
+            /**
+             * @description 이름
+             * @example 게임 장르
+             */
+            name: string;
+            /** @description 설명 */
+            description?: string;
+            /** @description 사용 여부. false면 화면용 목록이 빈 목록이다 */
+            enabled: boolean;
+            /** @description 항목 (사용 안 함 포함, 정렬 순서대로) */
+            codes: components["schemas"]["CodeListResponse"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -1237,6 +2550,62 @@ export interface operations {
                 "application/json": components["schemas"]["PasswordChangeRequest"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    markSeen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -1495,7 +2864,101 @@ export interface operations {
             };
         };
     };
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NoticeAdminResponse"];
+                };
+            };
+        };
+    };
     modify_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeModifyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NoticeAdminResponse"];
+                };
+            };
+        };
+    };
+    delete_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    pin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticePinRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NoticeAdminResponse"];
+                };
+            };
+        };
+    };
+    modify_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1521,7 +2984,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -1563,6 +3026,54 @@ export interface operations {
             };
         };
     };
+    setEnabled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MenuEnabledRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    modifyGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeGroupModifyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CodeGroupListResponse"];
+                };
+            };
+        };
+    };
     modifyCode: {
         parameters: {
             query?: never;
@@ -1598,6 +3109,145 @@ export interface operations {
                 groupCode: string;
                 code: string;
             };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reorder_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeOrderRequest"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    setEnabled_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeEnabledRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reorderGroups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeGroupOrderRequest"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RichTextImageUploadResponse"];
+                };
+            };
+        };
+    };
+    subscribe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushSubscriptionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unsubscribe: {
+        parameters: {
+            query: {
+                endpoint: string;
+            };
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -1819,6 +3469,172 @@ export interface operations {
             };
         };
     };
+    getMembers: {
+        parameters: {
+            query?: {
+                keyword?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseRoleMemberResponse"];
+                };
+            };
+        };
+    };
+    addMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleMembersRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    removeMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleMembersRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleIdsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    search_1: {
+        parameters: {
+            query: {
+                request: components["schemas"]["NoticeSearchRequest"];
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseNoticeAdminListResponse"];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NoticeAdminResponse"];
+                };
+            };
+        };
+    };
+    publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NoticeAdminResponse"];
+                };
+            };
+        };
+    };
     getMenus: {
         parameters: {
             query?: never;
@@ -1839,7 +3655,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -1860,6 +3676,28 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["MenuTreeResponse"];
                 };
+            };
+        };
+    };
+    deleteAll_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MenuIdsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1995,6 +3833,176 @@ export interface operations {
             };
         };
     };
+    show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    getPage: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseNotificationResponse"];
+                };
+            };
+        };
+    };
+    unreadCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UnreadCountResponse"];
+                };
+            };
+        };
+    };
+    pushPublicKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PushPublicKeyResponse"];
+                };
+            };
+        };
+    };
+    getPage_1: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseNoticeListResponse"];
+                };
+            };
+        };
+    };
+    get_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NoticeResponse"];
+                };
+            };
+        };
+    };
+    hasNew: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NoticeNewResponse"];
+                };
+            };
+        };
+    };
+    user: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MyMenuResponse"][];
+                };
+            };
+        };
+    };
     me_1: {
         parameters: {
             query?: never;
@@ -2039,6 +4047,72 @@ export interface operations {
             };
         };
     };
+    getScreens: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ScreenResponse"][];
+                };
+            };
+        };
+    };
+    getPermissionTree: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PermissionTreeResponse"];
+                };
+            };
+        };
+    };
+    getPage_2: {
+        parameters: {
+            query: {
+                search: components["schemas"]["PurgeLogSearchRequest"];
+                /** @description 페이지 (0부터) */
+                page?: number;
+                /** @description 페이지 크기 */
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponsePurgeLogListResponse"];
+                };
+            };
+        };
+    };
     getPermissions: {
         parameters: {
             query?: never;
@@ -2059,7 +4133,7 @@ export interface operations {
             };
         };
     };
-    getPage: {
+    getPage_3: {
         parameters: {
             query: {
                 search: components["schemas"]["LoginHistorySearchRequest"];
@@ -2081,6 +4155,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PageResponseLoginHistoryListResponse"];
+                };
+            };
+        };
+    };
+    getTree: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CodeGroupTreeResponse"][];
                 };
             };
         };

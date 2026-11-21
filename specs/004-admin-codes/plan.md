@@ -9,9 +9,11 @@
 코드 그룹·코드 관리와 화면용 목록은 키트(`springboot/v0.3.1` code 헬퍼, `web-next/v0.3.0` code 헬퍼)에 이미 있다. 마이그레이션에 코드 그룹 시드가 없어 처음에는 비어 있고(FR-001), 캐시도 켜져 있지 않다(FR-003).
 moa가 할 일은 "관리자가 코드 관리를 열면 FR-001 표의 그룹이 보인다"를 AC 테스트로 고정하는 것이다. 운영 코드와 마이그레이션은 바꾸지 않는다 ([research.md](./research.md) R1).
 
-**관리 화면 정리 (2026-11-15, FR-004~FR-007, US1)**: 그룹을 코드로 등록하고(`CodeGroupSource`, `code_groups` 표 삭제), 항목 코드 자동 순번, 트리 조회·순서·일괄 API를 더한다. 화면은 메뉴 관리와 같은 트리 표·드로어·일괄 처리로 다시 짠다. `001-admin-menus` Phase 11의 부품을 쓴다 ([research.md](./research.md) R5~R8). 구현 브랜치는 `feat/004-code-console`. 키트 code 헬퍼를 moa에서 먼저 고치고 키트로 옮긴다
+**관리 화면 정리 (2026-11-15, FR-004~FR-007, US1)**: 그룹을 코드로 등록하고(`CodeGroupSource`, `tb_code_group` 표 삭제), 항목 코드 자동 순번, 트리 조회·순서·일괄 API를 더한다. 화면은 메뉴 관리와 같은 트리 표·드로어·일괄 처리로 다시 짠다. `001-admin-menus` Phase 11의 부품을 쓴다 ([research.md](./research.md) R5~R8). 구현 브랜치는 `feat/004-code-console`. 키트 code 헬퍼를 moa에서 먼저 고치고 키트로 옮긴다
 
-**그룹 관리 (2026-11-18, FR-002·FR-004·FR-008, US1-AC1·AC6~AC10)**: 위의 "그룹을 코드로 등록"을 되돌린다. `code_groups`를 `used_by`·`system` 열과 함께 다시 만들고, 코드 등록(`CodeGroupSource` 등)을 지운다. 그룹 만들기·고치기·지우기 API를 두고 시스템 그룹은 지우지 못하게 막는다. 화면에 그룹 추가와 그룹 드로어, 잠금 표시를 더한다 ([research.md](./research.md) R9·R10). 구현 브랜치는 `feat/004-code-groups-on-screen`
+**그룹 관리 (2026-11-18, FR-002·FR-004·FR-008, US1-AC1·AC6~AC10)**: 위의 "그룹을 코드로 등록"을 되돌린다. `tb_code_group`를 `used_by`·`system` 열과 함께 다시 만들고, 코드 등록(`CodeGroupSource` 등)을 지운다. 그룹 만들기·고치기·지우기 API를 두고 시스템 그룹은 지우지 못하게 막는다. 화면에 그룹 추가와 그룹 드로어, 잠금 표시를 더한다 ([research.md](./research.md) R9·R10). 구현 브랜치는 `feat/004-code-groups-on-screen`
+
+**흔한 방식과 두 칸 화면 (2026-11-20, FR-002·FR-004·FR-005·FR-007~FR-009, US1)**: 시스템 그룹과 삭제를 없애고 그룹에 사용 여부를 둔다. 쓰는 곳은 설명으로 합친다. 화면은 좌 트리 · 우 상세 두 칸으로 바꾸고, 일괄 처리 줄 고정, 그룹 체크(항목 모두 고르기), 트리 안 그룹 추가, 상태 색, 코드 입력 거르기를 더한다. 좁은 폭은 드로어 ([research.md](./research.md) R11~R13). 구현 브랜치는 `feat/004-code-standard`
 
 ## Technical Context
 
@@ -19,7 +21,7 @@ moa가 할 일은 "관리자가 코드 관리를 열면 FR-001 표의 그룹이 
 
 **Primary Dependencies**: psw-dev-kit code 헬퍼 (`CodeApplication`, `ApiAdminCodeController`, `ApiCodeController`)
 
-**Storage**: MariaDB `code_groups`, `codes` (`V1_4__codes.sql`). `code_groups`는 2026-11-15에 지웠다가 2026-11-18에 `used_by`·`system` 열을 더해 다시 만든다 ([data-model.md](./data-model.md))
+**Storage**: MariaDB `tb_code_group`, `tb_code` (`V1_4__codes.sql`). `tb_code_group`는 2026-11-15에 지웠다가 2026-11-18에 다시 만들고, 2026-11-20에 `used_by`·`system`을 빼고 `enabled`를 더한다 ([data-model.md](./data-model.md)). 지금은 `V1__schema.sql`·`V2__seed.sql`에 합쳐져 있다 (2026-11-21)
 
 **Testing**: 인수 테스트 `AcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`)
 

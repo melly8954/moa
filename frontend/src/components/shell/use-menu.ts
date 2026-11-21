@@ -14,7 +14,8 @@ import type { MenuItem } from "./menu"
 //   moa: 관리 셸과 사용자 셸이 메뉴를 나눠 쓴다 (specs/001-admin-menus FR-005, research R5. 키트로 옮길 것)
 //   1) 관리 셸: 서버 메뉴 (/menus/me, 관리자가 메뉴 관리 화면에서 정한 것. 이름은 번역하지 않는다)
 //   2) 사용자 셸: 서버 사용자 메뉴 (/menus/user, 대상 USER. 로그인하지 않아도 부른다. FR-007)
-// 서버 메뉴는 이미 내 권한으로 걸러져 온다. 기준 데이터라 5분 동안 다시 묻지 않는다
+// moa: 관리 메뉴는 권한과 상관없이 모두 오고, 들어갈 수 없는 메뉴는 accessible: false다 (001 FR-002, 2026-11-22)
+// 기준 데이터라 5분 동안 다시 묻지 않는다
 export const MY_MENUS_QUERY_KEY = ["me", "menus"] as const
 export const USER_MENUS_QUERY_KEY = ["menus", "user"] as const
 
@@ -24,6 +25,8 @@ function fromServer(menus: MyMenu[]): MenuItem[] {
     label: m.name,
     href: m.path ?? undefined,
     icon: menuIcon(m.icon),
+    // accessible이 없으면(사용자 메뉴, 예전 응답) 잠그지 않는다
+    locked: m.accessible === false,
     children: m.children.length > 0 ? fromServer(m.children) : undefined,
   }))
 }

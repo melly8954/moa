@@ -15,13 +15,14 @@ import com.moa.api.application.v1.role.command.ModifyAccessRoleCommand;
 import com.moa.api.dto.menu.MenuAudience;
 import com.moa.api.dto.menu.MenuDto;
 import com.moa.api.dto.role.AccessRoleDto;
+import com.moa.api.dto.role.AccessRoleView;
+import com.moa.api.dto.role.GrantBlock;
 import com.moa.api.dto.role.PermissionTreeDto;
 import com.moa.api.dto.role.RoleMemberDto;
-import com.moa.api.program.ProgramRegistry;
+import com.moa.api.screen.ScreenRegistry;
 import com.moa.api.service.menu.MenuService;
 import com.moa.api.service.role.AccessRoleService;
 import com.moa.api.service.role.RoleUserService;
-import com.moa.api.service.user.SocialAccountService;
 import com.moa.api.service.user.UserService;
 import com.moa.common.audit.AuditProperties;
 import com.moa.common.security.AuthPrincipal;
@@ -32,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 역할·권한 관리 (선택 헬퍼 rbac). actor는 요청한 사용자다 (권한 상승 검사에 쓴다).
- * moa: 권한 트리, 사용자별 역할, 구성원 (specs/003-admin-roles FR-004~FR-008). 권한 트리는 menu 헬퍼의 메뉴와 프로그램을 읽는다.
+ * moa: 권한 트리, 사용자별 역할, 구성원 (specs/003-admin-roles FR-004~FR-008). 권한 트리는 menu 헬퍼의 메뉴와 연결 화면을 읽는다.
  */
 @Component
 @RequiredArgsConstructor
@@ -43,10 +44,8 @@ public class AccessRoleApplication {
 	private final UserService userService;
 	private final PermissionRegistry permissionRegistry;
 	private final MenuService menuService;
-	private final ProgramRegistry programRegistry;
+	private final ScreenRegistry screenRegistry;
 	private final AuditProperties auditProperties;
-	// moa: 소셜 회원에게 업무 역할을 주지 않는다 (specs/010-social-login FR-007, US1-AC6)
-	private final SocialAccountService socialAccountService;
 
 	/** 코드에 등록된 권한 전부 (역할에 묶을 수 있는 것) */
 	public List<PermissionDefinition> getPermissions() {
@@ -54,8 +53,8 @@ public class AccessRoleApplication {
 	}
 
 	/**
-	 * 역할 창에서 권한을 고르는 트리 (moa, FR-004). 관리 메뉴 트리(꺼진 메뉴 포함, 없는 프로그램을 가리키는 메뉴는 뺌)와
-	 * 어느 관리 메뉴도 가리키지 않는 관리 프로그램.
+	 * 역할 창에서 권한을 고르는 트리 (moa, FR-004). 관리 메뉴 트리(꺼진 메뉴 포함, 없는 연결 화면을 가리키는 메뉴는 뺌)와
+	 * 어느 관리 메뉴도 가리키지 않는 관리 연결 화면.
 	 */
 	@Transactional(readOnly = true)
 	public PermissionTreeDto getPermissionTree() {
@@ -64,41 +63,42 @@ public class AccessRoleApplication {
 			.toList();
 		Set<String> listed = new HashSet<>();
 		adminMenus.forEach(menu -> {
-			listed.add(menu.programKey());
-			menu.children().forEach(child -> listed.add(child.programKey()));
+			listed.add(menu.screenKey());
+			menu.children().forEach(child -> listed.add(child.screenKey()));
 		});
 		List<PermissionTreeDto.Node> nodes = adminMenus.stream()
 			.map(this::node)
 			.filter(Objects::nonNull)
 			.toList();
-		List<PermissionTreeDto.Unlisted> unlisted = programRegistry.of(MenuAudience.ADMIN).stream()
-			.filter(program -> !listed.contains(program.key()))
-			.map(program -> new PermissionTreeDto.Unlisted(program.key(), program.name(), program.permission(),
-				permissionName(program.permission())))
+		List<PermissionTreeDto.Unlisted> unlisted = screenRegistry.of(MenuAudience.ADMIN).stream()
+			.filter(screen -> !listed.contains(screen.key()))
+			.map(screen -> new PermissionTreeDto.Unlisted(screen.key(), screen.name(), screen.permission(),
+				permissionName(screen.permission())))
 			.toList();
 		return new PermissionTreeDto(nodes, unlisted);
 	}
 
+	/** moa: 최고 관리자 역할이 맨 앞. 이 사람이 다룰 수 있는지와 권한 이름을 붙인다 (specs/003-admin-roles research R18) */
 	@Transactional(readOnly = true)
-	public List<AccessRoleDto> getRoles() {
-		return accessRoleService.getAll();
+	public List<AccessRoleView> getRoles(AuthPrincipal actor) {
+		return accessRoleService.getAll().stream().map(role -> view(actor, role)).toList();
 	}
 
 	@Transactional(readOnly = true)
-	public AccessRoleDto getRole(Long id) {
-		return accessRoleService.get(id);
+	public AccessRoleView getRole(AuthPrincipal actor, Long id) {
+		return view(actor, accessRoleService.get(id));
 	}
 
 	@Transactional
-	public AccessRoleDto create(AuthPrincipal actor, CreateAccessRoleCommand command) {
-		return accessRoleService.create(actor, command.code(), command.name(), command.description(),
-			command.permissions());
+	public AccessRoleView create(AuthPrincipal actor, CreateAccessRoleCommand command) {
+		return view(actor, accessRoleService.create(actor, command.code(), command.name(), command.description(),
+			command.permissions()));
 	}
 
 	@Transactional
-	public AccessRoleDto modify(AuthPrincipal actor, ModifyAccessRoleCommand command) {
-		return accessRoleService.modify(actor, command.id(), command.name(), command.description(),
-			command.permissions());
+	public AccessRoleView modify(AuthPrincipal actor, ModifyAccessRoleCommand command) {
+		return view(actor, accessRoleService.modify(actor, command.id(), command.name(), command.description(),
+			command.permissions()));
 	}
 
 	@Transactional
@@ -108,21 +108,18 @@ public class AccessRoleApplication {
 
 	/** 없는 사용자면 R001 */
 	@Transactional(readOnly = true)
-	public List<AccessRoleDto> getRolesOfUser(Long userId) {
+	public List<AccessRoleView> getRolesOfUser(AuthPrincipal actor, Long userId) {
 		userService.find(userId);
-		return accessRoleService.getRolesOfUser(userId);
+		return accessRoleService.getRolesOfUser(userId).stream().map(role -> view(actor, role)).toList();
 	}
 
 	/**
-	 * 없는 사용자·역할이면 R001. moa: 대상이 ADMIN이면 B001 (specs/003-admin-roles Edge Cases),
-	 * 소셜 회원에게 역할을 주면 A011 (specs/010-social-login FR-007. 모두 빼는 것은 막지 않는다)
+	 * 없는 사용자·역할이면 R001. moa: 대상이 회원이면 B001, 마지막 최고 관리자를 빼면 B001 (specs/003-admin-roles FR-002·FR-010).
+	 * 사용자 관리 드로어도 이 API로 역할을 준다 (`002-admin-users` FR-005)
 	 */
 	@Transactional
 	public void replaceRolesOfUser(AuthPrincipal actor, Long userId, List<Long> roleIds) {
-		roleUserService.requireNotAdmin(userService.find(userId).role());
-		if (!roleIds.isEmpty()) {
-			socialAccountService.requireNoSocialMembers(List.of(userId));
-		}
+		roleUserService.requireAdminAccount(userService.find(userId).role());
 		accessRoleService.replaceRolesOfUser(actor, userId, roleIds);
 	}
 
@@ -138,15 +135,11 @@ public class AccessRoleApplication {
 		return roleUserService.getMembers(auditProperties.systemActorId(), roleId, keyword, pageable);
 	}
 
-	/**
-	 * 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, ADMIN이 섞이면 B001 (moa, FR-006),
-	 * 소셜 회원이 섞이면 A011 (specs/010-social-login FR-007). 하나라도 틀리면 아무도 더하지 않는다
-	 */
+	/** 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, ADMIN이 섞이면 B001 (moa, FR-006). 하나라도 틀리면 아무도 더하지 않는다 */
 	@Transactional
 	public void addMembers(AuthPrincipal actor, Long roleId, List<Long> userIds) {
 		accessRoleService.requireExists(roleId);
 		roleUserService.requireTargets(auditProperties.systemActorId(), userIds);
-		socialAccountService.requireNoSocialMembers(userIds);
 		accessRoleService.addMembers(actor, roleId, userIds);
 	}
 
@@ -158,9 +151,16 @@ public class AccessRoleApplication {
 		accessRoleService.removeMembers(actor, roleId, userIds);
 	}
 
-	/** 화면 메뉴는 프로그램의 권한, 묶음 메뉴는 하위 메뉴를 담는다. 없는 프로그램과 하위 메뉴 없는 묶음은 null */
+	private AccessRoleView view(AuthPrincipal actor, AccessRoleDto role) {
+		List<String> names = role.fixed() ? List.of()
+			: role.permissions().stream().map(this::permissionName).filter(Objects::nonNull).toList();
+		GrantBlock block = accessRoleService.blockReason(actor, role);
+		return new AccessRoleView(role, names, block == null, block);
+	}
+
+	/** 화면 메뉴는 연결 화면의 권한, 묶음 메뉴는 하위 메뉴를 담는다. 없는 연결 화면과 하위 메뉴 없는 묶음은 null */
 	private PermissionTreeDto.Node node(MenuDto menu) {
-		if (menu.programKey() == null) {
+		if (menu.screenKey() == null) {
 			List<PermissionTreeDto.Node> children = menu.children().stream()
 				.map(this::node)
 				.filter(Objects::nonNull)
@@ -168,10 +168,10 @@ public class AccessRoleApplication {
 			return children.isEmpty() ? null
 				: new PermissionTreeDto.Node(menu.id(), menu.name(), menu.enabled(), null, null, children);
 		}
-		if (menu.program() == null) {
+		if (menu.screen() == null) {
 			return null;
 		}
-		String permission = menu.program().permission();
+		String permission = menu.screen().permission();
 		return new PermissionTreeDto.Node(menu.id(), menu.name(), menu.enabled(), permission,
 			permissionName(permission), List.of());
 	}

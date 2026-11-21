@@ -3,9 +3,13 @@ package com.moa.common.helper.loginhistory;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.moa.common.purgelog.PersonalDataPurgedEvent;
+import com.moa.common.purgelog.PurgeTarget;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 public class LoginHistoryCleaner {
 
 	private final LoginHistoryRepository loginHistoryRepository;
+	private final ApplicationEventPublisher eventPublisher;
 
 	@Value("${app.login-history.retention-days:365}")
 	private int retentionDays;
@@ -29,5 +34,7 @@ public class LoginHistoryCleaner {
 	public void deleteExpired() {
 		int deleted = loginHistoryRepository.deleteCreatedBefore(LocalDateTime.now().minusDays(retentionDays));
 		log.info("보관 기간({}일)이 지난 접속 이력 {}건을 지웠습니다.", retentionDays, deleted);
+		// moa: 파기 이력 (specs/013-purge-log). 키트로 옮길 것
+		eventPublisher.publishEvent(PersonalDataPurgedEvent.byScheduler(PurgeTarget.LOGIN_HISTORY, deleted));
 	}
 }

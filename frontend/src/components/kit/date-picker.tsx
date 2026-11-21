@@ -14,11 +14,13 @@ import {
   fromCalendarDate,
   inRange,
   parseTypedDate,
+  matchingQuickRange,
   QUICK_RANGES,
   quickRange,
   toCalendarDate,
 } from "@/lib/date"
 import { cn } from "@/lib/utils"
+import { SegmentedButtons } from "./segmented-buttons"
 
 // 날짜 고르기: 입력칸에 직접 치거나(20261106, 2026.11.6도 된다) 달력 버튼으로 고른다
 // 값은 언제나 "YYYY-MM-DD" 문자열이고 비우면 "" (lib/date.ts). min·max 밖은 고를 수 없다
@@ -143,11 +145,16 @@ export function DatePicker({
   )
 }
 
-// 기간 고르기: 시작·끝 입력칸 둘과 달력 하나, 빠른 선택(오늘, 최근 7일, 최근 30일, 이번 달, 지난달)
+// 기간 고르기: 빠른 기간 단추(전체·오늘·7일·이번 달·3개월), 시작·끝 입력칸 둘, 달력 하나
+// moa: 빠른 기간을 달력 창 안에서 날짜 칸 앞 나눔 단추로 옮겼다. 단추 줄과 날짜 칸은 높이가 같다 (specs/011-list-screen FR-010·FR-011, 2026-11-21)
+//   지금 날짜가 어떤 단추의 기간과 같으면 그 단추가 골라진 모양이다. 좁으면 단추 줄이 날짜 칸 위 줄로 간다
 // 시작이 끝보다 늦으면 빨간 테두리로 보인다 (값은 그대로 넘긴다. 검사는 폼·검색이 한다)
+// moa: onSettle은 기간이 정해진 때만 부른다: 빠른 기간 단추, 날짜 칸을 떠나거나 엔터, 달력에서 끝 날짜까지 고른 때
+//   (달력에서 시작 날짜만 누른 때는 부르지 않는다). 검색 영역은 이때 바로 조회한다 (specs/011-list-screen FR-012)
 export function DateRangePicker({
   value,
   onChange,
+  onSettle,
   min,
   max,
   disabled,
@@ -158,6 +165,7 @@ export function DateRangePicker({
 }: BaseProps & {
   value: DateRange
   onChange: (value: DateRange) => void
+  onSettle?: (value: DateRange) => void
   // 입력칸 이름 (화면 낭독기). 기본은 "시작일"·"종료일"
   fromLabel?: string
   toLabel?: string
@@ -168,16 +176,29 @@ export function DateRangePicker({
   const reversed = value.from !== "" && value.to !== "" && value.from > value.to
   const from = toCalendarDate(value.from)
   const to = toCalendarDate(value.to)
+  const picked = matchingQuickRange(value)
+  const change = (next: DateRange, settled: boolean) => {
+    onChange(next)
+    if (settled) onSettle?.(next)
+  }
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-1", className)}>
+    <div className={cn("flex flex-wrap items-center gap-x-2 gap-y-1", className)}>
+      {/* 빠른 기간 나눔 단추. 날짜 칸(InputGroup h-8)과 같은 높이·테두리 */}
+      <SegmentedButtons
+        aria-label={t("quick")}
+        items={QUICK_RANGES.map((kind) => ({ value: kind, label: t(kind) }))}
+        value={picked}
+        onChange={(kind) => change(quickRange(kind), true)}
+        disabled={disabled}
+      />
       {/* 시작 ~ 끝은 한 줄로 붙여 둔다. 좁으면 달력 버튼만 다음 줄로 */}
       <div className="flex items-center gap-1">
         <InputGroup className="w-(--date-range-input-width)" data-disabled={disabled || undefined}>
           <DateTextInput
             aria-label={fromLabel ?? t("from")}
             value={value.from}
-            onCommit={(next) => onChange({ ...value, from: next })}
+            onCommit={(next) => change({ ...value, from: next }, true)}
             min={min}
             max={max}
             invalid={invalid || reversed}
@@ -191,7 +212,7 @@ export function DateRangePicker({
           <DateTextInput
             aria-label={toLabel ?? t("to")}
             value={value.to}
-            onCommit={(next) => onChange({ ...value, to: next })}
+            onCommit={(next) => change({ ...value, to: next }, true)}
             min={min}
             max={max}
             invalid={invalid || reversed}
@@ -205,30 +226,17 @@ export function DateRangePicker({
         >
           <CalendarDays />
         </PopoverTrigger>
-        <PopoverContent className="flex w-auto flex-col gap-2 p-2 sm:flex-row" align="end">
-          <div className="flex flex-wrap gap-1 sm:flex-col">
-            {QUICK_RANGES.map((kind) => (
-              <Button
-                key={kind}
-                variant="ghost"
-                size="sm"
-                className="justify-start"
-                onClick={() => {
-                  onChange(quickRange(kind))
-                  setOpen(false)
-                }}
-              >
-                {t(kind)}
-              </Button>
-            ))}
-          </div>
+        <PopoverContent className="w-auto p-2" align="end">
           <Calendar
             mode="range"
             locale={locale}
             selected={{ from, to }}
             defaultMonth={from ?? to}
             disabled={disabledDays(min, max)}
-            onSelect={(range) => onChange({ from: fromCalendarDate(range?.from), to: fromCalendarDate(range?.to) })}
+            onSelect={(range) => {
+              const next = { from: fromCalendarDate(range?.from), to: fromCalendarDate(range?.to) }
+              change(next, next.from === "" || next.to !== "")
+            }}
           />
         </PopoverContent>
       </Popover>

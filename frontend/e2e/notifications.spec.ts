@@ -130,6 +130,27 @@ test("US3-AC1 새 개인 알림이 오면 토스트가 뜨고 벨 숫자가 하�
   await expect(page.getByRole("button", { name: "알림, 안 읽은 알림 1개" }).first()).toBeVisible()
 })
 
+test("US3-AC4 연결 화면을 보고 있을 때 개인 알림이 오면 토스트 없이 벨 숫자만 하나 는다", async ({ page }) => {
+  let count = 0
+  const stomp = await mockStomp(page)
+  await mockSignedInApis(page, { unread: () => count })
+  await page.goto("/")
+  await expect(page.getByRole("button", { name: "알림", exact: true }).first()).toBeVisible()
+
+  count = 1
+  await stomp.send("/user/queue/notifications", {
+    type: "NOTIFICATION_CREATED",
+    id: 10,
+    notificationType: "SYSTEM",
+    title: "보고 있는 화면의 알림",
+    link: "/?from=notification",
+    createdAt: "2026-11-22T09:00:00+09:00",
+  })
+
+  await expect(page.getByRole("button", { name: "알림, 안 읽은 알림 1개" }).first()).toBeVisible()
+  await expect(page.getByText("보고 있는 화면의 알림")).toHaveCount(0)
+})
+
 test("US4-AC4 브라우저 알림 권한을 거부했으면 설정 화면에서 꺼져 있고 브라우저 설정 안내가 보인다 (설정 화면 가로 넘침·접근성)", async ({
   page,
 }) => {

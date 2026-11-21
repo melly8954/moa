@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "refresh_tokens")
+@Table(name = "tb_refresh_token")
 @HardDelete(reason = "만료·폐기된 토큰은 보관할 이유가 없어 주기적으로 지운다")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken extends BaseTimeEntity {

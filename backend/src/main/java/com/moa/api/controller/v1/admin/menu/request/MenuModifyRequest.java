@@ -16,8 +16,8 @@ public record MenuModifyRequest(
 	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "이름",
 		example = "코드 관리") @NotBlank @Size(max = 50) String name,
 	@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED,
-		description = "moa: 가리키는 프로그램 키 (GET /api/v1/admin/programs). 비우면 묶음 메뉴(1단계만). 등록되지 않았거나 대상이 다르면 V001",
-		example = "ADMIN_CODES") @Size(max = 50) String programKey,
+		description = "moa: 가리키는 연결 화면 키 (GET /api/v1/admin/screens). 비우면 묶음 메뉴(1단계만). 등록되지 않았거나 대상이 다르면 V001",
+		example = "ADMIN_CODES") @Size(max = 50) String screenKey,
 	@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "아이콘 이름",
 		example = "list") @Size(max = 50) String icon,
 	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "정렬 순서",
@@ -29,10 +29,10 @@ public record MenuModifyRequest(
 		example = "ADMIN") MenuAudience audience,
 	@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED,
 		description = "moa: 사용자 화면 메뉴의 공개 범위 (PUBLIC 모두, MEMBER 로그인한 사용자). "
-			+ "사용자 화면 메뉴는 필수, 로그인이 필요한 프로그램은 MEMBER만(V001). 관리 메뉴·묶음 메뉴는 버린다",
+			+ "사용자 화면 메뉴는 필수, 로그인이 필요한 연결 화면은 MEMBER만(V001). 관리 메뉴·묶음 메뉴는 버린다",
 		example = "PUBLIC") MenuVisibility visibility) {
 
 	public ModifyMenuCommand toCommand(Long id) {
-		return new ModifyMenuCommand(id, parentId, name, programKey, icon, sortOrder, enabled, audience, visibility);
+		return new ModifyMenuCommand(id, parentId, name, screenKey, icon, sortOrder, enabled, audience, visibility);
 	}
 }

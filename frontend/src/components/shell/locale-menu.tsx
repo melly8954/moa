@@ -21,14 +21,6 @@ export const HAS_LOCALE_CHOICE = LOCALES.length > 1
 // 고른 언어는 쿠키에 1년 두고, 화면을 서버에서 다시 그린다
 export function LocaleMenu({ trigger, showLabel = false }: { trigger: React.ReactElement; showLabel?: boolean }) {
   const t = useTranslations()
-  const locale = useLocale()
-  const router = useRouter()
-
-  const change = (value: string) => {
-    document.cookie = `${LOCALE_COOKIE}=${value}; path=/; max-age=31536000; samesite=lax`
-    router.refresh()
-  }
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={trigger}>
@@ -36,17 +28,31 @@ export function LocaleMenu({ trigger, showLabel = false }: { trigger: React.Reac
         <span className={showLabel ? undefined : "sr-only"}>{t("shell.language")}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>{t("shell.language")}</DropdownMenuLabel>
-          <DropdownMenuRadioGroup value={locale} onValueChange={(value) => change(value as string)}>
-            {LOCALES.map((value) => (
-              <DropdownMenuRadioItem key={value} value={value}>
-                {t(`locales.${value}`)}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuGroup>
+        <LocaleChoices />
       </DropdownMenuContent>
     </DropdownMenu>
+  )
+}
+
+// 언어 고르기 묶음. 다른 메뉴(계정 줄 톱니) 안에도 넣는다 (moa 001 FR-005, 2026-11-21)
+export function LocaleChoices() {
+  const t = useTranslations()
+  const locale = useLocale()
+  const router = useRouter()
+  const change = (value: string) => {
+    document.cookie = `${LOCALE_COOKIE}=${value}; path=/; max-age=31536000; samesite=lax`
+    router.refresh()
+  }
+  return (
+    <DropdownMenuGroup>
+      <DropdownMenuLabel>{t("shell.language")}</DropdownMenuLabel>
+      <DropdownMenuRadioGroup value={locale} onValueChange={(value) => change(value as string)}>
+        {LOCALES.map((value) => (
+          <DropdownMenuRadioItem key={value} value={value}>
+            {t(`locales.${value}`)}
+          </DropdownMenuRadioItem>
+        ))}
+      </DropdownMenuRadioGroup>
+    </DropdownMenuGroup>
   )
 }

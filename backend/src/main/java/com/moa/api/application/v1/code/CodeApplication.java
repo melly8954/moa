@@ -9,9 +9,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.moa.api.application.v1.code.command.CreateCodeCommand;
+import com.moa.api.application.v1.code.command.CreateCodeGroupCommand;
 import com.moa.api.application.v1.code.command.ModifyCodeCommand;
+import com.moa.api.application.v1.code.command.ModifyCodeGroupCommand;
 import com.moa.api.dto.code.CodeDto;
 import com.moa.api.dto.code.CodeGroupDto;
+import com.moa.api.dto.code.CodeGroupOrderDto;
 import com.moa.api.dto.code.CodeGroupTreeDto;
 import com.moa.api.dto.code.CodeOrderDto;
 import com.moa.api.service.code.CodeService;
@@ -39,6 +42,12 @@ public class CodeApplication {
 		return codeService.getCodes(groupCode, true);
 	}
 
+	/** moa: 꺼진 그룹의 화면용 목록은 빈 목록이다 (specs/004-admin-codes FR-008). 캐시하지 않는다 */
+	@Transactional(readOnly = true)
+	public boolean isGroupEnabled(String groupCode) {
+		return codeService.isGroupEnabled(groupCode);
+	}
+
 	@Transactional(readOnly = true)
 	public List<CodeDto> getAllCodes(String groupCode) {
 		return codeService.getCodes(groupCode, true);
@@ -49,10 +58,23 @@ public class CodeApplication {
 		return codeService.getGroups();
 	}
 
-	/** moa: 등록된 그룹마다 항목 (specs/004-admin-codes FR-005) */
+	/** moa: 그룹마다 항목 (specs/004-admin-codes FR-005) */
 	@Transactional(readOnly = true)
 	public List<CodeGroupTreeDto> getTree() {
 		return codeService.getTree();
+	}
+
+	/** moa: 관리자가 만드는 그룹 (FR-004) */
+	@Transactional
+	public CodeGroupDto createGroup(CreateCodeGroupCommand command) {
+		return codeService.createGroup(command.groupCode(), command.name(), command.description());
+	}
+
+	/** moa: 그룹 이름·설명·사용 여부 (FR-004·FR-008) */
+	@Transactional
+	public CodeGroupDto modifyGroup(ModifyCodeGroupCommand command) {
+		return codeService.modifyGroup(command.groupCode(), command.name(), command.description(),
+			command.enabled());
 	}
 
 	@Transactional
@@ -68,6 +90,7 @@ public class CodeApplication {
 			command.enabled());
 	}
 
+	/** moa: 사용 안 함 항목 지우기 (FR-008, 2026-11-21) */
 	@Transactional
 	@CacheEvict(value = CACHE, key = "#groupCode")
 	public void deleteCode(String groupCode, String code) {
@@ -81,11 +104,10 @@ public class CodeApplication {
 		codeService.setEnabled(groupCode, codes, enabled);
 	}
 
-	/** moa: 한 그룹 안 일괄 삭제 (FR-005) */
+	/** moa: 그룹 순서 (FR-005, 2026-11-21). 화면용 목록에는 영향이 없다 */
 	@Transactional
-	@CacheEvict(value = CACHE, key = "#groupCode")
-	public void deleteAll(String groupCode, Collection<String> codes) {
-		codeService.deleteAll(groupCode, codes, currentActor.id());
+	public void reorderGroups(List<CodeGroupOrderDto> orders) {
+		codeService.reorderGroups(orders);
 	}
 
 	/** moa: 한 그룹 안 순서 (FR-005) */

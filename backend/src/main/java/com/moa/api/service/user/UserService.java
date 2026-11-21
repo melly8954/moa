@@ -60,20 +60,15 @@ public class UserService {
 		return UserDto.from(user);
 	}
 
-	public boolean hasAdmin() {
-		return userReader.existsAdmin();
-	}
-
 	/**
-	 * 첫 관리자를 만든다. ADMIN이 이미 있으면 만들지 않는다. 만든 계정은 비밀번호 변경 요구 상태다.
+	 * 첫 관리자 계정(ADMIN)을 만든다. 만든 계정은 비밀번호 변경 요구 상태다.
+	 * moa: 건너뛸지(최고 관리자가 이미 있는지)와 최고 관리자 역할에 넣는 것은 UserApplication이 한다
+	 * (specs/002-admin-users FR-001, specs/003-admin-roles research R20)
 	 *
-	 * @return 만들었으면 true, ADMIN이 이미 있어 건너뛰었으면 false
+	 * @return 만든 계정 ID
 	 * @throws ServiceException 비밀번호가 8자보다 짧으면 V001, 같은 아이디의 계정이 있으면 R002
 	 */
-	public boolean bootstrapAdmin(String loginId, String temporaryPassword, String name) {
-		if (userReader.existsAdmin()) {
-			return false;
-		}
+	public Long bootstrapAdmin(String loginId, String temporaryPassword, String name) {
 		if (temporaryPassword.length() < 8) {
 			throw new ServiceException(ErrorCode.INVALID_INPUT, "첫 관리자 비밀번호는 8자 이상이어야 합니다.");
 		}
@@ -82,8 +77,7 @@ public class UserService {
 		}
 		User admin = new User(loginId, null, name == null || name.isBlank() ? "관리자" : name, Role.ADMIN);
 		admin.resetPassword(passwordEncoder.encode(temporaryPassword));
-		userWriter.save(admin);
-		return true;
+		return userWriter.save(admin).getId();
 	}
 
 	/**

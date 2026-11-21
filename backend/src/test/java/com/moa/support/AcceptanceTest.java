@@ -12,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 import com.moa.common.security.AuthPrincipal;
+import com.moa.common.security.Role;
 import com.moa.common.security.jwt.JwtTokenProvider;
 
 /**
@@ -40,6 +41,9 @@ public abstract class AcceptanceTest {
 	@Autowired
 	private DatabaseCleaner databaseCleaner;
 
+	@Autowired
+	private TestUsers supportUsers;
+
 	@AfterEach
 	void cleanDatabase() {
 		databaseCleaner.clean();
@@ -48,5 +52,22 @@ public abstract class AcceptanceTest {
 	/** Authorization 헤더 값. 로그인 API 없이 인증된 요청을 만든다 */
 	protected String bearer(Long userId, String... roles) {
 		return "Bearer " + jwtTokenProvider.createAccessToken(new AuthPrincipal(userId, Set.of(roles)));
+	}
+
+	/**
+	 * moa: 최고 관리자(id 2, admin)의 Authorization 헤더 값 (specs/003-admin-roles research R21). 계정과 최고 관리자 역할 구성원을 만든다.
+	 * ADMIN은 모든 권한이 아니라 관리자 계정이라, DB에 없는 계정의 bearer(2L, "ADMIN")은 권한이 없다
+	 */
+	protected String superAdmin() {
+		supportUsers.create(2L, "admin", "admin1234!", Role.ADMIN);
+		supportUsers.makeSuperAdmin(2L);
+		return bearer(2L, Role.ADMIN.name());
+	}
+
+	/** moa: 이 권한들만 묶은 역할을 받은 운영자(관리자 계정)의 Authorization 헤더 값 */
+	protected String operator(Long userId, String loginId, String... permissions) {
+		supportUsers.create(userId, loginId, "operator1234!", Role.ADMIN);
+		supportUsers.grant(userId, "OP_" + userId, permissions);
+		return bearer(userId, Role.ADMIN.name());
 	}
 }
