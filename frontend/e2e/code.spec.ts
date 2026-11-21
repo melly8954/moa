@@ -5,7 +5,7 @@ import { expectNoHorizontalOverflow, expectNoSeriousA11yViolations } from "./sup
 
 // 공통코드 (code 헬퍼). 백엔드 대신 API를 가로챈다
 // moa: 왼쪽 그룹 목록 · 오른쪽 고른 그룹의 머리와 항목 표다. 그룹 추가·설정은 드로어, 항목은 표 안에서 다룬다.
-// 그룹과 항목은 지우지 않고 사용 여부로 끈다. 항목 코드는 직접 적는다 (specs/004-admin-codes FR-004~FR-009, US1, 2026-11-21)
+// 그룹은 지우지 않고 사용 여부로 끄며, 항목은 사용 안 함일 때만 지운다. 항목 코드는 직접 적는다 (specs/004-admin-codes FR-004~FR-009, US1, 2026-11-21)
 
 const TREE = [
   {
@@ -32,6 +32,7 @@ const TREE = [
 type Sent = {
   create?: { url: string; body: unknown }
   modify?: { url: string; body: unknown }
+  remove?: string
   order?: unknown
   enabled?: { url: string; body: unknown }
   orderGroups?: unknown
@@ -63,8 +64,12 @@ async function mockCodes(page: Page, sent: Sent = {}, tree: unknown[] = TREE) {
       ? route.fulfill(conflict)
       : route.fulfill({ status: 201, json: { ...body, sortOrder: 3, enabled: true } })
   })
-  // 항목 고치기(이름·사용). 뒤에 등록한 order·enabled가 먼저 잡는다
+  // 항목 고치기(이름·사용)·지우기. 뒤에 등록한 order·enabled가 먼저 잡는다
   await page.route("**/api/v1/admin/code-groups/*/codes/*", (route) => {
+    if (route.request().method() === "DELETE") {
+      sent.remove = route.request().url()
+      return route.fulfill({ status: 204 })
+    }
     sent.modify = { url: route.request().url(), body: route.request().postDataJSON() }
     return route.fulfill({ json: { code: "X", name: "X", sortOrder: 0, enabled: true } })
   })
@@ -100,7 +105,7 @@ test("US1-AC1 왼쪽 그룹 목록에서 첫 그룹이 골라져 있고, 오른�
   await mockCodes(page)
   await page.goto("/admin/codes")
   await expect(page.getByRole("heading", { name: "코드 관리" })).toBeVisible()
-  await expect(page.getByText("지우지 않고 사용 안 함으로 꺼요.")).toBeVisible()
+  await expect(page.getByText("꺼진 항목만 지울 수 있어요.", { exact: false })).toBeVisible()
   // 그룹 목록: 이름, 그룹 코드, 항목 수. 첫 그룹이 골라져 있다
   await expect(groupButton(page, "게임 장르")).toHaveAttribute("aria-current", "true")
   await expect(groupButton(page, "게임 장르")).toContainText("GAME_GENRE")
@@ -111,8 +116,19 @@ test("US1-AC1 왼쪽 그룹 목록에서 첫 그룹이 골라져 있고, 오른�
   await expect(page.getByText("게임 등록 화면의 장르")).toBeVisible()
   await expect(page.getByRole("row", { name: /퍼즐/ }).getByRole("switch", { name: "퍼즐 사용" })).not.toBeChecked()
   await expect(page.getByRole("row", { name: /PUZZLE/ })).toBeVisible()
-  // 삭제는 어디에도 없다 (FR-008)
-  await expect(page.getByRole("button", { name: /삭제/ })).toHaveCount(0)
+  // 지우기 단추는 사용 안 함 항목에만 있다 (FR-008)
+  await expect(page.getByRole("button", { name: "퍼즐 지우기" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "FPS 지우기" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: /그룹.*(지우기|삭제)/ })).toHaveCount(0)
+  // 추가 줄 예시 글자는 그 그룹의 이름과 첫 항목이다
+  await expect(page.getByRole("textbox", { name: "코드", exact: true })).toHaveAttribute(
+    "placeholder",
+    "게임 장르 코드 (예: FPS)",
+  )
+  await expect(page.getByRole("textbox", { name: "이름", exact: true })).toHaveAttribute(
+    "placeholder",
+    "이름 (예: FPS)",
+  )
 
   const toolbar = page.getByRole("toolbar", { name: "고른 항목 처리" })
   await expect(toolbar.getByText("체크해서 한꺼번에 처리해요.")).toBeVisible()
@@ -209,6 +225,37 @@ test("US1-AC4 항목 둘을 체크해 한꺼번에 사용 안 함으로 보낸�
   await expect(page.getByRole("heading", { name: "신고 사유" })).toBeVisible()
   await expect(toolbar.getByText("체크해서 한꺼번에 처리해요.")).toBeVisible()
   await expect(page.getByRole("checkbox", { name: "욕설 고르기" })).not.toBeChecked()
+})
+
+test("FR-005 항목이 없는 그룹은 추가 줄에 적는 규칙을, 안내 줄에 뜻 있는 코드의 예를 보인다 @wide", async ({
+  page,
+}) => {
+  await mockCodes(page)
+  await page.goto("/admin/codes")
+  await groupButton(page, "빈 그룹").click()
+  await expect(page.getByText("예: 게임 장르라면 FPS, RPG", { exact: false })).toBeVisible()
+  await expect(page.getByRole("textbox", { name: "코드", exact: true })).toHaveAttribute(
+    "placeholder",
+    "빈 그룹 코드 (영문 대문자·숫자·_)",
+  )
+  await expect(page.getByRole("textbox", { name: "이름", exact: true })).toHaveAttribute("placeholder", "이름")
+})
+
+test("US1-AC11 사용 안 함 항목 줄의 지우기를 누르고 확인하면 그 항목을 지운다. 취소하면 보내지 않는다 @wide", async ({
+  page,
+}) => {
+  const sent: Sent = {}
+  await mockCodes(page, sent)
+  await page.goto("/admin/codes")
+  await page.getByRole("button", { name: "퍼즐 지우기" }).click()
+  const ask = page.getByRole("alertdialog", { name: "퍼즐 항목을 지울까요?" })
+  await expect(ask).toContainText("PUZZLE")
+  await ask.getByRole("button", { name: "취소" }).click()
+  expect(sent.remove).toBeUndefined()
+
+  await page.getByRole("button", { name: "퍼즐 지우기" }).click()
+  await page.getByRole("alertdialog").getByRole("button", { name: "지우기" }).click()
+  await expect.poll(() => sent.remove).toContain("/code-groups/GAME_GENRE/codes/PUZZLE")
 })
 
 test("US1-AC5 키보드로 항목을 옮기면 그 그룹의 순서를 한 번에 보낸다 @wide", async ({ page }) => {
