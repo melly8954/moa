@@ -6,18 +6,17 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
+import { type Column, DataTable } from "@/components/kit/data-table"
 import { QueryState } from "@/components/kit/query-state"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useErrorMessages } from "@/lib/error-messages"
-import type { Role } from "@/types/role"
-
-const SIZE = 20
+import type { PageSize } from "@/lib/list-search"
+import type { Role, RoleMember } from "@/types/role"
 
 // 역할 "구성원" (moa, specs/003-admin-roles FR-006, US5, research R13·R19)
 //   고르기 목록: 검색과 서버 쪽 나눔. 쪽은 칸 안 상태로 두고 주소에 두지 않는다
+//   표와 쪽 이동 줄은 키트 목록 표(DataTable)라 업무 목록과 같다: 기본 10개, 결과가 없어도 쪽 이동 줄·10줄 높이 (011-list-screen, R29)
 //   검색어가 없으면 구성원만, 있으면 관리자 계정에서 찾고 구성원인지 표시한다 (회원은 역할을 받지 않아 나오지 않는다)
 //   체크해서 "더하기"·"빼기"를 한꺼번에 한다. 다른 역할에서는 최고 관리자 계정을 체크할 수 없다 (모든 권한)
 //   내가 다룰 수 없는 역할(grantable false)은 보기만 한다
@@ -29,16 +28,15 @@ export function RoleMembers({ role }: { role: Role }) {
   const { describeError } = useErrorMessages()
   const [keyword, setKeyword] = useState("")
   const [searched, setSearched] = useState("")
-  const [page, setPage] = useState(0)
+  const [page, setPage] = useState(1)
+  const [size, setSize] = useState<PageSize>(10)
   const [selected, setSelected] = useState<number[]>([])
   const members = useQuery({
-    queryKey: ["admin", "roles", role.id, "members", { keyword: searched, page }],
-    queryFn: () => api.v1.role.members(role.id, { keyword: searched || undefined, page, size: SIZE }),
+    queryKey: ["admin", "roles", role.id, "members", { keyword: searched, page, size }],
+    queryFn: () => api.v1.role.members(role.id, { keyword: searched || undefined, page: page - 1, size }),
     placeholderData: keepPreviousData,
   })
   const blocked = (u: { superAdmin: boolean }) => !role.grantable || (!role.fixed && u.superAdmin)
-  const selectable = (members.data?.content ?? []).filter((u) => !blocked(u)).map((u) => u.id)
-  const allChecked = selectable.length > 0 && selectable.every((id) => selected.includes(id))
 
   const run = useMutation({
     mutationFn: ({ action }: { action: () => Promise<unknown>; done: string }) => action(),
@@ -61,9 +59,40 @@ export function RoleMembers({ role }: { role: Role }) {
 
   const search = (value: string) => {
     setSearched(value.trim())
-    setPage(0)
+    setPage(1)
     setSelected([])
   }
+  // 목록 표에 넘길 쪽 상태 (주소가 아닌 칸 안 상태). 쪽·쪽 크기가 바뀌면 고른 계정을 비운다 (고르기는 이 쪽 안에서만)
+  const listSearch = {
+    page,
+    size,
+    sort: undefined,
+    isFiltered: searched !== "",
+    reset: () => {
+      setKeyword("")
+      search("")
+    },
+    setPage: (next: number) => {
+      setPage(next)
+      setSelected([])
+    },
+    setSize: (next: PageSize) => {
+      setSize(next)
+      setPage(1)
+      setSelected([])
+    },
+    setSort: () => {},
+  }
+  const columns: Column<RoleMember>[] = [
+    { key: "loginId", header: t("loginId") },
+    { key: "name", header: t("name") },
+    {
+      key: "member",
+      header: t("memberStatus"),
+      className: "text-muted-foreground",
+      cell: (u) => (!role.fixed && u.superAdmin ? t("allPermissions") : u.member ? t("isMember") : t("notMember")),
+    },
+  ]
 
   if (role.fixed) {
     return (
@@ -142,80 +171,20 @@ export function RoleMembers({ role }: { role: Role }) {
           </Button>
         </div>
       )}
-      <QueryState
+      <DataTable
+        caption={t("membersTable")}
+        columns={columns}
         query={members}
-        isEmpty={(d) => d.content.length === 0}
+        search={listSearch}
+        rowKey={(u) => u.id}
         empty={t(searched ? "findEmpty" : "membersEmpty")}
-      >
-        {(data) => (
-          <>
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10">
-                      <Checkbox
-                        aria-label={t("selectAllPeople")}
-                        checked={allChecked}
-                        disabled={selectable.length === 0}
-                        onCheckedChange={(checked) =>
-                          setSelected(
-                            checked === true
-                              ? [...new Set([...selected, ...selectable])]
-                              : selected.filter((id) => !selectable.includes(id)),
-                          )
-                        }
-                      />
-                    </TableHead>
-                    <TableHead>{t("loginId")}</TableHead>
-                    <TableHead>{t("name")}</TableHead>
-                    <TableHead>{t("memberStatus")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.content.map((u) => (
-                    <TableRow key={u.id} data-state={selected.includes(u.id) ? "selected" : undefined}>
-                      <TableCell>
-                        <Checkbox
-                          aria-label={t("selectPerson", { loginId: u.loginId })}
-                          checked={selected.includes(u.id)}
-                          disabled={blocked(u)}
-                          onCheckedChange={(checked) =>
-                            setSelected(checked === true ? [...selected, u.id] : selected.filter((id) => id !== u.id))
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>{u.loginId}</TableCell>
-                      <TableCell>{u.name}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {!role.fixed && u.superAdmin ? t("allPermissions") : u.member ? t("isMember") : t("notMember")}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            {data.totalPages > 1 && (
-              <nav aria-label={t("memberPages")} className="flex items-center justify-center gap-2">
-                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
-                  {t("prevPage")}
-                </Button>
-                <span className="text-sm">
-                  {page + 1} / {data.totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page + 1 >= data.totalPages}
-                  onClick={() => setPage(page + 1)}
-                >
-                  {t("nextPage")}
-                </Button>
-              </nav>
-            )}
-          </>
-        )}
-      </QueryState>
+        selection={{
+          selected,
+          onChange: (ids) => setSelected(ids.map(Number)),
+          canSelect: (u) => !blocked(u),
+          rowLabel: (u) => u.loginId,
+        }}
+      />
     </div>
   )
 }
