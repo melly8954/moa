@@ -3,14 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
-import { type ReactNode, useState } from "react"
+import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
-import { ResponsivePanel as SideDrawer } from "@/components/kit/detail-panel"
 import { EnabledSwitch } from "@/components/kit/enabled-switch"
-import { useDrawerClose } from "@/components/kit/side-drawer"
+import { SideDrawer, useDrawerClose } from "@/components/kit/side-drawer"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -21,8 +20,9 @@ import { useErrorMessages } from "@/lib/error-messages"
 import { type CodeGroupInput, codeGroupSchema } from "@/lib/schemas/code"
 import type { CodeGroupTree } from "@/types/code"
 
-// 공통코드 그룹 패널 (moa, specs/004-admin-codes FR-004·FR-008·FR-009, US1-AC7·AC8·AC9). 그룹 행이나 트리 위 "추가"(소속 그룹 없음)로 연다
-//   만들 때: 소속 그룹(없음), 그룹 코드, 이름, 설명. 사용 중으로 트리 맨 뒤에 생긴다
+// 공통코드 그룹 드로어 (moa, specs/004-admin-codes FR-004·FR-005·FR-008·FR-009, US1-AC7·AC8·AC9·AC10)
+//   그룹 목록 위 "그룹 추가"나 그룹 머리의 "그룹 설정"으로 연다 (폭과 상관없이 드로어, 2026-11-21)
+//   만들 때: 그룹 코드, 이름, 설명. 사용 중으로 목록 맨 뒤에 생긴다
 //   고칠 때: 이름(아래 오른쪽에 사용 토글), 설명. 그룹 코드는 보기만 한다. 그룹은 지우지 않고 사용 안 함으로 끈다
 //   group이 있으면 수정, 없으면 추가
 const toGroupCode = (value: string) =>
@@ -34,14 +34,11 @@ const toGroupCode = (value: string) =>
 
 export function GroupDrawer({
   group,
-  parentField,
   open,
   onOpenChange,
   onSaved,
 }: {
   group?: CodeGroupTree
-  // 새로 만들 때 맨 위에 두는 "소속 그룹" 칸 (FR-005)
-  parentField?: ReactNode
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved: (groupCode: string) => Promise<unknown>
@@ -114,7 +111,6 @@ export function GroupDrawer({
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           )}
-          {!editing && parentField}
           <Controller
             name="groupCode"
             control={form.control}

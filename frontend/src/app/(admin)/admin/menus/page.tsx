@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ChevronDown, Plus } from "lucide-react"
+import { ChevronDown, Plus, ShieldCheck, User } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
@@ -151,13 +151,23 @@ export default function MenusPage() {
       <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:basis-0 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]">
         <div className="flex min-h-0 min-w-0 flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <Tabs value={audience} onValueChange={(value) => void changeAudience(value as MenuAudience)}>
-              <TabsList aria-label={t("audience")}>
-                <TabsTrigger value="ADMIN">{t("audienceAdmin")}</TabsTrigger>
-                <TabsTrigger value="USER">{t("audienceUser")}</TabsTrigger>
+            {/* 대상 나눔 단추: 트리 칸 폭을 채우고 아이콘을 붙인다 (FR-010, 2026-11-21) */}
+            <Tabs
+              value={audience}
+              onValueChange={(value) => void changeAudience(value as MenuAudience)}
+              className="min-w-0 flex-1"
+            >
+              <TabsList aria-label={t("audience")} className="grid w-full grid-cols-2">
+                <TabsTrigger value="ADMIN">
+                  <ShieldCheck aria-hidden="true" />
+                  {t("audienceAdmin")}
+                </TabsTrigger>
+                <TabsTrigger value="USER">
+                  <User aria-hidden="true" />
+                  {t("audienceUser")}
+                </TabsTrigger>
               </TabsList>
             </Tabs>
-            <span className="flex-1" />
             <Button size="sm" onClick={addMenu}>
               <Plus />
               {t("add")}

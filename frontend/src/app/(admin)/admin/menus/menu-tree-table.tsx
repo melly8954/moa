@@ -16,8 +16,9 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { FileText, Folder } from "lucide-react"
+import { ChevronDown, ChevronUp, FileText, Folder } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useState } from "react"
 import { DragHandle } from "@/components/kit/drag-handle"
 import { MenuIcon } from "@/components/menu/icons"
 import { openOnRowClick, ROW_CLICKABLE } from "@/components/kit/row-click"
@@ -36,6 +37,8 @@ import { isGroup, type MenuRow, rowsOf } from "./menu-order"
 //   메뉴명 앞에 메뉴의 아이콘(없으면 상위 메뉴는 폴더, 화면 메뉴는 문서). 사용 안 함은 회색(neutral), 빨강은 "없는 화면"에만 쓴다
 //   상세 칸에 열린 행(active)은 강조한다
 //   손잡이는 키보드로도 옮긴다 (스페이스로 집고 화살표로 옮기고 스페이스로 놓기)
+//   하위 메뉴가 있는 상위 메뉴는 메뉴명 칸 끝의 "N개" 단추로 접고 편다. 이 단추는 접기만 하고 상세를 열지 않는다 (2026-11-21)
+//   접힌 하위 메뉴는 그리지 않고 끌기 대상에서도 빠진다. 고른 상태는 그대로다
 export function MenuTreeTable({
   tree,
   selected,
@@ -56,12 +59,17 @@ export function MenuTreeTable({
   className?: string
 }) {
   const t = useTranslations("menuAdmin")
-  const rows = rowsOf(tree)
+  const allRows = rowsOf(tree)
+  // 접은 상위 메뉴 id. 처음에는 모두 펼친다
+  const [collapsed, setCollapsed] = useState<number[]>([])
+  const rows = allRows.filter((r) => r.depth === 0 || !collapsed.includes(r.menu.parentId ?? -1))
+  const toggleOpen = (id: number) =>
+    setCollapsed(collapsed.includes(id) ? collapsed.filter((c) => c !== id) : [...collapsed, id])
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
-  const allIds = rows.map((r) => r.menu.id)
+  const allIds = allRows.map((r) => r.menu.id)
   const allChecked = allIds.length > 0 && allIds.every((id) => selected.includes(id))
   const someChecked = !allChecked && allIds.some((id) => selected.includes(id))
 
@@ -109,7 +117,7 @@ export function MenuTreeTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            <SortableContext items={allIds} strategy={verticalListSortingStrategy}>
+            <SortableContext items={rows.map((r) => r.menu.id)} strategy={verticalListSortingStrategy}>
               {rows.map((row) => (
                 <SortableMenuRow
                   key={row.menu.id}
@@ -119,6 +127,8 @@ export function MenuTreeTable({
                   onOpen={() => onOpen(row.menu)}
                   disabled={disabled}
                   active={active === row.menu.id}
+                  open={!collapsed.includes(row.menu.id)}
+                  onToggleOpen={() => toggleOpen(row.menu.id)}
                 />
               ))}
             </SortableContext>
@@ -140,6 +150,8 @@ function SortableMenuRow({
   onOpen,
   disabled,
   active,
+  open,
+  onToggleOpen,
 }: {
   row: MenuRow
   checked: boolean
@@ -147,6 +159,9 @@ function SortableMenuRow({
   onOpen: () => void
   disabled: boolean
   active: boolean
+  // 하위 메뉴가 펼쳐져 있는가 (하위 메뉴가 있는 상위 메뉴만)
+  open: boolean
+  onToggleOpen: () => void
 }) {
   const t = useTranslations("menuAdmin")
   const { menu, depth } = row
@@ -181,7 +196,7 @@ function SortableMenuRow({
         />
       </TableCell>
       <TableCell>
-        <div className={cn("flex items-center gap-2", depth === 1 && "pl-6")}>
+        <div className={cn("flex min-w-0 items-center gap-2", depth === 1 && "pl-6")}>
           {/* 메뉴의 아이콘. 없으면 상위 메뉴는 폴더, 화면 메뉴는 문서 (FR-010, 2026-11-21) */}
           <MenuIcon
             name={menu.icon}
@@ -193,6 +208,26 @@ function SortableMenuRow({
             {menu.name}
           </button>
           {menu.missingScreen && <StatusText tone="negative">{t("missingScreen")}</StatusText>}
+          {/* 하위 메뉴 접기·펴기. 글자가 있는 단추라 상세 열기(행 누르기)와 나뉜다 (FR-010, 2026-11-21) */}
+          {depth === 0 && menu.children.length > 0 && (
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-label={t(open ? "collapseChildren" : "expandChildren", {
+                name: menu.name,
+                count: menu.children.length,
+              })}
+              className="ml-auto inline-flex shrink-0 items-center gap-0.5 rounded-full border px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+              onClick={onToggleOpen}
+            >
+              {t("childCount", { count: menu.children.length })}
+              {open ? (
+                <ChevronUp aria-hidden="true" className="size-3.5" />
+              ) : (
+                <ChevronDown aria-hidden="true" className="size-3.5" />
+              )}
+            </button>
+          )}
         </div>
       </TableCell>
       <TableCell>

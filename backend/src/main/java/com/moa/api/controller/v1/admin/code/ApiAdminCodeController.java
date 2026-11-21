@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.moa.api.application.v1.code.CodeApplication;
-import com.moa.api.controller.v1.admin.code.request.CodeBulkEnabledRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeCreateRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeEnabledRequest;
 import com.moa.api.controller.v1.admin.code.request.CodeGroupCreateRequest;
@@ -72,14 +71,6 @@ public class ApiAdminCodeController {
 	@PutMapping("/code-groups/order")
 	public ResponseEntity<Void> reorderGroups(@RequestBody @NotEmpty List<@Valid CodeGroupOrderRequest> request) {
 		codeApplication.reorderGroups(request.stream().map(CodeGroupOrderRequest::toDto).toList());
-		return ResponseEntity.noContent().build();
-	}
-
-	@Operation(summary = "moa: 그룹과 항목의 사용 여부 한꺼번에",
-		description = "여러 그룹에 걸쳐 그룹과 항목을 섞어 켜고 끈다. 하나라도 없으면 R001, 아무것도 바꾸지 않는다. 둘 다 비면 V001 (FR-005)")
-	@PutMapping("/code-groups/enabled")
-	public ResponseEntity<Void> setEnabledBulk(@Valid @RequestBody CodeBulkEnabledRequest request) {
-		codeApplication.setEnabled(request.groupCodesOrEmpty(), request.codeKeys(), request.enabled());
 		return ResponseEntity.noContent().build();
 	}
 

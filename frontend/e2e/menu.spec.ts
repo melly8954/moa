@@ -367,6 +367,24 @@ test("US5-AC1 왼쪽은 상위 메뉴 아래 하위 메뉴를 들여 쓴 트리�
   await expect(nameButton(page, "운영")).toHaveCount(0)
 })
 
+test("FR-010 상위 메뉴 행 끝의 개수 단추는 하위 메뉴를 접고 펴기만 하고 상세를 열지 않는다 @wide", async ({ page }) => {
+  await mock(page)
+  await page.goto("/admin/menus")
+  const toggle = page.getByRole("button", { name: "운영 하위 메뉴 2개 접기" })
+  await expect(toggle).toHaveAttribute("aria-expanded", "true")
+  await expect(toggle).toHaveText(/2개/)
+  await toggle.click()
+  await expect(nameButton(page, "코드")).toHaveCount(0)
+  await expect(detail(page, "메뉴 수정")).toHaveCount(0)
+  await page.getByRole("button", { name: "운영 하위 메뉴 2개 펼치기" }).click()
+  await expect(nameButton(page, "코드")).toBeVisible()
+  // 하위 메뉴가 없는 상위 메뉴(설정)와 화면 메뉴에는 개수 단추가 없다
+  await expect(page.getByRole("button", { name: /^설정 하위 메뉴/ })).toHaveCount(0)
+  // 행의 나머지를 누르면 상세가 열린다
+  await clickRowBlank(page, "운영")
+  await expect(detail(page, "메뉴 수정")).toBeVisible()
+})
+
 test("FR-011 머리 설명에 역할 관리로 가는 링크가 있다", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/menus")

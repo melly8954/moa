@@ -29,8 +29,8 @@ export type CodeGroupCreateRequest = {
 export type CodeGroupModifyRequest = { name: string; description?: string; enabled: boolean }
 
 export type CodeCreateRequest = {
-  // moa: 비우면 그룹 안의 자동 순번 (001, 002, …)
-  code?: string
+  // moa: 필수. 자동 순번은 없다 (specs/004-admin-codes FR-006, 2026-11-21)
+  code: string
   name: string
   // moa: 비우면 그룹 맨 뒤
   sortOrder?: number
@@ -44,9 +44,5 @@ export type CodeModifyRequest = {
 export type CodeOrder = { code: string; sortOrder: number }
 // moa: 그룹 순서 한 줄 (PUT /admin/code-groups/order, 2026-11-21)
 export type CodeGroupOrder = { groupCode: string; sortOrder: number }
-// moa: 그룹과 항목을 섞어 여러 그룹에 걸쳐 사용 여부 바꾸기 (PUT /admin/code-groups/enabled, 2026-11-21)
-export type CodeBulkEnabledRequest = {
-  groupCodes: string[]
-  codes: { groupCode: string; code: string }[]
-  enabled: boolean
-}
+// moa: 한 그룹 안 항목의 사용 여부 한꺼번에 (PUT /admin/code-groups/{g}/codes/enabled)
+export type CodeEnabledRequest = { codes: string[]; enabled: boolean }
