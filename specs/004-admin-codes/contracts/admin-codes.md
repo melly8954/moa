@@ -56,3 +56,16 @@
 | US1-AC7 | `POST /api/v1/admin/code-groups` (`groupCode`, `name`, `description`) | 201, `enabled` = true. 겹치면 409 `R002`. 형식이 틀리면 400 `V001` |
 | US1-AC8 | `PUT /api/v1/admin/code-groups/{g}` (`name`, `description`, `enabled`) | 200. `groupCode`는 그대로. `DELETE /api/v1/admin/code-groups/{g}`·`DELETE .../codes/{code}`는 405 |
 | US1-AC9 | `PUT /api/v1/admin/code-groups/{g}` (`enabled` false) | 200. `GET /api/v1/codes/{g}`는 200 빈 목록, `?includeDisabled=true`면 항목이 모두 온다. 다시 켜면 켜진 항목이 온다 |
+
+## 메뉴 관리와 같은 조작 (2026-11-21)
+
+그룹 행 체크는 그룹 자체를 고르고, 일괄 사용 여부는 그룹과 항목을 섞어 여러 그룹에 걸쳐 바꾼다. 그룹도 끌어서 순서를 바꾼다.
+
+| AC | 요청 | 기대 |
+|---|---|---|
+| US1-AC1 | `GET /api/v1/admin/code-groups/tree` | 200. 그룹은 순서(`sort_order`)대로, 같으면 만든 순서 |
+| US1-AC4 | `PUT /api/v1/admin/code-groups/enabled` (`groupCodes`: 한 그룹, `codes`: 다른 그룹의 `{groupCode, code}` 하나, `enabled` false) | 204. 그 그룹의 `GET /api/v1/codes/{g}`는 빈 목록, 그 항목은 자기 그룹의 화면용 목록에서 빠짐. 없는 그룹·코드가 섞이면 404 `R001`, 아무것도 안 바뀜. `groupCodes`·`codes`가 둘 다 비면 400 `V001` |
+| US1-AC5 | `PUT /api/v1/admin/code-groups/order` (`[{groupCode, sortOrder}]`) | 204. 트리가 그 순서. 없는 그룹이 섞이면 404 `R001`, 아무것도 안 바뀜 |
+| US1-AC7 | `POST /api/v1/admin/code-groups` | 201. 트리 맨 뒤 |
+
+- 한 그룹 안 항목만 바꾸던 `PUT /api/v1/admin/code-groups/{g}/codes/enabled`는 그대로 둔다(화면은 위 API를 쓴다)
