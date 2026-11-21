@@ -110,12 +110,12 @@
     "openRange": "기간 고르기",
     "from": "시작일",
     "to": "종료일",
+    "all": "전체",
     "today": "오늘",
     "last7Days": "7일",
     "thisMonth": "이번 달",
     "quick": "빠른 기간",
-    "last3Months": "3개월",
-    "lastYear": "1년"
+    "last3Months": "3개월"
   },
   "search": {
     "panel": "검색 조건",
