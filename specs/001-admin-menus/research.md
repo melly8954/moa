@@ -227,3 +227,22 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
   - US5-AC7: 이름을 고치고 다른 행을 누르면 묻고, 그만두면 고치던 값이 남는다
   - US5-AC8: 좁은 폭에서 드로어로 열린다
   - "묶음"·"프로그램" 문구를 찾던 기대(`menu.spec.ts`, 역할 관리 `role.spec.ts`)를 새 문구로 고친다(원칙 V)
+
+## R27. 관리 셸과 첫 화면을 계정 종류로 고른다 (FR-005·FR-006, 2026-11-21)
+
+- **Decision**:
+  - `components/shell/landing.ts` `landingPath`·`fetchLandingPath`: 내 정보(`GET /api/v1/users/me`의 `role`)가 `ADMIN`이면 `/admin`, `USER`면 `/`. 지금은 `/menus/me`에 관리 메뉴가 있으면 `/admin`이다. 부르는 곳(`sign-in/page.tsx`, `providers/auth-gate.tsx`)은 그대로 둔다
+  - `components/shell/account-shell.tsx`: 계정 화면의 셸을 `menus.data.length > 0` 대신 `useMe().role === "ADMIN"`으로 고른다
+  - `app/(admin)/admin/page.tsx`: `ADMIN`이면 볼 수 있는 첫 관리 메뉴로 보내고, 없으면 안내("받은 권한이 없어요. 최고 관리자에게 역할을 받으세요.")를 본문에 보인다. `USER`면 지금처럼 `/`로 보낸다. 안내 문구는 `messages/ko.json`에 둔다
+  - `app/(admin)/layout.tsx`는 그대로다. 회원이 관리 화면 주소로 바로 들어오면 지금처럼 API가 막고 권한 없음 안내가 보인다(FR-003)
+  - 백엔드 `/menus/me`는 바꾸지 않는다. 역할 없는 `ADMIN`·`USER` 모두 빈 목록이다(권한 판정은 `003` research R16)
+- **Rationale**: 관리 메뉴가 있는지로 고르면 역할을 다 뺀 운영자가 회원처럼 사용자 셸에 떨어져, 자기가 관리자 계정인지 모른다(스펙 가정)
+- **Alternatives considered**: `/menus/me`에 계정 종류를 함께 내기(내 정보에 이미 있다), 회원이 `/admin/...`에 오면 레이아웃에서 `/`로 보내기(지금 FR-003 안내 동작이 바뀌고 이 변경의 범위가 아니다)
+- **키트로 옮길 것**: 셸 고르기 기준(계정 종류)
+
+## R28. 무엇을 테스트하나 (US1-AC1, FR-005·FR-006, 2026-11-21)
+
+- **Decision**:
+  - 단위 테스트 `tests/unit/landing.test.ts`: "관리 메뉴가 있으면 /admin"을 "`ADMIN`이면 /admin, `USER`면 /"로 바꾼다(원칙 V)
+  - e2e 지원 `e2e/support/api.ts` `signedIn`: 셸을 `menus`가 아니라 `me.role`로 고르게 되므로, 관리 화면을 여는 테스트는 `me.role = "ADMIN"`을 준다. `menu.spec.ts`(셸 테스트, 관리자 계정 화면이 관리 셸), `auth.spec.ts`·`screens.spec.ts`의 첫 화면 기대를 바꾸고, 역할 없는 `ADMIN`이 `/admin`에서 안내를 보는 테스트를 더한다. `menu.spec.ts`의 "역할 관리" 링크 이름은 "권한 관리"로(원칙 V)
+  - API 인수 테스트 `AdminMenusAcceptanceTest`: US1-AC1의 메뉴 이름 "권한 관리", 운영자 준비(`giveOperatorRole`)를 `ADMIN` 계정으로, `userSeesNoAdminMenu`·`userIsForbidden`은 그대로. 테스트 지원 `MenuSeed`의 메뉴 이름을 V7 뒤 구성으로 맞춘다
