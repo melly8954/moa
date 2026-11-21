@@ -20,7 +20,6 @@ const LABELS = { light: "themeLight", dark: "themeDark", system: "themeSystem" }
 // trigger: 셸마다 다른 버튼 모양 (사이드바 메뉴 버튼, 헤더 아이콘 버튼)
 export function ThemeMenu({ trigger, showLabel = false }: { trigger: React.ReactElement; showLabel?: boolean }) {
   const t = useTranslations("shell")
-  const { theme = "system", setTheme } = useTheme()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={trigger}>
@@ -30,17 +29,26 @@ export function ThemeMenu({ trigger, showLabel = false }: { trigger: React.React
         <span className={showLabel ? undefined : "sr-only"}>{t("theme")}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>{t("theme")}</DropdownMenuLabel>
-          <DropdownMenuRadioGroup value={theme} onValueChange={(value) => setTheme(value as string)}>
-            {THEMES.map((value) => (
-              <DropdownMenuRadioItem key={value} value={value}>
-                {t(LABELS[value])}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuGroup>
+        <ThemeChoices />
       </DropdownMenuContent>
     </DropdownMenu>
+  )
+}
+
+// 화면 모드 고르기 묶음. 다른 메뉴(계정 줄 톱니) 안에도 넣는다 (moa 001 FR-005, 2026-11-21)
+export function ThemeChoices() {
+  const t = useTranslations("shell")
+  const { theme = "system", setTheme } = useTheme()
+  return (
+    <DropdownMenuGroup>
+      <DropdownMenuLabel>{t("theme")}</DropdownMenuLabel>
+      <DropdownMenuRadioGroup value={theme} onValueChange={(value) => setTheme(value as string)}>
+        {THEMES.map((value) => (
+          <DropdownMenuRadioItem key={value} value={value}>
+            {t(LABELS[value])}
+          </DropdownMenuRadioItem>
+        ))}
+      </DropdownMenuRadioGroup>
+    </DropdownMenuGroup>
   )
 }

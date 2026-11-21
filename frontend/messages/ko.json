@@ -49,7 +49,9 @@
     "openPanel": "메뉴 목록 펼치기",
     "closePanel": "메뉴 목록 접기",
     "collapseSidebar": "사이드바 접기",
-    "expandSidebar": "사이드바 펼치기"
+    "expandSidebar": "사이드바 펼치기",
+    "notifications": "알림",
+    "preferences": "설정 메뉴"
   },
   "menu": {
     "home": "홈",

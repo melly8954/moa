@@ -34,7 +34,7 @@ import { SITE } from "@/lib/site"
 import { useAuthStore } from "@/stores/auth"
 import { useEffect } from "react"
 import { HAS_LOCALE_CHOICE, LocaleMenu } from "./locale-menu"
-import { AccountMenu } from "./account-menu"
+import { AccountBar } from "./account-bar"
 import { isActive, type MenuItem } from "./menu"
 import { ThemeMenu } from "./theme-menu"
 import { useOpenMenus } from "./use-open-menus"
@@ -76,24 +76,17 @@ export function SidebarShell({
           </nav>
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border">
+          {/* 로그인했으면 계정 줄 한 줄: 이름·아이디, 알림 벨, 톱니(화면 모드·설정·비밀번호 변경), 로그아웃 (moa 001 FR-005, 2026-11-21) */}
+          {signedIn && <AccountBar />}
           <SidebarMenu>
-            {/* 개인 알림 벨 (moa 007 US2, 키트로 옮길 것) */}
-            {signedIn && (
+            {!signedIn && (
               <SidebarMenuItem>
-                <NotificationBell showLabel trigger={<SidebarMenuButton tooltip={t("notification.bell")} />} />
+                <ThemeMenu showLabel trigger={<SidebarMenuButton tooltip={t("shell.theme")} />} />
               </SidebarMenuItem>
             )}
-            <SidebarMenuItem>
-              <ThemeMenu showLabel trigger={<SidebarMenuButton tooltip={t("shell.theme")} />} />
-            </SidebarMenuItem>
-            {HAS_LOCALE_CHOICE && (
+            {!signedIn && HAS_LOCALE_CHOICE && (
               <SidebarMenuItem>
                 <LocaleMenu showLabel trigger={<SidebarMenuButton tooltip={t("shell.language")} />} />
-              </SidebarMenuItem>
-            )}
-            {signedIn && (
-              <SidebarMenuItem>
-                <AccountMenu trigger={<SidebarMenuButton tooltip={t("shell.account")} />} />
               </SidebarMenuItem>
             )}
             {status === "signedOut" && (
