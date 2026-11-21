@@ -50,9 +50,9 @@ moa가 정하는 부분만 쓴다.
 ## 기술 제약
 
 - 모노레포다. 백엔드는 `backend/`, 프론트는 `frontend/`에 둔다.
-- 백엔드: Spring Boot, psw-dev-kit `springboot/v0.5.0` (admin 프리셋, rich-text, websocket). 적용 기록은 `backend/.psw-dev-kit`.
-- 프론트: Next, psw-dev-kit `web-next/v0.5.0` (admin 프리셋, rich-text). 적용 기록은 `frontend/.psw-dev-kit`.
-- 키트 버전 태그는 키트를 적용하거나 올릴 때 이 절에 적는다.
+- 백엔드: Spring Boot, psw-dev-kit `springboot` 템플릿 (admin 프리셋, rich-text, websocket).
+- 프론트: Next, psw-dev-kit `web-next` 템플릿 (admin 프리셋, rich-text).
+- 키트 버전은 따로 기록하지 않는다. 키트에서 무언가를 가져오면 그 커밋 메시지에 키트 태그를 적는다.
 - DB 테이블·열·인덱스는 `docs/db.md`를 따른다(MUST).
 - 목록은 아래 네 종류 중 하나로 정하고, 스펙에 종류와 이유를 적는다(MUST).
   - 구성 목록: 개수에 상한이 있고 전체를 보며 순서·구조를 다룬다. 전체를 보이고 화면 안에서 스크롤한다. 스펙에 상한을 적고, 넘을 수 있으면 업무 목록으로 바꾼다.
@@ -75,4 +75,4 @@ moa가 정하는 부분만 쓴다.
   문구만 고치면 PATCH를 올린다.
 - 문서는 100줄 안팎으로 짧게 유지한다. 길어지면 원칙이 아닌 내용이 섞였는지 먼저 본다.
 
-**Version**: 1.3.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-21
+**Version**: 1.4.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-22
