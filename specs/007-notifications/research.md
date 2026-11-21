@@ -45,7 +45,7 @@ Technical Context에 미결은 없다. 아래는 키트와 moa 코드를 확인�
 
 ## R7. 서비스 워커와 "보이는 상태" 판정
 
-- **Decision**: `public/sw.js`에서 `push` 이벤트 때 `clients.matchAll({ type: "window", includeUncontrolled: true })`로 moa 창 중 `visibilityState === "visible"`인 것이 있으면 브라우저 알림을 띄우지 않는다. 없으면 `showNotification(title, { tag: notificationId, data: { link } })`. `notificationclick`은 열린 moa 창이 있으면 그 창을 앞으로 가져와 `link`로 옮기고, 없으면 새 창을 연다
+- **Decision**: `public/sw.js`에서 `push` 이벤트 때 `clients.matchAll({ type: "window", includeUncontrolled: true })`로 moa 창 중 `visibilityState === "visible"`인 것이 있으면 브라우저 알림을 띄우지 않는다. 없으면 `showNotification(title, { tag: notificationId, data: { link } })`(2026-11-22부터 제목·본문·아이콘은 R13). `notificationclick`은 열린 moa 창이 있으면 그 창을 앞으로 가져와 `link`로 옮기고, 없으면 새 창을 연다
 - **Rationale**: spec Edge Cases(보이는 상태면 토스트만). `tag`로 같은 알림이 겹치지 않는다
 - **주의**: 화면이 보이는 상태라 브라우저 알림을 띄우지 않으면, 브라우저에 따라 "백그라운드에서 갱신됨" 같은 기본 알림이 뜰 수 있다. 화면이 보일 때는 대부분의 브라우저가 허용한다. 화면 직접 확인 항목으로 남긴다
 
@@ -81,3 +81,10 @@ Technical Context에 미결은 없다. 아래는 키트와 moa 코드를 확인�
 
 - **Decision**: `006-notices` US4-AC1은 이 스펙의 US1-AC1과 같은 테스트로 확인하고, 006 tasks T041~T043을 이 구현에서 체크한다. 006 `NoticesAcceptanceTest`에는 더하지 않는다 (실시간은 실제 포트가 필요해 다른 테스트 틀이다). 006 spec SC-006 "US1~US4 전부"는 이 테스트로 채워진다
 - **Rationale**: 같은 동작을 두 곳에서 테스트하지 않는다
+
+## R13. 브라우저 알림 문구와 아이콘 (2026-11-22, FR-008)
+
+- **Decision**: 웹 푸시 페이로드에서 `title`을 빼고 `{id, type, link}`만 보낸다(`type`은 개인 알림 종류). 서비스 워커는 제목 "moa", 본문은 `type`이 `MESSAGE`면 "새 메시지가 있습니다", 아니면 "새 알림이 있습니다"로 띄우고, `icon`에 moa 알림 아이콘(`frontend/public/icons/notification-192.png`, 192×192 PNG)을 준다. `tag`와 누르면 `link`를 여는 동작은 R7 그대로다
+- **Rationale**: 보이지 않을 내용은 보내지 않는다(내용이 기기에 남지 않는다). 문구가 둘뿐이고 서비스 워커는 next-intl을 쓰지 못하므로 `sw.js`에 둔다. `MESSAGE` 종류는 메신저 기능이 더하고, 그 전까지는 모두 "새 알림이 있습니다"다
+- **Alternatives considered**: 서버가 문구를 정해 페이로드에 담기. 문구를 바꿀 일이 드물고 종류만 알면 되어 서비스 워커에 둔다
+- **주의**: 아이콘 파일은 지금 없다(`favicon.ico`뿐). moa 로고로 만든 192×192 PNG를 사람이 준다
