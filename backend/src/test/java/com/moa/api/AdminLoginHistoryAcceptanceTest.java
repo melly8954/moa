@@ -66,15 +66,15 @@ class AdminLoginHistoryAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("FR-002 접속 이력은 90일 동안 보관하고, 지나면 정리 때 지운다")
-	void keepsHistoriesFor90Days() {
-		history("within-90-days", LocalDateTime.now().minusDays(89));
-		history("over-90-days", LocalDateTime.now().minusDays(91));
+	@DisplayName("FR-002 접속 이력은 1년(365일) 동안 보관하고, 지나면 정리 때 지운다")
+	void keepsHistoriesForOneYear() {
+		history("within-one-year", LocalDateTime.now().minusDays(364));
+		history("over-one-year", LocalDateTime.now().minusDays(366));
 
 		loginHistoryCleaner.deleteExpired();
 
 		List<String> remaining = jdbcTemplate.queryForList("select login_id from tb_login_history", String.class);
-		assertThat(remaining).containsExactly("within-90-days");
+		assertThat(remaining).containsExactly("within-one-year");
 	}
 
 	private void login(String loginId, String password) {

@@ -203,7 +203,7 @@
   },
   "loginHistory": {
     "title": "접속 이력",
-    "description": "로그인 성공·실패를 접속 IP·기기와 함께 90일 동안 보여요. 계정 잠금은 <link>사용자 관리</link>에서 해요.",
+    "description": "로그인 성공·실패를 접속 IP·기기와 함께 1년 동안 보여요. 계정 잠금은 <link>사용자 관리</link>에서 해요.",
     "period": "기간",
     "result": "결과",
     "loginId": "아이디",

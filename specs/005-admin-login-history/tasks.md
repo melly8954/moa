@@ -76,11 +76,11 @@ description: "접속 이력 (admin-login-history) 작업 목록"
 
 **Purpose**: 보관 기간을 90일에서 1년(365일)으로 바꿔 `docs/privacy.md` 보관 기간 표와 맞춘다 (research.md R2)
 
-- [ ] T012 [P] backend/src/main/resources/application.yaml의 `retention-days: ${LOGIN_HISTORY_RETENTION_DAYS:90}`를 `${LOGIN_HISTORY_RETENTION_DAYS:365}`로 바꾸고, 바로 위 주석의 "90일"을 "1년(365일)"으로 고친다
-- [ ] T013 [P] backend/.env.example의 `LOGIN_HISTORY_RETENTION_DAYS=90`을 `LOGIN_HISTORY_RETENTION_DAYS=365`로 바꾼다
-- [ ] T014 [P] frontend/messages/ko.json 접속 이력 머리 안내의 "90일 동안"을 FR-004 문구대로 "1년 동안"으로 바꾼다
-- [ ] T015 backend/src/test/java/com/moa/api/AdminLoginHistoryAcceptanceTest.java의 FR-002 테스트를 1년으로 맞춘다: 이름을 "FR-002 접속 이력은 1년(365일) 동안 보관하고, 지나면 정리 때 지운다"로, 넣는 이력을 364일 전(남음)과 366일 전(지워짐)으로 바꾼다. 스펙 FR-002를 먼저 고쳤으므로 원칙 V에 어긋나지 않는다
-- [ ] T016 backend/에서 `./gradlew build`, frontend/에서 `npm run check`를 돌린다. `dbTest`는 PR CI에서 본다
+- [X] T012 [P] backend/src/main/resources/application.yaml의 `retention-days: ${LOGIN_HISTORY_RETENTION_DAYS:90}`를 `${LOGIN_HISTORY_RETENTION_DAYS:365}`로 바꾸고, 바로 위 주석의 "90일"을 "1년(365일)"으로 고친다
+- [X] T013 [P] backend/.env.example의 `LOGIN_HISTORY_RETENTION_DAYS=90`을 `LOGIN_HISTORY_RETENTION_DAYS=365`로 바꾼다
+- [X] T014 [P] frontend/messages/ko.json 접속 이력 머리 안내의 "90일 동안"을 FR-004 문구대로 "1년 동안"으로 바꾼다
+- [X] T015 backend/src/test/java/com/moa/api/AdminLoginHistoryAcceptanceTest.java의 FR-002 테스트를 1년으로 맞춘다: 이름을 "FR-002 접속 이력은 1년(365일) 동안 보관하고, 지나면 정리 때 지운다"로, 넣는 이력을 364일 전(남음)과 366일 전(지워짐)으로 바꾼다. 스펙 FR-002를 먼저 고쳤으므로 원칙 V에 어긋나지 않는다
+- [X] T016 backend/에서 `./gradlew build`, frontend/에서 `npm run check`를 돌린다. `dbTest`는 PR CI에서 본다
 
 ---
 
