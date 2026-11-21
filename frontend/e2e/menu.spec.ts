@@ -351,15 +351,16 @@ test("FR-002 FR-006 접속 이력만 받은 운영자는 로그인하면 접속 
   const rights = await locks.evaluateAll((svgs) => svgs.map((svg) => Math.round(svg.getBoundingClientRect().right)))
   expect(new Set(rights).size).toBe(1)
 
-  await users.click()
-  await expect(page.getByText("접근 권한이 없습니다.")).toBeVisible()
-  await expect(page).toHaveURL(/\/admin\/login-histories$/)
-
   // 들어갈 수 있는 하위 메뉴가 없는 상위 메뉴도 펼 수 있고, 그 안 메뉴는 모두 잠겨 있다
   await menuGroup(page, "설정").click()
   await expect(locks).toHaveCount(5)
   await expect(menuLinks(page)).toHaveText(["접속 이력"])
+  // 흐린 글자도 대비를 지킨다. 토스트가 나타나는 중(반투명)에 재면 대비가 틀리게 나와 토스트 전에 잰다
   await expectNoSeriousA11yViolations(page)
+
+  await users.click()
+  await expect(page.getByText("접근 권한이 없습니다.")).toBeVisible()
+  await expect(page).toHaveURL(/\/admin\/login-histories$/)
 })
 
 test("관리자의 계정 화면(설정)은 관리 셸 안에 열린다 @wide", async ({ page }) => {
