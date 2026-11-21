@@ -69,3 +69,17 @@
 | US1-AC7 | `POST /api/v1/admin/code-groups` | 201. 트리 맨 뒤 |
 
 - 한 그룹 안 항목만 바꾸던 `PUT /api/v1/admin/code-groups/{g}/codes/enabled`는 그대로 둔다(화면은 위 API를 쓴다)
+
+## 그룹 목록 + 항목 표, 코드 직접 입력 (2026-11-21)
+
+화면이 그룹 목록 → 고른 그룹의 항목 표로 바뀐다(spec.md FR-005). 위 "메뉴 관리와 같은 조작"의 섞은 일괄 처리 API를 걷어낸다.
+
+| 시나리오 | 요청 | 기대 |
+|---|---|---|
+| US1-AC2 | `POST /api/v1/admin/code-groups/{g}/codes` (`code`, `name`) | 201, 그 코드로 그룹 맨 뒤. 그룹 안에서 겹치면 409 `R002` |
+| US1-AC2 | `POST /api/v1/admin/code-groups/{g}/codes` (`code` 없음·빈 값) | 400 `V001`. 자동 순번은 없다 |
+| US1-AC3 | `PUT /api/v1/admin/code-groups/{g}/codes/{code}` (`name`, `enabled`) | 200. 코드는 그대로 |
+| US1-AC4 | `PUT /api/v1/admin/code-groups/{g}/codes/enabled` (`codes` 둘, `enabled` false) | 204. `GET /api/v1/codes/{g}`에서 빠짐. 없는 코드가 섞이면 404 `R001`, 아무것도 안 바뀜 |
+| US1-AC5 | `PUT /api/v1/admin/code-groups/order`, `PUT /api/v1/admin/code-groups/{g}/codes/order` | 204. 목록·표가 그 순서 |
+
+- `PUT /api/v1/admin/code-groups/enabled`(그룹과 항목을 섞은 일괄 사용 여부)는 없앤다. 그룹은 `PUT /api/v1/admin/code-groups/{g}`의 `enabled`로 하나씩 끈다
