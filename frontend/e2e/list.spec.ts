@@ -142,7 +142,8 @@ test("기간: 날짜 칸 앞 빠른 단추는 두 칸을 채우고, 직접 친 �
   expect(quickBox?.height).toBe(inputBox?.height)
   // 달력 창 안에는 빠른 선택이 없다
   await page.getByRole("button", { name: "기간 고르기" }).click()
-  await expect(page.getByRole("dialog").getByRole("button", { name: "7일" })).toHaveCount(0)
+  // (달력의 날짜 단추 이름에도 "7일"이 들어가므로 빠른 기간 묶음이 없는지로 본다)
+  await expect(page.getByRole("dialog").getByRole("group", { name: "빠른 기간" })).toHaveCount(0)
   await page.keyboard.press("Escape")
 
   await page.getByLabel("가입일 시작일").fill("2026.1.5")
