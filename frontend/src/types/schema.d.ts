@@ -1066,7 +1066,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 파기 기록 목록
+         * 파기 이력 목록
          * @description 최신순. 조건(target, from, to)은 모두 선택이고 함께 주면 AND. from이 to보다 늦으면 V001
          */
         get: operations["getPage_2"];
@@ -2252,7 +2252,7 @@ export interface components {
             /** @description 권한 */
             permission: components["schemas"]["PermissionRef"];
         };
-        /** @description 파기 기록 검색 조건 */
+        /** @description 파기 이력 검색 조건 */
         PurgeLogSearchRequest: {
             /**
              * @description 대상 종류. 없으면 전체
@@ -2297,11 +2297,11 @@ export interface components {
              */
             totalPages: number;
         };
-        /** @description 파기 기록 */
+        /** @description 파기 이력 */
         PurgeLogListResponse: {
             /**
              * Format: int64
-             * @description 파기 기록 ID
+             * @description 파기 이력 ID
              */
             id: number;
             /**

@@ -99,9 +99,9 @@ app:
     # 푸시 서버가 연락할 운영자 주소 (mailto:...)
     subject: ${WEB_PUSH_SUBJECT:}
 ---
-# moa: 개인정보 파기 기록 (specs/013-purge-log). 파기 기록 보관 기간과 정리 시각 (FR-006)
+# moa: 개인정보 파기 이력 (specs/013-purge-log). 파기 이력 보관 기간과 정리 시각 (FR-006)
 app:
   purge-log:
-    # 이 기간이 지난 파기 기록은 매일 지운다. 다른 정리(04:30~05:00)가 끝난 뒤에 돈다
+    # 이 기간이 지난 파기 이력은 매일 지운다. 다른 정리(04:30~05:00)가 끝난 뒤에 돈다
     retention-days: ${PURGE_LOG_RETENTION_DAYS:365}
     cleanup-cron: ${PURGE_LOG_CLEANUP_CRON:0 10 5 * * *}

@@ -215,7 +215,7 @@
     "result": "결과",
     "loginId": "아이디",
     "loginIdPlaceholder": "아이디 전체 (정확히 일치)",
-    "createdAt": "시각",
+    "createdAt": "접속 시각",
     "ip": "IP",
     "device": "기기",
     "succeeded": "성공",
@@ -226,11 +226,11 @@
     }
   },
   "purgeLog": {
-    "title": "파기 기록",
+    "title": "파기 이력",
     "description": "보관 기간이 지나 지운 개인정보의 종류와 건수를 1년 동안 보여요. 지운 내용은 남기지 않아요. 로그인 기록은 <link>접속 이력</link>에서 봐요.",
     "period": "기간",
     "target": "대상",
-    "createdAt": "일시",
+    "createdAt": "파기 시각",
     "count": "건수",
     "method": "방법",
     "actor": "처리자",

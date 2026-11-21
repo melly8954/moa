@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 /**
- * 파기 기록 저장·정리. 조건 조회는 PurgeLogReader가 QueryDSL로 한다.
+ * 파기 이력 저장·정리. 조건 조회는 PurgeLogReader가 QueryDSL로 한다.
  */
 public interface PurgeLogRepository extends JpaRepository<PurgeLog, Long> {
 

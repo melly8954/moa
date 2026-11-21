@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import com.moa.common.security.permission.PermissionDefinition;
 import com.moa.common.security.permission.PermissionSource;
 
-/** 개인정보 파기 기록의 권한 (moa, specs/013-purge-log FR-008) */
+/** 개인정보 파기 이력의 권한 (moa, specs/013-purge-log FR-008) */
 @Component
 public class PurgeLogPermissions implements PermissionSource {
 
@@ -15,6 +15,6 @@ public class PurgeLogPermissions implements PermissionSource {
 
 	@Override
 	public List<PermissionDefinition> permissions() {
-		return List.of(new PermissionDefinition(READ, "파기 기록 조회", "파기 기록"));
+		return List.of(new PermissionDefinition(READ, "파기 이력 조회", "파기 이력"));
 	}
 }

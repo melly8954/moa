@@ -74,7 +74,7 @@ public class NotificationApplication {
 		notificationService.unsubscribe(userId, endpoint);
 	}
 
-	/** 보관 기간이 지난 알림을 지운다 (정리기가 부른다). 같은 트랜잭션에서 파기 기록을 남긴다 (specs/013-purge-log) */
+	/** 보관 기간이 지난 알림을 지운다 (정리기가 부른다). 같은 트랜잭션에서 파기 이력을 남긴다 (specs/013-purge-log) */
 	@Transactional
 	public int deleteExpired(int retentionDays) {
 		int deleted = notificationService.deleteOlderThan(retentionDays);

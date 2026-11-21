@@ -11,7 +11,7 @@ import com.moa.api.service.purgelog.PurgeLogService;
 
 import lombok.RequiredArgsConstructor;
 
-/** 개인정보 파기 기록 조회 (specs/013-purge-log US2) */
+/** 개인정보 파기 이력 조회 (specs/013-purge-log US2) */
 @Component
 @RequiredArgsConstructor
 public class PurgeLogApplication {
