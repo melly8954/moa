@@ -79,8 +79,31 @@ description: "관리자·운영자 계정 (admin-users) 작업 목록"
 
 ---
 
+## Phase 7: 관리자 계정과 드로어 역할 주기 (2026-11-21 FR-001·FR-003·FR-005~FR-008, US1~US4 변경)
+
+**Purpose**: 계정 종류(회원·관리자), 드로어 역할 체크, 내 권한 안쪽 계정만 다루기 (research.md R9~R12). `003-admin-roles` Phase 7과 한 구현 브랜치 `feat/003-admin-accounts`에서, 그 백엔드(T033~T038) 뒤에 한다
+
+**백엔드**
+
+- [ ] T013 backend/src/main/java/com/moa/api/service/user/UserAdminService.java: `create`·`changeRole`의 "ADMIN만"을 없애고, `ADMIN` → `USER`면 역할을 모두 빼고 토큰을 끊는다. `requireManageable`을 최고 관리자 대상은 최고 관리자만, `ADMIN` 대상은 권한이 내 안쪽일 때만으로 바꾸고, 마지막 최고 관리자를 잠그기·지우기·회원으로 바꾸기 B001 (R9)
+- [ ] T014 backend/src/main/java/com/moa/api/controller/v1/admin/user/response/UserAdminResponse.java에 `superAdmin`·`protection`을 더하고 backend/src/main/java/com/moa/api/application/v1/user/UserAdminApplication.java의 목록·한 사람이 한 번에 모아 붙인다. 응답 설명의 "ADMIN은 accessRoles가 빈다"를 고친다 (R10)
+
+**프론트**
+
+- [ ] T015 frontend/src/app/(admin)/admin/users/user-drawer.tsx: 위 칸(계정 종류), 관리자 계정의 역할 칸(권한 관리 권한이 있으면 체크 목록·이유·`permissionNames`·역할 저장, 없으면 이름만), 회원 안내, `protection`이면 단추 끄고 이유. user-dialogs.tsx의 계정 종류 바꾸기에 빠질 역할 확인, `CreateUserDrawer`의 `canGrantAdmin` 없앰. frontend/src/types/user-admin.ts에 `superAdmin`·`protection` (R11)
+- [ ] T016 frontend/src/app/(admin)/admin/users/page.tsx: 역할 열(최고 관리자·역할 없음·이름들·빈 칸), `protectedRow`·`iAmAdmin`을 `protection`으로 바꾼다. frontend/messages/ko.json `userAdmin`의 계정 종류·회원·역할·머리 안내(FR-008) 문구, 쓰지 않는 키 지우기 (R11)
+
+**테스트 (마지막)**
+
+- [ ] T017 backend/src/test/java/com/moa/api/AdminUsersAcceptanceTest.java를 contracts/admin-accounts.md "관리자 계정과 다루기 범위" 표대로 고치고 더한다. 운영자는 `ADMIN` 계정으로 만든다. backend/src/test/java/com/moa/api/UserAdminAcceptanceTest.java `adminProtection`을 R9 규칙으로 바꾸고 PR 설명에 적는다 (원칙 V, R12)
+- [ ] T018 frontend/e2e/user-admin.spec.ts를 R12대로 고친다 (원칙 V)
+- [ ] T019 specs/002-admin-users/quickstart.md "화면 확인"에 계정 종류·드로어 역할 체크·막힌 행 절차를 더하고 사람이 확인한다 (T012를 갈음한다)
+
+---
+
 ## Dependencies & Execution Order
 
+- Phase 7: `003-admin-roles` T033~T039 → T013 → T014 → T015 → T016 → (`001-admin-menus` T089~T093) → `003-admin-roles` T043~T046 → T017 → T018 → `003-admin-roles` T047 → T019
 - Phase 6: `001-admin-menus` T071, `003-admin-roles` T024 → T007 → T008 → T009 → T010 → T011 → T012
 - T001 → US1(T002)·US2(T003) → T004 → T005, T006
 - US1과 US2는 서로 기대지 않는다

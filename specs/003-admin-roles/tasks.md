@@ -1,9 +1,9 @@
 ---
 
-description: "운영자 역할 (admin-roles) 작업 목록"
+description: "권한 관리 (admin-roles) 작업 목록"
 ---
 
-# Tasks: 운영자 역할 (admin-roles)
+# Tasks: 권한 관리 (admin-roles)
 
 **Input**: `specs/003-admin-roles/`의 설계 문서
 
@@ -114,9 +114,41 @@ description: "운영자 역할 (admin-roles) 작업 목록"
 
 ---
 
+## Phase 7: 관리자 계정과 최고 관리자 역할, 두 칸 화면 (2026-11-21 FR-001~FR-011, US1-AC4·US2·US4·US5 변경)
+
+**Purpose**: `ADMIN`을 관리자 계정으로, 모든 권한을 최고 관리자 역할로 바꾸고, 권한 관리를 두 칸 화면과 새 이름으로 바꾼다 (research.md R16~R21). `002-admin-users` Phase 7, `001-admin-menus` Phase 14와 한 구현 브랜치 `feat/003-admin-accounts`에서 한다. 이 Phase의 백엔드가 둘의 앞이다
+
+**백엔드**
+
+- [ ] T033 backend/src/main/resources/db/migration/V7__super_admin_role.sql: 최고 관리자 역할 행, 역할 가진 `USER` → `ADMIN`, 기존 `ADMIN` → 최고 관리자 구성원, 메뉴 "역할 관리" → "권한 관리"(이름이 그대로일 때만). backend/src/main/resources/db/localdata/R__local_accounts.sql에 `admin`의 최고 관리자 구성원 줄을 더한다 (R20)
+- [ ] T034 backend/src/main/java/com/moa/api/entity/role/ 쪽에 `AccessRoles.SUPER_ADMIN_CODE` 상수를 두고, backend/src/main/java/com/moa/api/service/role/AccessRolePermissionChecker.java에 `isSuperAdmin(userId)`, backend/src/main/java/com/moa/common/security/permission/PermissionGuard.java의 `permissions`를 최고 관리자 → 모두, `ADMIN` → 역할 합집합, `USER` → 없음으로 바꾼다. `Role`·`PermissionChecker` 주석과 `ApiMenuController` 설명을 고친다 (R16)
+- [ ] T035 backend/src/main/java/com/moa/api/service/role/PermissionCeilingGrantPolicy.java·AccessRoleService.java·RoleUserService.java: 최고 관리자면 무엇이든, 최고 관리자 역할과 `USER_MANAGE`가 든 역할은 최고 관리자만, 대상이 `USER`면 B001(`requireNotAdmin` → `requireAdminAccount`), 최고 관리자 역할 수정·삭제 B001, 최고 관리자에 더하면 다른 역할 빼기, 마지막 구성원 빼기 B001(002가 부를 공개 메서드로), 구성원 검색은 `ADMIN`만 (R17)
+- [ ] T036 backend/src/main/java/com/moa/api/controller/v1/admin/role/ 응답 레코드: 역할 목록·상세에 `fixed`·`permissionNames`·`grantable`·`blockReason`, 목록은 최고 관리자 역할 맨 앞, 구성원 항목 `role` → `superAdmin` (R18, contracts/admin-roles.md "관리자 계정과 최고 관리자 역할")
+- [ ] T037 backend/src/main/java/com/moa/api/permission/RolePermissions.java·backend/src/main/java/com/moa/api/screen/RoleScreens.java의 이름을 "권한 관리"로 바꾼다. 키·경로는 그대로 (R19, FR-011)
+- [ ] T038 backend/src/main/java/com/moa/api/service/user/UserService.java `bootstrapAdmin`: 만든 계정을 최고 관리자 역할에 넣고, 건너뛰는 조건을 "최고 관리자 구성원이 있으면"으로 바꾼다 (R20)
+
+**프론트**
+
+- [ ] T039 frontend/src/api/role.ts·frontend/src/types/role.ts를 새 칸에 맞춘다 (`fixed`, `permissionNames`, `grantable`, `blockReason`, 구성원 `superAdmin`). 사용자 관리 드로어(`002-admin-users` T015)도 이 타입을 쓴다
+- [ ] T040 frontend/src/app/(admin)/admin/roles/page.tsx를 두 칸으로 바꾼다: 왼쪽 검색·일괄 줄·목록(체크박스·이름·구성원 수, 최고 관리자 맨 위·자물쇠·체크 꺼짐), 오른쪽 `DetailPanel`(고르기 전 안내), 좁은 폭 `ResponsivePanel` 드로어, 다른 행으로 가기 전 `confirmLeave()` (R19)
+- [ ] T041 frontend/src/app/(admin)/admin/roles/role-drawer.tsx를 role-panel.tsx로 바꾼다: 탭 없이 머리(이름·코드·쓸 메뉴 수·구성원 수), 이름·설명, "쓸 메뉴"(permission-tree.tsx)와 "구성원"(role-members.tsx)을 나란히. 최고 관리자 역할은 읽기 전용·트리 모두 체크 꺼짐. 새 역할은 저장 전 구성원 자리에 안내. role-members.tsx는 `superAdmin` 행을 "모든 권한"으로, 회원은 검색에 없다 (R19)
+- [ ] T042 frontend/messages/ko.json: `role.title`을 "권한 관리"로, `pageDescription`을 FR-009 문구로, `guide`·`menuAdmin.guide`·`userAdmin.description`의 링크 이름, `menu.roles`, 최고 관리자·고정 역할·저장 전 구성원 안내 문구. frontend/src/api/role.ts 등 주석의 "역할 관리"를 고친다 (R19)
+
+**테스트 (마지막)**
+
+- [ ] T043 backend/src/test/java/com/moa/support/AcceptanceTest.java에 `superAdmin()`·`operator(permissions...)`를 두고, `bearer(2L, "ADMIN")`으로 모든 권한을 얻던 인수 테스트를 `superAdmin()`으로 바꾼다 (R21)
+- [ ] T044 키트 수용 테스트의 기대를 스펙대로 바꾼다: backend/src/test/java/com/moa/common/PermissionAcceptanceTest.java, backend/src/test/java/com/moa/api/RbacAcceptanceTest.java(역할은 `ADMIN` 계정에, `USER`면 B001), backend/src/test/java/com/moa/api/MenuAcceptanceTest.java, backend/src/test/java/com/moa/api/AdminBootstrapAcceptanceTest.java. 바꾼 테스트를 PR 설명에 적는다 (원칙 V, R21)
+- [ ] T045 backend/src/test/java/com/moa/api/AdminRolesAcceptanceTest.java: US1-AC4, US2-AC1~AC5, US4-AC4(최고 관리자 섞인 삭제), US5-AC4, FR-002·FR-008·FR-010 줄을 contracts/admin-roles.md "관리자 계정과 최고 관리자 역할" 표대로. `adminGetsNoAccessRole`·`addingAdminFailsWholly`를 USER면 B001로 뒤집고 운영자를 `ADMIN` 계정으로 만든다 (원칙 V)
+- [ ] T046 frontend/e2e/role.spec.ts를 R21대로 고친다 (두 칸, 탭 없음, 최고 관리자 행, 좁은 폭 드로어, 머리 안내, "권한 관리")
+- [ ] T047 backend/에서 `./gradlew spotlessApply`, `./gradlew build`, 한 번 `bootRun`으로 V7 적용과 `validate` 확인, frontend/에서 `npm run format`, `npm run check`. dbTest·e2e는 PR CI로 본다
+- [ ] T048 specs/003-admin-roles/quickstart.md "화면 확인"을 두 칸·최고 관리자에 맞춰 고치고 사람이 확인한다 (T032를 갈음한다)
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 → T002·T003 → T004 → T005 → T006~T008 → T009 → T010, T011
+- Phase 7: T033 → T034 → T035 → T036, T037, T038 → T039 → T040, T041 → T042 → (`002-admin-users` T013~T016, `001-admin-menus` T089~T093) → T043 → T044 → T045 → T046 → (002·001 테스트) → T047 → T048. 기능 코드를 셋 모두 끝낸 뒤 테스트를 한다(CLAUDE.md "작업 흐름")
 - Phase 6: `001-admin-menus` T071 → T024 → T025 → T026 → T027 → T028, T029 → T030 → T031 → T032
 - Phase 5: `001-admin-menus` T052~T060 → T012 → T013, T014 → T015 → T016 → T017, T018 → T019 → T020 → T021 → T022, T023. T013·T014는 다른 파일이 섞이지 않으면 나란히 해도 된다
 - T002와 T003은 다른 파일이라 함께 진행할 수 있다
