@@ -14,6 +14,7 @@ import {
   fromCalendarDate,
   inRange,
   parseTypedDate,
+  matchingQuickRange,
   QUICK_RANGES,
   quickRange,
   toCalendarDate,
@@ -143,7 +144,9 @@ export function DatePicker({
   )
 }
 
-// 기간 고르기: 시작·끝 입력칸 둘과 달력 하나, 빠른 선택(오늘, 최근 7일, 최근 30일, 이번 달, 지난달)
+// 기간 고르기: 빠른 기간 단추(오늘·7일·이번 달·3개월·1년), 시작·끝 입력칸 둘, 달력 하나
+// moa: 빠른 기간을 달력 창 안에서 날짜 칸 앞 나눔 단추로 옮겼다. 단추 줄과 날짜 칸은 높이가 같다 (specs/011-list-screen FR-010·FR-011, 2026-11-21)
+//   지금 날짜가 어떤 단추의 기간과 같으면 그 단추가 골라진 모양이다. 좁으면 단추 줄이 날짜 칸 위 줄로 간다
 // 시작이 끝보다 늦으면 빨간 테두리로 보인다 (값은 그대로 넘긴다. 검사는 폼·검색이 한다)
 export function DateRangePicker({
   value,
@@ -168,9 +171,34 @@ export function DateRangePicker({
   const reversed = value.from !== "" && value.to !== "" && value.from > value.to
   const from = toCalendarDate(value.from)
   const to = toCalendarDate(value.to)
+  const picked = matchingQuickRange(value)
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-1", className)}>
+    <div className={cn("flex flex-wrap items-center gap-x-2 gap-y-1", className)}>
+      {/* 빠른 기간 나눔 단추. 날짜 칸(InputGroup h-8)과 같은 높이·테두리 */}
+      <div
+        role="group"
+        aria-label={t("quick")}
+        className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-input p-0.5"
+      >
+        {QUICK_RANGES.map((kind) => (
+          <button
+            key={kind}
+            type="button"
+            aria-pressed={picked === kind}
+            disabled={disabled}
+            className={cn(
+              "h-full rounded-md px-2.5 text-sm whitespace-nowrap text-muted-foreground transition-colors outline-none",
+              "hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
+              picked === kind &&
+                "bg-primary font-medium text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+            )}
+            onClick={() => onChange(quickRange(kind))}
+          >
+            {t(kind)}
+          </button>
+        ))}
+      </div>
       {/* 시작 ~ 끝은 한 줄로 붙여 둔다. 좁으면 달력 버튼만 다음 줄로 */}
       <div className="flex items-center gap-1">
         <InputGroup className="w-(--date-range-input-width)" data-disabled={disabled || undefined}>
@@ -205,23 +233,7 @@ export function DateRangePicker({
         >
           <CalendarDays />
         </PopoverTrigger>
-        <PopoverContent className="flex w-auto flex-col gap-2 p-2 sm:flex-row" align="end">
-          <div className="flex flex-wrap gap-1 sm:flex-col">
-            {QUICK_RANGES.map((kind) => (
-              <Button
-                key={kind}
-                variant="ghost"
-                size="sm"
-                className="justify-start"
-                onClick={() => {
-                  onChange(quickRange(kind))
-                  setOpen(false)
-                }}
-              >
-                {t(kind)}
-              </Button>
-            ))}
-          </div>
+        <PopoverContent className="w-auto p-2" align="end">
           <Calendar
             mode="range"
             locale={locale}

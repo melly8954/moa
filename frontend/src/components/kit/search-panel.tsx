@@ -65,7 +65,8 @@ export function SearchPanel<F extends Record<string, string>>({
           search.submit()
         }}
       >
-        <div className="divide-y overflow-hidden rounded-lg border">{children}</div>
+        {/* moa: 조건 둘을 한 줄에 두는지는 화면 폭이 아니라 이 영역의 폭으로 정한다 (container query, specs/011-list-screen Edge Cases) */}
+        <div className="@container/search divide-y overflow-hidden rounded-lg border">{children}</div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={search.reset}>
             <RotateCcw />
@@ -81,9 +82,12 @@ export function SearchPanel<F extends Record<string, string>>({
   )
 }
 
-// 조건 둘을 한 줄에 (넓은 화면)
+// 조건 둘을 한 줄에 (검색 영역이 넓을 때, 약 672px 이상)
+// moa: 화면 폭(md) 기준이면 사이드바 때문에 본문이 좁은 768px 화면에서 한 칸이 좁아 조건이 옆 칸으로 넘쳤다
 export function SearchRow({ children }: { children: React.ReactNode }) {
-  return <div className="grid divide-y md:grid-cols-2 md:divide-x md:divide-y-0">{children}</div>
+  return (
+    <div className="grid divide-y @2xl/search:grid-cols-2 @2xl/search:divide-x @2xl/search:divide-y-0">{children}</div>
+  )
 }
 
 // 조건 한 칸: 왼쪽 라벨 칸(폭 --label-width) + 오른쪽 입력

@@ -126,16 +126,31 @@ test("열 이름을 누르면 서버 정렬: 오름차순 → 내림차순 → �
   await expect(header).toHaveAttribute("aria-sort", "descending")
 })
 
-test("기간: 빠른 선택은 두 칸을 채우고, 직접 친 날짜는 칸을 떠날 때 맞춘다", async ({ page }) => {
+test("기간: 날짜 칸 앞 빠른 단추는 두 칸을 채우고, 직접 친 날짜는 칸을 떠날 때 맞춘다 (moa 011 US4)", async ({
+  page,
+}) => {
   await open(page)
-  await page.getByRole("button", { name: "기간 고르기" }).click()
-  await page.getByRole("button", { name: "최근 7일" }).click()
+  const quick = page.getByRole("group", { name: "빠른 기간" })
+  await expect(quick.getByRole("button")).toHaveText(["오늘", "7일", "이번 달", "3개월", "1년"])
+  await quick.getByRole("button", { name: "7일" }).click()
+  await expect(quick.getByRole("button", { name: "7일" })).toHaveAttribute("aria-pressed", "true")
   await expect(page.getByLabel("가입일 시작일")).toHaveValue(/^\d{4}-\d{2}-\d{2}$/)
   await expect(page.getByLabel("가입일 종료일")).toHaveValue(/^\d{4}-\d{2}-\d{2}$/)
+  // 단추 줄과 날짜 칸은 높이가 같다 (US4-AC1)
+  const quickBox = await quick.boundingBox()
+  const inputBox = await page.getByLabel("가입일 시작일").locator("..").boundingBox()
+  expect(quickBox?.height).toBe(inputBox?.height)
+  // 달력 창 안에는 빠른 선택이 없다
+  await page.getByRole("button", { name: "기간 고르기" }).click()
+  // (달력의 날짜 단추 이름에도 "7일"이 들어가므로 빠른 기간 묶음이 없는지로 본다)
+  await expect(page.getByRole("dialog").getByRole("group", { name: "빠른 기간" })).toHaveCount(0)
+  await page.keyboard.press("Escape")
 
   await page.getByLabel("가입일 시작일").fill("2026.1.5")
   await page.getByLabel("가입일 시작일").blur()
   await expect(page.getByLabel("가입일 시작일")).toHaveValue("2026-01-05")
+  // 직접 고친 기간은 어떤 단추와도 같지 않다 (US4-AC4)
+  await expect(quick.getByRole("button", { name: "7일" })).toHaveAttribute("aria-pressed", "false")
 
   await page.getByLabel("가입일 종료일").fill("2026-13-40")
   await page.getByLabel("가입일 종료일").blur()
