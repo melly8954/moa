@@ -121,6 +121,23 @@ description: "관리자·운영자 계정 (admin-users) 작업 목록"
 
 ---
 
+## Phase 9: 드로어 한 폼과 행 클릭 (2026-11-22 FR-007·FR-008, US3·US4)
+
+**Purpose**: 행 아무 곳이나 눌러 열고, 드로어를 계정 정보 한 폼 + 계정 상태 + 계정 삭제 구역으로 (research.md R16). 백엔드는 바꾸지 않는다. 구현 브랜치 `feat/002-user-drawer-form`
+
+**프론트**
+
+- [ ] T025 frontend/src/components/kit/data-table.tsx에 `onRowClick`(행에 `ROW_CLICKABLE`·`openOnRowClick`), frontend/src/app/(admin)/admin/users/page.tsx 아이디 칸을 밑줄 없는 단추로, 행 클릭으로 드로어 열기 (R16)
+- [ ] T026 frontend/src/app/(admin)/admin/users/user-drawer.tsx·user-roles.tsx: 이름 입력란·계정 종류 나눔 단추·역할 체크 칸 한 폼과 아래 저장·취소(바꾼 채 닫으면 묻기, 계정 종류가 바뀌면 확인 창), 역할 목록에서 최고 관리자 역할 빼기, 계정 상태 구역(로그인 막기 스위치·비밀번호 초기화), 계정 삭제 구역. user-dialogs.tsx의 `RenameDialog`·`RoleChangeDialog` 없애기 (R16)
+- [ ] T027 frontend/messages/ko.json `userAdmin`: 머리 설명(FR-008), 로그인 막기·계정 상태·계정 삭제·저장 문구, 쓰지 않는 키 지우기 (R16)
+
+**테스트 (마지막)**
+
+- [ ] T028 frontend/e2e/user-admin.spec.ts: 행을 눌러 열기, 한 폼 저장(이름·역할 한 번에), 계정 종류 확인 창, 최고 관리자 역할이 목록에 없음, 로그인 막기 스위치, 막힌 행에서 칸·스위치·단추 꺼짐. 기존 "역할 저장"·"이름 바꾸기" 단추 테스트를 고친다 (원칙 V)
+- [ ] T029 specs/002-admin-users/quickstart.md "화면 확인" 6·10을 새 드로어로 사람이 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
 - Phase 8: `003-admin-roles` T049~T050 → T020 → T021 → `003-admin-roles` T051 → T022 → `003-admin-roles` T052~T054 → T023 → `003-admin-roles` T055 → T024
