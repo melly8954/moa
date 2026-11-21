@@ -82,8 +82,9 @@ async function mockCodes(page: Page, sent: Sent = {}, tree: unknown[] = TREE) {
   })
 }
 
+// 그룹을 고르는 단추. 같은 줄의 끌기 손잡이("… 옮기기")는 글자가 없어 hasText로 거른다
 const groupButton = (page: Page, name: string) =>
-  page.getByRole("list", { name: "코드 그룹 목록" }).getByRole("button", { name })
+  page.getByRole("list", { name: "코드 그룹 목록" }).getByRole("button").filter({ hasText: name })
 
 test("공통코드: 가로 넘침·접근성", async ({ page }) => {
   await mockCodes(page)
