@@ -29,6 +29,8 @@ export type MenuItem = {
   icon?: LucideIcon
   // 새 소식 점. 값은 화면 낭독기가 읽을 글자 (moa 006: "공지" 옆 새 공지 점, 키트로 옮길 것)
   badge?: string
+  // moa: 권한이 없어 들어갈 수 없다. 흐리게 자물쇠와 함께 보이고, 누르면 토스트만 띄운다 (001 FR-002, 2026-11-22)
+  locked?: boolean
   children?: MenuItem[]
 }
 

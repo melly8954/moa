@@ -66,6 +66,14 @@ public class MenuService {
 	}
 
 	/**
+	 * moa: 사용 중인 관리 메뉴 트리 전체 (권한으로 거르지 않는다). 내 메뉴가 권한 없는 메뉴도 흐리게 보이려고 쓴다
+	 * (specs/001-admin-menus FR-002, 2026-11-22). 없는 연결 화면을 가리키는 메뉴와 하위 메뉴가 없는 묶음 메뉴는 뺀다
+	 */
+	public List<MenuDto> getAdminTree() {
+		return getVisibleTree(MenuAudience.ADMIN, permissionRegistry.keys(), true);
+	}
+
+	/**
 	 * 하위 메뉴의 대상은 보낸 값과 상관없이 부모를 따른다. 1단계 메뉴의 대상을 비우면 관리 메뉴(ADMIN)다.
 	 *
 	 * @throws ServiceException 연결 화면·공개 범위가 틀리면 V001, 부모가 없으면 R001, 3단계가 되면 B001

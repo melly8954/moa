@@ -8,6 +8,9 @@ export type MyMenu = {
   path?: string | null
   // 아이콘 이름 (components/menu/icons.ts)
   icon?: string | null
+  // moa: 들어갈 수 있는가(연결 화면의 권한이 있는가). 관리자 계정은 권한 없는 메뉴도 받는다 (specs/001-admin-menus FR-002, 2026-11-22)
+  //   상위 메뉴는 하위 메뉴 중 하나라도 들어갈 수 있으면 true
+  accessible: boolean
   children: MyMenu[]
 }
 
