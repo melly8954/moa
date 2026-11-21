@@ -62,20 +62,22 @@ test("결과 '전체'를 고르면 결과 조건을 보내지 않는다 (moa 011
   const all = page.getByRole("button", { name: "전체", exact: true })
   await all.click()
   await expect(all).toHaveAttribute("aria-pressed", "true")
-  await page.getByRole("button", { name: "조회" }).click()
   await expect(page).not.toHaveURL(/success=/)
   await expect.poll(() => requests.at(-1)?.searchParams.has("success")).toBe(false)
   await expect(page.getByText("입력한 내용을 확인해 주세요.")).toHaveCount(0)
 })
 
-test("조건(결과·아이디)을 API에 넘긴다", async ({ page }) => {
+test("조건(결과·아이디)을 API에 넘긴다. 결과는 누르면 바로, 아이디는 엔터로 조회한다 (moa 011 US5)", async ({
+  page,
+}) => {
   const requests: URL[] = []
   await mock(page, requests)
   await page.goto("/admin/login-histories")
   await page.getByRole("button", { name: "실패", exact: true }).click()
-  await page.getByLabel("아이디").fill("kim")
-  await page.getByRole("button", { name: "조회" }).click()
   await expect(page).toHaveURL(/success=false/)
+  await page.getByLabel("아이디").fill("kim")
+  await page.getByLabel("아이디").press("Enter")
+  await expect(page).toHaveURL(/loginId=kim/)
   await expect
     .poll(() => requests.at(-1)?.searchParams.toString())
     .toMatch(/success=false.*loginId=kim|loginId=kim.*success=false/)

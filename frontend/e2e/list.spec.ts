@@ -23,12 +23,12 @@ test("목록 화면: 가로 넘침·접근성 (밝은·어두운 화면)", async
   await expectNoSeriousA11yViolations(page)
 })
 
-test("조건은 조회를 눌러야 반영되고, 주소에 남고, 1쪽으로 돌아간다", async ({ page }) => {
+test("조건을 바꾸면 조회 단추 없이 바로 반영되고, 주소에 남고, 1쪽으로 돌아간다 (moa 011 US5)", async ({ page }) => {
   await open(page, "?page=3")
+  // 조회 단추는 없고 초기화만 있다 (US5-AC1)
+  await expect(page.getByRole("button", { name: "조회", exact: true })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "초기화", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "중지", exact: true }).click()
-  await expect(page).toHaveURL(/\?page=3$/)
-
-  await page.getByRole("button", { name: "조회" }).click()
   await expect(page).toHaveURL(/\?status=STOPPED$/)
   await expect(page.getByText("총 21건")).toBeVisible()
   for (const text of await statusCells(page).allInnerTexts()) expect(text).toContain("중지")
@@ -45,6 +45,27 @@ test("검색어 칸에서 Enter로 조회하고, 결과가 없으면 '조건에 
   await page.getByLabel("이름").press("Enter")
   await expect(page).toHaveURL(/keyword=/)
   await expect(page.getByText("조건에 맞는 결과가 없어요.")).toBeVisible()
+})
+
+test("검색어는 치기를 멈추고 0.5초 뒤 조회하고, 그 조회는 방문 기록을 쌓지 않는다 (moa 011 US5-AC4·AC5)", async ({
+  page,
+}) => {
+  await open(page)
+  const before = await page.evaluate(() => history.length)
+  await page.getByLabel("이름").pressSequentially("없는", { delay: 50 })
+  // 치는 동안에는 조회하지 않는다
+  await expect(page).not.toHaveURL(/keyword=/)
+  await expect(page).toHaveURL(/keyword=/, { timeout: 3_000 })
+  await expect(page.getByText("조건에 맞는 결과가 없어요.")).toBeVisible()
+  expect(await page.evaluate(() => history.length)).toBe(before)
+})
+
+test("두 조건을 연달아 바꿔도 둘 다 반영된다 (moa 011 US5)", async ({ page }) => {
+  await open(page)
+  await page.getByRole("button", { name: "중지", exact: true }).click()
+  await page.getByLabel("등급").selectOption({ index: 1 })
+  await expect(page).toHaveURL(/status=STOPPED/)
+  await expect(page).toHaveURL(/grade=/)
 })
 
 test("초기화는 기본값으로 되돌리고 바로 조회한다", async ({ page }) => {
