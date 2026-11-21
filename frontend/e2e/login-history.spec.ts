@@ -55,6 +55,19 @@ test("실패는 짧은 사유로, 시각은 초까지 보인다", async ({ page 
   await expect(page.getByRole("row", { name: /10\.0\.0\.1/ })).toContainText("성공")
 })
 
+test("결과 '전체'를 고르면 결과 조건을 보내지 않는다 (moa 011 FR-010)", async ({ page }) => {
+  const requests: URL[] = []
+  await mock(page, requests)
+  await page.goto("/admin/login-histories?success=false")
+  const all = page.getByRole("button", { name: "전체", exact: true })
+  await all.click()
+  await expect(all).toHaveAttribute("aria-pressed", "true")
+  await page.getByRole("button", { name: "조회" }).click()
+  await expect(page).not.toHaveURL(/success=/)
+  await expect.poll(() => requests.at(-1)?.searchParams.has("success")).toBe(false)
+  await expect(page.getByText("입력한 내용을 확인해 주세요.")).toHaveCount(0)
+})
+
 test("조건(결과·아이디)을 API에 넘긴다", async ({ page }) => {
   const requests: URL[] = []
   await mock(page, requests)
