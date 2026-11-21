@@ -152,7 +152,9 @@ test("기간: 날짜 칸 앞 빠른 단추는 두 칸을 채우고, 직접 친 �
 }) => {
   await open(page)
   const quick = page.getByRole("group", { name: "빠른 기간" })
-  await expect(quick.getByRole("button")).toHaveText(["오늘", "7일", "이번 달", "3개월", "1년"])
+  // 맨 앞은 전체이고, 기간이 비어 있는 처음에는 전체가 골라져 있다 (US4-AC1, 2026-11-22)
+  await expect(quick.getByRole("button")).toHaveText(["전체", "오늘", "7일", "이번 달", "3개월"])
+  await expect(quick.getByRole("button", { name: "전체" })).toHaveAttribute("aria-pressed", "true")
   await quick.getByRole("button", { name: "7일" }).click()
   await expect(quick.getByRole("button", { name: "7일" })).toHaveAttribute("aria-pressed", "true")
   await expect(page.getByLabel("가입일 시작일")).toHaveValue(/^\d{4}-\d{2}-\d{2}$/)
@@ -161,6 +163,12 @@ test("기간: 날짜 칸 앞 빠른 단추는 두 칸을 채우고, 직접 친 �
   const quickBox = await quick.boundingBox()
   const inputBox = await page.getByLabel("가입일 시작일").locator("..").boundingBox()
   expect(quickBox?.height).toBe(inputBox?.height)
+  // 전체를 누르면 두 칸을 비우고 기간 없이 조회한다 (US4-AC6)
+  await quick.getByRole("button", { name: "전체" }).click()
+  await expect(page.getByLabel("가입일 시작일")).toHaveValue("")
+  await expect(page.getByLabel("가입일 종료일")).toHaveValue("")
+  await expect(page).not.toHaveURL(/from=/)
+  await expect(quick.getByRole("button", { name: "전체" })).toHaveAttribute("aria-pressed", "true")
   // 달력 창 안에는 빠른 선택이 없다
   await page.getByRole("button", { name: "기간 고르기" }).click()
   // (달력의 날짜 단추 이름에도 "7일"이 들어가므로 빠른 기간 묶음이 없는지로 본다)
