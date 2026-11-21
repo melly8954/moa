@@ -117,3 +117,15 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
   - `AdminUsersAcceptanceTest`: US1-AC2·AC3는 R14의 SQL 파일을 읽어 맨 위 값 줄만 바꿔 `ScriptUtils`로 실행한 뒤 로그인·`/menus/me`·리프레시로 확인한다. US4-AC3는 운영자와 최고 관리자 본인이 최고 관리자 행의 계정 종류·잠그기·초기화·삭제를 하면 A005·B001, 본인 이름 바꾸기는 200. 지금의 `lastSuperAdminIsProtected`는 이 테스트로 바꾼다(원칙 V)
   - SQL 파일이 아닌 계정(회원, 없는 아이디)으로 절차를 돌리면 멈추고 아무것도 바뀌지 않는다
   - e2e(`user-admin.spec.ts`): 최고 관리자 본인 행은 이름 바꾸기만 켜짐과 안내, 최고 관리자 역할 체크 칸은 늘 꺼짐
+
+## R16. 드로어 한 폼과 행 클릭 (FR-007·FR-008, US3·US4, 2026-11-22)
+
+- **Decision**:
+  - 행 클릭: 키트 `DataTable`에 `onRowClick`을 더한다. 행에 `ROW_CLICKABLE`과 `openOnRowClick`(행 안의 단추·입력은 건너뜀, `components/kit/row-click.ts`)을 단다. 아이디 칸은 밑줄 없는 단추로 두어 키보드로도 연다
+  - 한 폼: react-hook-form 하나에 `name`·`role`·`roleIds`. 처음 값은 계정과 받은 역할(`GET /admin/users/{id}/roles`)이고, 값이 바뀌어 다시 읽히면 맞춘다(`values`). 저장은 바뀐 것만 차례로 부른다: 이름(`PUT /admin/users/{id}`) → 계정 종류(`PUT /{id}/role`) → 역할(`PUT /admin/users/{id}/roles`, 관리자 계정이고 권한 관리 권한이 있고 바뀌었을 때). 백엔드 API는 그대로다. 중간에 실패하면 그때까지 된 것은 남기고 목록을 다시 읽어 폼을 맞춘 뒤 오류를 보인다
+  - 계정 종류가 바뀌면 저장 전에 확인 창(로그아웃, 회원이면 빠질 역할). 회원 → 관리자로 고른 폼에서는 역할 체크 칸을 바로 보이고, 저장 때 계정 종류를 먼저 바꾼 뒤 역할을 준다
+  - 역할 목록에서 고정 역할(최고 관리자)을 뺀다. 최고 관리자 계정은 지금처럼 "최고 관리자 (모든 권한)"만 보인다
+  - 계정 상태: 로그인 막기는 `Switch`(켜짐 = 잠김), 비밀번호 초기화는 단추. 지금의 확인 창·API(`PUT/DELETE /{id}/lock`, `POST /{id}/password-reset`)를 그대로 부른다. 계정 삭제는 맨 아래 `border-destructive` 구역
+  - 이름 바꾸기·계정 종류 바꾸기 창(`RenameDialog`·`RoleChangeDialog`)과 "역할 저장" 단추는 없앤다
+- **Rationale**: 저장할 것과 바로 되는 것이 구역으로 갈린다. 서버 규칙(막기·보호)은 그대로라 화면만 바뀐다
+- **Alternatives considered**: 한 번에 저장하는 새 API(이름·계정 종류·역할을 한 트랜잭션으로. 부분 실패가 없지만 사용자 관리와 권한 관리 API가 겹친다. 지금은 화면에서 차례로 부르고 실패를 알린다)
