@@ -5,7 +5,9 @@ package com.moa.api.dto.role;
  * 화면은 이유만 받아 체크 칸·단추를 끄고 안내한다.
  */
 public enum GrantBlock {
-	/** 최고 관리자만 다룬다 (최고 관리자 역할, 사용자 관리 권한이 든 역할, 최고 관리자 계정) */
+	/** 최고 관리자 역할: 누구도 주거나 빼지 못한다 (한 명 고정, specs/003-admin-roles FR-010) */
+	FIXED,
+	/** 최고 관리자만 다룬다 (사용자 관리 권한이 든 역할, 최고 관리자 계정) */
 	SUPER_ADMIN_ONLY,
 	/** 내가 갖지 않은 권한이 들어 있다 */
 	WIDER_PERMISSIONS

@@ -23,8 +23,9 @@ export type Role = {
   blockReason?: GrantBlock | null
 }
 
-// moa: 다룰 수 없는 이유. SUPER_ADMIN_ONLY는 최고 관리자만, WIDER_PERMISSIONS는 내가 갖지 않은 권한이 들어 있음
-export type GrantBlock = "SUPER_ADMIN_ONLY" | "WIDER_PERMISSIONS"
+// moa: 다룰 수 없는 이유. FIXED는 최고 관리자 역할(누구도 주거나 빼지 못함, 한 명 고정), SUPER_ADMIN_ONLY는 최고 관리자만,
+//   WIDER_PERMISSIONS는 내가 갖지 않은 권한이 들어 있음 (specs/003-admin-roles FR-010, research R23)
+export type GrantBlock = "FIXED" | "SUPER_ADMIN_ONLY" | "WIDER_PERMISSIONS"
 
 export type RoleCreateRequest = { code: string; name: string; description?: string; permissions: string[] }
 export type RoleModifyRequest = { name: string; description?: string; permissions: string[] }

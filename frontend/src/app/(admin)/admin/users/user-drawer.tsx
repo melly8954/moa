@@ -52,6 +52,8 @@ export function UserDrawer({
 }) {
   const t = useTranslations("userAdmin")
   const protectedRow = !!user?.protection
+  // moa: 최고 관리자 계정은 본인 이름 바꾸기만 된다. 나머지는 누구도 못 한다 (FR-007, 2026-11-21 한 명 고정)
+  const fixedRow = !!user?.superAdmin
 
   return (
     <SideDrawer
@@ -81,36 +83,46 @@ export function UserDrawer({
             <UserRoles user={user} />
           </section>
           <div className="flex flex-col gap-2 border-t pt-4">
-            {user.protection && (
+            {user.protection ? (
               <Alert>
                 <AlertDescription>
                   {t(user.protection === "SUPER_ADMIN_ONLY" ? "protectedSuperAdmin" : "protectedWider")}
                 </AlertDescription>
               </Alert>
+            ) : (
+              fixedRow && (
+                <Alert>
+                  <AlertDescription>{t("superAdminSelf")}</AlertDescription>
+                </Alert>
+              )
             )}
             <Button variant="outline" disabled={protectedRow} onClick={onRename}>
               {t("rename")}
             </Button>
-            <Button variant="outline" disabled={protectedRow || isSelf} onClick={onChangeRole}>
+            <Button variant="outline" disabled={protectedRow || fixedRow || isSelf} onClick={onChangeRole}>
               {t("changeRole")}
             </Button>
-            <Button variant="outline" disabled={protectedRow || isSelf} onClick={onToggleLock}>
+            <Button variant="outline" disabled={protectedRow || fixedRow || isSelf} onClick={onToggleLock}>
               {t(user.locked ? "unlock" : "lock")}
             </Button>
-            <Button variant="outline" disabled={protectedRow || !user.hasPassword} onClick={onResetPassword}>
+            <Button
+              variant="outline"
+              disabled={protectedRow || fixedRow || !user.hasPassword}
+              onClick={onResetPassword}
+            >
               {t("resetPassword")}
             </Button>
             {extraActions.map((action) => (
               <Button
                 key={action.key}
                 variant="outline"
-                disabled={protectedRow || action.disabled?.(user)}
+                disabled={protectedRow || fixedRow || action.disabled?.(user)}
                 onClick={() => action.onSelect(user)}
               >
                 {action.label}
               </Button>
             ))}
-            <Button variant="destructive" disabled={protectedRow || isSelf} onClick={onRemove}>
+            <Button variant="destructive" disabled={protectedRow || fixedRow || isSelf} onClick={onRemove}>
               {t("remove")}
             </Button>
           </div>

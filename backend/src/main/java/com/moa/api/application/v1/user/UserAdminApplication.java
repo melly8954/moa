@@ -32,7 +32,8 @@ import lombok.RequiredArgsConstructor;
  *
  * moa (specs/002-admin-users FR-005·FR-007, research R9·R10): 바꾸는 일 전에 다루기 범위를 본다. 최고 관리자가 아니면
  * 최고 관리자 계정은 못 다루고, 관리자 계정은 그 권한이 모두 내 권한 안에 있을 때만 다룬다. 계정 종류를 회원으로 바꾸면
- * 역할을 모두 빼고 로그아웃시킨다. 최고 관리자가 0명이 되는 일(회원으로 바꾸기·잠그기·지우기)은 B001이다
+ * 역할을 모두 빼고 로그아웃시킨다. 최고 관리자 계정은 본인 이름 바꾸기만 되고, 계정 종류·잠그기·풀기·비밀번호 초기화·삭제는
+ * 누구든 B001이다 (FR-007, 2026-11-21 한 명 고정. 되돌리기는 개발자 DB 절차, FR-009)
  */
 @Component
 @RequiredArgsConstructor
@@ -75,9 +76,7 @@ public class UserAdminApplication {
 	@Transactional
 	public UserAdminDto changeRole(AuthPrincipal actor, Long id, Role role) {
 		UserAdminDto before = requireManageable(actor, id);
-		if (before.role() == Role.ADMIN && role != Role.ADMIN) {
-			accessRoleService.requireSuperAdminRemains(List.of(id));
-		}
+		requireNotSuperAdmin(id);
 		UserAdminDto changed = userAdminService.changeRole(actor, id, role);
 		if (before.role() != role) {
 			if (role != Role.ADMIN) {
@@ -91,7 +90,7 @@ public class UserAdminApplication {
 	@Transactional
 	public void lock(AuthPrincipal actor, Long id) {
 		requireManageable(actor, id);
-		accessRoleService.requireSuperAdminRemains(List.of(id));
+		requireNotSuperAdmin(id);
 		userAdminService.lock(actor, id);
 		authTokenService.revokeAll(id);
 	}
@@ -99,25 +98,32 @@ public class UserAdminApplication {
 	@Transactional
 	public void unlock(AuthPrincipal actor, Long id) {
 		requireManageable(actor, id);
+		requireNotSuperAdmin(id);
 		userAdminService.unlock(actor, id);
 	}
 
 	@Transactional
 	public String resetPassword(AuthPrincipal actor, Long id) {
 		requireManageable(actor, id);
+		requireNotSuperAdmin(id);
 		String temporary = userAdminService.resetPassword(actor, id);
 		authTokenService.revokeAll(id);
 		return temporary;
 	}
 
-	/** moa: 지운 계정의 역할도 뺀다 (최고 관리자 수를 셀 때 지운 계정이 남지 않게) */
+	/** moa: 지운 계정의 역할도 뺀다 */
 	@Transactional
 	public void delete(AuthPrincipal actor, Long id) {
 		requireManageable(actor, id);
-		accessRoleService.requireSuperAdminRemains(List.of(id));
+		requireNotSuperAdmin(id);
 		userAdminService.delete(actor, id);
 		accessRoleService.removeAllRolesOf(id);
 		authTokenService.revokeAll(id);
+	}
+
+	/** moa: 최고 관리자 계정이면 B001 (FR-007, research R13) */
+	private void requireNotSuperAdmin(Long id) {
+		userAdminService.requireNotSuperAdmin(accessRoleService.isSuperAdmin(id));
 	}
 
 	/** moa: 다루기 범위 (R9). 없는 계정 R001, 다룰 수 없으면 A005 */

@@ -107,16 +107,16 @@ description: "관리자·운영자 계정 (admin-users) 작업 목록"
 
 **백엔드**
 
-- [ ] T020 backend/src/main/java/com/moa/api/application/v1/user/UserAdminApplication.java·backend/src/main/java/com/moa/api/service/user/UserAdminService.java: 최고 관리자 대상의 계정 종류·잠그기·풀기·초기화·삭제 B001(`requireNotSuperAdmin`), 이름 바꾸기는 본인만, `requireSuperAdminRemains` 호출 없앰 (R13)
-- [ ] T021 backend/src/main/resources/db/ops/super-admin-reset-password.sql·super-admin-transfer.sql(맨 위 값 줄, 한 트랜잭션, SIGNAL 검사, 지우기 먼저, 토큰 폐기, 끝에 수 확인), specs/002-admin-users/quickstart.md "운영: 최고 관리자 되돌리기"와 맞추기 (R14)
+- [X] T020 backend/src/main/java/com/moa/api/application/v1/user/UserAdminApplication.java·backend/src/main/java/com/moa/api/service/user/UserAdminService.java: 최고 관리자 대상의 계정 종류·잠그기·풀기·초기화·삭제 B001(`requireNotSuperAdmin`), 이름 바꾸기는 본인만, `requireSuperAdminRemains` 호출 없앰 (R13)
+- [X] T021 backend/src/main/resources/db/ops/super-admin-reset-password.sql·super-admin-transfer.sql(맨 위 값 줄, 한 트랜잭션, 확인 표 검사, 지우기 먼저, 토큰 폐기, 끝에 수 확인), specs/002-admin-users/quickstart.md "운영: 최고 관리자 되돌리기"와 맞추기 (R14)
 
 **프론트**
 
-- [ ] T022 frontend/src/app/(admin)/admin/users/user-drawer.tsx(최고 관리자 행: 이름 바꾸기만, 본인 안내)·user-roles.tsx(최고 관리자 역할 체크 칸 늘 꺼짐과 이유, 최고 관리자 계정은 "최고 관리자 (모든 권한)"만), frontend/messages/ko.json 문구 (R13)
+- [X] T022 frontend/src/app/(admin)/admin/users/user-drawer.tsx(최고 관리자 행: 이름 바꾸기만, 본인 안내)·user-roles.tsx(최고 관리자 역할 체크 칸 늘 꺼짐과 이유, 최고 관리자 계정은 "최고 관리자 (모든 권한)"만), frontend/messages/ko.json 문구 (R13)
 
 **테스트 (마지막)**
 
-- [ ] T023 backend/src/test/java/com/moa/api/AdminUsersAcceptanceTest.java: US1-AC2·AC3(SQL 파일 실행), US4-AC3·FR-007(최고 관리자 행 B001·A005, 본인 이름 200), 절차 SIGNAL. `lastSuperAdminIsProtected`를 바꾼다. frontend/e2e/user-admin.spec.ts 최고 관리자 행·역할 칸 (원칙 V, R15)
+- [X] T023 backend/src/test/java/com/moa/api/AdminUsersAcceptanceTest.java: US1-AC2·AC3(SQL 파일 실행), US4-AC3·FR-007(최고 관리자 행 B001·A005, 본인 이름 200), 절차 멈춤. `lastSuperAdminIsProtected`를 바꾼다. frontend/e2e/user-admin.spec.ts 최고 관리자 행·역할 칸 (원칙 V, R15)
 - [ ] T024 specs/002-admin-users/quickstart.md "화면 확인"에 최고 관리자 본인 행을 더하고, "운영: 최고 관리자 되돌리기"를 개발자가 한 번 따라 해 본다 (사람 확인)
 
 ---

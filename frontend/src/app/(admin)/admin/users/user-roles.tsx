@@ -20,7 +20,8 @@ import type { AdminUser } from "@/types/user-admin"
 //   관리자 계정만 역할을 받는다. 회원이면 계정 종류를 관리자로 바꾸라고 안내한다
 //   권한 관리 권한(ROLE_MANAGE)이 있으면 체크해서 주고 뺀다. 저장은 권한 관리의 API(PUT /users/{id}/roles)를 그대로 쓴다
 //   체크할 수 없는 역할(최고 관리자만, 내가 갖지 않은 권한)은 꺼진 채 이유를 보인다. 서버도 같은 규칙으로 막는다
-//   최고 관리자 역할을 고르면 그 역할만 남는다 (모든 권한이라 다른 역할은 뜻이 없다, specs/003-admin-roles FR-010)
+//   최고 관리자 역할은 누구에게나 늘 꺼져 있고, 최고 관리자 계정은 체크 목록 대신 "최고 관리자 (모든 권한)"만 보인다
+//   (한 명 고정, specs/003-admin-roles FR-010, specs/002-admin-users research R13)
 //   권한 관리 권한이 없으면 받은 역할 이름만 보인다
 export function UserRoles({ user }: { user: AdminUser }) {
   const t = useTranslations("userAdmin")
@@ -28,6 +29,9 @@ export function UserRoles({ user }: { user: AdminUser }) {
 
   if (user.role !== "ADMIN") {
     return <p className="text-sm text-muted-foreground">{t("memberNoRoles")}</p>
+  }
+  if (user.superAdmin) {
+    return <p className="text-sm">{t("superAdminRoles")}</p>
   }
   if (!canManage) {
     return (
@@ -91,7 +95,13 @@ function RoleChecks({ user }: { user: AdminUser }) {
       <div className="flex flex-col gap-2">
         {roles.data.map((role) => {
           const reason = !role.grantable
-            ? t(role.blockReason === "SUPER_ADMIN_ONLY" ? "roleSuperAdminOnly" : "roleWider")
+            ? t(
+                role.blockReason === "FIXED"
+                  ? "roleFixed"
+                  : role.blockReason === "SUPER_ADMIN_ONLY"
+                    ? "roleSuperAdminOnly"
+                    : "roleWider",
+              )
             : superChecked && !role.fixed
               ? t("roleWithSuperAdmin")
               : undefined

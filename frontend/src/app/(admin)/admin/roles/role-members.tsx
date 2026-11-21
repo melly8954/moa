@@ -21,7 +21,8 @@ const SIZE = 20
 //   검색어가 없으면 구성원만, 있으면 관리자 계정에서 찾고 구성원인지 표시한다 (회원은 역할을 받지 않아 나오지 않는다)
 //   체크해서 "더하기"·"빼기"를 한꺼번에 한다. 다른 역할에서는 최고 관리자 계정을 체크할 수 없다 (모든 권한)
 //   내가 다룰 수 없는 역할(grantable false)은 보기만 한다
-//   하나라도 틀리면 서버가 아무것도 바꾸지 않는다 (회원·최고 관리자 0명 B001, 권한 밖 역할 A005)
+//   하나라도 틀리면 서버가 아무것도 바꾸지 않는다 (회원 B001, 권한 밖 역할 A005)
+//   최고 관리자 역할(fixed)은 구성원이 첫 관리자 한 명으로 고정이라 보기만 한다. 검색·체크·일괄 줄을 두지 않는다 (FR-006·FR-010, R24)
 export function RoleMembers({ role }: { role: Role }) {
   const t = useTranslations("role")
   const queryClient = useQueryClient()
@@ -62,6 +63,25 @@ export function RoleMembers({ role }: { role: Role }) {
     setSearched(value.trim())
     setPage(0)
     setSelected([])
+  }
+
+  if (role.fixed) {
+    return (
+      <div className="flex flex-col gap-2">
+        <QueryState query={members} isEmpty={(d) => d.content.length === 0} empty={t("membersEmpty")}>
+          {(data) => (
+            <ul className="flex flex-col gap-1 rounded-lg border p-3 text-sm">
+              {data.content.map((u) => (
+                <li key={u.id}>
+                  {u.loginId} <span className="text-muted-foreground">{u.name}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </QueryState>
+        <p className="text-sm text-muted-foreground">{t("superAdminFixed")}</p>
+      </div>
+    )
   }
 
   return (
