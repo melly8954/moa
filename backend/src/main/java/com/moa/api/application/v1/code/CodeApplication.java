@@ -16,7 +16,6 @@ import com.moa.api.dto.code.CodeDto;
 import com.moa.api.dto.code.CodeGroupDto;
 import com.moa.api.dto.code.CodeGroupOrderDto;
 import com.moa.api.dto.code.CodeGroupTreeDto;
-import com.moa.api.dto.code.CodeKeyDto;
 import com.moa.api.dto.code.CodeOrderDto;
 import com.moa.api.service.code.CodeService;
 import com.moa.common.audit.CurrentActor;
@@ -96,16 +95,6 @@ public class CodeApplication {
 	@CacheEvict(value = CACHE, key = "#groupCode")
 	public void setEnabled(String groupCode, Collection<String> codes, boolean enabled) {
 		codeService.setEnabled(groupCode, codes, enabled);
-	}
-
-	/**
-	 * moa: 그룹과 항목을 섞어 여러 그룹에 걸쳐 일괄 사용·사용 안 함 (FR-005, 2026-11-21). 하나라도 틀리면 아무것도 바꾸지 않는다.
-	 * 여러 그룹의 화면용 목록이 바뀔 수 있어 캐시를 모두 비운다
-	 */
-	@Transactional
-	@CacheEvict(value = CACHE, allEntries = true)
-	public void setEnabled(Collection<String> groupCodes, Collection<CodeKeyDto> codes, boolean enabled) {
-		codeService.setEnabled(groupCodes, codes, enabled);
 	}
 
 	/** moa: 그룹 순서 (FR-005, 2026-11-21). 화면용 목록에는 영향이 없다 */

@@ -1,11 +1,11 @@
 import type {
   Code,
   CodeCreateRequest,
+  CodeEnabledRequest,
   CodeGroup,
   CodeGroupCreateRequest,
   CodeGroupModifyRequest,
   CodeGroupTree,
-  CodeBulkEnabledRequest,
   CodeGroupOrder,
   CodeModifyRequest,
   CodeOrder,
@@ -15,7 +15,7 @@ import { http } from "./client"
 // 공통코드 (code 헬퍼). api.v1.code로 부른다
 //   list: 화면용 목록 (로그인한 사용자). 기본은 사용하는 코드만, includeDisabled면 사용 안 함 코드도
 //   admin: 공통코드 화면용 (CODE_MANAGE 권한)
-// moa: tree·한 그룹 안 순서(order), 그룹 순서(orderGroups)·그룹과 항목 일괄 사용 여부(setEnabledBulk), 그룹 만들기·고치기를 더했다. 지우는 API는 없다 (specs/004-admin-codes FR-008)
+// moa: tree·한 그룹 안 순서(order)·한 그룹 안 일괄 사용 여부(setEnabled), 그룹 순서(orderGroups), 그룹 만들기·고치기를 더했다. 지우는 API는 없다 (specs/004-admin-codes FR-008)
 const enc = encodeURIComponent
 const groupOf = (groupCode: string) => `/api/v1/admin/code-groups/${enc(groupCode)}`
 const codesOf = (groupCode: string) => `${groupOf(groupCode)}/codes`
@@ -43,7 +43,7 @@ export const codeApi = {
       http.put<void>(`${codesOf(groupCode)}/order`, orders).then(() => undefined),
     orderGroups: (orders: CodeGroupOrder[]) =>
       http.put<void>("/api/v1/admin/code-groups/order", orders).then(() => undefined),
-    setEnabledBulk: (data: CodeBulkEnabledRequest) =>
-      http.put<void>("/api/v1/admin/code-groups/enabled", data).then(() => undefined),
+    setEnabled: (groupCode: string, data: CodeEnabledRequest) =>
+      http.put<void>(`${codesOf(groupCode)}/enabled`, data).then(() => undefined),
   },
 }

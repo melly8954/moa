@@ -60,12 +60,6 @@ public class CodeReader {
 		return codeRepository.findByGroupCodeAndEnabledTrueOrderBySortOrderAscCodeAsc(groupCode);
 	}
 
-	/** moa: 지운 항목까지 센 숫자 코드의 가장 큰 값. 없으면 0 */
-	public long findMaxNumericCode(String groupCode) {
-		Long max = codeRepository.findMaxNumericCode(groupCode);
-		return max == null ? 0 : max;
-	}
-
 	/** moa: 그룹의 가장 큰 정렬 순서. 항목이 없으면 -1 */
 	public int findMaxSortOrder(String groupCode) {
 		Integer max = codeRepository.findMaxSortOrder(groupCode);

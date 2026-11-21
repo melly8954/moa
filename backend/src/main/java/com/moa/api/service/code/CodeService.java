@@ -2,7 +2,6 @@ package com.moa.api.service.code;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +15,6 @@ import com.moa.api.dto.code.CodeDto;
 import com.moa.api.dto.code.CodeGroupDto;
 import com.moa.api.dto.code.CodeGroupOrderDto;
 import com.moa.api.dto.code.CodeGroupTreeDto;
-import com.moa.api.dto.code.CodeKeyDto;
 import com.moa.api.dto.code.CodeOrderDto;
 import com.moa.api.entity.code.Code;
 import com.moa.api.entity.code.CodeGroup;
@@ -34,9 +32,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class CodeService {
-
-	/** 자동 순번의 최소 자릿수 (FR-006). 999를 넘으면 자릿수가 늘어난다 */
-	private static final String AUTO_CODE_FORMAT = "%03d";
 
 	private final CodeReader codeReader;
 	private final CodeWriter codeWriter;
@@ -103,20 +98,17 @@ public class CodeService {
 	}
 
 	/**
-	 * moa: 코드를 비우면 그룹 안의 자동 순번(지운 것까지 센 숫자 코드 + 1, 세 자리 이상), 순서를 비우면 그룹 맨 뒤 (FR-006, R6)
+	 * moa: 코드는 관리자가 적는다(자동 순번 없음, FR-006 2026-11-21). 순서를 비우면 그룹 맨 뒤
 	 *
 	 * @throws ServiceException 그룹이 없으면 R001, 그룹 안에 같은 코드가 있으면 R002
 	 */
-	public CodeDto createCode(String groupCode, @Nullable String code, String name, @Nullable Integer sortOrder) {
+	public CodeDto createCode(String groupCode, String code, String name, @Nullable Integer sortOrder) {
 		requireGroup(groupCode);
-		String target = code == null || code.isBlank()
-			? AUTO_CODE_FORMAT.formatted(codeReader.findMaxNumericCode(groupCode) + 1)
-			: code;
-		if (codeReader.existsCode(groupCode, target)) {
-			throw new ServiceException(ErrorCode.DUPLICATE_RESOURCE, "이미 있는 코드입니다: " + groupCode + "." + target);
+		if (codeReader.existsCode(groupCode, code)) {
+			throw new ServiceException(ErrorCode.DUPLICATE_RESOURCE, "이미 있는 코드입니다: " + groupCode + "." + code);
 		}
 		int order = sortOrder == null ? codeReader.findMaxSortOrder(groupCode) + 1 : sortOrder;
-		return CodeDto.from(codeWriter.save(new Code(groupCode, target, name, order)));
+		return CodeDto.from(codeWriter.save(new Code(groupCode, code, name, order)));
 	}
 
 	/**
@@ -166,24 +158,6 @@ public class CodeService {
 			}
 		}
 		orders.forEach(order -> groups.get(order.groupCode()).changeSortOrder(order.sortOrder()));
-	}
-
-	/**
-	 * moa: 그룹과 항목을 섞어 여러 그룹에 걸쳐 한 번에 켜고 끈다 (FR-005, 2026-11-21).
-	 * 하나라도 없으면 아무것도 바꾸지 않는다 (호출하는 Application의 트랜잭션이 롤백한다).
-	 *
-	 * @throws ServiceException 없는 그룹이나 그룹에 없는 코드 R001
-	 */
-	public void setEnabled(Collection<String> groupCodes, Collection<CodeKeyDto> codes, boolean enabled) {
-		List<CodeGroup> groups = new LinkedHashSet<>(groupCodes).stream().map(this::requireGroup).toList();
-		Map<String, List<String>> codesByGroup = codes.stream()
-			.collect(Collectors.groupingBy(CodeKeyDto::groupCode, LinkedHashMap::new,
-				Collectors.mapping(CodeKeyDto::code, Collectors.toList())));
-		List<Code> targets = new ArrayList<>();
-		codesByGroup.forEach((groupCode, groupCodesOfItems) -> targets.addAll(requireAll(groupCode,
-			groupCodesOfItems)));
-		groups.forEach(group -> group.changeEnabled(enabled));
-		targets.forEach(code -> code.changeEnabled(enabled));
 	}
 
 	private CodeGroup requireGroup(String groupCode) {

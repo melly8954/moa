@@ -12,9 +12,9 @@ import jakarta.validation.constraints.Size;
 
 @Schema(description = "코드 만들기 요청")
 public record CodeCreateRequest(
-	@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED,
-		description = "코드. 영문 대문자·숫자·밑줄. moa: 비우면 그룹 안의 자동 순번(001, 002, …)",
-		example = "PAID") @Size(max = 50) @Pattern(regexp = "[A-Z0-9_]*") @Nullable String code,
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED,
+		description = "코드. 영문 대문자·숫자·밑줄. moa: 필수(자동 순번 없음, specs/004-admin-codes FR-006)",
+		example = "PAID") @NotBlank @Size(max = 50) @Pattern(regexp = "[A-Z0-9_]+") String code,
 	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "이름",
 		example = "결제 완료") @NotBlank @Size(max = 100) String name,
 	@Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "정렬 순서. 작을수록 앞. moa: 비우면 그룹 맨 뒤",
