@@ -87,3 +87,16 @@ US3-AC2·AC5는 위 "공개 범위" 표에 있다.
 | US1-AC2 | ADMIN | 여섯 API 모두 200 |
 | US2-AC2 | USER (역할 없음) | 여섯 API 모두 403, `code` = `A005`. 쓰기 요청(`POST /api/v1/admin/menus`)도 403 `A005` |
 | US2-AC3 | 토큰 없음 | 여섯 API 모두 401, `code` = `A001` |
+
+## 권한 없는 메뉴도 내려준다 (2026-11-22)
+
+`GET /api/v1/menus/me`가 관리자 계정에게 사용 중인 관리 메뉴를 모두 준다. 항목마다 `accessible`(그 연결 화면의 권한이 있는가)을 더한다. 상위 메뉴의 `accessible`은 하위 메뉴 중 하나라도 `accessible`인가다 (spec.md FR-002)
+
+| 호출자 | 기대 |
+|---|---|
+| ADMIN, 최고 관리자 | 200. 모든 관리 메뉴, 모두 `accessible: true` |
+| ADMIN, 접속 이력 조회 권한만 | 200. 모든 관리 메뉴. 접속 이력만 `accessible: true`, 나머지 화면 메뉴는 `false` |
+| ADMIN, 역할 없음 | 200. 모든 관리 메뉴, 모두 `accessible: false` |
+| USER | 200. 빈 목록 |
+
+- 사용 안 함 메뉴와 없는 연결 화면을 가리키는 메뉴는 주지 않는다 (예전과 같다)
