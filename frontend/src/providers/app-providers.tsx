@@ -14,7 +14,8 @@ import { RealtimeProvider } from "./realtime-provider"
 //   ThemeProvider: 화면 모드(밝게·어둡게·기기 설정). <html>에 dark 클래스를 붙인다
 //   QueryClient: 서버 데이터 조회·캐시 (useQuery, useMutation)
 //   TooltipProvider: Tooltip을 쓰려면 필요하다 (사이드바 접힘 메뉴 이름)
-//   Toaster: 잠깐 떴다 사라지는 알림 (toast)
+//   Toaster: 잠깐 떴다 사라지는 알림 (toast). 오른쪽 아래에 띄운다. 결과 안내는 초록(toast.success), 알림은 파랑(toast.info)
+//     (specs/007-notifications contracts/notifications-screens.md "토스트")
 //   ConfirmHost: confirm()이 띄우는 확인 창
 //   RealtimeProvider·RealtimeToasts: 로그인하면 실시간 연결을 열고 공지·알림 토스트를 띄운다 (moa 007, 키트로 옮길 것)
 export function AppProviders({ wsUrl, children }: { wsUrl: string; children: React.ReactNode }) {
@@ -30,7 +31,7 @@ export function AppProviders({ wsUrl, children }: { wsUrl: string; children: Rea
         <RealtimeProvider wsUrl={wsUrl}>
           <TooltipProvider>
             {children}
-            <Toaster richColors position="top-center" />
+            <Toaster richColors position="bottom-right" />
             <ConfirmHost />
             <RealtimeToasts />
           </TooltipProvider>
