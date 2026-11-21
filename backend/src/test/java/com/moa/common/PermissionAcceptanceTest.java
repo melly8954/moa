@@ -9,7 +9,9 @@ import org.springframework.http.HttpHeaders;
 import com.moa.support.AcceptanceTest;
 
 /**
- * 권한: @RequirePermission, ADMIN은 모든 권한, 역할 계층(ADMIN > USER), @CurrentUser, 내 권한
+ * 권한: @RequirePermission, 최고 관리자는 모든 권한, 역할 계층(ADMIN > USER), @CurrentUser, 내 권한
+ * moa (specs/003-admin-roles FR-002·FR-010, research R21): 키트는 "ADMIN은 모든 권한"이었다. moa는 ADMIN이 관리자 계정이고
+ * 모든 권한은 최고 관리자 역할이 준다. 역할 없는 ADMIN은 권한이 없다
  */
 class PermissionAcceptanceTest extends AcceptanceTest {
 
@@ -18,11 +20,19 @@ class PermissionAcceptanceTest extends AcceptanceTest {
 	private static final String MY_PERMISSIONS = "/api/v1/users/me/permissions";
 
 	@Test
-	@DisplayName("권한: ADMIN은 권한이 필요한 API를 부르고, @CurrentUser로 자기 ID를 받는다")
+	@DisplayName("권한: 최고 관리자는 권한이 필요한 API를 부르고, @CurrentUser로 자기 ID를 받는다")
 	void adminHasEveryPermission() {
-		assertThat(mvc.get().uri(PERMISSION).header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")))
+		assertThat(mvc.get().uri(PERMISSION).header(HttpHeaders.AUTHORIZATION, superAdmin()))
 			.hasStatus(200)
 			.bodyText().isEqualTo("2");
+	}
+
+	@Test
+	@DisplayName("권한: 역할 없는 관리자 계정(ADMIN)은 권한이 필요한 API에서 A005")
+	void adminWithoutRoleHasNoPermission() {
+		assertThat(mvc.get().uri(PERMISSION).header(HttpHeaders.AUTHORIZATION, bearer(4L, "ADMIN")))
+			.hasStatus(403)
+			.bodyJson().extractingPath("$.code").isEqualTo("A005");
 	}
 
 	@Test
@@ -37,9 +47,9 @@ class PermissionAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("권한: 내 권한은 ADMIN이면 등록된 전부, 권한을 받지 않은 사용자는 빈 목록")
+	@DisplayName("권한: 내 권한은 최고 관리자면 등록된 전부, 권한을 받지 않은 사용자는 빈 목록")
 	void myPermissions() {
-		assertThat(mvc.get().uri(MY_PERMISSIONS).header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")))
+		assertThat(mvc.get().uri(MY_PERMISSIONS).header(HttpHeaders.AUTHORIZATION, superAdmin()))
 			.hasStatus(200)
 			.bodyJson().extractingPath("$.permissions").asArray().contains("SAMPLE_MANAGE");
 		assertThat(mvc.get().uri(MY_PERMISSIONS).header(HttpHeaders.AUTHORIZATION, bearer(3L, "USER")))

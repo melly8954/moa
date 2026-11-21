@@ -21,6 +21,8 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  /* moa: 연한 빨간 바탕(destructive/10·/20) 위 글자. destructive 그대로는 대비가 4.5:1에 모자란다 (키트로 옮길 것) */
+  --destructive-strong: oklch(0.5 0.2 27.325);
   /* moa: 상태 "사용·정상" 색 (StatusText positive) */
   --success: oklch(0.627 0.17 149.2);
   --border: oklch(0.922 0 0);
@@ -57,6 +59,7 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-strong: oklch(0.78 0.16 22.216);
   --success: oklch(0.723 0.192 149.6);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);

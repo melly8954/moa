@@ -188,7 +188,7 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	@Test
 	@DisplayName("US2-AC2 파기 기록 조회 권한만 받은 운영자는 운영 아래 파기 기록을 보고 목록을 연다")
 	void operatorWithReadPermissionSeesMenuAndList() {
-		testUsers.create(OPERATOR_ID, "operator", "operator123!", Role.USER);
+		testUsers.create(OPERATOR_ID, "operator", "operator123!", Role.ADMIN);
 		MvcTestResult role = asAdmin(mvc.post().uri("/api/v1/admin/roles").contentType(MediaType.APPLICATION_JSON)
 			.content("{\"code\":\"PRIVACY\",\"name\":\"개인정보 담당\",\"permissions\":[\"PURGE_LOG_READ\"]}"));
 		assertThat(role).hasStatus(201);
@@ -206,7 +206,7 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	@Test
 	@DisplayName("US2-AC3 파기 기록 조회 권한이 없는 운영자가 목록을 요청하면 권한 없음으로 막힌다")
 	void operatorWithoutPermissionIsForbidden() {
-		testUsers.create(OPERATOR_ID, "operator", "operator123!", Role.USER);
+		testUsers.create(OPERATOR_ID, "operator", "operator123!", Role.ADMIN);
 
 		assertThat(asOperator(mvc.get().uri(PURGE_LOGS))).hasStatus(403)
 			.bodyJson().extractingPath("$.code").isEqualTo("A005");
@@ -252,11 +252,11 @@ class PurgeLogAcceptanceTest extends AcceptanceTest {
 	}
 
 	private MvcTestResult asAdmin(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 
 	private MvcTestResult asOperator(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(OPERATOR_ID, "USER")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, bearer(OPERATOR_ID, "ADMIN")).exchange();
 	}
 
 	private String body(MvcTestResult result) {

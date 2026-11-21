@@ -144,7 +144,7 @@ const SIX_ADMIN_MENUS = [
     icon: "settings",
     children: sub(
       [
-        ["역할 관리", "/admin/roles", "shield"],
+        ["권한 관리", "/admin/roles", "shield"],
         ["메뉴 관리", "/admin/menus", "menu"],
         ["코드 관리", "/admin/codes", "list"],
       ],
@@ -300,6 +300,24 @@ test("US2-AC4 일반 회원은 로그인하면 사용자 셸 첫 화면이 열�
   await expect(menuLinks(page)).toHaveText(["홈", "공지"])
 })
 
+// moa (specs/001-admin-menus FR-005·FR-006, research R27·R28, 2026-11-21): 셸은 계정 종류로 고른다
+test("FR-005 역할이 없는 관리자 계정은 로그인하면 관리 셸에서 받은 권한이 없다는 안내를 본다 @wide", async ({
+  page,
+}) => {
+  await signedIn(page, { me: { role: "ADMIN" }, menus: [] })
+  await page.route("**/api/v1/auth/login", (route) =>
+    route.fulfill({ json: { accessToken: "e2e-token", tokenType: "Bearer", expiresIn: 900 } }),
+  )
+  await page.goto("/sign-in")
+  await page.getByLabel("아이디").fill("e2e")
+  await page.getByLabel("비밀번호").fill("e2e-pass")
+  await page.getByRole("button", { name: "로그인" }).click()
+  await expect(page).toHaveURL(/\/admin$/)
+  await expect(page.getByRole("heading", { name: "받은 권한이 없어요" })).toBeVisible()
+  await expect(page.getByText("최고 관리자에게 역할을 받으세요.")).toBeVisible()
+  await expect(menuLinks(page)).toHaveCount(0)
+})
+
 test("관리자의 계정 화면(설정)은 관리 셸 안에 열린다 @wide", async ({ page }) => {
   await signedIn(page, { menus: SIX_ADMIN_MENUS })
   await page.goto("/settings")
@@ -437,10 +455,10 @@ test("FR-010 이미 고른 연결 화면 칸을 눌러 치면 고른 이름을 �
   await expect(page.getByRole("option", { name: "코드 관리" })).toHaveCount(0)
 })
 
-test("FR-011 머리 설명에 역할 관리로 가는 링크가 있다", async ({ page }) => {
+test("FR-011 머리 설명에 권한 관리로 가는 링크가 있다", async ({ page }) => {
   await mock(page)
   await page.goto("/admin/menus")
-  await expect(page.getByRole("link", { name: "역할 관리", exact: true }).last()).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "권한 관리", exact: true }).last()).toHaveAttribute(
     "href",
     "/admin/roles",
   )

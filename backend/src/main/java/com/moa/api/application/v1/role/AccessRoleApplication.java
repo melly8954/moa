@@ -15,6 +15,8 @@ import com.moa.api.application.v1.role.command.ModifyAccessRoleCommand;
 import com.moa.api.dto.menu.MenuAudience;
 import com.moa.api.dto.menu.MenuDto;
 import com.moa.api.dto.role.AccessRoleDto;
+import com.moa.api.dto.role.AccessRoleView;
+import com.moa.api.dto.role.GrantBlock;
 import com.moa.api.dto.role.PermissionTreeDto;
 import com.moa.api.dto.role.RoleMemberDto;
 import com.moa.api.screen.ScreenRegistry;
@@ -76,26 +78,27 @@ public class AccessRoleApplication {
 		return new PermissionTreeDto(nodes, unlisted);
 	}
 
+	/** moa: 최고 관리자 역할이 맨 앞. 이 사람이 다룰 수 있는지와 권한 이름을 붙인다 (specs/003-admin-roles research R18) */
 	@Transactional(readOnly = true)
-	public List<AccessRoleDto> getRoles() {
-		return accessRoleService.getAll();
+	public List<AccessRoleView> getRoles(AuthPrincipal actor) {
+		return accessRoleService.getAll().stream().map(role -> view(actor, role)).toList();
 	}
 
 	@Transactional(readOnly = true)
-	public AccessRoleDto getRole(Long id) {
-		return accessRoleService.get(id);
+	public AccessRoleView getRole(AuthPrincipal actor, Long id) {
+		return view(actor, accessRoleService.get(id));
 	}
 
 	@Transactional
-	public AccessRoleDto create(AuthPrincipal actor, CreateAccessRoleCommand command) {
-		return accessRoleService.create(actor, command.code(), command.name(), command.description(),
-			command.permissions());
+	public AccessRoleView create(AuthPrincipal actor, CreateAccessRoleCommand command) {
+		return view(actor, accessRoleService.create(actor, command.code(), command.name(), command.description(),
+			command.permissions()));
 	}
 
 	@Transactional
-	public AccessRoleDto modify(AuthPrincipal actor, ModifyAccessRoleCommand command) {
-		return accessRoleService.modify(actor, command.id(), command.name(), command.description(),
-			command.permissions());
+	public AccessRoleView modify(AuthPrincipal actor, ModifyAccessRoleCommand command) {
+		return view(actor, accessRoleService.modify(actor, command.id(), command.name(), command.description(),
+			command.permissions()));
 	}
 
 	@Transactional
@@ -105,15 +108,18 @@ public class AccessRoleApplication {
 
 	/** 없는 사용자면 R001 */
 	@Transactional(readOnly = true)
-	public List<AccessRoleDto> getRolesOfUser(Long userId) {
+	public List<AccessRoleView> getRolesOfUser(AuthPrincipal actor, Long userId) {
 		userService.find(userId);
-		return accessRoleService.getRolesOfUser(userId);
+		return accessRoleService.getRolesOfUser(userId).stream().map(role -> view(actor, role)).toList();
 	}
 
-	/** 없는 사용자·역할이면 R001. moa: 대상이 ADMIN이면 B001 (specs/003-admin-roles Edge Cases) */
+	/**
+	 * 없는 사용자·역할이면 R001. moa: 대상이 회원이면 B001, 마지막 최고 관리자를 빼면 B001 (specs/003-admin-roles FR-002·FR-010).
+	 * 사용자 관리 드로어도 이 API로 역할을 준다 (`002-admin-users` FR-005)
+	 */
 	@Transactional
 	public void replaceRolesOfUser(AuthPrincipal actor, Long userId, List<Long> roleIds) {
-		roleUserService.requireNotAdmin(userService.find(userId).role());
+		roleUserService.requireAdminAccount(userService.find(userId).role());
 		accessRoleService.replaceRolesOfUser(actor, userId, roleIds);
 	}
 
@@ -143,6 +149,13 @@ public class AccessRoleApplication {
 		accessRoleService.requireExists(roleId);
 		roleUserService.requireTargets(auditProperties.systemActorId(), userIds);
 		accessRoleService.removeMembers(actor, roleId, userIds);
+	}
+
+	private AccessRoleView view(AuthPrincipal actor, AccessRoleDto role) {
+		List<String> names = role.fixed() ? List.of()
+			: role.permissions().stream().map(this::permissionName).filter(Objects::nonNull).toList();
+		GrantBlock block = accessRoleService.blockReason(actor, role);
+		return new AccessRoleView(role, names, block == null, block);
 	}
 
 	/** 화면 메뉴는 연결 화면의 권한, 묶음 메뉴는 하위 메뉴를 담는다. 없는 연결 화면과 하위 메뉴 없는 묶음은 null */

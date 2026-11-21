@@ -14,7 +14,17 @@ export type Role = {
   permissions: string[]
   // 이 역할을 가진 사용자 수
   userCount: number
+  // moa: 코드에 고정된 최고 관리자 역할. 권한 키가 비어 있고 모든 권한을 갖는다. 바꾸거나 지울 수 없다 (specs/003-admin-roles FR-010)
+  fixed: boolean
+  // moa: 묶은 권한의 이름 (사용자 관리 드로어에 작게 보인다). 최고 관리자 역할은 빈다
+  permissionNames: string[]
+  // moa: 내가 이 역할을 다루고 주고 뺄 수 있나. 못 하면 blockReason이 이유다 (research R18)
+  grantable: boolean
+  blockReason?: GrantBlock | null
 }
+
+// moa: 다룰 수 없는 이유. SUPER_ADMIN_ONLY는 최고 관리자만, WIDER_PERMISSIONS는 내가 갖지 않은 권한이 들어 있음
+export type GrantBlock = "SUPER_ADMIN_ONLY" | "WIDER_PERMISSIONS"
 
 export type RoleCreateRequest = { code: string; name: string; description?: string; permissions: string[] }
 export type RoleModifyRequest = { name: string; description?: string; permissions: string[] }
@@ -35,12 +45,13 @@ export type PermissionTree = {
   unlisted: { screenKey: string; name: string; permission: PermissionRef }[]
 }
 
-// 역할 드로어 "구성원" 탭의 사용자 (moa, specs/003-admin-roles FR-006). role은 시스템 역할 (ADMIN은 업무 역할을 받지 않는다)
+// 역할 구성원의 한 줄 (moa, specs/003-admin-roles FR-006). 관리자 계정만 온다
 export type RoleMember = {
   id: number
   loginId: string
   name: string
-  role: "USER" | "ADMIN"
+  // 최고 관리자 역할을 가졌나. 다른 역할은 받지 않는다
+  superAdmin: boolean
   // 이 역할의 구성원인가
   member: boolean
 }

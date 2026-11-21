@@ -335,7 +335,7 @@ class NotificationsAcceptanceTest extends RealtimeAcceptanceTest {
 	}
 
 	private MvcTestResult asAdmin(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 
 	private MvcTestResult asMember(MockMvcRequestBuilder request) {

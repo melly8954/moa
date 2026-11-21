@@ -9,14 +9,17 @@ import type { PermissionTree, PermissionTreeNode } from "@/types/role"
 //   관리 메뉴 트리를 체크한다. 체크한 메뉴의 연결 화면 권한이 역할에 담긴다 (value는 권한 키 목록)
 //   같은 권한을 쓰는 메뉴는 함께 체크된다. 묶음 메뉴를 체크하면 하위 메뉴가 모두 체크된다
 //   어느 메뉴도 가리키지 않는 관리 연결 화면은 맨 아래 "메뉴에 없는 화면"에 둔다
+//   disabled면 보기만 한다 (최고 관리자 역할, 내가 다룰 수 없는 역할. specs/003-admin-roles FR-010, research R19)
 export function PermissionTreePicker({
   tree,
   value,
   onChange,
+  disabled = false,
 }: {
   tree: PermissionTree
   value: string[]
   onChange: (value: string[]) => void
+  disabled?: boolean
 }) {
   const t = useTranslations("role")
   const toggle = (keys: string[], checked: boolean) =>
@@ -34,6 +37,7 @@ export function PermissionTreePicker({
           id={id}
           checked={checked}
           indeterminate={!checked && count > 0}
+          disabled={disabled}
           onCheckedChange={(next) => toggle(keys, next === true)}
         />
         <FieldLabel htmlFor={id} className="font-normal">
@@ -53,7 +57,7 @@ export function PermissionTreePicker({
 
   return (
     <FieldSet>
-      <FieldLegend variant="label">{t("permissions")}</FieldLegend>
+      <FieldLegend variant="label">{t("menusToUse")}</FieldLegend>
       <p className="text-sm text-muted-foreground">{t("permissionTreeHint")}</p>
       <div className="flex flex-col gap-2">
         {tree.menus.map((node) => [

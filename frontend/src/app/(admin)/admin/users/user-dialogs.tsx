@@ -198,6 +198,16 @@ export function RoleChangeDialog({ user, onClose }: { user?: AdminUser; onClose:
           <DialogTitle>{t("changeRole")}</DialogTitle>
           <DialogDescription>{t("changeRoleDescription")}</DialogDescription>
         </DialogHeader>
+        {/* moa: 관리자 계정을 회원으로 바꾸면 받은 역할이 모두 빠진다 (specs/002-admin-users FR-005, US4-AC5) */}
+        {user?.role === "ADMIN" && role === "USER" && (user.superAdmin || user.accessRoles.length > 0) && (
+          <Alert>
+            <AlertDescription>
+              {t("demoteWarning", {
+                roles: user.superAdmin ? t("superAdmin") : user.accessRoles.map((r) => r.name).join(", "),
+              })}
+            </AlertDescription>
+          </Alert>
+        )}
         <Field>
           <FieldLabel htmlFor="change-role">{t("role")}</FieldLabel>
           <NativeSelect id="change-role" value={role} onChange={(e) => setRole(e.target.value as Role)}>

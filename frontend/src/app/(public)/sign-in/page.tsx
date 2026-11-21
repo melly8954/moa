@@ -41,7 +41,7 @@ export default function SignInPage() {
       queryClient.clear()
       useAuthStore.getState().signIn(token.accessToken)
       // 로그인이 필요한 화면에서 왔으면 그 화면으로 돌아간다 (?next=, 같은 사이트 경로만)
-      // 아니면 관리 메뉴가 있으면 관리 셸, 없으면 사용자 셸 첫 화면 (moa: specs/001-admin-menus FR-006)
+      // 아니면 관리자 계정은 관리 셸, 회원은 사용자 셸 첫 화면 (moa: specs/001-admin-menus FR-006, 2026-11-21)
       const next = currentNextPath()
       if (next) {
         router.replace(next)

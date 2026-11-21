@@ -2,16 +2,21 @@ package com.moa.api.service.role;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.moa.api.dto.role.AccessRoleDto;
+import com.moa.api.dto.role.GrantBlock;
 import com.moa.api.entity.role.AccessRole;
+import com.moa.api.entity.role.AccessRoles;
 import com.moa.api.repository.reader.role.AccessRoleReader;
 import com.moa.api.repository.writer.role.AccessRoleWriter;
 import com.moa.common.exception.ErrorCode;
@@ -23,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 업무 역할 관리 (선택 헬퍼 rbac). 바꾸는 요청은 RoleGrantPolicy로 권한 상승을 막는다 (거부하면 A005).
+ * moa: 최고 관리자 역할은 바꾸거나 지울 수 없고, 구성원이 늘 한 명 이상이며, 그 구성원은 다른 역할을 받지 않는다
+ * (specs/003-admin-roles FR-010, research R16·R17)
  */
 @Service
 @RequiredArgsConstructor
@@ -33,9 +40,18 @@ public class AccessRoleService {
 	private final PermissionRegistry permissionRegistry;
 	private final RoleGrantPolicy roleGrantPolicy;
 
+	/** 만든 순서. moa: 최고 관리자 역할을 맨 앞에 둔다 (FR-005) */
 	public List<AccessRoleDto> getAll() {
 		Map<Long, Long> counts = accessRoleReader.countUsersByRole();
-		return accessRoleReader.findAll().stream().map(role -> dto(role, counts)).toList();
+		return accessRoleReader.findAll().stream()
+			.map(role -> dto(role, counts))
+			.sorted(Comparator.comparing(AccessRoleDto::fixed).reversed())
+			.toList();
+	}
+
+	/** moa: 다룰 수 없으면 그 이유, 다룰 수 있으면 null (research R18) */
+	public GrantBlock blockReason(AuthPrincipal actor, AccessRoleDto role) {
+		return roleGrantPolicy.blockReason(actor, role);
 	}
 
 	/**
@@ -66,6 +82,7 @@ public class AccessRoleService {
 	public AccessRoleDto modify(AuthPrincipal actor, Long id, String name, String description,
 		Collection<String> permissions) {
 		AccessRole role = require(id);
+		requireNotFixed(role);
 		Map<Long, Long> counts = accessRoleReader.countUsersByRole();
 		checkManage(actor, dto(role, counts));
 		Set<String> checked = checkPermissions(permissions);
@@ -81,6 +98,7 @@ public class AccessRoleService {
 	 */
 	public void delete(AuthPrincipal actor, Long id) {
 		AccessRole role = require(id);
+		requireNotFixed(role);
 		checkManage(actor, dto(role, Map.of()));
 		role.delete(actor.userId());
 		accessRoleWriter.removeRoleFromUsers(id);
@@ -96,6 +114,7 @@ public class AccessRoleService {
 		List<AccessRole> roles = new ArrayList<>();
 		for (Long id : new LinkedHashSet<>(ids)) {
 			AccessRole role = require(id);
+			requireNotFixed(role);
 			checkManage(actor, dto(role, Map.of()));
 			roles.add(role);
 		}
@@ -121,8 +140,18 @@ public class AccessRoleService {
 	 */
 	public void replaceRolesOfUser(AuthPrincipal actor, Long userId, Collection<Long> roleIds) {
 		Set<Long> requested = new LinkedHashSet<>(roleIds);
-		if (accessRoleReader.findAll(requested).size() != requested.size()) {
+		List<AccessRole> found = accessRoleReader.findAll(requested);
+		if (found.size() != requested.size()) {
 			throw new ServiceException(ErrorCode.NOT_FOUND, "없는 역할이 있습니다.");
+		}
+		// moa: 최고 관리자 역할을 고르면 그 역할만 남긴다. 모든 권한이라 다른 역할은 뜻이 없다 (FR-010)
+		found.stream().filter(role -> AccessRoles.isSuperAdmin(role.getCode())).findFirst().ifPresent(superAdmin -> {
+			requested.clear();
+			requested.add(superAdmin.getId());
+		});
+		if (accessRoleReader.isSuperAdmin(userId)
+			&& found.stream().noneMatch(role -> AccessRoles.isSuperAdmin(role.getCode()))) {
+			requireSuperAdminRemains(List.of(userId));
 		}
 		Set<Long> current = new HashSet<>(accessRoleReader.findRoleIdsOfUser(userId));
 		Set<Long> changed = new HashSet<>(requested);
@@ -141,6 +170,15 @@ public class AccessRoleService {
 	public void addMembers(AuthPrincipal actor, Long roleId, Collection<Long> userIds) {
 		AccessRole role = require(roleId);
 		checkManage(actor, dto(role, Map.of()));
+		if (AccessRoles.isSuperAdmin(role.getCode())) {
+			// moa: 최고 관리자에 더하면 그 계정의 다른 역할은 뺀다 (FR-010)
+			new LinkedHashSet<>(userIds)
+				.forEach(userId -> accessRoleWriter.replaceRolesOfUser(userId, List.of(roleId)));
+			return;
+		}
+		if (!accessRoleReader.findSuperAdminIds(userIds).isEmpty()) {
+			throw new ServiceException(ErrorCode.INVALID_STATE, "최고 관리자는 다른 역할을 받지 않아요. 이미 모든 권한을 가졌어요.");
+		}
 		for (Long userId : new LinkedHashSet<>(userIds)) {
 			if (!accessRoleReader.hasRole(userId, roleId)) {
 				accessRoleWriter.addRoleToUser(userId, roleId);
@@ -156,6 +194,9 @@ public class AccessRoleService {
 	public void removeMembers(AuthPrincipal actor, Long roleId, Collection<Long> userIds) {
 		AccessRole role = require(roleId);
 		checkManage(actor, dto(role, Map.of()));
+		if (AccessRoles.isSuperAdmin(role.getCode())) {
+			requireSuperAdminRemains(userIds);
+		}
 		new LinkedHashSet<>(userIds).forEach(userId -> accessRoleWriter.removeRoleFromUser(userId, roleId));
 	}
 
@@ -164,6 +205,68 @@ public class AccessRoleService {
 	 */
 	public void requireExists(Long roleId) {
 		require(roleId);
+	}
+
+	/** moa: 최고 관리자 역할에 구성원이 있는가 (첫 관리자 부트스트랩, `002-admin-users` FR-001) */
+	public boolean hasSuperAdmin() {
+		return accessRoleReader.findSuperAdminRole().map(role -> accessRoleReader.countMembers(role.getId()) > 0)
+			.orElse(false);
+	}
+
+	/** moa: 이 계정이 최고 관리자 역할을 가졌나 */
+	public boolean isSuperAdmin(Long userId) {
+		return accessRoleReader.isSuperAdmin(userId);
+	}
+
+	/** moa: 이 계정들 중 최고 관리자 */
+	public Set<Long> findSuperAdminIds(Collection<Long> userIds) {
+		return accessRoleReader.findSuperAdminIds(userIds);
+	}
+
+	/** moa: 계정 ID → 받은 역할들의 권한 합집합 (사용자 관리의 다루기 범위, `002-admin-users` research R10). 쿼리 2개 */
+	public Map<Long, Set<String>> permissionsOf(Collection<Long> userIds) {
+		if (userIds.isEmpty()) {
+			return Map.of();
+		}
+		Map<Long, List<Long>> roleIds = accessRoleReader.findRoleIdsOfUsers(userIds);
+		Map<Long, Set<String>> rolePermissions = new HashMap<>();
+		accessRoleReader.findAll(roleIds.values().stream().flatMap(List::stream).collect(Collectors.toSet()))
+			.forEach(role -> rolePermissions.put(role.getId(), role.getPermissions()));
+		Map<Long, Set<String>> result = new HashMap<>();
+		roleIds.forEach((userId, ids) -> result.put(userId, ids.stream()
+			.flatMap(id -> rolePermissions.getOrDefault(id, Set.of()).stream())
+			.collect(Collectors.toSet())));
+		return result;
+	}
+
+	/** moa: 이 계정을 최고 관리자 역할에 넣는다 (첫 관리자 부트스트랩). 역할이 없으면 만들고, 다른 역할은 뺀다 */
+	public void addSuperAdmin(Long userId) {
+		accessRoleWriter.replaceRolesOfUser(userId, List.of(accessRoleWriter.ensureSuperAdminRole().getId()));
+	}
+
+	/** moa: 이 계정의 역할을 모두 뺀다 (관리자 계정을 회원으로 바꿀 때, `002-admin-users` FR-005) */
+	public void removeAllRolesOf(Long userId) {
+		accessRoleWriter.replaceRolesOfUser(userId, List.of());
+	}
+
+	/**
+	 * moa: 이 계정들이 빠져도(역할을 빼거나, 회원으로 바꾸거나, 잠그거나, 지워도) 최고 관리자가 한 명은 남는지 본다 (FR-010)
+	 *
+	 * @throws ServiceException 0명이 되면 B001
+	 */
+	public void requireSuperAdminRemains(Collection<Long> leavingUserIds) {
+		accessRoleReader.findSuperAdminRole().ifPresent(role -> {
+			long leaving = accessRoleReader.findSuperAdminIds(leavingUserIds).size();
+			if (leaving > 0 && accessRoleReader.countMembers(role.getId()) - leaving < 1) {
+				throw new ServiceException(ErrorCode.INVALID_STATE, "최고 관리자는 한 명은 있어야 해요.");
+			}
+		});
+	}
+
+	private void requireNotFixed(AccessRole role) {
+		if (AccessRoles.isSuperAdmin(role.getCode())) {
+			throw new ServiceException(ErrorCode.INVALID_STATE, "최고 관리자 역할은 바꾸거나 지울 수 없어요.");
+		}
 	}
 
 	private AccessRole require(Long id) {

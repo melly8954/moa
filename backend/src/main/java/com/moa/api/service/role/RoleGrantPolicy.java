@@ -3,6 +3,7 @@ package com.moa.api.service.role;
 import java.util.Collection;
 
 import com.moa.api.dto.role.AccessRoleDto;
+import com.moa.api.dto.role.GrantBlock;
 import com.moa.common.security.AuthPrincipal;
 
 /**
@@ -17,4 +18,7 @@ public interface RoleGrantPolicy {
 
 	/** 이미 있는 이 역할을 다룰 수 있는가 (바꾸기·지우기, 사용자에게 주기·빼기) */
 	boolean canManage(AuthPrincipal actor, AccessRoleDto role);
+
+	/** moa: 다룰 수 없으면 그 이유, 다룰 수 있으면 null (specs/003-admin-roles research R18) */
+	GrantBlock blockReason(AuthPrincipal actor, AccessRoleDto role);
 }

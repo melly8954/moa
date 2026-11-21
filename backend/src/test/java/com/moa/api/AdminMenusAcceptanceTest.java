@@ -63,7 +63,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
 			.containsExactly("사용자 관리", "공지 관리", "접속 이력", "파기 기록");
 		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
-			.containsExactly("역할 관리", "메뉴 관리", "코드 관리");
+			.containsExactly("권한 관리", "메뉴 관리", "코드 관리");
 		assertThat(result).bodyJson().extractingPath("$[*].children[*].path").asArray()
 			.containsExactly("/admin/users", "/admin/notices", "/admin/login-histories", "/admin/purge-logs",
 				"/admin/roles",
@@ -120,7 +120,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].name").asArray()
 			.containsExactlyInAnyOrder("운영", "설정");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].children[*].name").asArray()
-			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "역할 관리", "공지 관리",
+			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "권한 관리", "공지 관리",
 				"파기 기록");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'USER')].name").asArray()
 			.containsExactlyInAnyOrder("홈", "공지");
@@ -264,7 +264,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
 			.containsExactly("사용자 관리", "공지 관리", "파기 기록");
 		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
-			.containsExactly("역할 관리", "메뉴 관리", "코드 관리", "접속 이력");
+			.containsExactly("권한 관리", "메뉴 관리", "코드 관리", "접속 이력");
 	}
 
 	@Test
@@ -300,7 +300,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	private void giveOperatorRole(String permission) {
 		testUsers.create(1L, "system", null, Role.USER);
 		testUsers.create(2L, "admin", "admin1234!", Role.ADMIN);
-		testUsers.create(OPERATOR_ID, "operator", "operator123!", Role.USER);
+		testUsers.create(OPERATOR_ID, "operator", "operator123!", Role.ADMIN);
 		MvcTestResult role = asAdmin(mvc.post().uri("/api/v1/admin/roles").contentType(MediaType.APPLICATION_JSON)
 			.content("{\"code\":\"OPERATOR\",\"name\":\"운영\",\"permissions\":[\"" + permission + "\"]}"));
 		assertThat(role).hasStatus(201);
@@ -339,7 +339,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	private MvcTestResult asAdmin(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(2L, "ADMIN")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, superAdmin()).exchange();
 	}
 
 	private MvcTestResult asUser(MockMvcRequestBuilder request) {
@@ -347,6 +347,6 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	private MvcTestResult asOperator(MockMvcRequestBuilder request) {
-		return request.header(HttpHeaders.AUTHORIZATION, bearer(OPERATOR_ID, "USER")).exchange();
+		return request.header(HttpHeaders.AUTHORIZATION, bearer(OPERATOR_ID, "ADMIN")).exchange();
 	}
 }

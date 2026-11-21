@@ -263,16 +263,16 @@ description: "관리 메뉴와 접근 (admin-menus) 작업 목록"
 
 **프론트**
 
-- [ ] T089 frontend/src/components/shell/landing.ts: `landingPath`·`fetchLandingPath`를 내 정보의 계정 종류로(`ADMIN` → `/admin`, `USER` → `/`) (R27)
-- [ ] T090 frontend/src/components/shell/account-shell.tsx: 계정 화면의 셸을 `useMe().role`로 고른다 (R27)
-- [ ] T091 frontend/src/app/(admin)/admin/page.tsx: `ADMIN`이고 볼 메뉴가 없으면 안내를 보이고, `USER`면 `/`로 보낸다 (R27)
-- [ ] T092 frontend/messages/ko.json에 안내 문구("받은 권한이 없어요. 최고 관리자에게 역할을 받으세요.")를 더한다 (FR-005)
-- [ ] T093 specs/001-admin-menus/quickstart.md에 "역할 없는 관리자 계정으로 로그인하면 관리 셸에 안내" 확인 줄을 더한다
+- [X] T089 frontend/src/components/shell/landing.ts: `landingPath`·`fetchLandingPath`를 내 정보의 계정 종류로(`ADMIN` → `/admin`, `USER` → `/`) (R27)
+- [X] T090 frontend/src/components/shell/account-shell.tsx: 계정 화면의 셸을 `useMe().role`로 고른다 (R27)
+- [X] T091 frontend/src/app/(admin)/admin/page.tsx: `ADMIN`이고 볼 메뉴가 없으면 안내를 보이고, `USER`면 `/`로 보낸다 (R27)
+- [X] T092 frontend/messages/ko.json에 안내 문구("받은 권한이 없어요. 최고 관리자에게 역할을 받으세요.")를 더한다 (FR-005)
+- [X] T093 specs/001-admin-menus/quickstart.md에 "역할 없는 관리자 계정으로 로그인하면 관리 셸에 안내" 확인 줄을 더한다
 
 **테스트 (마지막)**
 
-- [ ] T094 frontend/tests/unit/landing.test.ts, frontend/e2e/support/api.ts `signedIn`(셸을 `me.role`로), frontend/e2e/menu.spec.ts·auth.spec.ts·screens.spec.ts를 R28대로 고치고 역할 없는 관리자 안내 테스트를 더한다 (원칙 V)
-- [ ] T095 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java·backend/src/test/java/com/moa/support/MenuSeed.java를 R28대로 고친다 ("권한 관리", 운영자는 `ADMIN` 계정)
+- [X] T094 frontend/tests/unit/landing.test.ts, frontend/e2e/support/api.ts `signedIn`(셸을 `me.role`로), frontend/e2e/menu.spec.ts·auth.spec.ts·screens.spec.ts를 R28대로 고치고 역할 없는 관리자 안내 테스트를 더한다 (원칙 V)
+- [X] T095 backend/src/test/java/com/moa/api/AdminMenusAcceptanceTest.java·backend/src/test/java/com/moa/support/MenuSeed.java를 R28대로 고친다 ("권한 관리", 운영자는 `ADMIN` 계정)
 - [ ] T096 quickstart.md "화면 확인"의 T093 줄을 사람이 확인한다
 
 ---
