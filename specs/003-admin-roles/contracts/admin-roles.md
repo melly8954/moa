@@ -39,12 +39,12 @@ US1은 키트 API를 moa의 AC에 맞춰 어떻게 확인하는지만 적는다.
 | US2-AC1 | 부트스트랩 뒤 `GET /api/v1/admin/roles` | 첫 항목 `code` = `SUPER_ADMIN`, `fixed` = true. `GET .../members`에 첫 관리자 |
 | US2-AC2 | 최고 관리자 역할에 `PUT /api/v1/admin/roles/{id}`, `DELETE`, `bulk-delete`(다른 역할과 섞어) | 409 `B001`. 아무것도 안 바뀜 |
 | US2-AC3 | 테스트 연결 화면을 등록한 뒤 최고 관리자로 그 화면의 API | 200 |
-| US2-AC4 | 구성원 한 명뿐인 최고 관리자 역할에 `POST .../members/remove` | 409 `B001` |
-| US2-AC5 | 권한 관리 운영자로 최고 관리자 역할에 `POST .../members` | 403 `A005` |
+| US2-AC4 | 최고 관리자 자신이 최고 관리자 역할에 `POST .../members`, `POST .../members/remove` (2026-11-22 한 명 고정) | 409 `B001`. 구성원은 그대로 한 명 |
+| US2-AC5 | 최고 관리자가 `PUT /api/v1/admin/users/{운영자}/roles`에 최고 관리자 역할을 넣기, `PUT /api/v1/admin/users/2/roles`로 최고 관리자 역할 빼기. 목록의 최고 관리자 역할 | 409 `B001`. 최고 관리자 역할 `grantable` = false, `blockReason` = `FIXED` |
 | US5-AC4 | `GET .../members?keyword=` (회원·최고 관리자 섞임), 다른 역할에 최고 관리자 계정 `POST .../members` | 회원 없음, 최고 관리자 행 `superAdmin` = true. 409 `B001` |
 | FR-002 | 회원에게 `POST .../members`, `PUT /api/v1/admin/users/{userId}/roles` | 409 `B001` |
 | FR-008 | 사용자 관리·권한 관리 권한을 가진 운영자가 `USER_MANAGE`를 담은 `POST /api/v1/admin/roles` | 403 `A005` |
-| FR-010 | 다른 역할을 가진 운영자를 최고 관리자 역할에 `POST .../members` | 204. 그 계정의 다른 역할은 빠짐 |
+| FR-010·SC-006 | DB에 최고 관리자 역할 줄을 하나 더 넣는다(SQL) | DB가 거부(유일 제약 `uk_user_access_role_super_slot`) |
 
 ## 사용자별 역할 (US3, 새로 — 2026-11-15 관리 화면 정리로 없앰)
 

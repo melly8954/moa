@@ -15,13 +15,15 @@ moa가 할 일은 "접속 이력만 보는 운영자" 흐름을 AC 테스트로 
 
 **관리자 계정과 최고 관리자 역할, 두 칸 화면 (2026-11-21, FR-001~FR-011, US1-AC4·US2·US4·US5)**: 시스템 역할 `ADMIN`을 "모든 권한"에서 "관리자 계정"으로 바꾸고, 모든 권한은 코드 `SUPER_ADMIN`인 최고 관리자 역할(V7 마이그레이션의 행, 권한 행 없음)이 가진다. 권한 판정(`PermissionGuard`)과 역할을 주는 규칙(`RoleGrantPolicy`·`RoleUserService`)을 바꾸고, 역할 목록·구성원 응답에 칸을 더한다. 권한 관리를 메뉴 관리와 같은 두 칸 화면으로 바꾸고 이름을 "권한 관리"로 바꾼다. `002-admin-users`(사용자 드로어 역할 주기, 계정 다루기 범위)와 `001-admin-menus`(관리 셸 조건)가 이 판정에 기대므로 셋을 한 구현 브랜치 `feat/003-admin-accounts`에서 한다. 키트 골격·rbac·user-admin과 다르게 동작하고, 키트 수용 테스트 일부의 기대가 바뀐다 ([research.md](./research.md) R16~R21)
 
+**최고 관리자 한 명 고정 (2026-11-21·22, FR-006·FR-007·FR-010, US2, Clarifications)**: 최고 관리자 역할의 구성원을 화면·API로 더하거나 빼지 못하게 하고(B001, 막힌 이유 `FIXED`), 구성원 칸을 보기만 하게 바꾼다. `V8__single_super_admin.sql`이 이미 여럿인 DB를 ID가 가장 작은 한 명으로 줄이고, `tb_user_access_role`에 생성 열 `super_slot`과 유일 제약을 걸어 DB도 한 명을 지킨다. 되돌리기(`002-admin-users` FR-009)는 DB 절차라 코드를 더하지 않는다. `002-admin-users`(최고 관리자 계정 행)와 한 구현 브랜치 `feat/003-single-super-admin`에서 한다 ([research.md](./research.md) R22~R25)
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)
 
 **Primary Dependencies**: psw-dev-kit rbac 헬퍼 (`AccessRolePermissionChecker`), menu 헬퍼 (내 메뉴 거르기)
 
-**Storage**: MariaDB `tb_access_role`, `tb_user_access_role` (`V1_8__access_roles.sql`). 새 테이블과 컬럼은 없다. 지금은 `V1__schema.sql`·`V2__seed.sql`에 합쳐져 있다 (2026-11-21). 최고 관리자 역할 행과 기존 데이터 옮기기는 `V7__super_admin_role.sql`이다 (R20)
+**Storage**: MariaDB `tb_access_role`, `tb_user_access_role` (`V1_8__access_roles.sql`). 새 테이블과 컬럼은 없다. 지금은 `V1__schema.sql`·`V2__seed.sql`에 합쳐져 있다 (2026-11-21). 최고 관리자 역할 행과 기존 데이터 옮기기는 `V7__super_admin_role.sql`이다 (R20). 한 명으로 줄이기와 `tb_user_access_role.super_slot`(생성 열 + 유일 제약)은 `V8__single_super_admin.sql`이다 (R22)
 
 **Testing**: 인수 테스트 `AcceptanceTest` (MockMvc + Testcontainers MariaDB, `./gradlew dbTest`). 화면은 키트 e2e(Playwright)
 

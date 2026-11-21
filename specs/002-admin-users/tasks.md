@@ -101,8 +101,29 @@ description: "관리자·운영자 계정 (admin-users) 작업 목록"
 
 ---
 
+## Phase 8: 최고 관리자 계정 고정과 개발자 DB 절차 (2026-11-21·22 FR-007·FR-009, US1-AC2·AC3, US4-AC3)
+
+**Purpose**: 최고 관리자 계정 행은 본인 이름 바꾸기만, 되돌리기는 DB SQL 절차 (research.md R13~R15). `003-admin-roles` Phase 8과 한 구현 브랜치 `feat/003-single-super-admin`
+
+**백엔드**
+
+- [ ] T020 backend/src/main/java/com/moa/api/application/v1/user/UserAdminApplication.java·backend/src/main/java/com/moa/api/service/user/UserAdminService.java: 최고 관리자 대상의 계정 종류·잠그기·풀기·초기화·삭제 B001(`requireNotSuperAdmin`), 이름 바꾸기는 본인만, `requireSuperAdminRemains` 호출 없앰 (R13)
+- [ ] T021 backend/src/main/resources/db/ops/super-admin-reset-password.sql·super-admin-transfer.sql(맨 위 값 줄, 한 트랜잭션, SIGNAL 검사, 지우기 먼저, 토큰 폐기, 끝에 수 확인), specs/002-admin-users/quickstart.md "운영: 최고 관리자 되돌리기"와 맞추기 (R14)
+
+**프론트**
+
+- [ ] T022 frontend/src/app/(admin)/admin/users/user-drawer.tsx(최고 관리자 행: 이름 바꾸기만, 본인 안내)·user-roles.tsx(최고 관리자 역할 체크 칸 늘 꺼짐과 이유, 최고 관리자 계정은 "최고 관리자 (모든 권한)"만), frontend/messages/ko.json 문구 (R13)
+
+**테스트 (마지막)**
+
+- [ ] T023 backend/src/test/java/com/moa/api/AdminUsersAcceptanceTest.java: US1-AC2·AC3(SQL 파일 실행), US4-AC3·FR-007(최고 관리자 행 B001·A005, 본인 이름 200), 절차 SIGNAL. `lastSuperAdminIsProtected`를 바꾼다. frontend/e2e/user-admin.spec.ts 최고 관리자 행·역할 칸 (원칙 V, R15)
+- [ ] T024 specs/002-admin-users/quickstart.md "화면 확인"에 최고 관리자 본인 행을 더하고, "운영: 최고 관리자 되돌리기"를 개발자가 한 번 따라 해 본다 (사람 확인)
+
+---
+
 ## Dependencies & Execution Order
 
+- Phase 8: `003-admin-roles` T049~T050 → T020 → T021 → `003-admin-roles` T051 → T022 → `003-admin-roles` T052~T054 → T023 → `003-admin-roles` T055 → T024
 - Phase 7: `003-admin-roles` T033~T039 → T013 → T014 → T015 → T016 → (`001-admin-menus` T089~T093) → `003-admin-roles` T043~T046 → T017 → T018 → `003-admin-roles` T047 → T019
 - Phase 6: `001-admin-menus` T071, `003-admin-roles` T024 → T007 → T008 → T009 → T010 → T011 → T012
 - T001 → US1(T002)·US2(T003) → T004 → T005, T006

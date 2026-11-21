@@ -89,3 +89,29 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
   - API 인수 테스트(`AdminUsersAcceptanceTest`): US1-AC1(부트스트랩 계정이 최고 관리자, 모든 관리 메뉴), US2-AC1(`role` = `ADMIN`으로 만들기, 역할 전에는 `/menus/me` 빈 목록), US3-AC1(`accessRoles`·`superAdmin`), US3-AC3(드로어가 쓰는 `PUT /users/{id}/roles` → 공지 관리 200), US4-AC1(사용자 관리 운영자가 회원 다루기·`ADMIN`으로 바꾸기), US4-AC2(권한이 더 많은 운영자 비밀번호 초기화 A005, `protection` = `WIDER_PERMISSIONS`), US4-AC3(최고 관리자 행 A005, `SUPER_ADMIN_ONLY`), US4-AC5(`ADMIN` → `USER`면 역할이 비고 토큰이 끊김), 마지막 최고 관리자 잠그기·지우기 B001. 지금 운영자를 `role` = `USER`로 만들던 테스트는 `ADMIN`으로 바꾼다(원칙 V)
   - 키트 수용 테스트 `UserAdminAcceptanceTest`: `adminProtection`(ADMIN이 아니면 ADMIN 행 A005)을 R9 규칙으로 바꾼다. `search`의 `role=ADMIN` 거르기는 그대로다. 바꾼 것을 PR 설명에 적는다
   - e2e(`user-admin.spec.ts`): US3-AC1(역할 열 세 가지), US3-AC2·AC3(체크 칸, 저장), US3-AC4(회원 드로어 안내), US4-AC2·AC3(`protection`이면 단추 꺼짐과 이유), US4-AC4(권한 관리 권한 없으면 체크 꺼짐), US4-AC5(되돌리기 확인 창에 역할 이름), "계정 종류"·"회원" 문구. "내가 관리자가 아니면 관리자 행은 모두 꺼져 있다"(:107)는 `protection` 기대로 바꾼다(원칙 V)
+
+## R13. 최고 관리자 계정 행 (FR-007, US4-AC3, 2026-11-21 한 명 고정)
+
+- **Decision**:
+  - `UserAdminApplication`: 대상이 최고 관리자면 계정 종류 바꾸기·잠그기·풀기·비밀번호 초기화·삭제를 누구든 409 `B001`("최고 관리자 계정은 바꿀 수 없어요. 개발자에게 요청해요."). 이름 바꾸기는 최고 관리자 본인만 된다(다른 사람은 지금처럼 `protection` = `SUPER_ADMIN_ONLY`로 403 `A005`). 막는 것은 `UserAdminService.requireNotSuperAdmin(boolean)`이 던진다(ServiceException은 Service에서만, ArchUnit)
+  - 지금의 `requireSuperAdminRemains` 호출(회원으로 바꾸기·잠그기·지우기)은 위 규칙이 먼저 막으므로 없앤다
+  - 화면(`user-drawer.tsx`): `user.superAdmin`이면 이름 바꾸기 말고 모두 끈다. 본인이면 이름 바꾸기만 켜고 "최고 관리자 계정은 바꿀 수 없어요. 비밀번호는 내 비밀번호 바꾸기에서 바꿔요." 안내, 남이면 지금처럼 모두 끄고 이유
+  - 사용자 드로어 역할 칸(`user-roles.tsx`): 최고 관리자 역할 체크 칸은 늘 끄고 이유("최고 관리자는 한 명으로 고정이에요"), 최고 관리자 계정의 드로어는 체크 목록 대신 "최고 관리자 (모든 권한)"만 보인다
+- **Rationale**: 스펙 FR-007. 최고 관리자 계정을 바꾸는 길은 개발자 DB 절차뿐이다
+
+## R14. 개발자 DB 절차 (FR-009, US1-AC2·AC3, Clarifications 2026-11-22)
+
+- **Decision**: SQL 파일 두 개를 `backend/src/main/resources/db/ops/`에 둔다. Flyway 위치(`db/migration`, local `db/localdata`)가 아니라 서버가 실행하지 않는다. quickstart "운영: 최고 관리자 되돌리기"가 이 파일과 순서를 안내한다
+  - `super-admin-reset-password.sql`: 맨 위 `SET @login := '<아이디>'; SET @hash := '{bcrypt}<bcrypt 값>';` 두 줄만 고쳐 실행. 한 트랜잭션에서 그 계정이 최고 관리자인지 확인(아니면 `SIGNAL`로 중단) → `password = @hash`, `password_change_required = TRUE`, `locked_at = NULL` → `tb_refresh_token.revoked_at = NOW(6)`(그 계정의 살아 있는 토큰) → 끝에 최고 관리자 수 확인 쿼리
+  - `super-admin-transfer.sql`: 맨 위 `SET @to := '<새 최고 관리자 아이디>'`만 고쳐 실행. 그 계정이 지운 적 없는 `ADMIN`인지 확인(아니면 SIGNAL) → 그 계정의 다른 역할 줄 지우기 → 예전 최고 관리자 줄 **지우기 먼저** → 새 줄 넣기(`super_slot` 유일 제약 때문에 순서가 중요하다, 003 R22) → 예전 최고 관리자의 토큰 폐기 → 끝에 최고 관리자가 정확히 한 명인지 확인. 새 최고 관리자의 비밀번호는 바꾸지 않는다(본인 비밀번호로 로그인한다)
+  - bcrypt 값 만들기: `htpasswd -bnBC 10 "" '<임시 비밀번호>' | tr -d ':\n'`(Apache 도구, `$2y$`도 Spring `BCryptPasswordEncoder`가 읽는다) 또는 `python -c "import bcrypt; print(bcrypt.hashpw(b'<pw>', bcrypt.gensalt(10)).decode())"`. 저장 값 앞에 `{bcrypt}`를 붙인다(`DelegatingPasswordEncoder`)
+  - 감사 열(`updated_at`, `updated_by`)은 `NOW(6)`, 시스템 계정(1)으로 둔다
+- **Rationale**: 스펙 Clarifications(서버 설정값·코드 없이 DB 절차). 절차를 파일로 두면 문서와 테스트가 같은 SQL을 쓴다
+- **Alternatives considered**: quickstart에 SQL을 글로만 적기(테스트가 같은 SQL을 돌릴 수 없어 문서가 낡아도 모른다)
+
+## R15. 무엇을 테스트하나 (US1-AC2·AC3, US4-AC3, FR-007, 2026-11-22)
+
+- **Decision**:
+  - `AdminUsersAcceptanceTest`: US1-AC2·AC3는 R14의 SQL 파일을 읽어 맨 위 값 줄만 바꿔 `ScriptUtils`로 실행한 뒤 로그인·`/menus/me`·리프레시로 확인한다. US4-AC3는 운영자와 최고 관리자 본인이 최고 관리자 행의 계정 종류·잠그기·초기화·삭제를 하면 A005·B001, 본인 이름 바꾸기는 200. 지금의 `lastSuperAdminIsProtected`는 이 테스트로 바꾼다(원칙 V)
+  - SQL 파일이 아닌 계정(회원, 없는 아이디)으로 절차를 돌리면 SIGNAL로 멈추고 아무것도 바뀌지 않는다
+  - e2e(`user-admin.spec.ts`): 최고 관리자 본인 행은 이름 바꾸기만 켜짐과 안내, 최고 관리자 역할 체크 칸은 늘 꺼짐
