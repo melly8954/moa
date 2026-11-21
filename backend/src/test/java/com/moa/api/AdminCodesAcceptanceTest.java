@@ -39,7 +39,7 @@ class AdminCodesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC1 공통코드 트리는 만든 순서로 그룹마다 이름·설명·그룹 코드·사용 여부와 항목을 준다")
+	@DisplayName("US1-AC1 공통코드 트리는 그룹 순서(처음은 만든 순서)로 그룹마다 이름·설명·그룹 코드·사용 여부와 항목을 준다")
 	void treeOfGroups() {
 		post(GENRE, "{\"name\":\"FPS\"}");
 
@@ -86,21 +86,30 @@ class AdminCodesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC4 항목 둘을 한꺼번에 사용 안 함으로 바꾸면 화면용 목록에서 빠진다. 하나라도 없으면 아무것도 바꾸지 않는다")
+	@DisplayName("US1-AC4 그룹과 다른 그룹의 항목을 섞어 한꺼번에 사용 안 함으로 바꾼다. 하나라도 없으면 아무것도 바꾸지 않고, 둘 다 비면 V001")
 	void bulkDisable() {
 		post(GENRE, "{\"name\":\"FPS\"}");
 		post(GENRE, "{\"name\":\"RPG\"}");
-		post(GENRE, "{\"name\":\"퍼즐\"}");
+		post(REASON, "{\"name\":\"욕설\"}");
+		post(REASON, "{\"name\":\"광고\"}");
+		String bulk = GROUPS + "/enabled";
 
-		assertThat(put(GENRE + "/enabled", "{\"codes\":[\"001\",\"NONE\"],\"enabled\":false}")).hasStatus(404)
-			.bodyJson().extractingPath("$.code").isEqualTo("R001");
-		assertThat(screenCodes(GENRE_GROUP)).bodyJson().extractingPath("$.length()").isEqualTo(3);
+		assertThat(put(bulk, "{\"groupCodes\":[\"" + GENRE_GROUP + "\"],\"codes\":[{\"groupCode\":\"" + REASON_GROUP
+			+ "\",\"code\":\"NONE\"}],\"enabled\":false}")).hasStatus(404).bodyJson().extractingPath("$.code")
+			.isEqualTo("R001");
+		assertThat(screenCodes(GENRE_GROUP)).bodyJson().extractingPath("$.length()").isEqualTo(2);
+		assertThat(put(bulk, "{\"groupCodes\":[],\"codes\":[],\"enabled\":false}")).hasStatus(400).bodyJson()
+			.extractingPath("$.code").isEqualTo("V001");
 
-		assertThat(put(GENRE + "/enabled", "{\"codes\":[\"001\",\"002\"],\"enabled\":false}")).hasStatus(204);
+		assertThat(put(bulk, "{\"groupCodes\":[\"" + GENRE_GROUP + "\"],\"codes\":[{\"groupCode\":\"" + REASON_GROUP
+			+ "\",\"code\":\"001\"}],\"enabled\":false}")).hasStatus(204);
 
-		assertThat(screenCodes(GENRE_GROUP)).bodyJson().extractingPath("$[*].name").asArray()
-			.containsExactly("퍼즐");
-		assertThat(admin(mvc.get().uri(GENRE))).bodyJson().extractingPath("$.length()").isEqualTo(3);
+		// 그룹을 꺼도 그 그룹의 항목은 그대로 켜져 있다(그룹 체크는 그룹 자체). 꺼진 그룹의 화면용 목록은 빈 목록이다
+		assertThat(screenCodes(GENRE_GROUP)).bodyJson().extractingPath("$.length()").isEqualTo(0);
+		assertThat(admin(mvc.get().uri(GENRE))).bodyJson().extractingPath("$[*].enabled").asArray()
+			.containsExactly(true, true);
+		assertThat(screenCodes(REASON_GROUP)).bodyJson().extractingPath("$[*].name").asArray()
+			.containsExactly("광고");
 	}
 
 	@Test
@@ -122,6 +131,22 @@ class AdminCodesAcceptanceTest extends AcceptanceTest {
 			.hasStatus(404).bodyJson().extractingPath("$.code").isEqualTo("R001");
 		assertThat(screenCodes(GENRE_GROUP)).bodyJson().extractingPath("$[*].name").asArray()
 			.containsExactly("RPG", "FPS");
+	}
+
+	@Test
+	@DisplayName("US1-AC5 그룹 순서를 바꾸면 트리가 그 순서다. 없는 그룹이 섞이면 아무것도 바꾸지 않는다")
+	void reorderGroups() {
+		String order = GROUPS + "/order";
+
+		assertThat(put(order, "[{\"groupCode\":\"" + REASON_GROUP + "\",\"sortOrder\":0},{\"groupCode\":\""
+			+ GENRE_GROUP + "\",\"sortOrder\":1}]")).hasStatus(204);
+		assertThat(admin(mvc.get().uri(GROUPS + "/tree"))).bodyJson().extractingPath("$[*].groupCode").asArray()
+			.containsExactly(REASON_GROUP, GENRE_GROUP);
+
+		assertThat(put(order, "[{\"groupCode\":\"" + GENRE_GROUP + "\",\"sortOrder\":0},{\"groupCode\":\"NONE\","
+			+ "\"sortOrder\":1}]")).hasStatus(404).bodyJson().extractingPath("$.code").isEqualTo("R001");
+		assertThat(admin(mvc.get().uri(GROUPS + "/tree"))).bodyJson().extractingPath("$[*].groupCode").asArray()
+			.containsExactly(REASON_GROUP, GENRE_GROUP);
 	}
 
 	@Test
