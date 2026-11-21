@@ -23,7 +23,7 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 시스템 | 운영자 역할 | 키트 rbac | `003-admin-roles` | 구현됨 |
 | 시스템 | 공통코드 | 키트 code | `004-admin-codes` | 구현됨. 흔한 방식(삭제 없이 사용 여부, 시스템 그룹 없앰)과 두 칸 화면(2026-11-20)은 구현 전 |
 | 시스템 | 접속 이력 | 키트 login-history | `005-admin-login-history` | 구현됨 |
-| 시스템 | 개인정보 파기 기록 (정리기의 파기 기록 저장과 관리 화면 목록, `docs/privacy.md`) | moa | `013` | 예약 (담당: haily) |
+| 시스템 | 개인정보 파기 기록 (정리기의 파기 기록 저장과 관리 화면 목록, `docs/privacy.md`) | moa | `013-purge-log` | 기획 중 |
 | 공지 | 공지사항 (관리 화면과 사용자 목록·상세) | moa | `006-notices` | 구현됨 |
 | 알림 | 알림 (실시간 전달, 개인 알림함, 브라우저 알림) | moa, 키트 websocket | `007-notifications` | 구현됨. 개인 알림을 보내는 기능은 각 기능이 `NotificationApplication.notify`로 붙는다 |
 | 회원 | 탈퇴 계정 복구 | moa | - | 보류: 탈퇴 상태·유예 기간이 정해진 뒤 |
