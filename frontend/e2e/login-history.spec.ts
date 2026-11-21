@@ -59,7 +59,8 @@ test("결과 '전체'를 고르면 결과 조건을 보내지 않는다 (moa 011
   const requests: URL[] = []
   await mock(page, requests)
   await page.goto("/admin/login-histories?success=false")
-  const all = page.getByRole("button", { name: "전체", exact: true })
+  // 기간 빠른 단추에도 "전체"가 있어 결과 묶음 안에서 찾는다 (011 FR-010, 2026-11-22)
+  const all = page.getByRole("group", { name: "결과" }).getByRole("button", { name: "전체", exact: true })
   await all.click()
   await expect(all).toHaveAttribute("aria-pressed", "true")
   await expect(page).not.toHaveURL(/success=/)
