@@ -170,7 +170,7 @@ function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) 
               {...(group && { "aria-expanded": open, "aria-controls": open ? subId : undefined, onClick: toggle })}
             >
               {item.icon && <item.icon />}
-              {lockedScreen && <LockMark label={t("shell.locked")} />}
+              {lockedScreen && <LockMark />}
               {/* 새 소식 점 (moa 006 R12): 펼치면 이름 오른쪽, 접으면 아이콘 오른쪽 위. 이름 칸이 마지막이어야 말줄임이 된다 */}
               {item.badge && (
                 <i
@@ -191,6 +191,7 @@ function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) 
               <span>
                 {item.label}
                 {item.badge && <span className="sr-only">, {item.badge}</span>}
+                {lockedScreen && <span className="sr-only">, {t("shell.locked")}</span>}
               </span>
             </SidebarMenuButton>
             {item.children && open && (
@@ -210,8 +211,11 @@ function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) 
                     >
                       {/* moa: 하위 메뉴도 아이콘이 있으면 보인다 (specs/001-admin-menus FR-005, 2026-11-21) */}
                       {child.icon && <child.icon />}
-                      {child.locked && <LockMark label={t("shell.locked")} />}
-                      <span>{child.label}</span>
+                      {child.locked && <LockMark />}
+                      <span>
+                        {child.label}
+                        {child.locked && <span className="sr-only">, {t("shell.locked")}</span>}
+                      </span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 ))}
@@ -229,13 +233,9 @@ function SidebarNav({ menu, pathname }: { menu: MenuItem[]; pathname: string }) 
 const LOCKED = "text-sidebar-foreground/50 hover:text-sidebar-foreground/70 [&_svg]:text-sidebar-foreground/50"
 
 // 자물쇠: 메뉴명 길이와 상관없이 줄 오른쪽 끝에 두어 같은 단계의 메뉴끼리 같은 열에 선다. 아이콘만 남게 접으면 숨긴다
-function LockMark({ label }: { label: string }) {
-  return (
-    <>
-      <Lock aria-hidden className="order-last ml-auto size-3.5! shrink-0 group-data-[collapsible=icon]:hidden" />
-      <span className="sr-only order-last">{label}</span>
-    </>
-  )
+//   화면 읽기 프로그램에는 이름 칸 안의 ", 권한 없음"으로 메뉴명 뒤에 읽힌다 (새 소식 점과 같은 방식)
+function LockMark() {
+  return <Lock aria-hidden className="order-last ml-auto size-3.5! shrink-0 group-data-[collapsible=icon]:hidden" />
 }
 
 // 사이드바 로고 줄. 펼쳤을 때: 로고(첫 화면 링크)와 접기 단추. 아이콘만 남게 접었을 때: 로고 자리가 펼치기 단추
