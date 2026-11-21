@@ -1,12 +1,13 @@
 "use client"
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 // 목록 화면의 검색 조건·쪽·정렬. 모두 주소(쿼리 문자열)에 둔다
 //   → 새로고침·뒤로 가기·주소 공유를 해도 같은 목록이 열린다
 // 규칙 (목록 화면 공통 모양)
-//   - 조건을 바꿔도 바로 반영하지 않는다. 조회를 눌러야 주소가 바뀌고, 1쪽으로 돌아간다
+//   - moa: 조건을 바꾸면 검색 영역이 바로 submit한다(조회 단추 없음). submit하면 주소가 바뀌고 1쪽으로 돌아간다
+//     검색어는 엔터 또는 0.5초 멈춤 뒤 (specs/011-list-screen FR-012·FR-013, 2026-11-22)
 //   - 초기화는 기본값으로 되돌리고 바로 조회한다
 //   - 쪽 크기·정렬을 바꾸면 1쪽으로 돌아간다
 //   - 기본 쪽 크기는 10이다. 주소의 쪽이 전체 쪽 수를 넘으면 목록 표가 마지막 쪽으로 바꾼다(replace)
@@ -24,7 +25,7 @@ type Filters = Record<string, string>
 export type ListSearch<F extends Filters> = {
   // 지금 목록에 반영된 조건 (주소에서 읽음)
   filters: F
-  // 검색 영역에 입력 중인 조건 (조회를 눌러야 반영)
+  // 검색 영역에 입력 중인 조건 (submit해야 반영. 검색 영역은 바꾸는 즉시·검색어는 잠시 뒤 submit한다)
   draft: F
   setDraft: (patch: Partial<F>) => void
   // 1부터
@@ -33,7 +34,8 @@ export type ListSearch<F extends Filters> = {
   sort: Sort
   // 기본값과 다른 조건이 반영돼 있나 (빈 결과 문구를 "검색 결과 없음"으로 고른다)
   isFiltered: boolean
-  submit: (patch?: Partial<F>) => void
+  // replace: 방문 기록을 새로 쌓지 않는다 (검색어를 치는 동안의 조회)
+  submit: (patch?: Partial<F>, options?: { replace?: boolean }) => void
   reset: () => void
   // replace: 방문 기록을 남기지 않는다 (넘친 쪽 바로잡기)
   setPage: (page: number, options?: { replace?: boolean }) => void
@@ -89,6 +91,12 @@ export function useListSearch<F extends Filters>({
     setLastQuery(query)
     setDraftState(state.filters)
   }
+  // moa: 보낸 조건. 주소가 바뀌기 전에 다른 조건을 또 바꿔도(빠르게 두 번 누름, 검색어 0.5초 기다림 중) 앞의 것을 잃지 않게 이어 쓴다
+  //   늦게 도는 조회(검색어 타이머)도 가장 새 값을 보도록 ref에 둔다. 주소가 바뀌면 반영된 조건으로 맞춘다
+  const sent = useRef(state.filters)
+  useEffect(() => {
+    sent.current = state.filters
+  }, [state.filters])
 
   const navigate = useCallback(
     (next: { filters: F; page: number; size: PageSize; sort: Sort }, replace = false) => {
@@ -121,9 +129,17 @@ export function useListSearch<F extends Filters>({
     draft,
     setDraft: (patch) => setDraftState((prev) => ({ ...prev, ...patch })),
     isFiltered: Object.keys(defaults).some((key) => state.filters[key] !== defaults[key]),
-    submit: (patch = {}) => navigate({ ...state, filters: { ...draft, ...patch }, page: 1 }),
+    submit: (patch = {}, options) => {
+      // moa: 조건을 하나씩 바로 조회하므로, 보낸 조건에 바뀐 것만 더한다
+      //   (반영하지 않은 입력, 예: 시작이 끝보다 늦은 기간이 다른 조건의 조회에 섞이지 않게)
+      const filters = { ...sent.current, ...patch }
+      sent.current = filters
+      setDraftState((prev) => ({ ...prev, ...patch }))
+      navigate({ ...state, filters, page: 1 }, options?.replace)
+    },
     reset: () => {
       setDraftState(defaults)
+      sent.current = defaults
       navigate({ filters: defaults, page: 1, size: state.size, sort: defaultSort })
     },
     setPage: (page, options) => navigate({ ...state, page }, options?.replace),
