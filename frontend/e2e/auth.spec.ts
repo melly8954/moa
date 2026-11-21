@@ -38,7 +38,7 @@ test("임시 비밀번호 사용자는 비밀번호 변경 화면에만 있고, 
   await signedIn(page)
   await page.route("**/api/v1/users/me", (route) =>
     route.fulfill({
-      json: { id: 2, loginId: "e2e", name: "e2e", role: "USER", passwordChangeRequired: required },
+      json: { id: 2, loginId: "e2e", name: "e2e", role: "USER", passwordChangeRequired: required, hasPassword: true },
     }),
   )
   await page.route("**/api/v1/users/me/password", (route) => {

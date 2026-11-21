@@ -62,6 +62,8 @@ class SocialLoginAcceptanceTest extends AcceptanceTest {
 		databaseCleaner.clean();
 		testUsers.create(1L, "system", null, Role.USER);
 		testUsers.create(ADMIN_ID, "admin", "admin1234!", Role.ADMIN);
+		// ADMIN은 관리자 계정일 뿐이라 모든 권한은 최고 관리자 역할이 준다 (specs/003-admin-roles research R21)
+		testUsers.makeSuperAdmin(ADMIN_ID);
 	}
 
 	@AfterEach
@@ -141,7 +143,7 @@ class SocialLoginAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC6 소셜 회원에게 시스템 역할 ADMIN이나 업무 역할을 주면 A011로 막힌다")
+	@DisplayName("US1-AC6 소셜 회원에게 시스템 역할 ADMIN을 주면 A011, 업무 역할은 회원이라 B001로 막힌다")
 	void socialMemberCannotGetManagementRoles() {
 		Long userId = signUpMember("code-1", "google-sub-0001", "kim@example.com", "모아킴");
 		String admin = bearer(ADMIN_ID, "ADMIN");
@@ -156,10 +158,10 @@ class SocialLoginAcceptanceTest extends AcceptanceTest {
 			.hasStatus(409).bodyJson().extractingPath("$.code").isEqualTo("A011");
 		assertThat(mvc.post().uri("/api/v1/admin/roles/" + roleId + "/members").header(HttpHeaders.AUTHORIZATION, admin)
 			.contentType(MediaType.APPLICATION_JSON).content("{\"userIds\":[" + userId + "]}").exchange())
-			.hasStatus(409).bodyJson().extractingPath("$.code").isEqualTo("A011");
+			.hasStatus(409).bodyJson().extractingPath("$.code").isEqualTo("B001");
 		assertThat(mvc.put().uri("/api/v1/admin/users/" + userId + "/roles").header(HttpHeaders.AUTHORIZATION, admin)
 			.contentType(MediaType.APPLICATION_JSON).content("{\"roleIds\":[" + roleId + "]}").exchange())
-			.hasStatus(409).bodyJson().extractingPath("$.code").isEqualTo("A011");
+			.hasStatus(409).bodyJson().extractingPath("$.code").isEqualTo("B001");
 	}
 
 	@Test
@@ -182,7 +184,7 @@ class SocialLoginAcceptanceTest extends AcceptanceTest {
 		Long userId = signUpMember("code-1", "google-sub-0001", "kim@example.com", "모아킴");
 
 		List<String> rows = jdbcTemplate.queryForList("select concat(terms_type, ':', terms_version) "
-			+ "from user_terms_agreements where user_id = ? and agreed_at is not null order by terms_type",
+			+ "from tb_user_terms_agreement where user_id = ? and agreed_at is not null order by terms_type",
 			String.class,
 			userId);
 
@@ -220,9 +222,9 @@ class SocialLoginAcceptanceTest extends AcceptanceTest {
 		Long second = signUpMember("code-2", "google-sub-0002", "lee@example.com", "moa_kim");
 
 		List<String> keys = jdbcTemplate.queryForList(
-			"select nickname_key from user_profiles where user_id in (?, ?)", String.class, first, second);
+			"select nickname_key from tb_user_profile where user_id in (?, ?)", String.class, first, second);
 		List<String> tags = jdbcTemplate.queryForList(
-			"select nickname_tag from user_profiles where user_id in (?, ?)", String.class, first, second);
+			"select nickname_tag from tb_user_profile where user_id in (?, ?)", String.class, first, second);
 		assertThat(keys).containsOnly("moa_kim");
 		assertThat(tags).hasSize(2).doesNotHaveDuplicates().allMatch(tag -> tag.matches("\\d{4}"));
 	}
@@ -234,7 +236,7 @@ class SocialLoginAcceptanceTest extends AcceptanceTest {
 		for (int i = 1; i <= 9999; i++) {
 			rows.add(new Object[] {100_000L + i, "busyname", String.format("%04d", i)});
 		}
-		jdbcTemplate.batchUpdate("insert into user_profiles (user_id, nickname_key, nickname_tag, created_at, "
+		jdbcTemplate.batchUpdate("insert into tb_user_profile (user_id, nickname_key, nickname_tag, created_at, "
 			+ "updated_at) values (?, ?, ?, now(6), now(6))", rows);
 		provider.register("code-1", "google-sub-0001", "kim@example.com", true, "Kim");
 		Cookie signup = callback(authorize(null), "code-1").getResponse().getCookie("oauth_signup");
@@ -375,8 +377,8 @@ class SocialLoginAcceptanceTest extends AcceptanceTest {
 		callback(authorize(null), "code-2");
 
 		Integer succeeded = jdbcTemplate.queryForObject(
-			"select count(*) from login_histories where user_id = ? and success = true", Integer.class, userId);
-		Integer failed = jdbcTemplate.queryForObject("select count(*) from login_histories "
+			"select count(*) from tb_login_history where user_id = ? and success = true", Integer.class, userId);
+		Integer failed = jdbcTemplate.queryForObject("select count(*) from tb_login_history "
 			+ "where login_id = 'google:google-s' and success = false and failure_code = 'A014'", Integer.class);
 		assertThat(succeeded).isEqualTo(1);
 		assertThat(failed).isEqualTo(1);
@@ -392,7 +394,7 @@ class SocialLoginAcceptanceTest extends AcceptanceTest {
 
 		assertThat(rename(userId, "새닉네임")).hasStatus(200);
 
-		assertThat(jdbcTemplate.queryForObject("select nickname_key from user_profiles where user_id = ?",
+		assertThat(jdbcTemplate.queryForObject("select nickname_key from tb_user_profile where user_id = ?",
 			String.class, userId)).isEqualTo("새닉네임");
 		assertThat(tagOf(userId)).isEqualTo(tag);
 	}
@@ -402,7 +404,7 @@ class SocialLoginAcceptanceTest extends AcceptanceTest {
 	void adminRenameReassignsTakenTag() {
 		Long userId = signUpMember("code-1", "google-sub-0001", "kim@example.com", "모아킴");
 		String tag = tagOf(userId);
-		jdbcTemplate.update("insert into user_profiles (user_id, nickname_key, nickname_tag, created_at, updated_at) "
+		jdbcTemplate.update("insert into tb_user_profile (user_id, nickname_key, nickname_tag, created_at, updated_at) "
 			+ "values (?, ?, ?, now(6), now(6))", 900L, "새닉네임", tag);
 
 		assertThat(rename(userId, "새닉네임")).hasStatus(200);
@@ -428,7 +430,7 @@ class SocialLoginAcceptanceTest extends AcceptanceTest {
 	}
 
 	private String tagOf(Long userId) {
-		return jdbcTemplate.queryForObject("select nickname_tag from user_profiles where user_id = ?", String.class,
+		return jdbcTemplate.queryForObject("select nickname_tag from tb_user_profile where user_id = ?", String.class,
 			userId);
 	}
 
@@ -484,11 +486,11 @@ class SocialLoginAcceptanceTest extends AcceptanceTest {
 	}
 
 	private Integer socialMemberCount() {
-		return jdbcTemplate.queryForObject("select count(*) from users where login_id like 's\\_%'", Integer.class);
+		return jdbcTemplate.queryForObject("select count(*) from tb_user where login_id like 's\\_%'", Integer.class);
 	}
 
 	private Integer loginHistoryCount() {
-		return jdbcTemplate.queryForObject("select count(*) from login_histories", Integer.class);
+		return jdbcTemplate.queryForObject("select count(*) from tb_login_history", Integer.class);
 	}
 
 	private String body(MvcTestResult result) {
