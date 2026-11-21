@@ -218,6 +218,30 @@
       "A007": "잠긴 계정"
     }
   },
+  "purgeLog": {
+    "title": "파기 기록",
+    "description": "보관 기간이 지나 지운 개인정보의 종류와 건수를 1년 동안 보여요. 지운 내용은 남기지 않아요. 로그인 기록은 <link>접속 이력</link>에서 봐요.",
+    "period": "기간",
+    "target": "대상",
+    "createdAt": "일시",
+    "count": "건수",
+    "method": "방법",
+    "actor": "처리자",
+    "targets": {
+      "LOGIN_HISTORY": "접속 이력",
+      "NOTIFICATION": "알림",
+      "REFRESH_TOKEN": "리프레시 토큰",
+      "RICH_TEXT_IMAGE": "본문 이미지"
+    },
+    "methods": {
+      "ROW_DELETE": "행 삭제",
+      "COLUMN_ERASE": "개인정보 열 삭제"
+    },
+    "actors": {
+      "SCHEDULER": "정리기",
+      "PERSON": "사람"
+    }
+  },
   "menuAdmin": {
     "title": "메뉴 관리",
     "empty": "아직 메뉴가 없어요.",
