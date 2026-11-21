@@ -2,9 +2,9 @@
 
 import { Combobox as ComboboxPrimitive } from "@base-ui/react"
 import { cn } from "cn"
-import { Ban } from "lucide-react"
+import { Ban, Search } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { matchesAny } from "@/components/kit/search-select"
+import { matchesAny, selectAll } from "@/components/kit/search-select"
 import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxList } from "@/components/ui/combobox"
 import { InputGroupAddon } from "@/components/ui/input-group"
 import { MENU_ICONS, MenuIcon } from "./icons"
@@ -45,12 +45,18 @@ export function IconPicker({
       }}
       grid
     >
-      <ComboboxInput id={id} placeholder={t("iconSearch")} aria-describedby={describedBy} className="w-full">
-        {value !== NONE && (
-          <InputGroupAddon align="inline-start">
-            <MenuIcon name={value} aria-hidden="true" />
-          </InputGroupAddon>
-        )}
+      {/* 고른 아이콘이 있으면 그 미리보기, 없으면 찾는 칸임을 알리는 돋보기. 칸을 누르면 글자를 모두 골라 바로 찾는다 */}
+      <ComboboxInput
+        id={id}
+        placeholder={t("iconSearch")}
+        aria-describedby={describedBy}
+        className="w-full"
+        onFocus={selectAll}
+        onClick={selectAll}
+      >
+        <InputGroupAddon align="inline-start">
+          {value !== NONE ? <MenuIcon name={value} aria-hidden="true" /> : <Search aria-hidden="true" />}
+        </InputGroupAddon>
       </ComboboxInput>
       <ComboboxContent>
         <ComboboxEmpty>{t("iconNotFound")}</ComboboxEmpty>
