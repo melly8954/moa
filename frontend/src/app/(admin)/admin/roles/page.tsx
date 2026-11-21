@@ -8,6 +8,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
+import { BulkToolbar } from "@/components/kit/bulk-toolbar"
 import { confirm } from "@/components/kit/confirm-dialog"
 import { PanelGuardContext, useIsWide, usePanelGuard } from "@/components/kit/detail-panel"
 import { PageHeader } from "@/components/kit/page-header"
@@ -104,15 +105,10 @@ export default function RolesPage() {
             </Button>
           </div>
           {/* 일괄 처리 줄은 늘 같은 자리·높이 (메뉴 관리와 같다) */}
-          <div
-            role="toolbar"
-            aria-label={t("bulkToolbar")}
-            className="flex min-h-10 flex-wrap items-center gap-2 rounded-lg border bg-muted px-3 py-1"
+          <BulkToolbar
+            label={t("bulkToolbar")}
+            selected={selected.length > 0 ? t("bulkSelected", { count: selected.length }) : t("bulkHint")}
           >
-            <span className="text-sm text-muted-foreground">
-              {selected.length > 0 ? t("bulkSelected", { count: selected.length }) : t("bulkHint")}
-            </span>
-            <span className="flex-1" />
             <Button
               size="sm"
               variant="outline"
@@ -121,7 +117,7 @@ export default function RolesPage() {
             >
               {t("remove")}
             </Button>
-          </div>
+          </BulkToolbar>
           <QueryState query={roles} isEmpty={(d) => d.length === 0} empty={t("empty")}>
             {() => (
               <div className="min-h-0 overflow-y-auto rounded-lg border">

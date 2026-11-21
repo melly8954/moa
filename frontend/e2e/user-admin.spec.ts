@@ -34,7 +34,7 @@ const USERS = [
     protection: "SUPER_ADMIN_ONLY",
   }),
   user({ id: 4, loginId: "lee", name: "이공지", accessRoles: [{ id: 3, name: "공지 담당" }] }),
-  user({ id: 5, loginId: "norole", name: "역할 없음" }),
+  user({ id: 5, loginId: "norole", name: "박운영" }),
   user({
     id: 3,
     loginId: "kim",

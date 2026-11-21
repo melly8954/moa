@@ -33,5 +33,6 @@ export async function expectNoSeriousA11yViolations(
   for (const selector of exclude) axe = axe.exclude(selector)
   const { violations } = await axe.analyze()
   const serious = violations.filter((v) => v.impact === "critical" || v.impact === "serious")
-  expect(serious.map((v) => `${v.id}: ${v.help}`)).toEqual([])
+  // moa: 어느 요소인지 알 수 있게 대상(선택자)도 적는다. 실패 때만 보인다 (키트로 옮길 것)
+  expect(serious.map((v) => `${v.id}: ${v.help} @ ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([])
 }

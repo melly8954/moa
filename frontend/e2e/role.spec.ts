@@ -134,7 +134,8 @@ test("US4-AC1·AC2 왼쪽은 최고 관리자가 맨 위인 역할 목록(이름
   await page.goto("/admin/roles")
   await expect(page.getByRole("heading", { name: "권한 관리" })).toBeVisible()
   await expect(page.getByRole("tab")).toHaveCount(0)
-  await expect(page.getByRole("button", { name: /삭제$|수정$|구성원$/ })).toHaveCount(0)
+  // 행에는 단추가 없다 (일괄 줄의 "삭제"는 표 밖이다)
+  await expect(page.getByRole("row").getByRole("button", { name: /삭제$|수정$|구성원$/ })).toHaveCount(0)
   await expect(page.getByRole("row").nth(1)).toContainText("최고 관리자")
   await expect(page.getByRole("checkbox", { name: "최고 관리자 고르기" })).toBeDisabled()
   await expect(page.getByText("왼쪽에서 역할을 고르거나 역할을 추가해요.")).toBeVisible()
@@ -155,7 +156,7 @@ test("US4-AC3 역할 행을 누르면 오른쪽 칸에 이름·코드와 쓸 메
   await expect(panel.getByText("쓸 메뉴", { exact: true })).toBeVisible()
   await expect(panel.getByRole("heading", { name: "구성원" })).toBeVisible()
   await expect(panel.getByRole("checkbox", { name: /^코드 관리/ })).toBeChecked()
-  await expect(panel.getByRole("cell", { name: "operator", exact: true })).toBeVisible()
+  await expect(panel.getByRole("cell", { name: "operator", exact: true }).first()).toBeVisible()
   await expect(panel.getByRole("tab")).toHaveCount(0)
   await expect(page.getByRole("row", { name: /운영 매니저/ })).toHaveAttribute("aria-current", "true")
   await expectNoSeriousA11yViolations(page)
@@ -187,7 +188,7 @@ test("US3-AC1 역할 추가: 관리 메뉴 트리를 체크하면 그 메뉴의 
   await expect
     .poll(() => sent)
     .toEqual({ code: "VIEWER", name: "조회 담당", permissions: ["CODE_MANAGE", "ROLE_MANAGE"] })
-  await expect(detail(page, "운영 매니저").getByRole("cell", { name: "operator", exact: true })).toBeVisible()
+  await expect(detail(page, "운영 매니저").getByRole("cell", { name: "operator", exact: true }).first()).toBeVisible()
 })
 
 test("내 권한 밖이면(A005) 그렇게 알린다 @wide", async ({ page }) => {
@@ -280,5 +281,5 @@ test("US4-AC5 1024px보다 좁으면 목록만 보이고 상세는 드로어로 
   await page.goto("/admin/roles")
   await expect(page.getByText("왼쪽에서 역할을 고르거나 역할을 추가해요.")).toHaveCount(0)
   await roleButton(page, "운영 매니저").click()
-  await expect(page.getByRole("dialog").getByRole("cell", { name: "operator", exact: true })).toBeVisible()
+  await expect(page.getByRole("dialog").getByRole("cell", { name: "operator", exact: true }).first()).toBeVisible()
 })

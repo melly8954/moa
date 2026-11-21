@@ -100,7 +100,9 @@ class UserAdminAcceptanceTest extends AcceptanceTest {
 	void adminProtection() {
 		String member = bearer(3L, "USER");
 		assertThat(mvc.get().uri(USERS).header(HttpHeaders.AUTHORIZATION, member)).hasStatus(403);
+		superAdmin();
 		String manager = operator(5L, "manager", "USER_MANAGE");
+		// 2(admin)는 최고 관리자다. 최고 관리자 계정은 최고 관리자만 다룬다
 		assertThat(mvc.put().uri(USERS + "/2/lock").header(HttpHeaders.AUTHORIZATION, manager)).hasStatus(403)
 			.bodyJson().extractingPath("$.code").isEqualTo("A005");
 
