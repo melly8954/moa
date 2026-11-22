@@ -7,6 +7,8 @@ export const E2E_ME = {
   role: "USER",
   passwordChangeRequired: false,
   hasPassword: true,
+  avatar: "default",
+  mypageAllowed: true,
 }
 
 // 사용자 셸 메뉴 (/menus/user, 메뉴 관리의 사용자 메뉴 처음 구성. moa: specs/001-admin-menus FR-007)
