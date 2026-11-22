@@ -151,6 +151,7 @@
   - 기존 회원: 010 마이그레이션(`*__social_login.sql`)이 삭제되지 않은 회원(`role = 'USER'`, 시스템 계정 제외)에 행을 만들고 `nickname_key` = `LOWER(TRIM(name))`, `nickname_tag` = `LPAD(ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(name)) ORDER BY id), 4, '0')`로 채운다(MariaDB 11.4). 규칙 이전 이름이 겹쳐도 태그가 달라 모두 값을 갖는다
   - 키트가 계정을 만드는 경로(첫 관리자 `UserService.bootstrapAdmin`, 관리자의 계정 만들기 `UserAdminService.create`)는 고치지 않는다. 이 계정은 행 없이(태그 없이) 남는다. 관리자 계정(`ADMIN`)은 마이페이지를 쓰지 않고(FR-016), 관리자가 만든 회원(`USER`)이면 마이페이지에서 처음 저장할 때 행을 만들고 태그를 정한다(R8의 "없으면 만든 뒤"와 같은 자리)
   - 관리자 이름 바꾸기(`002-admin-users` FR-007, `UserAdminService.rename`): 프로필 행이 있으면 `nickname_key`를 바꾸고 태그를 `keepOrAssign`으로 맞춘다(R4). 변경 제한(R5)은 받지 않는다. **010이 dev에 구현했다**(프로필 행이 있으면 `NicknamePolicy` 규칙도 검사한다, 010 research R14). 002 스펙 갱신은 spec "나중에 고칠 곳" 002에 더한다
+  - 행이 없는 회원이 동시에 처음 저장하면 `tb_user_profile` PK(`user_id`) 충돌(또는 없는 행을 함께 잠가 생긴 교착)이 난다. 태그 충돌처럼 새 트랜잭션으로 다시 하고(최대 3번), 다시 할 때는 행이 있어 고치기 경로로 간다. 3번 다 실패하면 409 R002 (2026-11-22)
   - 탈퇴(soft delete)한 회원의 행을 지우거나 태그를 풀어 주는 일은 회원 탈퇴 스펙이 정한다(spec 가정). 그 전까지 탈퇴 회원의 태그는 그 닉네임에서 쓰인 채로 남는다
 - **010과의 경계**: 010이 먼저 병합됐다(2026-11-22, PR #67). 009 구현은 010의 `tb_user_profile`·`NicknamePolicy`·`NicknameTags`·가입 때 행 만들기를 그대로 쓰고, 칸만 더한다
 - **이유**: 닉네임이 처음 정해지는 때는 가입이고, 태그도 그때 정해야 바로 `닉네임#태그`로 구별된다. 첫 마이페이지 진입 때 만들면 GET이 쓰기가 된다. 기존 회원은 마이그레이션이 한 번에 채운다
