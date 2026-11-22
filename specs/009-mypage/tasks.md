@@ -58,7 +58,7 @@ description: "마이페이지 (mypage) 작업 목록"
 - [ ] T012 [P] `NicknamePolicy`·`NicknameTags`는 010이 B/api/service/user/에 만들었다 (research R4). 009는 새로 만들지 않고 그대로 쓴다. 규칙이 이 기능에 모자라면 그 클래스를 고치고 010 테스트가 그대로 통과하는지 본다
 - [ ] T013 [P] B/api/service/user/ProfileVisibility.java (잠정, FR-013): `view(profile, viewer)` — 로그인하지 않으면 없음, 나이·성별은 `age_gender_public`일 때만, 디스코드 태그는 `MEMBERS`일 때만(`FRIENDS`는 친구 기능 전까지 아무에게도 안 보임), 나머지는 모두. 이 규칙을 쓰는 API·화면은 만들지 않는다 (research R9)
 - [ ] T014 [P] B/api/service/user/GameStatsLinks.java: 게임 코드별 주소 틀(잠정, 구현 때 주소를 다시 확인): `LOL` `https://www.op.gg/summoners/kr/{id}`(`#` → `-`), `VALORANT` `https://tracker.gg/valorant/profile/riot/{id}/overview`(`#` 인코딩), `OVERWATCH` `https://www.overbuff.com/players/{id}`(`#` → `-`), `PUBG` `https://pubg.op.gg/user/{id}`. 게임 아이디는 URL 인코딩. 틀이 없거나 아이디가 비면 `null` (research R8)
-- [ ] T015 B/api/service/user/ProfileService.java 틀: `getMyProfile(userId)` — `nickname`·`nicknameTag`를 함께 준다. 행이 없으면 기본값(`nicknameTag` null, 아바타 `default`, 빈 값, `ageGenderPublic` 거짓, `discordVisibility` `PRIVATE`), `age` = 올해 − `birthYear`(값이 있을 때만), 목록에서 빠진 아바타 키는 `default`, `nicknameChangeAvailableAt` = `nickname_changed_at` + 쿨다운이 지금보다 뒤일 때만. `requireProfileForUpdate(userId)` — `findForUpdate`, 없으면 `nickname_key` = `NicknamePolicy.key(tb_user.name)`, `nickname_tag` = `NicknameTags.assign(key)`로 만든 뒤 잠근다(research R8·R14 "없으면 만든 뒤"). 처음 진입(GET)에서는 행을 만들지 않는다
+- [ ] T015 B/api/service/user/ProfileService.java 틀: `getMyProfile(userId)` — `nickname`·`nicknameTag`를 함께 준다. 행이 없으면 기본값(`nicknameTag` null, 아바타 `default`, 빈 값, `ageGenderPublic` 거짓, `discordVisibility` `PRIVATE`), `age` = 올해 − `birthYear`(값이 있을 때만), 목록에서 빠진 아바타 키는 `default`, `nicknameChangeableAt` = `nickname_changed_at` + 쿨다운(지금보다 뒤일 때만, 아니면 null). `requireProfileForUpdate(userId)` — `findForUpdate`, 없으면 `nickname_key` = `NicknamePolicy.key(tb_user.name)`, `nickname_tag` = `NicknameTags.assign(key)`로 만든 뒤 잠근다(research R8·R14 "없으면 만든 뒤"). 처음 진입(GET)에서는 행을 만들지 않는다
 - [ ] T016 B/api/application/v1/user/ProfileApplication.java와 B/api/controller/v1/user/ApiMyProfileController.java 틀: 모든 마이페이지 API(프로필·닉네임·게임 정보) 앞에서 `MemberActivityPolicy.isManagerAccount`가 참이면 403 `MYPAGE_NOT_ALLOWED`(A201) (FR-016, research R2). `GET /api/v1/profile/avatars`는 막지 않는다. `SecurityConfig`는 고치지 않는다(로그인 필요는 기본 규칙)
 - [ ] T017 [P] frontend/src/types/profile.ts(새: `MyProfile`, `GameProfiles`, 요청 타입 — contracts/profile-api.md 모양), frontend/src/api/index.ts에 `api.v1.profile.get()`, `save(body)`, `changeNickname(nickname)`, `addGame`, `updateGame`, `deleteGame`, `avatars()`를 더한다 (타입은 T044의 `npm run gen:api` 뒤 정리)
 - [ ] T018 [P] frontend/src/lib/avatars.ts(새: 키 → `/avatars/<키>.svg`, 모르는 키는 `default`)와 frontend/public/avatars/<키>.svg 8개(T003 그림)
@@ -75,7 +75,7 @@ description: "마이페이지 (mypage) 작업 목록"
 
 **Independent Test**: quickstart 1~3·22 — 계정 바에 닉네임·기본 아바타, 톱니 메뉴에 "마이페이지"가 보이고, 마이페이지의 모든 항목이 비어 있음으로 보이며, `admin`은 항목이 없고 권한 없음 화면이다
 
-- [ ] T021 [US1] ApiMyProfileController에 `GET /api/v1/users/me/profile` → `ProfileService.getMyProfile` (contracts/profile-api.md GET 모양: `nickname`, `avatar`, `bio`, `birthYear`, `age`, `gender`, `ageGenderPublic`, `discordTag`, `discordVisibility`, `playTimes[{code,name}]`, `nicknameChangeAvailableAt`, `games{count,max,items}`) (US1-AC1·AC4). 꺼진 공통코드 값도 이름과 함께 보인다(`includeDisabled`로 이름 찾기)
+- [ ] T021 [US1] ApiMyProfileController에 `GET /api/v1/users/me/profile` → `ProfileService.getMyProfile` (contracts/profile-api.md GET 모양: `nickname`, `avatar`, `bio`, `birthYear`, `age`, `gender`, `ageGenderPublic`, `discordTag`, `discordVisibility`, `playTimes[{code,name}]`, `nicknameChangeableAt`, `games{count,max,items}`) (US1-AC1·AC4). 꺼진 공통코드 값도 이름과 함께 보인다(`includeDisabled`로 이름 찾기)
 - [ ] T022 [US1] [공용] B/api/controller/v1/user/response/UserGetResponse.java(과 그 값을 만드는 서비스·`UserDto`)에 `avatar`(string, 행이 없거나 목록에서 빠진 키면 `default`)와 `mypageAllowed`(boolean, `!MemberActivityPolicy.isManagerAccount`)를 더한다 (contracts/users-me-and-screens.md, FR-014·FR-016). 010이 더한 `hasPassword`는 그대로 둔다. 키트 골격 파일이다. 구현 전에 바꿀 내용을 보고하고 확인받는다
 - [ ] T023 [P] [US1] [공용] frontend/src/types/user.ts `Me`에 `avatar`, `mypageAllowed`를 더한다. 010이 더한 `hasPassword`는 그대로 둔다. 테스트·e2e의 `Me` 모의 값(`e2e/support/api.ts`의 `E2E_ME` 등)도 함께 채운다. 키트 web-next 파일이다. 구현 전에 바꿀 내용을 보고하고 확인받는다
 - [ ] T024 [US1] [공용] frontend/src/components/shell/account-bar.tsx(사이드바 바닥 계정 바, `001-admin-menus` FR-005. dev가 키트 `account-menu.tsx`를 바꾼 파일): 사람 아이콘 자리에 아바타(`lib/avatars.ts`), 이름 자리에 닉네임(`name`). 회원(`mypageAllowed`)에게는 아이디 줄(툴팁 포함)을 숨긴다. 톱니 메뉴의 설정 앞에 `mypageAllowed`일 때만 "마이페이지"(`PROFILE_PATH`)를 둔다: 화면 모드, (언어), 마이페이지, 설정, 비밀번호 변경. 로그아웃은 따로 단추다. 010의 "`hasPassword`가 참이 아니면 아이디 줄·비밀번호 변경 숨김"은 그대로 둔다 (FR-014, US1-AC3·AC6, research R11, contracts/users-me-and-screens.md). 구현 전에 바꿀 내용을 보고하고 확인받는다
@@ -92,11 +92,11 @@ description: "마이페이지 (mypage) 작업 목록"
 
 **Independent Test**: quickstart 4~8 — 닉네임을 바꾸면 계정 바가 바로 바뀌고, 바로 다시 바꾸면 "언제부터"가 보이며, 규칙이 막히고, 다른 회원과 같은 닉네임은 다른 태그로 저장된다
 
-- [ ] T027 [US2] B/api/service/user/NicknameService.java `change(userId, raw)`: 한 트랜잭션에서 `NicknamePolicy.normalize` → 지금 이름과 같으면 아무것도 바꾸지 않고 돌려준다(시각 그대로, Edge Cases) → `validate`(V001) → `ProfileService.requireProfileForUpdate` → `nickname_changed_at`이 있고 + 쿨다운 전이면 B202와 `availableAt`(첫 변경은 바로, US2-AC6) → `NicknameTags.keepOrAssign(newKey, currentTag)`(다 차면 B201, US2-AC7·AC8) → `User.rename(nickname)`, `UserProfile.changeNickname(key, tag, now)` → flush. `uk_user_profile_nickname_key_nickname_tag` 위반은 010 `NicknameTags`의 다시 하기 규칙(새 트랜잭션, 최대 3번, 그래도면 B201)을 따른다 (research R4·R5, FR-003·FR-004)
-- [ ] T028 [US2] ApiMyProfileController에 `PUT /api/v1/users/me/nickname` 요청 `{ nickname }` → 200 `{ nickname, nicknameChangeAvailableAt }`. B202 응답의 `data.availableAt`을 오류 응답에 싣는다 (contracts "닉네임 바꾸기", US2-AC1·AC3~AC6)
+- [ ] T027 [US2] B/api/service/user/NicknameService.java `change(userId, raw)`: 한 트랜잭션에서 `NicknamePolicy.normalize` → 지금 이름과 같으면 아무것도 바꾸지 않고 돌려준다(시각 그대로, Edge Cases) → `validate`(V001) → `ProfileService.requireProfileForUpdate` → `nickname_changed_at`이 있고 + 쿨다운 전이면 B202(오류에 `data` 없음, 첫 변경은 바로, US2-AC6) → `NicknameTags.keepOrAssign(newKey, currentTag)`(다 차면 B201, US2-AC7·AC8) → `User.rename(nickname)`, `UserProfile.changeNickname(key, tag, now)` → flush. `uk_user_profile_nickname_key_nickname_tag` 위반은 010 `NicknameTags`의 다시 하기 규칙(새 트랜잭션, 최대 3번, 그래도면 B201)을 따른다 (research R4·R5, FR-003·FR-004)
+- [ ] T028 [US2] ApiMyProfileController에 `PUT /api/v1/users/me/nickname` 요청 `{ nickname }` → 200 `{ nickname, nicknameTag, nicknameChangeableAt }`. B202 오류에는 `data`를 싣지 않는다(키트 `BusinessException`·`ErrorResponse`를 고치지 않음) (contracts "닉네임 바꾸기", US2-AC1·AC3~AC6)
 - [ ] ~~T029~~ (2026-11-19 없앰) 가입 때 프로필 행(`nickname_key`·`nickname_tag`) 만들기는 010 가입이 한다 (research R14)
 - [ ] ~~T030~~ (2026-11-19 010으로 옮김) `UserAdminService.rename`의 `nickname_key`·태그 맞추기는 010이 한다 (research R14, `010-social-login` tasks)
-- [ ] T031 [US2] frontend/src/components/profile/nickname-field.tsx(새): zod로 길이 2~12자·한글·영문·숫자·`_`만 먼저 막고(잠정), 예약어·태그 다 참(B201)·변경 제한(B202)은 서버 응답을 칸 아래에 보인다. 마이페이지 머리에 `닉네임#태그`를 보인다(US1-AC1, 태그가 `null`이면 닉네임만). B202·`nicknameChangeAvailableAt`이면 "{date}부터 바꿀 수 있어요"와 단추 꺼짐. 따로 "닉네임 바꾸기" 단추로 저장하고, 성공하면 저장 안내 뒤 `me`·`profile` 쿼리를 무효화해 계정 바를 새로고침 없이 바꾼다 (FR-005, SC-002, US2-AC1·AC3~AC5)
+- [ ] T031 [US2] frontend/src/components/profile/nickname-field.tsx(새): zod로 길이 2~12자·한글·영문·숫자·`_`만 먼저 막고(잠정), 예약어·태그 다 참(B201)·변경 제한(B202)은 서버 응답을 칸 아래에 보인다. 마이페이지 머리에 `닉네임#태그`를 보인다(US1-AC1, 태그가 `null`이면 닉네임만). `nicknameChangeableAt`이 있으면 "{date}부터 바꿀 수 있어요"를 미리 보이고 입력·단추를 막는다. B202를 받으면(동시 저장·우회) `profile`을 다시 읽어 같은 안내를 보인다. 따로 "닉네임 바꾸기" 단추로 저장하고, 성공하면 저장 안내 뒤 `me`·`profile` 쿼리를 무효화해 계정 바를 새로고침 없이 바꾼다 (FR-005, SC-002, US2-AC1·AC3~AC5)
 
 **Checkpoint**: 닉네임을 바꾸면 모든 화면에 새 닉네임이 보인다 (MVP)
 
@@ -186,7 +186,7 @@ description: "마이페이지 (mypage) 작업 목록"
 | US2-AC1 닉네임 바꾸기 | 인수 + e2e(계정 바 즉시 반영) | T049, T053 |
 | US2-AC2 파티 멤버 목록의 새 닉네임 | 인수 (008 구현 뒤, 아니면 `/users/me`의 `name`으로 확인하고 PR에 적음) | T049 |
 | US2-AC3 규칙 위반(빈 값·공백·1자·13자·글자·예약어) | 인수 + 프론트 단위(zod) | T049, T052 |
-| US2-AC4 30일 안 다시 바꾸기 → `availableAt` | 인수 + 프론트 단위("{date}부터") | T049, T052 |
+| US2-AC4 30일 안 다시 바꾸기 → B202, GET의 `nicknameChangeableAt` | 인수 + 프론트 단위("{date}부터") | T049, T052 |
 | US2-AC5 같은 닉네임(대소문자만 다른 것 포함) 저장, 다른 태그 | 인수 | T049 |
 | US2-AC6 첫 변경은 바로 | 인수 | T049 |
 | US2-AC7 바꿀 때 태그 그대로 / 쓰이면 새 태그 | 인수 | T049 |

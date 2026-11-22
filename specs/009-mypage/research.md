@@ -57,7 +57,7 @@
 
 ## R5. 닉네임 변경 제한 (FR-004, 잠정)
 
-- **결정**: `tb_user_profile.nickname_changed_at`이 비어 있으면 가입 뒤 첫 변경이라 바로 바꾼다(US2-AC6). 값이 있으면 그 시각 + 30일 전에는 409 `NICKNAME_CHANGE_TOO_SOON`(B202)과 다시 바꿀 수 있는 시각(`availableAt`)을 돌려준다(US2-AC4). 바꾸면 지금 시각을 적는다. 같은 값으로 저장하면 아무것도 바꾸지 않고 시각도 그대로다(Edge Cases)
+- **결정**: `tb_user_profile.nickname_changed_at`이 비어 있으면 가입 뒤 첫 변경이라 바로 바꾼다(US2-AC6). 값이 있으면 그 시각 + 30일 전에는 409 `NICKNAME_CHANGE_TOO_SOON`(B202)이다(US2-AC4). 다시 바꿀 수 있는 시각은 오류에 싣지 않고 프로필 조회 응답의 `nicknameChangeableAt`(지금 바꿀 수 있으면 null)으로 주어 화면이 미리 안내하고 입력을 막는다. B202는 동시 저장·화면 우회 대비다(키트 `BusinessException`·`ErrorResponse`를 고치지 않으려고, 2026-11-22). 바꾸면 지금 시각을 적는다. 같은 값으로 저장하면 아무것도 바꾸지 않고 시각도 그대로다(Edge Cases)
   - 30일은 `ProfileProperties.nicknameCooldown`(기본 `30d`) 설정 값 하나다
 - **이유**: 가입 때 닉네임을 정하는 010은 이 칸을 건드리지 않으므로 "가입 뒤 첫 변경"을 따로 기록하지 않아도 된다. 관리자의 드로어 이름 바꾸기(`002-admin-users` FR-007)는 이 제한을 받지 않는다(spec "나중에 고칠 곳" 002)
 - **대안**: 변경 이력 테이블 — 지금 필요한 것은 마지막 시각 하나다
