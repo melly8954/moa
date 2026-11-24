@@ -19,7 +19,7 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 도메인 | 기능 | 출처 | 스펙 | 상태 |
 |---|---|---|---|---|
 | 시스템 | 관리 메뉴 구성과 접근 제한, 관리 셸·사용자 셸 | 키트 menu | `001-admin-menus` | 구현됨 |
-| 회원 | 첫 관리자, 관리자 계정(최고 관리자·운영자)과 회원 | 키트 user-admin, 골격 부트스트랩 | `002-admin-users` | 구현됨. 목록 일괄 삭제(2026-11-24)는 구현 전 |
+| 회원 | 첫 관리자, 관리자 계정(최고 관리자·운영자)과 회원 | 키트 user-admin, 골격 부트스트랩 | `002-admin-users` | 구현됨 |
 | 시스템 | 권한 관리 (운영자 역할, 최고 관리자 역할) | 키트 rbac | `003-admin-roles` | 구현됨 |
 | 시스템 | 공통코드 | 키트 code | `004-admin-codes` | 구현됨 |
 | 시스템 | 접속 이력 | 키트 login-history | `005-admin-login-history` | 구현됨 |
