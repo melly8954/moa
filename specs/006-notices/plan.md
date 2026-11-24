@@ -11,6 +11,8 @@ moa가 처음 직접 만드는 기능이다. 백엔드에 공지 엔터티와 �
 관리 메뉴에 "공지 관리"를 6번째로 더하고 `001-admin-menus`의 스펙과 테스트를 함께 고친다.
 실시간 알림(US4, FR-009)은 `007-notifications` 뒤로 미룬다 (R9).
 
+**공지 일괄 삭제 (2026-11-24, FR-001, US1-AC9)**: 공지 관리 목록에서 여러 공지를 체크해 한꺼번에 지운다. API `POST /api/v1/admin/notices/bulk-delete`는 메뉴·역할의 `bulk-delete`와 같은 모양으로, 한 트랜잭션에서 지우고 하나라도 없으면 아무것도 지우지 않는다. 화면은 키트 `DataTable`의 선택과 `BulkToolbar`를 쓴다. 마이그레이션은 없다. 구현 브랜치 `feat/006-notices-bulk-delete` ([research.md](./research.md) R13)
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)

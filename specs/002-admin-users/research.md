@@ -140,3 +140,14 @@ Technical Context에 미결은 없다. 아래는 코드를 확인해 정한 것�
   - 제공자 이름은 화면 문구(`ko.json`)에 둔다. 디스코드는 `010-social-login`이 enum에 더할 때 문구만 더한다
 - **Rationale**: 소셜 회원의 아이디는 moa가 만든 값이라 목록에서 알아볼 단서가 필요하다. 이미 받는 `hasPassword`만으로는 소셜인지, 어느 제공자인지 알 수 없다
 - **Alternatives considered**: 로그인 방식 열(대부분의 행에서 비어 있다), `hasPassword`만으로 "소셜" 배지(비밀번호가 있고 구글을 연결한 회원을 놓치고 제공자를 모른다), 소셜 회원의 아이디 대신 이메일 보이기(`010-social-login` FR-004 (c)가 정할 일이다)
+
+## R18. 사용자 일괄 삭제 (FR-006·FR-007, US3-AC6·US4-AC6, 2026-11-24)
+
+- **Decision**:
+  - API: `POST /api/v1/admin/users/bulk-delete` (`ids`, 사용자 관리 권한). 메뉴·역할의 `bulk-delete`와 같은 모양(`MenuIdsRequest`·`RoleIdsRequest`)이고 204를 준다
+  - `UserAdminApplication.deleteAll`이 한 트랜잭션에서 고른 계정을 모두 먼저 검사한 뒤 지운다. 검사는 `delete`와 같다: 없는 계정 R001, 다룰 수 없는 계정 A005, 최고 관리자·내 계정 B001. 하나라도 걸리면 예외로 끝나 아무것도 지워지지 않는다. 다루기 범위(`rowFacts`)는 고른 계정을 한 번에 읽는다. 지운 계정마다 역할을 빼고 토큰을 끊는다
+  - 화면: 목록 `DataTable`에 `selection`을 단다. `canSelect`는 `protection`이 없고 최고 관리자·내 계정이 아닌 행, `rowLabel`은 아이디다. 표 위 `BulkToolbar`에 고른 수와 삭제 단추를 두고, 자리와 높이는 `001-admin-menus` FR-010처럼 늘 같다. 삭제는 확인 창(고른 수, 지우면 로그아웃된다는 설명)을 거쳐 부르고, 끝나면 고른 것을 풀고 목록을 다시 읽는다. 실패하면 서버 메시지를 보인다
+  - 쪽을 넘기거나 검색을 바꾸면 고른 것이 풀린다(`role-members.tsx`와 같다). 체크 칸은 제 일만 하고 드로어를 열지 않는다(`openOnRowClick`이 입력을 건너뛴다)
+- **Rationale**: 001·003·004의 일괄 처리와 같은 모양과 규칙이다. 지울 수 없는 행을 미리 꺼 두므로 API가 막는 것은 화면을 거치지 않은 요청뿐이다
+- **Alternatives considered**: 화면에서 계정마다 `DELETE /{id}`를 차례로 부르기(중간에 실패하면 일부만 지워진다), 되는 계정만 지우고 결과를 알리기(다른 일괄 처리와 규칙이 다르다)
+- **테스트**: `AdminUsersAcceptanceTest`에 US3-AC6(회원 둘 `bulk-delete` 204, 목록에서 빠지고 토큰이 끊김), US4-AC6(사용자 관리 운영자가 회원 + 접속 이력 운영자를 섞으면 403 `A005`, 둘 다 남음), 최고 관리자 계정·내 계정이 섞이면 409 `B001`. e2e(`user-admin.spec.ts`)는 체크·일괄 줄·확인 창과 막힌 행의 꺼진 체크 칸
