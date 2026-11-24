@@ -24,7 +24,7 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 시스템 | 공통코드 | 키트 code | `004-admin-codes` | 구현됨 |
 | 시스템 | 접속 이력 | 키트 login-history | `005-admin-login-history` | 구현됨 |
 | 시스템 | 개인정보 파기 이력 (정리기의 파기 이력 저장과 관리 화면 목록, `docs/privacy.md`) | moa | `013-purge-log` | 구현됨 |
-| 공지 | 공지사항 (관리 화면과 사용자 목록·상세) | moa | `006-notices` | 구현됨. 목록 일괄 삭제(2026-11-24)는 구현 전 |
+| 공지 | 공지사항 (관리 화면과 사용자 목록·상세) | moa | `006-notices` | 구현됨 |
 | 알림 | 알림 (실시간 전달, 개인 알림함, 브라우저 알림) | moa, 키트 websocket | `007-notifications` | 구현됨. 개인 알림을 보내는 기능은 각 기능이 `NotificationApplication.notify`로 붙는다. 알림을 보내는 기능은 FR-012 규칙을 따른다 |
 | 마케팅 | 배너·팝업 관리 (관리 화면과 사용자 쪽 노출) | moa | `016` | 예약 (담당: haily) |
 | 회원 | 탈퇴 계정 복구 | moa | - | 보류: 탈퇴 상태가 정해진 뒤. 유예 기간(30일)은 `docs/privacy.md`가 정했다(2026-11-21). 탈퇴 상태·복구·완전 삭제는 회원 탈퇴 스펙이 맡는다(`009-mypage`·`010-social-login`) |

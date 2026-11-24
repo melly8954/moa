@@ -36,4 +36,6 @@ export const noticeAdminApi = {
   pin: (id: number, pinned: boolean) =>
     http.put<AdminNotice>(`${adminBase}/${id}/pin`, { pinned }).then((res) => res.data),
   remove: (id: number) => http.delete<void>(`${adminBase}/${id}`).then(() => undefined),
+  // 한꺼번에 지우기 (specs/006-notices FR-001). 없는(지운) 공지가 섞이면 아무것도 지우지 않는다
+  bulkDelete: (ids: number[]) => http.post<void>(`${adminBase}/bulk-delete`, { ids }).then(() => undefined),
 }
