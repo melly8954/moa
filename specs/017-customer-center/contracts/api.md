@@ -13,9 +13,9 @@
 
 | 요청 | 응답 | AC |
 |---|---|---|
-| `GET /api/v1/inquiries/me?page=&size=` | 200 쪽 `{id, categoryCode, title, status, createdAt}`, 쓴 최신순 | US3-AC1 |
+| `GET /api/v1/inquiries/me?page=&size=` | 200 쪽 `{id, categoryCode, categoryName, title, status, createdAt}`, 쓴 최신순 | US3-AC1 |
 | `POST /api/v1/inquiries` `{categoryCode, title, content, imageUrls[0..5]}` | 201 `{id}`. 칸 오류 400 `V001` (여섯 장 이상, 없는 이미지, 사용 중이 아닌 분류 포함) | US3-AC1·AC3·AC8 |
-| `GET /api/v1/inquiries/{id}` | 200 `{id, categoryCode, title, content, imageUrls, status, createdAt, answer, answeredAt, deletable}`. 남의 것·없는 것 404 `R001`. 답변한 관리자는 넣지 않는다 | US3-AC1·AC4·AC6·AC7 |
+| `GET /api/v1/inquiries/{id}` | 200 `{id, categoryCode, categoryName, title, content, imageUrls, status, createdAt, answer, answeredAt, deletable}`. 남의 것·없는 것 404 `R001`. 답변한 관리자는 넣지 않는다 | US3-AC1·AC4·AC6·AC7 |
 | `DELETE /api/v1/inquiries/{id}` | 204. 답변 완료면 409 `B001`, 남의 것·없는 것 404 `R001` | US3-AC5·AC6 |
 
 - 로그인하지 않으면 401 `A001` (골격). 화면은 `AuthGate`가 로그인으로 보낸다 (US3-AC2)

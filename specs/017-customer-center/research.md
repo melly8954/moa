@@ -11,7 +11,7 @@ Technical Context에 미결은 없다. 아래는 moa 코드(2026-11-25 dev `b90b
   - 형식·크기: rich-text 올리기 그대로 PNG·JPEG·GIF·WEBP, 한 장 5MB(`app.rich-text.image-max-size`). 넘으면 올리기에서 400 `V001`
   - 장수: 요청의 `imageUrls`는 0~5개(`@Size(max = 5)`). 화면은 다섯 장을 붙이면 고르기를 막고 안내한다 (US3-AC3)
 - **Rationale**: 이미지 저장, 공개 주소, 임시 정리, 파기 이력(`PurgeTarget.RICH_TEXT_IMAGE`)이 이미 있다. 새 헬퍼를 얹지 않으니 팀원에게 따로 알릴 것이 없다 (`specs/README.md` 추가로 쓸 키트 헬퍼)
-- **주의 (SC-004)**: rich-text 이미지 보기(`GET /api/v1/rich-text/images/{publicId}`)는 로그인 없이 열린다. 주소의 `publicId`는 추측할 수 없는 UUID라, 화면으로는 다른 회원의 첨부를 볼 길이 없다. 다만 주소를 알면 누구나 열 수 있다(주소가 곧 열쇠). 문의 화면은 주소를 그 문의의 주인과 문의 관리 권한자에게만 보낸다
+- **주의 (SC-004)**: rich-text 이미지 보기(`GET /api/v1/rich-text/images/{publicId}`)는 로그인 없이 열린다. 주소의 `publicId`는 추측할 수 없는 UUID라, 화면으로는 다른 회원의 첨부를 볼 길이 없다. 다만 주소를 알면 누구나 열 수 있다(주소가 곧 열쇠). 문의 화면은 주소를 그 문의의 주인과 문의 관리 권한자에게만 보낸다. 그래서 SC-004는 "화면이나 API로" 보는 일로 정하고, 주소의 공개 범위는 spec Assumptions에 적었다 (2026-11-25, analyze S1)
   - 주소만으로 열리는 것이 문제가 되면(민감한 스크린샷이 많아지는 경우) 키트 file 헬퍼로 권한을 확인하는 내려받기로 바꾼다. 그때는 이 결정과 data-model을 고친다
 - **Alternatives considered**:
   - 키트 file 헬퍼를 새로 얹기: 권한을 확인하는 내려받기를 만들 수 있지만, 저장·정리·파기 기록을 다시 잇고 사용자 쪽에도 영향이 간다. 첫 출시에는 크다
@@ -73,8 +73,8 @@ Technical Context에 미결은 없다. 아래는 moa 코드(2026-11-25 dev `b90b
 
 - **Decision**: 마이그레이션이 `tb_code_group`에 `SUPPORT_CATEGORY`, 항목 다섯을 넣는다. 같은 `group_code`가 이미 있으면 넣지 않는다 (`docs/db.md` 마이그레이션, `008-party` research의 시드 넣는 법)
   - 저장: FAQ·문의의 `category_code`에 항목 코드를 둔다
-  - 쓰기 확인: 새 FAQ·문의와 FAQ 고치기에서 분류가 그룹의 사용 중 항목이 아니면 400 `V001`(칸 오류 `categoryCode`)
-  - 화면의 분류 목록: 기존 `GET /api/v1/codes/SUPPORT_CATEGORY`(화면용, 사용 중 항목만)
+  - 쓰기 확인: 새 FAQ·문의, 그리고 FAQ를 고치며 분류를 바꿀 때 분류가 그룹의 사용 중 항목이 아니면 400 `V001`(칸 오류 `categoryCode`). 분류를 그대로 두고 고치면 확인하지 않는다. 꺼진 분류의 FAQ도 질문·답을 고칠 수 있어야 한다 (analyze U1)
+  - 화면의 분류 고르기: 기존 `GET /api/v1/codes/SUPPORT_CATEGORY`(화면용, 사용 중 항목만). 저장된 분류의 이름은 서버 응답의 `categoryName`(`getAllCodes`로 채움, 꺼진 항목도 이름이 있다)으로 보인다. 관리 응답과 회원 응답 모두 같다 (analyze I1)
   - 사용자 FAQ는 분류가 사용 중인 FAQ만 보인다. 관리 목록은 분류가 꺼져도 보이고, 이름은 전체 항목(`getAllCodes`)으로 찾는다 (spec Edge Cases)
 - `004-admin-codes` FR-001 표에 줄을 더했다. `AdminCodesAcceptanceTest`의 그룹 기대 목록과 테스트 정리 뒤 시드 되돌리기(`CodeSeed`, `008-party`가 만들기로 한 지원 코드. 없으면 017이 만든다)는 구현 PR에서 다룬다
 
