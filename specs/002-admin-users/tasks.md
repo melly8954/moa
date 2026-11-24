@@ -166,18 +166,18 @@ description: "관리자·운영자 계정 (admin-users) 작업 목록"
 
 **백엔드**
 
-- [ ] T037 backend/src/main/java/com/moa/api/application/v1/user/UserAdminApplication.java에 `deleteAll(actor, ids)`: 한 트랜잭션에서 고른 계정을 모두 검사(없는 계정 R001, `rowFacts`를 한 번에 읽어 `protection` A005, 최고 관리자·내 계정 B001)한 뒤 계정마다 지우고 역할을 빼고 토큰을 끊는다. 검사와 지우기는 `delete`와 같은 서비스 메서드를 쓴다 (R18)
-- [ ] T038 backend/src/main/java/com/moa/api/controller/v1/admin/user/: `UserIdsRequest`(`ids`, 메뉴·역할의 `IdsRequest`와 같은 검증)와 `ApiAdminUserController`의 `POST /bulk-delete`(204, `@Operation` 설명에 한 트랜잭션·막는 코드) (R18)
+- [X] T037 backend/src/main/java/com/moa/api/application/v1/user/UserAdminApplication.java에 `deleteAll(actor, ids)`: 한 트랜잭션에서 고른 계정을 모두 검사(없는 계정 R001, `rowFacts`를 한 번에 읽어 `protection` A005, 최고 관리자·내 계정 B001)한 뒤 계정마다 지우고 역할을 빼고 토큰을 끊는다. 검사와 지우기는 `delete`와 같은 서비스 메서드를 쓴다 (R18)
+- [X] T038 backend/src/main/java/com/moa/api/controller/v1/admin/user/: `UserIdsRequest`(`ids`, 메뉴·역할의 `IdsRequest`와 같은 검증)와 `ApiAdminUserController`의 `POST /bulk-delete`(204, `@Operation` 설명에 한 트랜잭션·막는 코드) (R18)
 
 **프론트**
 
-- [ ] T039 frontend/src/types/schema.d.ts: `npm run gen:api`로 `bulk-delete`를 받는다. 지금 schema.d.ts가 최신이 아니면 frontend/src/types/user-admin.ts와 API 함수에 직접 둔다
-- [ ] T040 frontend/src/app/(admin)/admin/users/page.tsx: `DataTable` `selection`(`canSelect`: `protection` 없음·최고 관리자 아님·내 계정 아님, `rowLabel`: 아이디), 표 위 `BulkToolbar`(고른 수, 삭제), 확인 창, 끝나면 고른 것 풀고 목록 다시 읽기, 쪽·검색이 바뀌면 고른 것 풀기. frontend/messages/ko.json `userAdmin` 일괄 삭제 문구 (FR-006, R18)
+- [X] T039 frontend/src/types/schema.d.ts: `npm run gen:api`로 `bulk-delete`를 받는다. 지금 schema.d.ts가 최신이 아니면 frontend/src/types/user-admin.ts와 API 함수에 직접 둔다
+- [X] T040 frontend/src/app/(admin)/admin/users/page.tsx: `DataTable` `selection`(`canSelect`: `protection` 없음·최고 관리자 아님·내 계정 아님, `rowLabel`: 아이디), 표 위 `BulkToolbar`(고른 수, 삭제), 확인 창, 끝나면 고른 것 풀고 목록 다시 읽기, 쪽·검색이 바뀌면 고른 것 풀기. frontend/messages/ko.json `userAdmin` 일괄 삭제 문구 (FR-006, R18)
 
 **테스트 (마지막)**
 
-- [ ] T041 backend/src/test/java/com/moa/api/AdminUsersAcceptanceTest.java: contracts/admin-accounts.md "일괄 삭제" 표대로 US3-AC6·US4-AC6, B001·R001 섞임 (원칙 V)
-- [ ] T042 frontend/e2e/user-admin.spec.ts: 둘을 체크해 일괄 삭제(확인 창), 내 행·최고 관리자 행의 꺼진 체크 칸, 체크 칸을 눌러도 드로어가 열리지 않음
+- [X] T041 backend/src/test/java/com/moa/api/AdminUsersAcceptanceTest.java: contracts/admin-accounts.md "일괄 삭제" 표대로 US3-AC6·US4-AC6, B001·R001 섞임 (원칙 V)
+- [X] T042 frontend/e2e/user-admin.spec.ts: 둘을 체크해 일괄 삭제(확인 창), 내 행·최고 관리자 행의 꺼진 체크 칸, 체크 칸을 눌러도 드로어가 열리지 않음
 - [ ] T043 specs/002-admin-users/quickstart.md "화면 확인"에 일괄 삭제를 더하고 사람이 확인한다
 
 ---

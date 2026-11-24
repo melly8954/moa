@@ -24,4 +24,6 @@ export const userAdminApi = {
   unlock: (id: number) => http.delete<void>(`${base}/${id}/lock`).then(() => undefined),
   resetPassword: (id: number) => http.post<TemporaryPassword>(`${base}/${id}/password-reset`).then((res) => res.data),
   remove: (id: number) => http.delete<void>(`${base}/${id}`).then(() => undefined),
+  // moa: 한꺼번에 지우기 (specs/002-admin-users FR-006). 하나라도 지울 수 없으면 아무것도 지우지 않는다
+  bulkDelete: (ids: number[]) => http.post<void>(`${base}/bulk-delete`, { ids }).then(() => undefined),
 }
