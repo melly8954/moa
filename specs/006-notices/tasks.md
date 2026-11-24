@@ -172,18 +172,18 @@ description: "공지사항 (notices) 작업 목록"
 
 **백엔드**
 
-- [ ] T060 backend/src/main/java/com/moa/api/application/v1/notice/NoticeApplication.java에 `deleteAll(ids)`: 한 트랜잭션에서 고른 공지를 모두 읽어 하나라도 없으면 R001, 그다음 공지마다 한 건 삭제와 같이 소프트 삭제와 본문 이미지 detach (R3·R13)
-- [ ] T061 backend/src/main/java/com/moa/api/controller/v1/admin/notice/: `NoticeIdsRequest`(`ids`, 메뉴·역할의 `IdsRequest`와 같은 검증)와 `ApiAdminNoticeController`의 `POST /bulk-delete`(204, `@Operation` 설명에 한 트랜잭션·막는 코드) (R13)
+- [X] T060 backend/src/main/java/com/moa/api/application/v1/notice/NoticeApplication.java에 `deleteAll(ids)`: 한 트랜잭션에서 고른 공지를 모두 읽어 하나라도 없으면 R001, 그다음 공지마다 한 건 삭제와 같이 소프트 삭제와 본문 이미지 detach (R3·R13)
+- [X] T061 backend/src/main/java/com/moa/api/controller/v1/admin/notice/: `NoticeIdsRequest`(`ids`, 메뉴·역할의 `IdsRequest`와 같은 검증)와 `ApiAdminNoticeController`의 `POST /bulk-delete`(204, `@Operation` 설명에 한 트랜잭션·막는 코드) (R13)
 
 **프론트**
 
-- [ ] T062 frontend/src/types/schema.d.ts: `npm run gen:api`로 `bulk-delete`를 받는다. 지금 schema.d.ts가 최신이 아니면 frontend/src/types/notice.ts와 API 함수에 직접 둔다
-- [ ] T063 frontend/src/app/(admin)/admin/notices/page.tsx: `DataTable` `selection`(`rowLabel`: 제목), 표 위 `BulkToolbar`(고른 수, 삭제), 확인 창, 끝나면 고른 것 풀고 목록·새 공지 쿼리 다시 읽기, 쪽·검색이 바뀌면 고른 것 풀기. frontend/messages/ko.json 일괄 삭제 문구 (FR-001, R13)
+- [X] T062 frontend/src/types/schema.d.ts: `npm run gen:api`로 `bulk-delete`를 받는다. 지금 schema.d.ts가 최신이 아니면 frontend/src/types/notice.ts와 API 함수에 직접 둔다
+- [X] T063 frontend/src/app/(admin)/admin/notices/page.tsx: `DataTable` `selection`(`rowLabel`: 제목), 표 위 `BulkToolbar`(고른 수, 삭제), 확인 창, 끝나면 고른 것 풀고 목록·새 공지 쿼리 다시 읽기, 쪽·검색이 바뀌면 고른 것 풀기. frontend/messages/ko.json 일괄 삭제 문구 (FR-001, R13)
 
 **테스트 (마지막)**
 
-- [ ] T064 backend/src/test/java/com/moa/api/NoticesAcceptanceTest.java: contracts/notices-api.md US1-AC9 줄대로 (원칙 V)
-- [ ] T065 frontend/e2e/notices.spec.ts: 둘을 체크해 일괄 삭제(확인 창), 체크 칸을 눌러도 고치기 화면으로 가지 않음
+- [X] T064 backend/src/test/java/com/moa/api/NoticesAcceptanceTest.java: contracts/notices-api.md US1-AC9 줄대로 (원칙 V)
+- [X] T065 frontend/e2e/notices.spec.ts: 둘을 체크해 일괄 삭제(확인 창), 체크 칸을 눌러도 고치기 화면으로 가지 않음
 - [ ] T066 specs/006-notices/quickstart.md "화면 확인"에 일괄 삭제를 더하고 사람이 확인한다
 
 ---
