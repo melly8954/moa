@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 
 import javax.sql.DataSource;
 
@@ -27,8 +28,11 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import com.jayway.jsonpath.JsonPath;
 import com.moa.api.application.v1.user.UserApplication;
+import com.moa.api.entity.user.UserSocialAccount;
+import com.moa.api.repository.writer.user.UserSocialAccountWriter;
 import com.moa.common.audit.SystemActor;
 import com.moa.common.security.Role;
+import com.moa.common.security.oauth.SocialProvider;
 import com.moa.support.AcceptanceTest;
 import com.moa.support.DatabaseCleaner;
 import com.moa.support.TestUsers;
@@ -57,6 +61,9 @@ class AdminUsersAcceptanceTest extends AcceptanceTest {
 
 	@Autowired
 	private DatabaseCleaner databaseCleaner;
+
+	@Autowired
+	private UserSocialAccountWriter userSocialAccountWriter;
 
 	/** 로컬 계정 SQL의 admin이 남아 있을 수 있어 비우고 시작한다 */
 	@BeforeEach
@@ -152,6 +159,49 @@ class AdminUsersAcceptanceTest extends AcceptanceTest {
 			.asArray().containsExactly(false);
 		assertThat(mvc.get().uri(ADMIN_USERS + "/10").header(HttpHeaders.AUTHORIZATION, admin).exchange())
 			.bodyJson().extractingPath("$.accessRoles[0].name").isEqualTo("보안 담당");
+	}
+
+	/**
+	 * moa (2026-11-24, research R17): 소셜 가입과 계정 연결 흐름은 010이 맡는다. 여기서는 회원과 연결 행을 직접 넣는다.
+	 * 비밀번호 회원의 연결(010 US5)은 아직 API가 없다
+	 */
+	@Test
+	@DisplayName("US3-AC5 소셜 계정이 연결된 회원은 목록·하나 조회에 제공자가 보이고, 비밀번호 없는 소셜 회원은 비밀번호 초기화가 B001이다")
+	void listShowsSocialProviders() {
+		testUsers.create(1L, "system", null, Role.USER);
+		testUsers.create(20L, "s_bbdxt37f2zdi", null, Role.USER);
+		testUsers.create(21L, "linked", "linked1234!", Role.USER);
+		testUsers.create(22L, "member", "member1234!", Role.USER);
+		linkGoogle(20L, "google-20", "social@example.com");
+		linkGoogle(21L, "google-21", "linked@example.com");
+		String admin = superAdmin();
+
+		MvcTestResult result = mvc.get().uri(ADMIN_USERS).header(HttpHeaders.AUTHORIZATION, admin).exchange();
+
+		assertThat(result).hasStatus(200);
+		assertThat(result).bodyJson()
+			.extractingPath("$.content[?(@.loginId == 's_bbdxt37f2zdi')].socialProviders[*]")
+			.asArray().containsExactly("GOOGLE");
+		assertThat(result).bodyJson().extractingPath("$.content[?(@.loginId == 's_bbdxt37f2zdi')].hasPassword")
+			.asArray().containsExactly(false);
+		assertThat(result).bodyJson().extractingPath("$.content[?(@.loginId == 'linked')].socialProviders[*]")
+			.asArray().containsExactly("GOOGLE");
+		assertThat(result).bodyJson().extractingPath("$.content[?(@.loginId == 'linked')].hasPassword")
+			.asArray().containsExactly(true);
+		assertThat(result).bodyJson().extractingPath("$.content[?(@.loginId == 'member')].socialProviders[*]")
+			.asArray().isEmpty();
+		assertThat(mvc.get().uri(ADMIN_USERS + "/20").header(HttpHeaders.AUTHORIZATION, admin).exchange())
+			.bodyJson().extractingPath("$.socialProviders").asArray().containsExactly("GOOGLE");
+
+		MvcTestResult reset = mvc.post().uri(ADMIN_USERS + "/20/password-reset")
+			.header(HttpHeaders.AUTHORIZATION, admin).exchange();
+		assertThat(reset).hasStatus(409);
+		assertThat(reset).bodyJson().extractingPath("$.code").isEqualTo("B001");
+	}
+
+	private void linkGoogle(Long userId, String subject, String email) {
+		userSocialAccountWriter.save(
+			new UserSocialAccount(userId, SocialProvider.GOOGLE, subject, email, null, LocalDateTime.now()));
 	}
 
 	@Test

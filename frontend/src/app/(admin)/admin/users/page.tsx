@@ -18,6 +18,7 @@ import type { AdminUser } from "@/types/user-admin"
 import { CreateUserDrawer, UserDrawer, UserStatus } from "./user-drawer"
 import { UserExtraDialogs, useUserExtraActions } from "./user-extras"
 import { rolesText } from "./user-roles"
+import { SocialBadges } from "./user-social"
 import { ROLES, TemporaryPasswordDialog, useInvalidateUsers, useUserErrorText } from "./user-dialogs"
 
 // 사용자 관리 (user-admin 헬퍼, 권한 USER_MANAGE)
@@ -95,10 +96,14 @@ export default function UsersPage() {
     {
       key: "loginId",
       header: t("loginId"),
+      // moa: 소셜 계정은 아이디 뒤에 제공자 배지 (FR-004)
       cell: (u) => (
-        <button type="button" className="text-left" onClick={() => setOpenId(u.id)}>
-          {u.loginId}
-        </button>
+        <span className="flex flex-wrap items-center gap-1.5">
+          <button type="button" className="text-left" onClick={() => setOpenId(u.id)}>
+            {u.loginId}
+          </button>
+          <SocialBadges user={u} />
+        </span>
       ),
     },
     { key: "name", header: t("name") },

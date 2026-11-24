@@ -3,6 +3,9 @@ import type { Role } from "./user"
 
 // 사용자 관리 API의 응답·요청·조건 (백엔드 user-admin 헬퍼: UserAdminResponse, UserCreateResponse 등)
 
+// moa: 소셜 로그인 제공자 (백엔드 SocialProvider, specs/010-social-login). 디스코드는 백엔드에 더할 때 함께 더한다
+export type SocialProvider = "GOOGLE"
+
 export type AdminUser = {
   id: number
   loginId: string
@@ -21,6 +24,8 @@ export type AdminUser = {
   superAdmin: boolean
   // moa: 내가 이 계정을 다룰 수 없는 이유. 다룰 수 있으면 null (research R10)
   protection?: GrantBlock | null
+  // moa: 연결된 소셜 제공자 (specs/002-admin-users FR-004, research R17). 목록·하나 조회에서만 온다. 없으면 빈 목록
+  socialProviders: SocialProvider[]
 }
 
 // 모두 선택. locked는 "true"·"false"
