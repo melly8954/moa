@@ -155,7 +155,7 @@ description: "관리자·운영자 계정 (admin-users) 작업 목록"
 **테스트 (마지막)**
 
 - [ ] T034 backend/src/test/java/com/moa/api/AdminUsersAcceptanceTest.java: US3-AC5 (`socialProviders`, 소셜 회원 비밀번호 초기화 B001) (원칙 V)
-- [ ] T035 frontend/e2e/user-admin.spec.ts: 소셜 회원 행의 배지, 드로어의 로그인 방식·꺼진 초기화 단추와 설명
+- [ ] T035 frontend/e2e/user-admin.spec.ts: 소셜 회원 행의 배지, 드로어의 로그인 방식("구글")·꺼진 초기화 단추와 설명. 운영자 드로어의 로그인 방식("아이디·비밀번호")은 지금의 US3-AC2 테스트에 더한다
 - [ ] T036 specs/002-admin-users/quickstart.md "화면 확인"에 소셜 회원 확인을 더하고 사람이 확인한다
 
 ---
