@@ -166,8 +166,31 @@ description: "공지사항 (notices) 작업 목록"
 
 ---
 
+## Phase 11: 공지 일괄 삭제 (2026-11-24 FR-001, US1-AC9)
+
+**Purpose**: 공지 관리 목록에서 여러 공지를 체크해 한꺼번에 지운다 (research.md R13). 마이그레이션 없음. 구현 브랜치 `feat/006-notices-bulk-delete`
+
+**백엔드**
+
+- [ ] T060 backend/src/main/java/com/moa/api/application/v1/notice/NoticeApplication.java에 `deleteAll(ids)`: 한 트랜잭션에서 고른 공지를 모두 읽어 하나라도 없으면 R001, 그다음 공지마다 한 건 삭제와 같이 소프트 삭제와 본문 이미지 detach (R3·R13)
+- [ ] T061 backend/src/main/java/com/moa/api/controller/v1/admin/notice/: `NoticeIdsRequest`(`ids`, 메뉴·역할의 `IdsRequest`와 같은 검증)와 `ApiAdminNoticeController`의 `POST /bulk-delete`(204, `@Operation` 설명에 한 트랜잭션·막는 코드) (R13)
+
+**프론트**
+
+- [ ] T062 frontend/src/types/schema.d.ts: `npm run gen:api`로 `bulk-delete`를 받는다. 지금 schema.d.ts가 최신이 아니면 frontend/src/types/notice.ts와 API 함수에 직접 둔다
+- [ ] T063 frontend/src/app/(admin)/admin/notices/page.tsx: `DataTable` `selection`(`rowLabel`: 제목), 표 위 `BulkToolbar`(고른 수, 삭제), 확인 창, 끝나면 고른 것 풀고 목록·새 공지 쿼리 다시 읽기, 쪽·검색이 바뀌면 고른 것 풀기. frontend/messages/ko.json 일괄 삭제 문구 (FR-001, R13)
+
+**테스트 (마지막)**
+
+- [ ] T064 backend/src/test/java/com/moa/api/NoticesAcceptanceTest.java: contracts/notices-api.md US1-AC9 줄대로 (원칙 V)
+- [ ] T065 frontend/e2e/notices.spec.ts: 둘을 체크해 일괄 삭제(확인 창), 체크 칸을 눌러도 고치기 화면으로 가지 않음
+- [ ] T066 specs/006-notices/quickstart.md "화면 확인"에 일괄 삭제를 더하고 사람이 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
+- Phase 11: T060 → T061 → T062 → T063 → T064 → T065 → T066
 - Setup: 백엔드(T001~T003 → T004)와 프론트(T005·T006 → T007·T008·T009 → T011)는 서로 기대지 않는다. T010은 둘 다 끝난 뒤
 - Foundational: T012 → T015 → T016 → T017 → T018. T013 → T019 → T020. T014는 아무 때나. T021은 T018 뒤. T022·T023은 프론트 Setup 뒤. T024는 백엔드 Foundational 마지막
 - US1(T025~T032), US2(T033~T035), US3(T036~T040)는 모두 Foundational에 기댄다

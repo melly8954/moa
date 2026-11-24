@@ -124,6 +124,26 @@ public class UserAdminApplication {
 		authTokenService.revokeAll(id);
 	}
 
+	/**
+	 * moa: 한꺼번에 지우기 (FR-006, research R18). 고른 계정을 모두 먼저 보고 나서 지운다. 없는 계정 R001, 다룰 수 없는 계정 A005,
+	 * 최고 관리자 계정·자기 자신 B001이 하나라도 있으면 아무것도 지우지 않는다. 지운 계정마다 역할을 빼고 로그아웃시킨다
+	 */
+	@Transactional
+	public void deleteAll(AuthPrincipal actor, List<Long> ids) {
+		List<Long> targets = ids.stream().distinct().toList();
+		List<UserAdminDto> users = targets.stream().map(userAdminService::get).toList();
+		for (RowFacts fact : rowFacts(actor, users)) {
+			userAdminService.requireNotProtected(fact.row().protection());
+			userAdminService.requireNotSuperAdmin(fact.row().superAdmin());
+			userAdminService.requireNotSelf(actor, fact.user().id());
+		}
+		for (Long id : targets) {
+			userAdminService.delete(actor, id);
+			accessRoleService.removeAllRolesOf(id);
+			authTokenService.revokeAll(id);
+		}
+	}
+
 	/** moa: 최고 관리자 계정이면 B001 (FR-007, research R13) */
 	private void requireNotSuperAdmin(Long id) {
 		userAdminService.requireNotSuperAdmin(accessRoleService.isSuperAdmin(id));

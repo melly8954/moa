@@ -7,6 +7,7 @@ import { expectNoHorizontalOverflow, expectNoSeriousA11yViolations } from "./sup
 //   관리자 계정은 드로어에서 역할을 체크해 준다. 다룰 수 없는 계정(protection)은 칸·스위치·단추가 꺼지고 이유가 보인다
 //   2026-11-22: 드로어는 한 폼(이름·계정 종류·역할) + 계정 상태(로그인 막기·비밀번호 초기화) + 계정 삭제 (FR-007, research R16)
 //   2026-11-24: 소셜 계정은 아이디 뒤 제공자 배지, 드로어에 로그인 방식과 꺼진 비밀번호 초기화의 이유 (FR-004·FR-007, research R17)
+//   2026-11-24: 목록에서 체크해 한꺼번에 지운다. 지울 수 없는 행은 체크 칸이 꺼진다 (FR-006, research R18)
 
 type RoleRef = { id: number; name: string }
 const user = (
@@ -137,13 +138,14 @@ async function mock(page: Page, { roleManage = true, sent = { calls: [] } as Sen
 }
 
 // moa: 행 아무 곳이나 누르면 드로어가 열린다 (specs/002-admin-users FR-007, 2026-11-22). 이름 칸을 누른다
+//   (맨 앞은 일괄 삭제 체크 칸, 그다음 아이디. 2026-11-24 FR-006)
 //   사이드바의 내 계정 메뉴도 이름이 아이디라서 목록 영역 안에서 찾는다 (목록이 뜨기를 기다리는 효과도 있다)
 const openUser = async (page: Page, loginId: string) => {
   const row = page
     .getByRole("region", { name: "사용자 관리" })
     .getByRole("row")
     .filter({ has: page.getByRole("button", { name: loginId, exact: true }) })
-  await row.getByRole("cell").nth(1).click()
+  await row.getByRole("cell").nth(2).click()
   return page.getByRole("dialog")
 }
 
@@ -185,6 +187,35 @@ test("FR-007 아이디는 밑줄 없는 단추이고, 행의 다른 칸을 눌�
   await expect(id).toHaveCSS("text-decoration-line", "none")
   const drawer = await openUser(page, "lee")
   await expect(drawer.getByRole("heading", { name: "lee" })).toBeVisible()
+})
+
+test("US3-AC6 계정 둘을 체크해 한꺼번에 지운다. 내 행·최고 관리자 행은 체크 칸이 꺼져 있고, 체크 칸은 드로어를 열지 않는다", async ({
+  page,
+}) => {
+  await mock(page)
+  let sent: unknown
+  await page.route("**/api/v1/admin/users/bulk-delete", (route) => {
+    sent = route.request().postDataJSON()
+    return route.fulfill({ status: 204 })
+  })
+  await page.goto("/admin/users")
+  const list = page.getByRole("region", { name: "사용자 관리" })
+  const toolbar = page.getByRole("toolbar", { name: "고른 계정 처리" })
+  await expect(toolbar.getByRole("button", { name: "삭제" })).toBeDisabled()
+  await expect(list.getByRole("checkbox", { name: "e2e 선택" })).toBeDisabled()
+  await expect(list.getByRole("checkbox", { name: "admin 선택" })).toBeDisabled()
+
+  await list.getByRole("checkbox", { name: "lee 선택" }).click()
+  await list.getByRole("checkbox", { name: "kim 선택" }).click()
+  await expect(page.getByRole("dialog")).toHaveCount(0)
+  await expect(toolbar).toContainText("2개 선택")
+
+  await toolbar.getByRole("button", { name: "삭제" }).click()
+  const confirmDialog = page.getByRole("alertdialog", { name: "계정 2개를 지울까요?" })
+  await confirmDialog.getByRole("button", { name: "삭제" }).click()
+  await expect(page.getByText("계정 2개를 지웠어요.")).toBeVisible()
+  expect(sent).toEqual({ ids: [4, 3] })
+  await expect(toolbar.getByRole("button", { name: "삭제" })).toBeDisabled()
 })
 
 test("US3-AC2 내 행 드로어는 계정 종류·로그인 막기·삭제가 꺼져 있고 이름은 고칠 수 있다", async ({ page }) => {

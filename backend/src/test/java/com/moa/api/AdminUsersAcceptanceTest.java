@@ -271,6 +271,63 @@ class AdminUsersAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
+	@DisplayName("US3-AC6 회원 둘을 한꺼번에 지우면 목록에서 빠지고 로그아웃된다")
+	void bulkDeleteRemovesMembers() {
+		String admin = superAdmin();
+		testUsers.create(11L, "member1", "member1234!", Role.USER);
+		testUsers.create(12L, "member2", "member1234!", Role.USER);
+		testUsers.create(13L, "member3", "member1234!", Role.USER);
+		MvcTestResult login = login("member1", "member1234!");
+		assertThat(login).hasStatus(200);
+
+		assertThat(bulkDelete(admin, "[11, 12]")).hasStatus(204);
+		MvcTestResult list = mvc.get().uri(ADMIN_USERS).header(HttpHeaders.AUTHORIZATION, admin).exchange();
+		assertThat(list).bodyJson().extractingPath("$.content[*].loginId").asArray()
+			.contains("member3")
+			.doesNotContain("member1", "member2");
+		assertThat(mvc.post().uri("/api/v1/auth/token/refresh").cookie(login.getResponse().getCookies()).exchange())
+			.hasStatus(401);
+	}
+
+	@Test
+	@DisplayName("US4-AC6 사용자 관리 운영자가 회원과 권한이 더 많은 운영자를 섞어 한꺼번에 지우면 A005이고 아무것도 지워지지 않는다")
+	void bulkDeleteStopsOnWiderAccount() {
+		String admin = superAdmin();
+		String manager = operator(20L, "manager", "USER_MANAGE");
+		operator(21L, "security", "LOGIN_HISTORY_READ");
+		testUsers.create(11L, "member1", "member1234!", Role.USER);
+
+		assertThat(bulkDelete(manager, "[11, 21]")).hasStatus(403).bodyJson().extractingPath("$.code")
+			.isEqualTo("A005");
+		assertThat(mvc.get().uri(ADMIN_USERS + "/11").header(HttpHeaders.AUTHORIZATION, admin).exchange())
+			.hasStatus(200);
+		assertThat(mvc.get().uri(ADMIN_USERS + "/21").header(HttpHeaders.AUTHORIZATION, admin).exchange())
+			.hasStatus(200);
+	}
+
+	@Test
+	@DisplayName("FR-006 최고 관리자 계정·내 계정(B001)이나 없는 계정(R001)이 섞이면 한꺼번에 지우기는 아무것도 지우지 않는다")
+	void bulkDeleteStopsOnBlockedOrMissing() {
+		String admin = superAdmin();
+		String manager = operator(20L, "manager", "USER_MANAGE");
+		testUsers.create(11L, "member1", "member1234!", Role.USER);
+
+		assertThat(bulkDelete(admin, "[11, 2]")).hasStatus(409).bodyJson().extractingPath("$.code")
+			.isEqualTo("B001");
+		assertThat(bulkDelete(manager, "[11, 20]")).hasStatus(409).bodyJson().extractingPath("$.code")
+			.isEqualTo("B001");
+		assertThat(bulkDelete(admin, "[11, 999]")).hasStatus(404).bodyJson().extractingPath("$.code")
+			.isEqualTo("R001");
+		assertThat(mvc.get().uri(ADMIN_USERS + "/11").header(HttpHeaders.AUTHORIZATION, admin).exchange())
+			.hasStatus(200);
+	}
+
+	private MvcTestResult bulkDelete(String bearer, String ids) {
+		return mvc.post().uri(ADMIN_USERS + "/bulk-delete").header(HttpHeaders.AUTHORIZATION, bearer)
+			.contentType(MediaType.APPLICATION_JSON).content("{\"ids\":" + ids + "}").exchange();
+	}
+
+	@Test
 	// 2026-11-21 한 명 고정: 예전 "하나뿐인 최고 관리자는 다른 최고 관리자 없이 바꿀 수 없다"를 "최고 관리자 계정은 이름 말고 누구도 못
 	// 바꾼다"로 바꿨다 (원칙 V, research R15)
 	@DisplayName("US4-AC3·FR-007 최고 관리자 계정은 본인 이름 바꾸기만 되고, 계정 종류·잠그기·풀기·비밀번호 초기화·삭제는 본인 B001, 운영자 A005")
