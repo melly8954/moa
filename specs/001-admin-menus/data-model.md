@@ -9,7 +9,7 @@
 
 | 묶음 | `icon` | `sort_order` | 하위 메뉴 (`screen_key`, `sort_order`) |
 |---|---|---|---|
-| 운영 | `briefcase` | 10 | `ADMIN_USERS` 10, `ADMIN_NOTICES` 20, `ADMIN_LOGIN_HISTORIES` 30 |
+| 운영 | `briefcase` | 10 | `ADMIN_USERS` 10, `ADMIN_NOTICES` 20, `ADMIN_FAQS` 23, `ADMIN_INQUIRIES` 26 (2026-11-25, `017-customer-center` research R7), `ADMIN_LOGIN_HISTORIES` 30 |
 | 마케팅 | `megaphone` | 15 | `ADMIN_BANNERS` 10, `ADMIN_POPUPS` 20 (2026-11-24, `016-banner-popup` research R6) |
 | 설정 | `settings` | 20 | `ADMIN_ROLES` 10 (이름 "권한 관리", 2026-11-21에 "역할 관리"에서 바꿈, `003-admin-roles` V7), `ADMIN_MENUS` 20, `ADMIN_CODES` 30 (이름 "코드 관리", 2026-11-21에 "공통코드"에서 바꿈) |
 
@@ -29,8 +29,11 @@
 | `ADMIN_NOTICES` | 공지 관리 | `/admin/notices` | `ADMIN` | `NOTICE_MANAGE` | - |
 | `ADMIN_BANNERS` | 배너 관리 | `/admin/banners` | `ADMIN` | `BANNER_MANAGE` | - |
 | `ADMIN_POPUPS` | 팝업 관리 | `/admin/popups` | `ADMIN` | `POPUP_MANAGE` | - |
+| `ADMIN_FAQS` | FAQ 관리 | `/admin/faqs` | `ADMIN` | `FAQ_MANAGE` | - |
+| `ADMIN_INQUIRIES` | 문의 관리 | `/admin/inquiries` | `ADMIN` | `INQUIRY_MANAGE` | - |
 | `HOME` | 홈 | `/` | `USER` | - | false |
 | `NOTICES` | 공지 | `/notices` | `USER` | - | false |
+| `SUPPORT` | 고객센터 | `/support` | `USER` | - | false |
 
 ## `tb_menu.screen_key`, `tb_menu.visibility` (FR-007, FR-009)
 
