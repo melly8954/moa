@@ -40,3 +40,12 @@
 | FR-007 | 최고 관리자 본인·다른 운영자가 최고 관리자 계정에 `PUT /{id}/role`, `PUT /{id}/lock`, `POST /{id}/password-reset`, `DELETE /{id}` (2026-11-22 한 명 고정) | 본인 409 `B001`, 운영자 403 `A005`. 본인 `PUT /{id}`(이름)은 200 |
 | US1-AC2 | `db/ops/super-admin-reset-password.sql`(아이디 = 최고 관리자, 새 bcrypt 값)을 실행 | 새 임시 비밀번호로 로그인 200, `passwordChangeRequired` = true, 예전 리프레시 토큰 401 |
 | US1-AC3 | `db/ops/super-admin-transfer.sql`(아이디 = 운영자 B)을 실행 | B의 `GET /api/v1/menus/me` 관리 메뉴 전부, 예전 최고 관리자는 빈 목록. 최고 관리자 줄은 하나 |
+
+## 소셜 계정 표시 (2026-11-24, research R17)
+
+응답 `UserAdminResponse`에 `socialProviders`(예: `["GOOGLE"]`, 없으면 `[]`)를 더한다. 목록·하나 조회에서만 채운다.
+
+| AC | 호출 | 기대 |
+|---|---|---|
+| US3-AC5 | 구글로 가입한 회원, 비밀번호 회원이 구글을 연결한 뒤 `GET /api/v1/admin/users` | 두 행 `socialProviders` = `["GOOGLE"]`, 구글로 가입한 회원 `hasPassword` = false. 다른 행은 `[]` |
+| US3-AC5 | 구글로 가입한 회원에게 `POST /{id}/password-reset` | 409 `B001` (지금과 같다) |

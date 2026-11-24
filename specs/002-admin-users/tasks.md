@@ -138,8 +138,31 @@ description: "관리자·운영자 계정 (admin-users) 작업 목록"
 
 ---
 
+## Phase 10: 소셜 계정 표시와 비밀번호 초기화 이유 (2026-11-24 FR-004·FR-007, US3-AC5)
+
+**Purpose**: 목록에서 소셜 계정을 알아보고, 드로어에서 비밀번호 초기화가 꺼진 이유를 보인다 (research.md R17). 마이그레이션 없음. 구현 브랜치 `feat/002-social-mark`
+
+**백엔드**
+
+- [ ] T030 backend/src/main/java/com/moa/api/repository/jpa/user/UserSocialAccountRepository.java·repository/reader/user/UserSocialAccountReader.java: 여러 회원의 연결 제공자를 한 번에 읽는 조회 (R17)
+- [ ] T031 backend/src/main/java/com/moa/api/dto/user/UserAdminRowDto.java·application/v1/user/UserAdminApplication.java(`rowFacts`)·controller/v1/admin/user/response/UserAdminResponse.java: `socialProviders`를 붙이고 응답에 더한다 (R17)
+
+**프론트**
+
+- [ ] T032 frontend/src/types/schema.d.ts: `npm run gen:api`로 `socialProviders`를 받는다
+- [ ] T033 frontend/src/app/(admin)/admin/users/page.tsx 아이디 칸 제공자 배지, user-drawer.tsx 로그인 방식 줄과 비밀번호 줄 설명, frontend/messages/ko.json `userAdmin` 문구 (FR-004·FR-007, R17)
+
+**테스트 (마지막)**
+
+- [ ] T034 backend/src/test/java/com/moa/api/AdminUsersAcceptanceTest.java: US3-AC5 (`socialProviders`, 소셜 회원 비밀번호 초기화 B001) (원칙 V)
+- [ ] T035 frontend/e2e/user-admin.spec.ts: 소셜 회원 행의 배지, 드로어의 로그인 방식("구글")·꺼진 초기화 단추와 설명. 운영자 드로어의 로그인 방식("아이디·비밀번호")은 지금의 US3-AC2 테스트에 더한다
+- [ ] T036 specs/002-admin-users/quickstart.md "화면 확인"에 소셜 회원 확인을 더하고 사람이 확인한다
+
+---
+
 ## Dependencies & Execution Order
 
+- Phase 10: T030 → T031 → T032 → T033 → T034 → T035 → T036. `010-social-login`의 연결 테이블(V10)이 있어야 한다
 - Phase 8: `003-admin-roles` T049~T050 → T020 → T021 → `003-admin-roles` T051 → T022 → `003-admin-roles` T052~T054 → T023 → `003-admin-roles` T055 → T024
 - Phase 7: `003-admin-roles` T033~T039 → T013 → T014 → T015 → T016 → (`001-admin-menus` T089~T093) → `003-admin-roles` T043~T046 → T017 → T018 → `003-admin-roles` T047 → T019
 - Phase 6: `001-admin-menus` T071, `003-admin-roles` T024 → T007 → T008 → T009 → T010 → T011 → T012
