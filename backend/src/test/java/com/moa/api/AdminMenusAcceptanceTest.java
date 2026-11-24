@@ -37,6 +37,8 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		"/api/v1/admin/code-groups",
 		"/api/v1/admin/login-histories",
 		"/api/v1/admin/purge-logs",
+		"/api/v1/admin/banners",
+		"/api/v1/admin/popups",
 		"/api/v1/admin/roles",
 		"/api/v1/admin/notices");
 	private static final long OPERATOR_ID = 10L;
@@ -54,25 +56,28 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US1-AC1 관리자는 관리 메뉴 7개를 운영·설정 묶음 아래에서 정해진 순서로 본다")
+	@DisplayName("US1-AC1 관리자는 관리 메뉴 9개를 운영·마케팅·설정 묶음 아래에서 정해진 순서로 본다")
 	void adminSeesMenusInOrder() {
 		MvcTestResult result = asAdmin(mvc.get().uri(MY_MENUS));
 
 		assertThat(result).hasStatus(200);
-		assertThat(result).bodyJson().extractingPath("$[*].name").asArray().containsExactly("운영", "설정");
+		assertThat(result).bodyJson().extractingPath("$[*].name").asArray().containsExactly("운영", "마케팅", "설정");
 		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
 			.containsExactly("사용자 관리", "공지 관리", "접속 이력", "파기 이력");
 		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
+			.containsExactly("배너 관리", "팝업 관리");
+		assertThat(result).bodyJson().extractingPath("$[2].children[*].name").asArray()
 			.containsExactly("권한 관리", "메뉴 관리", "코드 관리");
 		assertThat(result).bodyJson().extractingPath("$[*].children[*].path").asArray()
 			.containsExactly("/admin/users", "/admin/notices", "/admin/login-histories", "/admin/purge-logs",
+				"/admin/banners", "/admin/popups",
 				"/admin/roles",
 				"/admin/menus",
 				"/admin/codes");
 	}
 
 	@Test
-	@DisplayName("US1-AC2 관리자는 관리 화면 7개의 목록을 연다")
+	@DisplayName("US1-AC2 관리자는 관리 화면 9개의 목록을 연다")
 	void adminOpensEveryList() {
 		for (String api : ADMIN_LIST_APIS) {
 			assertThat(asAdmin(mvc.get().uri(api))).as(api).hasStatus(200);
@@ -118,10 +123,10 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 
 		assertThat(result).hasStatus(200);
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].name").asArray()
-			.containsExactlyInAnyOrder("운영", "설정");
+			.containsExactlyInAnyOrder("운영", "마케팅", "설정");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'ADMIN')].children[*].name").asArray()
 			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "권한 관리", "공지 관리",
-				"파기 이력");
+				"파기 이력", "배너 관리", "팝업 관리");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'USER')].name").asArray()
 			.containsExactlyInAnyOrder("홈", "공지");
 	}
@@ -186,7 +191,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		assertThat(result).bodyJson().extractingPath("$[?(@.key =~ /^(?!TEST_).*/)].key").asArray()
 			.containsExactly("ADMIN_USERS", "ADMIN_MENUS", "ADMIN_CODES", "ADMIN_LOGIN_HISTORIES", "ADMIN_PURGE_LOGS",
 				"ADMIN_ROLES",
-				"ADMIN_NOTICES", "HOME", "NOTICES");
+				"ADMIN_NOTICES", "ADMIN_BANNERS", "ADMIN_POPUPS", "HOME", "NOTICES");
 		assertThat(result).bodyJson().extractingPath("$[?(@.key == 'ADMIN_CODES')].permission.name").asArray()
 			.containsExactly("코드 관리");
 		assertThat(result).bodyJson().extractingPath("$[?(@.key == 'NOTICES')].path").asArray()
@@ -263,7 +268,8 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 		MvcTestResult result = asAdmin(mvc.get().uri(MY_MENUS));
 		assertThat(result).bodyJson().extractingPath("$[0].children[*].name").asArray()
 			.containsExactly("사용자 관리", "공지 관리", "파기 이력");
-		assertThat(result).bodyJson().extractingPath("$[1].children[*].name").asArray()
+		// 설정은 운영·마케팅 다음 세 번째 묶음이다 (FR-001, 016-banner-popup에서 마케팅을 더함)
+		assertThat(result).bodyJson().extractingPath("$[2].children[*].name").asArray()
 			.containsExactly("권한 관리", "메뉴 관리", "코드 관리", "접속 이력");
 	}
 
