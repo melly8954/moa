@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.moa.api.application.v1.notice.NoticeApplication;
 import com.moa.api.controller.v1.admin.notice.request.NoticeCreateRequest;
+import com.moa.api.controller.v1.admin.notice.request.NoticeIdsRequest;
 import com.moa.api.controller.v1.admin.notice.request.NoticeModifyRequest;
 import com.moa.api.controller.v1.admin.notice.request.NoticePinRequest;
 import com.moa.api.controller.v1.admin.notice.request.NoticeSearchRequest;
@@ -93,6 +94,14 @@ public class ApiAdminNoticeController {
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
 		noticeApplication.delete(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "한꺼번에 지우기",
+		description = "specs/006-notices FR-001: 한 트랜잭션. 공지마다 지우기와 같다. 없는(지운) 공지가 하나라도 있으면 R001이고 아무것도 지우지 않는다")
+	@PostMapping("/bulk-delete")
+	public ResponseEntity<Void> deleteAll(@Valid @RequestBody NoticeIdsRequest request) {
+		noticeApplication.deleteAll(request.ids());
 		return ResponseEntity.noContent().build();
 	}
 }
