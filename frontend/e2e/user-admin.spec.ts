@@ -6,6 +6,7 @@ import { expectNoHorizontalOverflow, expectNoSeriousA11yViolations } from "./sup
 // moa (specs/002-admin-users FR-005~FR-007, research R11·R12, 2026-11-21): 계정 종류는 회원(USER)·관리자(ADMIN)
 //   관리자 계정은 드로어에서 역할을 체크해 준다. 다룰 수 없는 계정(protection)은 칸·스위치·단추가 꺼지고 이유가 보인다
 //   2026-11-22: 드로어는 한 폼(이름·계정 종류·역할) + 계정 상태(로그인 막기·비밀번호 초기화) + 계정 삭제 (FR-007, research R16)
+//   2026-11-24: 소셜 계정은 아이디 뒤 제공자 배지, 드로어에 로그인 방식과 꺼진 비밀번호 초기화의 이유 (FR-004·FR-007, research R17)
 
 type RoleRef = { id: number; name: string }
 const user = (
@@ -19,6 +20,7 @@ const user = (
   createdAt: "2026-11-01T09:00:00+09:00",
   superAdmin: false,
   protection: null,
+  socialProviders: [],
   ...over,
   accessRoles: over.accessRoles ?? [],
 })
@@ -194,6 +196,7 @@ test("US3-AC2 내 행 드로어는 계정 종류·로그인 막기·삭제가 �
   await expect(loginBlock(drawer)).toBeDisabled()
   await expect(drawer.getByRole("button", { name: "삭제" })).toBeDisabled()
   await expect(drawer.getByLabel("이름")).toBeEnabled()
+  await expect(drawer.getByText("아이디·비밀번호", { exact: true })).toBeVisible()
   // 바꾼 것이 없으면 저장이 꺼져 있다
   await expect(drawer.getByRole("button", { name: "저장" })).toBeDisabled()
 })
@@ -220,6 +223,35 @@ test("US3-AC2·AC3 이름과 역할을 한 폼에서 고쳐 저장 한 번으로
   expect(sent.calls).toEqual(["name", "roles"])
   expect(sent.name).toEqual({ name: "박운영자" })
   expect(sent.roles).toEqual({ roleIds: [1] })
+})
+
+test("US3-AC5 소셜 계정은 아이디 뒤에 제공자 배지가 붙고, 비밀번호 없는 소셜 회원은 초기화가 꺼진 이유를 보인다", async ({
+  page,
+}) => {
+  const member = { role: "USER", createdAt: "2026-11-20T09:00:00+09:00", socialProviders: ["GOOGLE"] }
+  const users = [
+    ...USERS,
+    user({ id: 6, loginId: "s_bbdxt37f2zdi", name: "모아킴", hasPassword: false, ...member }),
+    user({ id: 7, loginId: "park", name: "박연결", ...member }),
+  ]
+  await mock(page, { users })
+  await page.goto("/admin/users")
+  await expect(page.getByRole("row", { name: /s_bbdxt37f2zdi/ })).toContainText("구글")
+  await expect(page.getByRole("row", { name: /park/ })).toContainText("구글")
+  await expect(page.getByRole("row", { name: /lee/ })).not.toContainText("구글")
+
+  const social = await openUser(page, "s_bbdxt37f2zdi")
+  await expect(social.getByText("구글", { exact: true })).toBeVisible()
+  await expect(social.getByRole("button", { name: "초기화" })).toBeDisabled()
+  await expect(
+    social.getByText("구글로만 로그인하는 계정이라 비밀번호가 없어요. 로그인 문제는 구글 계정에서 풀어야 해요."),
+  ).toBeVisible()
+  await expectNoSeriousA11yViolations(page)
+  await social.getByRole("button", { name: "취소" }).click()
+
+  const linked = await openUser(page, "park")
+  await expect(linked.getByText("아이디·비밀번호, 구글", { exact: true })).toBeVisible()
+  await expect(linked.getByRole("button", { name: "초기화" })).toBeEnabled()
 })
 
 test("US3-AC4 회원 드로어에는 역할 체크 칸 대신 계정 종류를 바꾸라는 안내가 있다", async ({ page }) => {
