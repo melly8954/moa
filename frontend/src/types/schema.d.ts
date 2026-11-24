@@ -878,6 +878,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/notices/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 한꺼번에 지우기
+         * @description specs/006-notices FR-001: 한 트랜잭션. 공지마다 지우기와 같다. 없는(지운) 공지가 하나라도 있으면 R001이고 아무것도 지우지 않는다
+         */
+        post: operations["deleteAll_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/menus": {
         parameters: {
             query?: never;
@@ -912,7 +932,7 @@ export interface paths {
          * 한꺼번에 지우기
          * @description moa (FR-010): 소프트 삭제, 한 트랜잭션. 고른 것끼리 부모·자식이면 함께 지운다. 없는 메뉴 R001, 고르지 않은 하위 메뉴가 남는 묶음 B001 (아무것도 지우지 않는다)
          */
-        post: operations["deleteAll_3"];
+        post: operations["deleteAll_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -998,7 +1018,7 @@ export interface paths {
          * 여러 배너 지우기
          * @description 하나라도 없으면 R001이고 아무것도 지우지 않는다
          */
-        post: operations["deleteAll_4"];
+        post: operations["deleteAll_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2360,6 +2380,17 @@ export interface components {
             pinned: boolean;
             /** @description true면 바로 게시, false면 임시 저장 */
             publish: boolean;
+        };
+        /** @description 공지 ID 목록 (한꺼번에 지우기) */
+        NoticeIdsRequest: {
+            /**
+             * @description 공지 ID들
+             * @example [
+             *       1,
+             *       2
+             *     ]
+             */
+            ids: number[];
         };
         /** @description 메뉴 만들기 요청 */
         MenuCreateRequest: {
@@ -4704,6 +4735,28 @@ export interface operations {
             };
         };
     };
+    deleteAll_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeIdsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getMenus: {
         parameters: {
             query?: never;
@@ -4748,7 +4801,7 @@ export interface operations {
             };
         };
     };
-    deleteAll_3: {
+    deleteAll_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4910,7 +4963,7 @@ export interface operations {
             };
         };
     };
-    deleteAll_4: {
+    deleteAll_5: {
         parameters: {
             query?: never;
             header?: never;
