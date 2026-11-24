@@ -47,7 +47,7 @@ test("US2-AC1 팝업 등록: 넓은 드로어 안의 편집기로 내용을 써�
   await page.getByRole("button", { name: "팝업 등록" }).click()
   const drawer = page.getByRole("dialog", { name: "팝업 등록" })
 
-  await drawer.getByLabel("제목").fill("12월 시즌 대회 열려요")
+  await drawer.getByLabel("제목", { exact: true }).fill("12월 시즌 대회 열려요")
   const editor = drawer.locator('[contenteditable="true"]')
   await editor.click()
   await editor.pressSequentially("참가 신청은 12월 10일까지예요.")

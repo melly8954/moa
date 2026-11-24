@@ -104,7 +104,7 @@ export function PopupDrawer({
             {t("cancel")}
           </Button>
           <Button type="submit" form="popup-form" disabled={save.isPending}>
-            {t(editing ? "save" : "create")}
+            {t(editing ? "save" : "register")}
           </Button>
         </>
       }
