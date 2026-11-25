@@ -1,48 +1,30 @@
-// moa: 마이페이지 API의 응답·요청 (specs/009-mypage contracts/profile-api.md)
-// 백엔드 ProfileGetResponse, ProfileSaveRequest, NicknameChangeRequest·Response, AvatarListResponse
-// gen:api 뒤 Schema<"ProfileGetResponse"> 등으로 바꿔도 된다. 게임 정보(games)는 US5 때 더한다
+import type { Schema } from "./openapi"
 
-export type Gender = "MALE" | "FEMALE" | "UNDISCLOSED"
+// moa: 마이페이지 API의 응답·요청 (specs/009-mypage contracts/profile-api.md). npm run gen:api의 생성 타입을 쓴다
+// 응답의 null 가능 칸(@Nullable)은 `field?: T`로 온다. 화면은 null과 빠짐을 같게 본다 (`?? ""`, `!!value`)
+// 게임 정보(games)는 US5 때 더한다
 
-export type DiscordVisibility = "PRIVATE" | "FRIENDS" | "MEMBERS"
+// GET·PUT /api/v1/users/me/profile
+export type MyProfile = Schema<"ProfileGetResponse">
 
-export type PlayTime = { code: string; name: string }
+export type PlayTime = Schema<"PlayTime">
 
-export type MyProfile = {
-  nickname: string
-  // 프로필 행이 아직 없으면 null. 화면은 "닉네임#태그"로 보이고, 없으면 닉네임만
-  nicknameTag: string | null
-  avatar: string
-  bio: string | null
-  birthYear: number | null
-  // 올해 − 출생 연도
-  age: number | null
+export type Gender = NonNullable<MyProfile["gender"]>
+
+export type DiscordVisibility = MyProfile["discordVisibility"]
+
+// PUT /api/v1/users/me/profile. 모든 칸을 보낸다. null이나 빈 배열은 비움
+// 서버는 gender·discordVisibility를 문자열로 받아 칸 오류(V001)로 확인한다. 화면은 목록 값만 보낸다
+type SaveFields = Required<Schema<"ProfileSaveRequest">>
+export type ProfileSaveRequest = { [K in keyof SaveFields]: SaveFields[K] | null } & {
   gender: Gender | null
   ageGenderPublic: boolean
-  discordTag: string | null
-  discordVisibility: DiscordVisibility
-  // 공통코드 순서. 꺼진 코드도 이름과 함께
-  playTimes: PlayTime[]
-  // 다음에 닉네임을 바꿀 수 있는 시각. 지금 바꿀 수 있으면 null
-  nicknameChangeableAt: string | null
-}
-
-// 모든 칸을 보낸다. null이나 빈 배열은 비움
-export type ProfileSaveRequest = {
-  avatar: string | null
-  bio: string | null
-  birthYear: number | null
-  gender: Gender | null
-  ageGenderPublic: boolean
-  discordTag: string | null
   discordVisibility: DiscordVisibility
   playTimes: string[]
 }
 
-export type NicknameChangeResponse = {
-  nickname: string
-  nicknameTag: string | null
-  nicknameChangeableAt: string | null
-}
+// PUT /api/v1/users/me/nickname
+export type NicknameChangeResponse = Schema<"NicknameChangeResponse">
 
-export type AvatarList = { avatars: string[] }
+// GET /api/v1/profile/avatars
+export type AvatarList = Schema<"AvatarListResponse">

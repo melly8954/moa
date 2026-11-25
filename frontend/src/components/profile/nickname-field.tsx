@@ -36,7 +36,7 @@ export function NicknameField({ profile }: { profile: MyProfile }) {
   })
   const value = useWatch({ control: form.control, name: "nickname" })
   const changeableAt = profile.nicknameChangeableAt
-  const locked = changeableAt !== null
+  const locked = !!changeableAt
   const unchanged = value.normalize("NFC").trim() === profile.nickname
 
   const onSubmit = async ({ nickname }: NicknameInput) => {

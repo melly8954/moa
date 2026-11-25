@@ -1,6 +1,30 @@
 // npm run gen:api가 만든 파일이다. 손으로 고치지 않는다 (scripts/gen-api.mjs)
 
 export interface paths {
+    "/api/v1/users/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 프로필
+         * @description 프로필을 아직 만들지 않았으면 기본값. 관리자 계정은 A201
+         */
+        get: operations["getMyProfile"];
+        /**
+         * 프로필 저장
+         * @description 닉네임·게임 정보를 뺀 모든 칸을 보낸 값으로 바꾼다. 칸 오류는 V001, 관리자 계정은 A201
+         */
+        put: operations["saveProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/me/password": {
         parameters: {
             query?: never;
@@ -14,6 +38,26 @@ export interface paths {
          * @description 바꾸면 비밀번호 변경 요구(passwordChangeRequired)가 풀린다. 현재 비밀번호가 틀리거나 새 비밀번호가 같으면 V001, 비밀번호가 없는 계정(소셜)은 B001
          */
         put: operations["changePassword"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me/nickname": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 닉네임 바꾸기
+         * @description 지금과 같으면 그대로. 규칙 V001, 변경 제한 기간 안 B202(다시 바꿀 수 있는 시각은 프로필 조회의 nicknameChangeableAt), 태그가 다 차면 B201, 관리자 계정은 A201
+         */
+        put: operations["changeNickname"];
         post?: never;
         delete?: never;
         options?: never;
@@ -92,7 +136,7 @@ export interface paths {
         get: operations["getRolesOfUser"];
         /**
          * 사용자의 역할 바꾸기
-         * @description 보낸 역할로 통째로 바꾼다. 다음 요청부터 바로 반영된다. 없는 사용자·역할 R001, 주거나 빼는 역할을 다룰 수 없으면 A005. moa: 대상이 ADMIN이면 B001
+         * @description 보낸 역할로 통째로 바꾼다. 다음 요청부터 바로 반영된다. 없는 사용자·역할 R001, 주거나 빼는 역할을 다룰 수 없으면 A005. moa: 대상이 회원이면 B001, 최고 관리자가 0명이 되면 B001. 최고 관리자 역할을 고르면 그 역할만 남는다. 사용자 관리 드로어도 쓴다
          */
         put: operations["replaceRolesOfUser"];
         post?: never;
@@ -116,13 +160,13 @@ export interface paths {
         get: operations["get"];
         /**
          * 사용자 정보 바꾸기
-         * @description 이름. 없으면 R001, ADMIN이 아닌데 ADMIN 계정이면 A005
+         * @description 이름. 없으면 R001, 다룰 수 없는 계정(최고 관리자 계정, 나보다 권한이 많은 관리자 계정) A005
          */
         put: operations["rename"];
         post?: never;
         /**
          * 사용자 지우기
-         * @description 소프트 삭제, 모든 기기에서 로그아웃. 같은 아이디로 다시 만들 수 있다. 자기 자신 B001, ADMIN이 아닌데 ADMIN 계정이면 A005
+         * @description 소프트 삭제, 모든 기기에서 로그아웃. 같은 아이디로 다시 만들 수 있다. 자기 자신 B001, 다룰 수 없는 계정(최고 관리자 계정, 나보다 권한이 많은 관리자 계정) A005, 최고 관리자가 0명이 되면 B001. 지운 계정의 역할도 뺀다
          */
         delete: operations["delete"];
         options?: never;
@@ -139,8 +183,8 @@ export interface paths {
         };
         get?: never;
         /**
-         * 시스템 역할 바꾸기
-         * @description ADMIN만 (아니면 A005). 자기 자신은 B001. 다음 토큰 재발급부터 반영된다
+         * 계정 종류 바꾸기
+         * @description moa: 회원(USER)·관리자 계정(ADMIN). 자기 자신 B001, 다룰 수 없는 계정(최고 관리자 계정, 나보다 권한이 많은 관리자 계정) A005, 최고 관리자가 0명이 되면 B001. 회원으로 바꾸면 역할을 모두 빼고, 바뀌면 모든 기기에서 로그아웃시킨다
          */
         put: operations["changeRole"];
         post?: never;
@@ -160,13 +204,13 @@ export interface paths {
         get?: never;
         /**
          * 잠그기
-         * @description 로그인·토큰 재발급을 막고 모든 기기에서 로그아웃시킨다. 자기 자신 B001, ADMIN이 아닌데 ADMIN 계정이면 A005
+         * @description 로그인·토큰 재발급을 막고 모든 기기에서 로그아웃시킨다. 자기 자신 B001, 다룰 수 없는 계정(최고 관리자 계정, 나보다 권한이 많은 관리자 계정) A005, 최고 관리자가 0명이 되면 B001
          */
         put: operations["lock"];
         post?: never;
         /**
          * 잠금 풀기
-         * @description ADMIN이 아닌데 ADMIN 계정이면 A005
+         * @description 다룰 수 없는 계정(최고 관리자 계정, 나보다 권한이 많은 관리자 계정) A005
          */
         delete: operations["unlock"];
         options?: never;
@@ -188,13 +232,13 @@ export interface paths {
         get: operations["getRole"];
         /**
          * 역할 바꾸기
-         * @description 이름·설명·권한을 바꾼다 (코드는 그대로). 없으면 R001, 등록되지 않은 권한 V001, 다룰 수 없는 역할·권한 A005
+         * @description 이름·설명·권한을 바꾼다 (코드는 그대로). 없으면 R001, 등록되지 않은 권한 V001, 다룰 수 없는 역할·권한 A005. moa: 최고 관리자 역할은 B001
          */
         put: operations["modify"];
         post?: never;
         /**
          * 역할 지우기
-         * @description 소프트 삭제. 이 역할을 가진 사용자에게서도 빠진다. 없으면 R001, 다룰 수 없는 역할 A005
+         * @description 소프트 삭제. 이 역할을 가진 사용자에게서도 빠진다. 없으면 R001, 다룰 수 없는 역할 A005. moa: 최고 관리자 역할은 B001
          */
         delete: operations["delete_1"];
         options?: never;
@@ -482,6 +526,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/oauth/sign-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 가입
+         * @description oauth_signup 쿠키의 소셜 계정으로 닉네임·약관 동의를 받아 회원을 만들고 로그인시킨다. 응답은 로그인과 같다. 성공하면 oauth_signup 쿠키를 지운다
+         */
+        post: operations["signUp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/logout": {
         parameters: {
             query?: never;
@@ -531,13 +595,13 @@ export interface paths {
         };
         /**
          * 사용자 목록
-         * @description 최신순 페이징. 지운 사용자와 시스템 계정은 빠진다
+         * @description 최신순 페이징. 지운 사용자와 시스템 계정은 빠진다. moa: 역할, 최고 관리자, 요청한 사람이 다룰 수 없는 이유(protection)
          */
         get: operations["search"];
         put?: never;
         /**
          * 사용자 만들기
-         * @description 임시 비밀번호로 만들고 응답에 한 번만 보인다. 아이디 형식 V001, 중복 R002, ADMIN이 아닌데 ADMIN으로 만들면 A005
+         * @description 임시 비밀번호로 만들고 응답에 한 번만 보인다. 아이디 형식 V001, 중복 R002. moa: 계정 종류 ADMIN(관리자 계정)도 사용자 관리 권한으로 만든다
          */
         post: operations["create"];
         delete?: never;
@@ -557,7 +621,7 @@ export interface paths {
         put?: never;
         /**
          * 비밀번호 초기화
-         * @description 임시 비밀번호로 바꾸고 응답에 한 번만 보인다. 모든 기기에서 로그아웃시킨다. 비밀번호 없는 계정(소셜) B001, ADMIN이 아닌데 ADMIN 계정이면 A005
+         * @description 임시 비밀번호로 바꾸고 응답에 한 번만 보인다. 모든 기기에서 로그아웃시킨다. 비밀번호 없는 계정(소셜) B001, 다룰 수 없는 계정(최고 관리자 계정, 나보다 권한이 많은 관리자 계정) A005
          */
         post: operations["resetPassword"];
         delete?: never;
@@ -575,7 +639,7 @@ export interface paths {
         };
         /**
          * 역할 목록
-         * @description 만든 순서대로
+         * @description 만든 순서대로. moa: 최고 관리자 역할이 맨 앞, 요청한 사람이 다룰 수 있는지(grantable·blockReason) (specs/003-admin-roles R18)
          */
         get: operations["getRoles"];
         put?: never;
@@ -599,13 +663,13 @@ export interface paths {
         };
         /**
          * 역할의 구성원
-         * @description moa (FR-006): 아이디 순 쪽. keyword가 없으면 구성원만, 있으면 아이디·이름으로 모든 사용자와 구성원 여부. 지운 사용자·시스템 계정은 빠진다. 없는 역할 R001
+         * @description moa (FR-006): 아이디 순 쪽. keyword가 없으면 구성원만, 있으면 아이디·이름으로 관리자 계정과 구성원 여부. 지운 사용자·시스템 계정은 빠진다. 없는 역할 R001
          */
         get: operations["getMembers"];
         put?: never;
         /**
          * 구성원 더하기
-         * @description moa (FR-006): 한 트랜잭션. 이미 구성원이면 그대로. 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, ADMIN이 섞이면 B001 (아무도 더하지 않는다)
+         * @description moa (FR-006): 한 트랜잭션. 이미 구성원이면 그대로. 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, 회원이나 (다른 역할에) 최고 관리자가 섞이면 B001 (아무도 더하지 않는다). 최고 관리자 역할에 더하면 그 계정의 다른 역할은 빠진다
          */
         post: operations["addMembers"];
         delete?: never;
@@ -625,7 +689,7 @@ export interface paths {
         put?: never;
         /**
          * 구성원 빼기
-         * @description moa (FR-006): 한 트랜잭션. 구성원이 아니면 그대로. 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, ADMIN이 섞이면 B001 (아무도 빼지 않는다)
+         * @description moa (FR-006): 한 트랜잭션. 구성원이 아니면 그대로. 없는 역할·사용자 R001, 다룰 수 없는 역할 A005, 회원이 섞이거나 최고 관리자가 0명이 되면 B001 (아무도 빼지 않는다)
          */
         post: operations["removeMembers"];
         delete?: never;
@@ -645,7 +709,7 @@ export interface paths {
         put?: never;
         /**
          * 한꺼번에 지우기
-         * @description moa (specs/003-admin-roles FR-005): 한 트랜잭션. 없는 역할 R001, 다룰 수 없는 역할 A005가 하나라도 있으면 아무것도 지우지 않는다
+         * @description moa (specs/003-admin-roles FR-005): 한 트랜잭션. 없는 역할 R001, 다룰 수 없는 역할 A005, 최고 관리자 역할 B001이 하나라도 있으면 아무것도 지우지 않는다
          */
         post: operations["deleteAll"];
         delete?: never;
@@ -821,6 +885,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 현재 약관 버전
+         * @description 필수 약관(SERVICE, PRIVACY)마다 현재 버전. 문안은 프론트가 버전으로 고른다
+         */
+        get: operations["current"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/rich-text/images/{id}": {
         parameters: {
             query?: never;
@@ -833,6 +917,26 @@ export interface paths {
          * @description 로그인 없이 연다. 없으면 R001
          */
         get: operations["show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profile/avatars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 기본 아바타 목록
+         * @description 로그인한 누구나 부를 수 있다
+         */
+        get: operations["getAvatars"];
         put?: never;
         post?: never;
         delete?: never;
@@ -987,7 +1091,7 @@ export interface paths {
         };
         /**
          * 내 메뉴
-         * @description 사용 중이고 내 권한으로 볼 수 있는 관리 메뉴 트리 (2단계, moa: 대상 ADMIN만). 메뉴가 가리키는 연결 화면의 권한으로 거른다. ADMIN은 모두 본다. 보이는 하위 메뉴가 없는 묶음 메뉴는 빠진다
+         * @description 사용 중인 관리 메뉴 트리 (2단계, moa: 대상 ADMIN만). moa: 관리자 계정은 권한과 상관없이 모두 받고 메뉴마다 accessible(연결 화면의 권한이 있는가)을 받는다. 회원은 빈 목록이다. 하위 메뉴가 없는 묶음 메뉴는 빠진다 (specs/001-admin-menus FR-002, 2026-11-22)
          */
         get: operations["me_1"];
         put?: never;
@@ -1010,6 +1114,66 @@ export interface paths {
          * @description 선택 상자 등에 쓴다. includeDisabled=true면 사용 안 함 코드도 enabled=false로 준다 (예전 데이터의 코드 이름을 보일 때). 그룹이 없으면 R001. moa: 그룹이 꺼져 있으면 빈 목록이다 (includeDisabled=true면 그대로 준다, specs/004-admin-codes FR-008)
          */
         get: operations["getCodes_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/{provider}/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 콜백
+         * @description 제공자가 돌려보내는 주소. 결과에 따라 /auth/oauth/done, /sign-up/nickname, /sign-in?oauthError=… 로 보낸다
+         */
+        get: operations["callback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/{provider}/authorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 인가 시작
+         * @description 브라우저가 이 주소로 이동한다. oauth_state 쿠키를 심고 제공자 인가 화면으로 보낸다. 제공자 설정이 없으면 /sign-in?oauthError=disabled로 보낸다
+         */
+        get: operations["authorize"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 제공자 목록
+         * @description 설정이 있는 제공자만 준다. 로그인 화면은 이 목록의 단추만 보인다 (US3-AC3)
+         */
+        get: operations["providers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1142,12 +1306,139 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description 프로필 저장 요청. 모든 칸을 보낸다. null이나 빈 배열은 비움 */
+        ProfileSaveRequest: {
+            /**
+             * @description 기본 아바타 키 (GET /api/v1/profile/avatars). null이면 default
+             * @example cat
+             */
+            avatar?: string;
+            /** @description 자기소개. 500자까지 */
+            bio?: string;
+            /**
+             * Format: int32
+             * @description 출생 연도. 1900~올해
+             * @example 2000
+             */
+            birthYear?: number;
+            /**
+             * @description 성별: MALE, FEMALE, UNDISCLOSED
+             * @example FEMALE
+             */
+            gender?: string;
+            /** @description 나이·성별 공개. null이면 거짓 */
+            ageGenderPublic?: boolean;
+            /**
+             * @description 디스코드 사용자 이름. 2~32자 영문 소문자·숫자·_·.
+             * @example moa_user.01
+             */
+            discordTag?: string;
+            /**
+             * @description 디스코드 공개 범위: PRIVATE, FRIENDS, MEMBERS. null이면 PRIVATE
+             * @example MEMBERS
+             */
+            discordVisibility?: string;
+            /** @description 플레이 시간대 (PLAY_TIME 코드) */
+            playTimes?: string[];
+        };
+        /** @description 플레이 가능 시간대 */
+        PlayTime: {
+            /**
+             * @description 코드
+             * @example WEEKDAY_EVENING
+             */
+            code: string;
+            /**
+             * @description 이름
+             * @example 평일 저녁
+             */
+            name: string;
+        };
+        /** @description 내 프로필 */
+        ProfileGetResponse: {
+            /**
+             * @description 닉네임 (tb_user.name)
+             * @example 모아
+             */
+            nickname: string;
+            /**
+             * @description 닉네임 태그. 프로필이 아직 없으면 null
+             * @example 0421
+             */
+            nicknameTag?: string;
+            /**
+             * @description 아바타 키. 목록에서 빠진 키면 default
+             * @example default
+             */
+            avatar: string;
+            /** @description 자기소개 */
+            bio?: string;
+            /**
+             * Format: int32
+             * @description 출생 연도
+             * @example 2000
+             */
+            birthYear?: number;
+            /**
+             * Format: int32
+             * @description 나이 (올해 − 출생 연도). 출생 연도가 없으면 null
+             * @example 26
+             */
+            age?: number;
+            /**
+             * @description 성별
+             * @enum {string}
+             */
+            gender?: "MALE" | "FEMALE" | "UNDISCLOSED";
+            /** @description 나이·성별 공개 */
+            ageGenderPublic: boolean;
+            /** @description 디스코드 사용자 이름 */
+            discordTag?: string;
+            /**
+             * @description 디스코드 공개 범위
+             * @enum {string}
+             */
+            discordVisibility: "PRIVATE" | "FRIENDS" | "MEMBERS";
+            /** @description 플레이 가능 시간대 (공통코드 순서, 꺼진 값도 이름과 함께) */
+            playTimes: components["schemas"]["PlayTime"][];
+            /**
+             * Format: date-time
+             * @description 다음에 닉네임을 바꿀 수 있는 시각. 지금 바꿀 수 있으면 null
+             */
+            nicknameChangeableAt?: string;
+        };
         /** @description 내 비밀번호 바꾸기 요청 */
         PasswordChangeRequest: {
             /** @description 지금 비밀번호 (임시 비밀번호 포함) */
             currentPassword: string;
             /** @description 새 비밀번호. 8~100자 */
             newPassword: string;
+        };
+        /** @description 닉네임 바꾸기 요청 */
+        NicknameChangeRequest: {
+            /**
+             * @description 새 닉네임. 2~12자 한글·영문·숫자·_
+             * @example 모아
+             */
+            nickname: string;
+        };
+        /** @description 닉네임 바꾸기 결과 */
+        NicknameChangeResponse: {
+            /**
+             * @description 닉네임
+             * @example 모아
+             */
+            nickname: string;
+            /**
+             * @description 닉네임 태그
+             * @example 0421
+             */
+            nicknameTag?: string;
+            /**
+             * Format: date-time
+             * @description 다음에 닉네임을 바꿀 수 있는 시각. 지금 바꿀 수 있으면 null
+             */
+            nicknameChangeableAt?: string;
         };
         /** @description 사용자 역할 바꾸기 요청 */
         UserRoleReplaceRequest: {
@@ -1168,7 +1459,7 @@ export interface components {
              */
             name: string;
         };
-        /** @description 업무 역할 */
+        /** @description 역할 */
         AccessRoleRef: {
             /**
              * Format: int64
@@ -1199,7 +1490,7 @@ export interface components {
              */
             name: string;
             /**
-             * @description 시스템 역할
+             * @description 계정 종류 (moa: USER 회원, ADMIN 관리자 계정)
              * @example USER
              * @enum {string}
              */
@@ -1220,8 +1511,15 @@ export interface components {
              * @description 만든 시각 (시간대 포함)
              */
             createdAt: string;
-            /** @description moa: 받은 업무 역할 (보기만, specs/002-admin-users FR-006). 목록·하나 조회에서만 채우고 바꾸기 응답에서는 비어 있다. 관리자(ADMIN)는 모든 권한을 가져 비어 있다 */
+            /** @description moa: 받은 역할 (specs/002-admin-users FR-006). 목록·하나 조회에서만 채우고 바꾸기 응답에서는 비어 있다. 회원은 비어 있다 */
             accessRoles: components["schemas"]["AccessRoleRef"][];
+            /** @description moa: 최고 관리자 역할을 가졌나. 목록·하나 조회에서만 채운다 */
+            superAdmin: boolean;
+            /**
+             * @description moa: 요청한 사람이 이 계정을 다룰 수 없는 이유 (research R10). 다룰 수 있으면 null. 목록·하나 조회에서만 채운다
+             * @enum {string}
+             */
+            protection?: "FIXED" | "SUPER_ADMIN_ONLY" | "WIDER_PERMISSIONS";
         };
         /** @description 시스템 역할 바꾸기 요청 */
         UserRoleChangeRequest: {
@@ -1269,7 +1567,7 @@ export interface components {
             /** @description 설명 */
             description?: string;
             /**
-             * @description 묶은 권한 키 (이름순)
+             * @description 묶은 권한 키 (이름순). 최고 관리자 역할은 비고 모든 권한을 갖는다
              * @example [
              *       "CODE_MANAGE"
              *     ]
@@ -1281,6 +1579,22 @@ export interface components {
              * @example 3
              */
             userCount: number;
+            /** @description moa: 코드에 고정된 최고 관리자 역할인가. 바꾸거나 지울 수 없다 (specs/003-admin-roles FR-010) */
+            fixed: boolean;
+            /**
+             * @description moa: 묶은 권한의 이름 (사용자 관리 드로어에 작게 보인다)
+             * @example [
+             *       "코드 관리"
+             *     ]
+             */
+            permissionNames: string[];
+            /** @description moa: 요청한 사람이 이 역할을 다루고 주고 뺄 수 있나 */
+            grantable: boolean;
+            /**
+             * @description moa: 다룰 수 없는 이유. 다룰 수 있으면 null
+             * @enum {string}
+             */
+            blockReason?: "FIXED" | "SUPER_ADMIN_ONLY" | "WIDER_PERMISSIONS";
         };
         /** @description 공지 고치기. 상태와 게시 시각은 그대로다 */
         NoticeModifyRequest: {
@@ -1680,6 +1994,29 @@ export interface components {
             /** @description 리프레시 토큰. 앱(X-Client-Type: app)에만 준다 */
             refreshToken?: string;
         };
+        /** @description 동의한 약관 하나 */
+        Agreement: {
+            /**
+             * @description 종류 (SERVICE, PRIVACY)
+             * @example SERVICE
+             */
+            type: string;
+            /**
+             * @description 동의한 버전 (GET /api/v1/terms)
+             * @example draft
+             */
+            version: string;
+        };
+        /** @description 소셜 가입 요청 */
+        OAuthSignUpRequest: {
+            /**
+             * @description 닉네임. 2~12자 한글·영문·숫자·_ (잠정). 다른 회원과 겹쳐도 된다
+             * @example 모아_01
+             */
+            nickname: string;
+            /** @description 동의한 약관. SERVICE·PRIVACY 둘 다 현재 버전이어야 한다 */
+            agreements: components["schemas"]["Agreement"][];
+        };
         /** @description 로그인 요청 */
         AuthLoginRequest: {
             /**
@@ -1900,9 +2237,42 @@ export interface components {
             role: "USER" | "ADMIN";
             /** @description 임시 비밀번호를 받아 바꿔야 한다. true면 화면이 비밀번호 변경으로 보낸다 */
             passwordChangeRequired: boolean;
+            /** @description moa: 비밀번호가 있는지. 없으면(소셜 회원) 비밀번호 변경을 숨긴다 (010 US2-AC3) */
+            hasPassword: boolean;
+            /**
+             * @description moa: 계정 바 아바타 키. 프로필이 없거나 목록에서 빠진 키면 default (009 FR-014)
+             * @example default
+             */
+            avatar: string;
+            /** @description moa: 마이페이지를 쓸 수 있는지. 관리자 계정(ADMIN)이면 거짓 (009 FR-016) */
+            mypageAllowed: boolean;
         };
         MyPermissionResponse: {
             permissions: string[];
+        };
+        /** @description 약관 하나 */
+        Item: {
+            /**
+             * @description 종류 (SERVICE 이용약관, PRIVACY 개인정보 수집·이용)
+             * @example SERVICE
+             */
+            type: string;
+            /**
+             * @description 현재 버전. 프론트가 이 버전의 문안을 고른다
+             * @example draft
+             */
+            version: string;
+            /** @description 필수 동의인지 */
+            required: boolean;
+        };
+        /** @description 가입 때 동의받을 현재 약관 */
+        TermsResponse: {
+            terms: components["schemas"]["Item"][];
+        };
+        /** @description 기본 아바타 목록 */
+        AvatarListResponse: {
+            /** @description 아바타 키 (순서대로). 그림은 프론트 /avatars/<키>.svg */
+            avatars: string[];
         };
         /** @description 개인 알림 */
         NotificationResponse: {
@@ -2062,8 +2432,20 @@ export interface components {
              * @example list
              */
             icon?: string;
+            /** @description moa: 들어갈 수 있는가(연결 화면의 권한이 있는가). 상위 메뉴는 하위 메뉴 중 하나라도 있으면 true */
+            accessible: boolean;
             /** @description 하위 메뉴 */
             children: components["schemas"]["MyMenuResponse"][];
+        };
+        /** @description 설정된 소셜 로그인 제공자 */
+        OAuthProvidersResponse: {
+            /**
+             * @description 제공자 경로 값. 설정이 없으면 빈 배열
+             * @example [
+             *       "google"
+             *     ]
+             */
+            providers: string[];
         };
         /** @description 사용자 검색 조건. 모두 선택 */
         UserSearchRequest: {
@@ -2172,7 +2554,7 @@ export interface components {
              */
             totalPages: number;
         };
-        /** @description moa: 역할 드로어 구성원 탭의 사용자 (specs/003-admin-roles FR-006) */
+        /** @description moa: 역할 구성원의 한 줄 (specs/003-admin-roles FR-006). 관리자 계정만 보인다 */
         RoleMemberResponse: {
             /**
              * Format: int64
@@ -2189,12 +2571,8 @@ export interface components {
              * @example 김운영
              */
             name: string;
-            /**
-             * @description 시스템 역할. ADMIN은 업무 역할을 받지 않는다
-             * @example USER
-             * @enum {string}
-             */
-            role: "USER" | "ADMIN";
+            /** @description 최고 관리자 역할을 가졌나. 다른 역할은 받지 않는다 */
+            superAdmin: boolean;
             /** @description 이 역할의 구성원인가 */
             member: boolean;
         };
@@ -2538,6 +2916,50 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getMyProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProfileGetResponse"];
+                };
+            };
+        };
+    };
+    saveProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProfileGetResponse"];
+                };
+            };
+        };
+    };
     changePassword: {
         parameters: {
             query?: never;
@@ -2557,6 +2979,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    changeNickname: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NicknameChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NicknameChangeResponse"];
+                };
             };
         };
     };
@@ -3297,6 +3743,48 @@ export interface operations {
             };
         };
     };
+    signUp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthSignUpRequest"];
+            };
+        };
+        responses: {
+            /** @description 가입·로그인 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AuthRefreshResponse"];
+                };
+            };
+            /** @description V001 닉네임 규칙, A017 약관 미동의·버전 다름, A009 가입 대기 쿠키 없음·만료 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A012 이미 가입된 소셜 계정, A015 이메일 중복, B201 닉네임 태그가 다 참 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     logout: {
         parameters: {
             query?: never;
@@ -3833,6 +4321,26 @@ export interface operations {
             };
         };
     };
+    current: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 현재 약관 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TermsResponse"];
+                };
+            };
+        };
+    };
     show: {
         parameters: {
             query?: never;
@@ -3851,6 +4359,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": string;
+                };
+            };
+        };
+    };
+    getAvatars: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AvatarListResponse"];
                 };
             };
         };
@@ -4043,6 +4571,79 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CodeListResponse"][];
+                };
+            };
+        };
+    };
+    callback: {
+        parameters: {
+            query?: {
+                code?: string;
+                state?: string;
+                error?: string;
+            };
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 결과 화면 */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    authorize: {
+        parameters: {
+            query?: {
+                /** @description login (연결 link는 나중) */
+                mode?: string;
+                /** @description 로그인 뒤 돌아갈 같은 사이트 경로 */
+                next?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description 제공자
+                 * @example google
+                 */
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 제공자 인가 화면 또는 로그인 화면 */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    providers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 제공자 목록 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OAuthProvidersResponse"];
                 };
             };
         };
