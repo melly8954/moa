@@ -10,6 +10,7 @@ import com.moa.api.dto.user.UserAdminDto;
 import com.moa.api.dto.user.UserAdminRowDto;
 import com.moa.common.response.ApiTimes;
 import com.moa.common.security.Role;
+import com.moa.common.security.oauth.SocialProvider;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -28,23 +29,25 @@ public record UserAdminResponse(
 		+ "바꾸기 응답에서는 비어 있다. 회원은 비어 있다") List<AccessRoleRef> accessRoles,
 	@Schema(description = "moa: 최고 관리자 역할을 가졌나. 목록·하나 조회에서만 채운다") boolean superAdmin,
 	@Schema(description = "moa: 요청한 사람이 이 계정을 다룰 수 없는 이유 (research R10). 다룰 수 있으면 null. "
-		+ "목록·하나 조회에서만 채운다") @Nullable GrantBlock protection) {
+		+ "목록·하나 조회에서만 채운다") @Nullable GrantBlock protection,
+	@Schema(description = "moa: 연결된 소셜 제공자 (specs/002-admin-users FR-004). 없으면 빈 목록. "
+		+ "목록·하나 조회에서만 채우고 바꾸기 응답에서는 비어 있다") List<SocialProvider> socialProviders) {
 
 	public static UserAdminResponse from(UserAdminDto user) {
-		return of(user, List.of(), false, null);
+		return of(user, List.of(), false, null, List.of());
 	}
 
 	public static UserAdminResponse from(UserAdminRowDto row) {
 		return of(row.user(),
 			row.accessRoles().stream().map(role -> new AccessRoleRef(role.id(), role.name())).toList(),
-			row.superAdmin(), row.protection());
+			row.superAdmin(), row.protection(), row.socialProviders());
 	}
 
 	private static UserAdminResponse of(UserAdminDto user, List<AccessRoleRef> accessRoles, boolean superAdmin,
-		@Nullable GrantBlock protection) {
+		@Nullable GrantBlock protection, List<SocialProvider> socialProviders) {
 		return new UserAdminResponse(user.id(), user.loginId(), user.name(), user.role(), user.locked(),
 			ApiTimes.of(user.lockedAt()), user.passwordChangeRequired(), user.hasPassword(),
-			ApiTimes.of(user.createdAt()), accessRoles, superAdmin, protection);
+			ApiTimes.of(user.createdAt()), accessRoles, superAdmin, protection, socialProviders);
 	}
 
 	@Schema(description = "역할")

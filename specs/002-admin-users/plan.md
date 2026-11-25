@@ -15,6 +15,10 @@ moa가 할 일은 스펙의 두 흐름을 AC 테스트로 고정하는 것이다
 
 **최고 관리자 계정 고정과 개발자 DB 절차 (2026-11-21·22, FR-007·FR-009, US1-AC2·AC3, US4-AC3, Clarifications)**: 최고 관리자 계정 행은 본인 이름 바꾸기만 되고 나머지는 누구든 B001로 막는다. 되돌리기는 서버 코드가 아니라 `backend/src/main/resources/db/ops/`의 SQL 파일 두 개(비밀번호 되돌리기, 최고 관리자 바꾸기)와 quickstart 안내로 둔다. 인수 테스트가 같은 파일을 실행해 확인한다. `003-admin-roles` Phase 8과 한 구현 브랜치 `feat/003-single-super-admin` ([research.md](./research.md) R13~R15)
 
+**소셜 계정 표시와 비밀번호 초기화 이유 (2026-11-24, FR-004·FR-007, US3-AC5)**: 응답 `UserAdminResponse`에 연결된 제공자 `socialProviders`를 더해 목록의 아이디 뒤 배지와 드로어의 로그인 방식·비밀번호 줄 설명에 쓴다. 연결은 `010-social-login`의 `tb_user_social_account`에서 한 쪽의 계정을 한 번에 읽는다. 마이그레이션은 없다. 구현 브랜치 `feat/002-social-mark` ([research.md](./research.md) R17)
+
+**사용자 일괄 삭제 (2026-11-24, FR-006·FR-007, US3-AC6·US4-AC6)**: 목록에서 여러 계정을 체크해 한꺼번에 지운다. API `POST /api/v1/admin/users/bulk-delete`는 메뉴·역할의 `bulk-delete`와 같은 모양으로, 한 트랜잭션에서 모두 검사한 뒤 지우고 하나라도 걸리면 아무것도 지우지 않는다. 화면은 키트 `DataTable`의 선택과 `BulkToolbar`를 쓰고, 지울 수 없는 행은 체크 칸을 끈다. 마이그레이션은 없다. 구현 브랜치 `feat/002-users-bulk-delete` ([research.md](./research.md) R18)
+
 ## Technical Context
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)

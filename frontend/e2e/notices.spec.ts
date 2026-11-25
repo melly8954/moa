@@ -161,3 +161,40 @@ test("공지 관리: 공지를 써서 게시한다 (가로 넘침·접근성, �
   expect(created).toEqual([{ title: "새 공지", content: "<p>본문</p>", pinned: false, publish: true }])
   await expect(page.getByRole("heading", { level: 1, name: "공지 고치기" })).toBeVisible()
 })
+
+test("US1-AC9 공지 관리: 공지 둘을 체크해 한꺼번에 지운다. 체크 칸은 고치기 화면으로 가지 않는다", async ({ page }) => {
+  let sent: unknown
+  await signedIn(page, { permissions: ["NOTICE_MANAGE"] })
+  await page.route("**/api/v1/menus/me", (route) => route.fulfill({ json: [] }))
+  const row = (id: number, title: string, status: string) => ({
+    id,
+    title,
+    status,
+    pinned: false,
+    publishedAt: status === "PUBLISHED" ? "2026-11-14T10:00:00+09:00" : null,
+    updatedAt: "2026-11-14T10:00:00+09:00",
+  })
+  const content = [row(3, "남길 공지", "PUBLISHED"), row(2, "지울 공지", "PUBLISHED"), row(1, "임시 공지", "DRAFT")]
+  await page.route("**/api/v1/admin/notices?*", (route) =>
+    route.fulfill({ json: { content, page: 0, size: 20, totalElements: 3, totalPages: 1 } }),
+  )
+  await page.route("**/api/v1/admin/notices/bulk-delete", (route) => {
+    sent = route.request().postDataJSON()
+    return route.fulfill({ status: 204 })
+  })
+  await page.goto("/admin/notices")
+  const list = page.getByRole("region", { name: "공지 관리" })
+  const toolbar = page.getByRole("toolbar", { name: "고른 공지 처리" })
+  await expect(toolbar.getByRole("button", { name: "지우기" })).toBeDisabled()
+
+  await list.getByRole("checkbox", { name: "지울 공지 선택" }).click()
+  await list.getByRole("checkbox", { name: "임시 공지 선택" }).click()
+  await expect(page).toHaveURL(/\/admin\/notices$/)
+  await expect(toolbar).toContainText("2개 선택")
+
+  await toolbar.getByRole("button", { name: "지우기" }).click()
+  await page.getByRole("alertdialog", { name: "공지 2개를 지울까요?" }).getByRole("button", { name: "지우기" }).click()
+  await expect(page.getByText("공지 2개를 지웠어요.")).toBeVisible()
+  expect(sent).toEqual({ ids: [2, 1] })
+  await expect(toolbar.getByRole("button", { name: "지우기" })).toBeDisabled()
+})

@@ -95,3 +95,13 @@ Technical Context에 미결은 없다. 아래는 키트와 moa 코드를 확인�
 - **Decision**: `NoticesAcceptanceTest` 한 클래스에 US1~US3 AC 14개를 `@DisplayName("US1-AC1 ...")`로 둔다. 공개 API는 토큰 없이, 관리 API는 ADMIN과 역할 없는 운영자 토큰으로 부른다. 프론트 e2e는 핵심 흐름 둘만: 관리자가 공지를 써서 게시하는 화면, 사용자 목록·상세(가로 넘침·접근성 포함)
 - **Rationale**: 원칙 II(API 통합 테스트 기본, e2e는 핵심 흐름). 001~005와 같은 모양이다
 - **Alternatives considered**: AC마다 e2e. 키트 e2e는 백엔드를 가로채 실제 권한·거르기를 검증하지 못한다
+
+## R13. 공지 일괄 삭제 (FR-001, US1-AC9, 2026-11-24)
+
+- **Decision**:
+  - API: `POST /api/v1/admin/notices/bulk-delete` (`ids`, `NOTICE_MANAGE`). 메뉴·역할의 `bulk-delete`와 같은 모양이고 204를 준다
+  - `NoticeApplication.deleteAll`이 한 트랜잭션에서 고른 공지를 모두 읽고, 하나라도 없으면(지운 공지 포함) R001로 끝나 아무것도 지우지 않는다. 지울 때는 한 건 삭제와 같이 소프트 삭제하고 `richTextImageService.detach("NOTICE", id)`를 공지마다 부른다(R3). 게시 이벤트를 내지 않으므로 실시간 알림은 가지 않는다
+  - 화면: 관리 목록 `DataTable`에 `selection`(모든 행 체크 가능, `rowLabel`은 제목). 표 위 `BulkToolbar`에 고른 수와 삭제 단추를 두고, 자리와 높이는 `001-admin-menus` FR-010처럼 늘 같다. 삭제는 확인 창(고른 수, 되살릴 수 없다는 설명)을 거쳐 부르고, 끝나면 고른 것을 풀고 목록과 새 공지 쿼리를 다시 읽는다. 쪽을 넘기거나 검색을 바꾸면 고른 것이 풀린다(`role-members.tsx`와 같다). 체크 칸은 제 일만 하고 고치기 화면으로 가지 않는다
+- **Rationale**: 001·003·004의 일괄 처리와 같은 모양과 규칙이다. 공지는 줄마다 막는 규칙이 없어 체크 칸을 끄는 행이 없다
+- **Alternatives considered**: 화면에서 공지마다 `DELETE /{id}`를 차례로 부르기(중간에 실패하면 일부만 지워진다), 일괄 게시·고정(spec 배경 2026-11-24)
+- **테스트**: `NoticesAcceptanceTest`에 US1-AC9(게시 하나 + 임시 저장 하나 `bulk-delete` 204, 관리·공개 목록에서 빠짐, 남은 게시 공지의 `number`는 1), 지운 공지가 섞이면 404 `R001`로 아무것도 안 지워짐, 역할 없는 운영자 403 `A005`. e2e(`notices.spec.ts`)는 체크·일괄 줄·확인 창

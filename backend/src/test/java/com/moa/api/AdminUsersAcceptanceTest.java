@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 
 import javax.sql.DataSource;
 
@@ -27,8 +28,11 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import com.jayway.jsonpath.JsonPath;
 import com.moa.api.application.v1.user.UserApplication;
+import com.moa.api.entity.user.UserSocialAccount;
+import com.moa.api.repository.writer.user.UserSocialAccountWriter;
 import com.moa.common.audit.SystemActor;
 import com.moa.common.security.Role;
+import com.moa.common.security.oauth.SocialProvider;
 import com.moa.support.AcceptanceTest;
 import com.moa.support.DatabaseCleaner;
 import com.moa.support.TestUsers;
@@ -57,6 +61,9 @@ class AdminUsersAcceptanceTest extends AcceptanceTest {
 
 	@Autowired
 	private DatabaseCleaner databaseCleaner;
+
+	@Autowired
+	private UserSocialAccountWriter userSocialAccountWriter;
 
 	/** 로컬 계정 SQL의 admin이 남아 있을 수 있어 비우고 시작한다 */
 	@BeforeEach
@@ -154,6 +161,49 @@ class AdminUsersAcceptanceTest extends AcceptanceTest {
 			.bodyJson().extractingPath("$.accessRoles[0].name").isEqualTo("보안 담당");
 	}
 
+	/**
+	 * moa (2026-11-24, research R17): 소셜 가입과 계정 연결 흐름은 010이 맡는다. 여기서는 회원과 연결 행을 직접 넣는다.
+	 * 비밀번호 회원의 연결(010 US5)은 아직 API가 없다
+	 */
+	@Test
+	@DisplayName("US3-AC5 소셜 계정이 연결된 회원은 목록·하나 조회에 제공자가 보이고, 비밀번호 없는 소셜 회원은 비밀번호 초기화가 B001이다")
+	void listShowsSocialProviders() {
+		testUsers.create(1L, "system", null, Role.USER);
+		testUsers.create(20L, "s_bbdxt37f2zdi", null, Role.USER);
+		testUsers.create(21L, "linked", "linked1234!", Role.USER);
+		testUsers.create(22L, "member", "member1234!", Role.USER);
+		linkGoogle(20L, "google-20", "social@example.com");
+		linkGoogle(21L, "google-21", "linked@example.com");
+		String admin = superAdmin();
+
+		MvcTestResult result = mvc.get().uri(ADMIN_USERS).header(HttpHeaders.AUTHORIZATION, admin).exchange();
+
+		assertThat(result).hasStatus(200);
+		assertThat(result).bodyJson()
+			.extractingPath("$.content[?(@.loginId == 's_bbdxt37f2zdi')].socialProviders[*]")
+			.asArray().containsExactly("GOOGLE");
+		assertThat(result).bodyJson().extractingPath("$.content[?(@.loginId == 's_bbdxt37f2zdi')].hasPassword")
+			.asArray().containsExactly(false);
+		assertThat(result).bodyJson().extractingPath("$.content[?(@.loginId == 'linked')].socialProviders[*]")
+			.asArray().containsExactly("GOOGLE");
+		assertThat(result).bodyJson().extractingPath("$.content[?(@.loginId == 'linked')].hasPassword")
+			.asArray().containsExactly(true);
+		assertThat(result).bodyJson().extractingPath("$.content[?(@.loginId == 'member')].socialProviders[*]")
+			.asArray().isEmpty();
+		assertThat(mvc.get().uri(ADMIN_USERS + "/20").header(HttpHeaders.AUTHORIZATION, admin).exchange())
+			.bodyJson().extractingPath("$.socialProviders").asArray().containsExactly("GOOGLE");
+
+		MvcTestResult reset = mvc.post().uri(ADMIN_USERS + "/20/password-reset")
+			.header(HttpHeaders.AUTHORIZATION, admin).exchange();
+		assertThat(reset).hasStatus(409);
+		assertThat(reset).bodyJson().extractingPath("$.code").isEqualTo("B001");
+	}
+
+	private void linkGoogle(Long userId, String subject, String email) {
+		userSocialAccountWriter.save(
+			new UserSocialAccount(userId, SocialProvider.GOOGLE, subject, email, null, LocalDateTime.now()));
+	}
+
 	@Test
 	@DisplayName("US3-AC3 드로어가 쓰는 역할 저장(PUT /users/{id}/roles)으로 역할을 더하면 그 운영자는 다음 요청부터 그 메뉴를 쓴다")
 	void drawerGivesRoles() {
@@ -218,6 +268,63 @@ class AdminUsersAcceptanceTest extends AcceptanceTest {
 			.bodyJson().extractingPath("$.length()").isEqualTo(0);
 		assertThat(mvc.post().uri("/api/v1/auth/token/refresh").cookie(login.getResponse().getCookies()).exchange())
 			.hasStatus(401);
+	}
+
+	@Test
+	@DisplayName("US3-AC6 회원 둘을 한꺼번에 지우면 목록에서 빠지고 로그아웃된다")
+	void bulkDeleteRemovesMembers() {
+		String admin = superAdmin();
+		testUsers.create(11L, "member1", "member1234!", Role.USER);
+		testUsers.create(12L, "member2", "member1234!", Role.USER);
+		testUsers.create(13L, "member3", "member1234!", Role.USER);
+		MvcTestResult login = login("member1", "member1234!");
+		assertThat(login).hasStatus(200);
+
+		assertThat(bulkDelete(admin, "[11, 12]")).hasStatus(204);
+		MvcTestResult list = mvc.get().uri(ADMIN_USERS).header(HttpHeaders.AUTHORIZATION, admin).exchange();
+		assertThat(list).bodyJson().extractingPath("$.content[*].loginId").asArray()
+			.contains("member3")
+			.doesNotContain("member1", "member2");
+		assertThat(mvc.post().uri("/api/v1/auth/token/refresh").cookie(login.getResponse().getCookies()).exchange())
+			.hasStatus(401);
+	}
+
+	@Test
+	@DisplayName("US4-AC6 사용자 관리 운영자가 회원과 권한이 더 많은 운영자를 섞어 한꺼번에 지우면 A005이고 아무것도 지워지지 않는다")
+	void bulkDeleteStopsOnWiderAccount() {
+		String admin = superAdmin();
+		String manager = operator(20L, "manager", "USER_MANAGE");
+		operator(21L, "security", "LOGIN_HISTORY_READ");
+		testUsers.create(11L, "member1", "member1234!", Role.USER);
+
+		assertThat(bulkDelete(manager, "[11, 21]")).hasStatus(403).bodyJson().extractingPath("$.code")
+			.isEqualTo("A005");
+		assertThat(mvc.get().uri(ADMIN_USERS + "/11").header(HttpHeaders.AUTHORIZATION, admin).exchange())
+			.hasStatus(200);
+		assertThat(mvc.get().uri(ADMIN_USERS + "/21").header(HttpHeaders.AUTHORIZATION, admin).exchange())
+			.hasStatus(200);
+	}
+
+	@Test
+	@DisplayName("FR-006 최고 관리자 계정·내 계정(B001)이나 없는 계정(R001)이 섞이면 한꺼번에 지우기는 아무것도 지우지 않는다")
+	void bulkDeleteStopsOnBlockedOrMissing() {
+		String admin = superAdmin();
+		String manager = operator(20L, "manager", "USER_MANAGE");
+		testUsers.create(11L, "member1", "member1234!", Role.USER);
+
+		assertThat(bulkDelete(admin, "[11, 2]")).hasStatus(409).bodyJson().extractingPath("$.code")
+			.isEqualTo("B001");
+		assertThat(bulkDelete(manager, "[11, 20]")).hasStatus(409).bodyJson().extractingPath("$.code")
+			.isEqualTo("B001");
+		assertThat(bulkDelete(admin, "[11, 999]")).hasStatus(404).bodyJson().extractingPath("$.code")
+			.isEqualTo("R001");
+		assertThat(mvc.get().uri(ADMIN_USERS + "/11").header(HttpHeaders.AUTHORIZATION, admin).exchange())
+			.hasStatus(200);
+	}
+
+	private MvcTestResult bulkDelete(String bearer, String ids) {
+		return mvc.post().uri(ADMIN_USERS + "/bulk-delete").header(HttpHeaders.AUTHORIZATION, bearer)
+			.contentType(MediaType.APPLICATION_JSON).content("{\"ids\":" + ids + "}").exchange();
 	}
 
 	@Test

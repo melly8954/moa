@@ -1,5 +1,7 @@
 package com.moa.api.application.v1.notice;
 
+import java.util.List;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -83,6 +85,17 @@ public class NoticeApplication {
 	public void delete(Long id) {
 		noticeService.delete(id, currentActor.id());
 		richTextImageService.detach(Notice.OWNER_TYPE, id);
+	}
+
+	/**
+	 * 한꺼번에 지우기 (FR-001, research R13). 고른 공지를 모두 먼저 읽고, 하나라도 없으면(지운 공지 포함) R001로 아무것도
+	 * 지우지 않는다. 공지마다 한 건 지우기와 같다. 게시가 아니므로 알림은 가지 않는다
+	 */
+	@Transactional
+	public void deleteAll(List<Long> ids) {
+		List<Long> targets = ids.stream().distinct().toList();
+		targets.forEach(noticeService::get);
+		targets.forEach(this::delete);
 	}
 
 	@Transactional

@@ -109,6 +109,36 @@ class NoticesAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
+	@DisplayName("US1-AC9 게시 공지 하나와 임시 저장 공지를 한꺼번에 지우면 공지 관리 목록에서 빠지고, 사용자 목록에는 남은 게시 공지만 1번으로 보인다")
+	void bulkDeleteRemovesNotices() {
+		create("kept", false, true);
+		long gone = create("gone", false, true);
+		long draft = create("draft", false, false);
+
+		assertThat(asAdmin(post(ADMIN_NOTICES + "/bulk-delete", "{\"ids\":[" + gone + "," + draft + "]}")))
+			.hasStatus(204);
+
+		assertThat(titles(asAdmin(mvc.get().uri(ADMIN_NOTICES)))).containsExactly("kept");
+		MvcTestResult list = mvc.get().uri(NOTICES).exchange();
+		assertThat(titles(list)).containsExactly("kept");
+		assertThat(list).bodyJson().extractingPath("$.content[0].number").isEqualTo(1);
+	}
+
+	@Test
+	@DisplayName("FR-001 지운 공지가 섞이면(R001) 한꺼번에 지우기는 아무것도 지우지 않고, 공지 관리 권한이 없으면 A005다")
+	void bulkDeleteStopsOnMissingOrForbidden() {
+		long kept = create("kept", false, true);
+		long gone = create("gone", false, true);
+		assertThat(asAdmin(mvc.delete().uri(ADMIN_NOTICES + "/" + gone))).hasStatus(204);
+
+		assertThat(asAdmin(post(ADMIN_NOTICES + "/bulk-delete", "{\"ids\":[" + kept + "," + gone + "]}")))
+			.hasStatus(404).bodyJson().extractingPath("$.code").isEqualTo("R001");
+		assertThat(asMember(post(ADMIN_NOTICES + "/bulk-delete", "{\"ids\":[" + kept + "]}"))).hasStatus(403)
+			.bodyJson().extractingPath("$.code").isEqualTo("A005");
+		assertThat(titles(asAdmin(mvc.get().uri(ADMIN_NOTICES)))).containsExactly("kept");
+	}
+
+	@Test
 	@DisplayName("US1-AC7 공지 관리 권한이 없는 운영자가 공지를 쓰거나 고치려 하면 권한 없음(A005)으로 막힌다")
 	void operatorWithoutPermissionIsForbidden() {
 		long id = create("notice", false, true);

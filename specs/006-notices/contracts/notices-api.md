@@ -16,6 +16,7 @@
 | `POST /api/v1/admin/notices/{id}/publish` | 임시 저장 공지를 게시. `published_at` = 지금 | 200 상세. 이미 게시했으면 409 `B001` |
 | `PUT /api/v1/admin/notices/{id}/pin` | 고정·풀기 {pinned} | 200 상세 |
 | `DELETE /api/v1/admin/notices/{id}` | 소프트 삭제, 본문 이미지 detach | 204 |
+| `POST /api/v1/admin/notices/bulk-delete` | 한꺼번에 지우기 {ids}. 한 트랜잭션, 공지마다 한 건 삭제와 같다 (2026-11-24, research R13) | 204. 없는(지운) 공지가 섞이면 404 `R001`이고 아무것도 안 지워짐 |
 
 - `content`는 `@SafeHtml`로 걸러 저장한다. 거른 뒤 비었거나 20,000자를 넘으면 400 `V001`
 - `title`은 1~200자
@@ -50,6 +51,7 @@
 | US1-AC6 | `DELETE` → 공개 목록·상세 | 204, 목록에 없음, 상세 404 `R001` |
 | US1-AC7 | 역할 없는 운영자(USER) `POST`·`PUT` | 403 `A005` |
 | US1-AC8 | ADMIN `POST` 본문 `<p>안녕</p><script>alert(1)</script><img src="x" onerror="alert(1)">` → 공개 상세 | `content`에 `script`·`onerror`·외부 `img`가 없고 `<p>안녕</p>`은 남음 |
+| US1-AC9 | 게시 공지 하나 + 임시 저장 공지 하나로 `POST bulk-delete` → 관리 목록, 공개 목록 | 204, 관리 목록에 둘 다 없음, 공개 목록에 남은 게시 공지 하나(`number` 1). 지운 공지가 섞이면 404 `R001`, 역할 없는 운영자는 403 `A005` |
 | US2-AC1 | 고정·일반 공지 여러 개(지운 공지 하나 포함) → 공개 목록 | 고정 먼저, 각 무리 안에서 게시 최신순. 칸 {number, title, publishedAt, pinned}. `number`는 게시 순번이고 지운 공지는 세지 않는다 |
 | US2-AC2 | 공개 상세 (본문에 서식·본문 이미지 주소) | 제목·게시 시각·본문 HTML 그대로 |
 | US2-AC3 | 토큰 없이 공개 목록·상세 / 토큰 있이 같은 요청 | 둘 다 200, 같은 내용 |

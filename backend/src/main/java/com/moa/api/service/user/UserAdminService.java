@@ -223,7 +223,12 @@ public class UserAdminService {
 		return user;
 	}
 
-	private void requireNotSelf(AuthPrincipal actor, Long id) {
+	/**
+	 * moa: 한꺼번에 지우기 전에 고른 계정을 미리 볼 때도 쓴다 (specs/002-admin-users FR-006, research R18)
+	 *
+	 * @throws ServiceException 자기 자신이면 B001
+	 */
+	public void requireNotSelf(AuthPrincipal actor, Long id) {
 		if (id.equals(actor.userId())) {
 			throw new ServiceException(ErrorCode.INVALID_STATE, "자기 자신에게는 할 수 없습니다.");
 		}

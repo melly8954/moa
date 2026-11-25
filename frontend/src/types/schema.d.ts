@@ -1,30 +1,6 @@
 // npm run gen:api가 만든 파일이다. 손으로 고치지 않는다 (scripts/gen-api.mjs)
 
 export interface paths {
-    "/api/v1/users/me/profile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 내 프로필
-         * @description 프로필을 아직 만들지 않았으면 기본값. 관리자 계정은 A201
-         */
-        get: operations["getMyProfile"];
-        /**
-         * 프로필 저장
-         * @description 닉네임·게임 정보를 뺀 모든 칸을 보낸 값으로 바꾼다. 칸 오류는 V001, 관리자 계정은 A201
-         */
-        put: operations["saveProfile"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/users/me/password": {
         parameters: {
             query?: never;
@@ -38,26 +14,6 @@ export interface paths {
          * @description 바꾸면 비밀번호 변경 요구(passwordChangeRequired)가 풀린다. 현재 비밀번호가 틀리거나 새 비밀번호가 같으면 V001, 비밀번호가 없는 계정(소셜)은 B001
          */
         put: operations["changePassword"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/users/me/nickname": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * 닉네임 바꾸기
-         * @description 지금과 같으면 그대로. 규칙 V001, 변경 제한 기간 안 B202(다시 바꿀 수 있는 시각은 프로필 조회의 nicknameChangeableAt), 태그가 다 차면 B201, 관리자 계정은 A201
-         */
-        put: operations["changeNickname"];
         post?: never;
         delete?: never;
         options?: never;
@@ -246,6 +202,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/popups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 팝업 하나
+         * @description 없으면 R001
+         */
+        get: operations["get_1"];
+        /**
+         * 팝업 고치기
+         * @description 모든 칸을 바꾼다. 없으면 R001
+         */
+        put: operations["modify_1"];
+        post?: never;
+        /**
+         * 팝업 지우기
+         * @description 소프트 삭제. 본문 이미지는 임시로 돌아가 정리된다. 없으면 R001
+         */
+        delete: operations["delete_2"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/popups/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 여러 팝업 켜기·끄기
+         * @description 하나라도 없으면 R001이고 아무것도 바꾸지 않는다
+         */
+        put: operations["setEnabled"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/notices/{id}": {
         parameters: {
             query?: never;
@@ -257,18 +261,18 @@ export interface paths {
          * 공지 하나
          * @description 없으면 R001
          */
-        get: operations["get_1"];
+        get: operations["get_2"];
         /**
          * 공지 고치기
          * @description 제목과 본문. 상태와 게시 시각은 그대로다. 없으면 R001
          */
-        put: operations["modify_1"];
+        put: operations["modify_2"];
         post?: never;
         /**
          * 공지 지우기
          * @description 소프트 삭제. 본문 이미지는 임시로 돌아가 정리된다. 없으면 R001
          */
-        delete: operations["delete_2"];
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -306,13 +310,13 @@ export interface paths {
          * 메뉴 바꾸기
          * @description 없는 메뉴 R001, 그 밖의 오류는 만들기와 같다. 자기 자신을 부모로, 하위 메뉴가 있는 메뉴의 대상 바꾸기 B001
          */
-        put: operations["modify_2"];
+        put: operations["modify_3"];
         post?: never;
         /**
          * 메뉴 지우기
          * @description 소프트 삭제. 하위 메뉴가 있으면 B001
          */
-        delete: operations["delete_3"];
+        delete: operations["delete_4"];
         options?: never;
         head?: never;
         patch?: never;
@@ -350,7 +354,7 @@ export interface paths {
          * 사용 여부 한꺼번에 바꾸기
          * @description moa (specs/001-admin-menus FR-010): 한 트랜잭션. 없는 메뉴가 하나라도 있으면 R001, 아무것도 바꾸지 않는다
          */
-        put: operations["setEnabled"];
+        put: operations["setEnabled_1"];
         post?: never;
         delete?: never;
         options?: never;
@@ -434,7 +438,7 @@ export interface paths {
          * moa: 그룹 안 여러 항목 사용 여부
          * @description 하나라도 없으면 R001, 아무것도 바꾸지 않는다
          */
-        put: operations["setEnabled_1"];
+        put: operations["setEnabled_2"];
         post?: never;
         delete?: never;
         options?: never;
@@ -455,6 +459,54 @@ export interface paths {
          * @description 없는 그룹이 섞이면 R001, 아무것도 바꾸지 않는다 (specs/004-admin-codes FR-005)
          */
         put: operations["reorderGroups"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/banners/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 배너 하나
+         * @description 없으면 R001
+         */
+        get: operations["get_3"];
+        /**
+         * 배너 고치기
+         * @description 모든 칸을 바꾼다. 빠진 이미지는 정리된다. 없으면 R001
+         */
+        put: operations["modify_4"];
+        post?: never;
+        /**
+         * 배너 지우기
+         * @description 소프트 삭제. 이미지는 임시로 돌아가 정리된다. 없으면 R001
+         */
+        delete: operations["delete_5"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/banners/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 여러 배너 켜기·끄기
+         * @description 하나라도 없으면 R001이고 아무것도 바꾸지 않는다
+         */
+        put: operations["setEnabled_3"];
         post?: never;
         delete?: never;
         options?: never;
@@ -630,6 +682,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 한꺼번에 지우기
+         * @description moa (specs/002-admin-users FR-006): 한 트랜잭션. 지우기와 같이 소프트 삭제, 역할 빼기, 모든 기기에서 로그아웃. 없는 계정 R001, 다룰 수 없는 계정(나보다 권한이 많은 관리자 계정) A005, 최고 관리자 계정·자기 자신 B001이 하나라도 있으면 아무것도 지우지 않는다
+         */
+        post: operations["deleteAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/roles": {
         parameters: {
             query?: never;
@@ -711,7 +783,51 @@ export interface paths {
          * 한꺼번에 지우기
          * @description moa (specs/003-admin-roles FR-005): 한 트랜잭션. 없는 역할 R001, 다룰 수 없는 역할 A005, 최고 관리자 역할 B001이 하나라도 있으면 아무것도 지우지 않는다
          */
-        post: operations["deleteAll"];
+        post: operations["deleteAll_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/popups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 팝업 목록
+         * @description 순서, 노출 시작이 늦은 것 순 페이징. 상태를 보내지 않으면 끝난 팝업은 뺀다
+         */
+        get: operations["search_1"];
+        put?: never;
+        /**
+         * 팝업 등록
+         * @description 내용은 걸러 저장한다. 끝 일시가 시작보다 앞이면 V001
+         */
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/popups/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 여러 팝업 지우기
+         * @description 하나라도 없으면 R001이고 아무것도 지우지 않는다
+         */
+        post: operations["deleteAll_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -729,13 +845,13 @@ export interface paths {
          * 공지 목록
          * @description 임시 저장 포함, 고친 최신순 페이징
          */
-        get: operations["search_1"];
+        get: operations["search_2"];
         put?: never;
         /**
          * 공지 만들기
          * @description publish=true면 바로 게시, 아니면 임시 저장. 본문은 걸러 저장한다
          */
-        post: operations["create_2"];
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -762,6 +878,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/notices/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 한꺼번에 지우기
+         * @description specs/006-notices FR-001: 한 트랜잭션. 공지마다 지우기와 같다. 없는(지운) 공지가 하나라도 있으면 R001이고 아무것도 지우지 않는다
+         */
+        post: operations["deleteAll_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/menus": {
         parameters: {
             query?: never;
@@ -776,7 +912,7 @@ export interface paths {
          * 메뉴 만들기
          * @description 등록되지 않았거나 대상이 다른 연결 화면·공개 범위 V001, 없는 부모 R001, 3단계가 되는 부모 B001
          */
-        post: operations["create_3"];
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -796,7 +932,7 @@ export interface paths {
          * 한꺼번에 지우기
          * @description moa (FR-010): 소프트 삭제, 한 트랜잭션. 고른 것끼리 부모·자식이면 함께 지운다. 없는 메뉴 R001, 고르지 않은 하위 메뉴가 남는 묶음 B001 (아무것도 지우지 않는다)
          */
-        post: operations["deleteAll_1"];
+        post: operations["deleteAll_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -839,6 +975,50 @@ export interface paths {
          * @description 그룹이 없으면 R001, 같은 코드가 있으면 R002. moa: 코드를 비우면 자동 순번, 순서를 비우면 맨 뒤
          */
         post: operations["createCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/banners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 배너 목록
+         * @description 순서, 노출 시작이 늦은 것 순 페이징. 상태를 보내지 않으면 끝난 배너는 뺀다
+         */
+        get: operations["search_3"];
+        put?: never;
+        /**
+         * 배너 등록
+         * @description 이미지는 rich-text 이미지 올리기로 받은 주소. GIF, 없는 이미지, 끝 일시가 시작보다 앞이면 V001
+         */
+        post: operations["create_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/banners/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 여러 배너 지우기
+         * @description 하나라도 없으면 R001이고 아무것도 지우지 않는다
+         */
+        post: operations["deleteAll_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -917,26 +1097,6 @@ export interface paths {
          * @description 로그인 없이 연다. 없으면 R001
          */
         get: operations["show"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/profile/avatars": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 기본 아바타 목록
-         * @description 로그인한 누구나 부를 수 있다
-         */
-        get: operations["getAvatars"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1033,7 +1193,7 @@ export interface paths {
          * 공지 하나
          * @description 게시한 공지만. 임시 저장·지운 공지·없는 공지는 R001
          */
-        get: operations["get_2"];
+        get: operations["get_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1306,139 +1466,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @description 프로필 저장 요청. 모든 칸을 보낸다. null이나 빈 배열은 비움 */
-        ProfileSaveRequest: {
-            /**
-             * @description 기본 아바타 키 (GET /api/v1/profile/avatars). null이면 default
-             * @example cat
-             */
-            avatar?: string;
-            /** @description 자기소개. 500자까지 */
-            bio?: string;
-            /**
-             * Format: int32
-             * @description 출생 연도. 1900~올해
-             * @example 2000
-             */
-            birthYear?: number;
-            /**
-             * @description 성별: MALE, FEMALE, UNDISCLOSED
-             * @example FEMALE
-             */
-            gender?: string;
-            /** @description 나이·성별 공개. null이면 거짓 */
-            ageGenderPublic?: boolean;
-            /**
-             * @description 디스코드 사용자 이름. 2~32자 영문 소문자·숫자·_·.
-             * @example moa_user.01
-             */
-            discordTag?: string;
-            /**
-             * @description 디스코드 공개 범위: PRIVATE, FRIENDS, MEMBERS. null이면 PRIVATE
-             * @example MEMBERS
-             */
-            discordVisibility?: string;
-            /** @description 플레이 시간대 (PLAY_TIME 코드) */
-            playTimes?: string[];
-        };
-        /** @description 플레이 가능 시간대 */
-        PlayTime: {
-            /**
-             * @description 코드
-             * @example WEEKDAY_EVENING
-             */
-            code: string;
-            /**
-             * @description 이름
-             * @example 평일 저녁
-             */
-            name: string;
-        };
-        /** @description 내 프로필 */
-        ProfileGetResponse: {
-            /**
-             * @description 닉네임 (tb_user.name)
-             * @example 모아
-             */
-            nickname: string;
-            /**
-             * @description 닉네임 태그. 프로필이 아직 없으면 null
-             * @example 0421
-             */
-            nicknameTag?: string;
-            /**
-             * @description 아바타 키. 목록에서 빠진 키면 default
-             * @example default
-             */
-            avatar: string;
-            /** @description 자기소개 */
-            bio?: string;
-            /**
-             * Format: int32
-             * @description 출생 연도
-             * @example 2000
-             */
-            birthYear?: number;
-            /**
-             * Format: int32
-             * @description 나이 (올해 − 출생 연도). 출생 연도가 없으면 null
-             * @example 26
-             */
-            age?: number;
-            /**
-             * @description 성별
-             * @enum {string}
-             */
-            gender?: "MALE" | "FEMALE" | "UNDISCLOSED";
-            /** @description 나이·성별 공개 */
-            ageGenderPublic: boolean;
-            /** @description 디스코드 사용자 이름 */
-            discordTag?: string;
-            /**
-             * @description 디스코드 공개 범위
-             * @enum {string}
-             */
-            discordVisibility: "PRIVATE" | "FRIENDS" | "MEMBERS";
-            /** @description 플레이 가능 시간대 (공통코드 순서, 꺼진 값도 이름과 함께) */
-            playTimes: components["schemas"]["PlayTime"][];
-            /**
-             * Format: date-time
-             * @description 다음에 닉네임을 바꿀 수 있는 시각. 지금 바꿀 수 있으면 null
-             */
-            nicknameChangeableAt?: string;
-        };
         /** @description 내 비밀번호 바꾸기 요청 */
         PasswordChangeRequest: {
             /** @description 지금 비밀번호 (임시 비밀번호 포함) */
             currentPassword: string;
             /** @description 새 비밀번호. 8~100자 */
             newPassword: string;
-        };
-        /** @description 닉네임 바꾸기 요청 */
-        NicknameChangeRequest: {
-            /**
-             * @description 새 닉네임. 2~12자 한글·영문·숫자·_
-             * @example 모아
-             */
-            nickname: string;
-        };
-        /** @description 닉네임 바꾸기 결과 */
-        NicknameChangeResponse: {
-            /**
-             * @description 닉네임
-             * @example 모아
-             */
-            nickname: string;
-            /**
-             * @description 닉네임 태그
-             * @example 0421
-             */
-            nicknameTag?: string;
-            /**
-             * Format: date-time
-             * @description 다음에 닉네임을 바꿀 수 있는 시각. 지금 바꿀 수 있으면 null
-             */
-            nicknameChangeableAt?: string;
         };
         /** @description 사용자 역할 바꾸기 요청 */
         UserRoleReplaceRequest: {
@@ -1520,6 +1553,8 @@ export interface components {
              * @enum {string}
              */
             protection?: "FIXED" | "SUPER_ADMIN_ONLY" | "WIDER_PERMISSIONS";
+            /** @description moa: 연결된 소셜 제공자 (specs/002-admin-users FR-004). 없으면 빈 목록. 목록·하나 조회에서만 채우고 바꾸기 응답에서는 비어 있다 */
+            socialProviders: "GOOGLE"[];
         };
         /** @description 시스템 역할 바꾸기 요청 */
         UserRoleChangeRequest: {
@@ -1595,6 +1630,100 @@ export interface components {
              * @enum {string}
              */
             blockReason?: "FIXED" | "SUPER_ADMIN_ONLY" | "WIDER_PERMISSIONS";
+        };
+        /** @description 팝업 등록·고치기 (specs/016-banner-popup FR-004) */
+        PopupSaveRequest: {
+            /**
+             * @description 제목
+             * @example 12월 시즌 대회 열려요
+             */
+            title: string;
+            /** @description 내용 HTML. 허용한 서식만 남기고 걸러 저장한다 (rich-text) */
+            content: string;
+            /**
+             * @description 연결 주소. /로 시작하는 내부 주소나 http·https 주소
+             * @example /notices/42
+             */
+            linkUrl?: string;
+            /**
+             * Format: date-time
+             * @description 노출 시작 일시
+             * @example 2026-12-01T10:00:00+09:00
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description 노출 끝 일시. 비면 끌 때까지. 있으면 시작보다 뒤
+             * @example 2026-12-10T23:59:00+09:00
+             */
+            endsAt?: string;
+            /**
+             * Format: int32
+             * @description 순서 (작을수록 먼저)
+             * @example 0
+             */
+            sortOrder: number;
+            /** @description 켜짐 */
+            enabled: boolean;
+        };
+        /** @description 팝업 (관리) */
+        PopupAdminResponse: {
+            /**
+             * Format: int64
+             * @description 팝업 ID
+             */
+            id: number;
+            /** @description 제목 */
+            title: string;
+            /** @description 내용 HTML (저장 때 걸렀다) */
+            content: string;
+            /** @description 연결 주소 */
+            linkUrl?: string;
+            /**
+             * Format: date-time
+             * @description 노출 시작 일시
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description 노출 끝 일시. 없으면 끌 때까지
+             */
+            endsAt?: string;
+            /**
+             * Format: int32
+             * @description 순서
+             */
+            sortOrder: number;
+            /** @description 켜짐 */
+            enabled: boolean;
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status: "SCHEDULED" | "ACTIVE" | "ENDED" | "DISABLED";
+            /**
+             * Format: date-time
+             * @description 등록한 시각
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description 고친 시각
+             */
+            updatedAt: string;
+        };
+        /** @description 여러 팝업 켜기·끄기 */
+        PopupEnabledRequest: {
+            /**
+             * @description 팝업 ID들
+             * @example [
+             *       1,
+             *       2
+             *     ]
+             */
+            ids: number[];
+            /** @description 켜짐 */
+            enabled: boolean;
         };
         /** @description 공지 고치기. 상태와 게시 시각은 그대로다 */
         NoticeModifyRequest: {
@@ -1906,6 +2035,111 @@ export interface components {
              */
             sortOrder: number;
         };
+        /** @description 배너 등록·고치기 (specs/016-banner-popup FR-003) */
+        BannerSaveRequest: {
+            /**
+             * @description 이름 (관리 목록에서 알아보는 이름)
+             * @example 윈터컵 참가 신청
+             */
+            name: string;
+            /** @description 넓은 화면 이미지 주소 (rich-text 이미지 올리기의 url). JPG·PNG·WebP */
+            wideImageUrl: string;
+            /** @description 좁은 화면 이미지 주소. 비면 넓은 화면 이미지를 쓴다 */
+            narrowImageUrl?: string;
+            /**
+             * @description 대체 문구
+             * @example moa 윈터컵 5인 팀 대회 참가 신청
+             */
+            altText: string;
+            /**
+             * @description 연결 주소. /로 시작하는 내부 주소나 http·https 주소
+             * @example /notices/42
+             */
+            linkUrl?: string;
+            /**
+             * Format: date-time
+             * @description 노출 시작 일시
+             * @example 2026-12-01T10:00:00+09:00
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description 노출 끝 일시. 비면 끌 때까지. 있으면 시작보다 뒤
+             * @example 2026-12-10T23:59:00+09:00
+             */
+            endsAt?: string;
+            /**
+             * Format: int32
+             * @description 순서 (작을수록 먼저)
+             * @example 0
+             */
+            sortOrder: number;
+            /** @description 켜짐 */
+            enabled: boolean;
+        };
+        /** @description 배너 (관리) */
+        BannerAdminResponse: {
+            /**
+             * Format: int64
+             * @description 배너 ID
+             */
+            id: number;
+            /** @description 이름 */
+            name: string;
+            /** @description 넓은 화면 이미지 주소 */
+            wideImageUrl: string;
+            /** @description 좁은 화면 이미지 주소. 없으면 넓은 화면 이미지를 쓴다 */
+            narrowImageUrl?: string;
+            /** @description 대체 문구 */
+            altText: string;
+            /** @description 연결 주소 */
+            linkUrl?: string;
+            /**
+             * Format: date-time
+             * @description 노출 시작 일시
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description 노출 끝 일시. 없으면 끌 때까지
+             */
+            endsAt?: string;
+            /**
+             * Format: int32
+             * @description 순서
+             */
+            sortOrder: number;
+            /** @description 켜짐 */
+            enabled: boolean;
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status: "SCHEDULED" | "ACTIVE" | "ENDED" | "DISABLED";
+            /**
+             * Format: date-time
+             * @description 등록한 시각
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description 고친 시각
+             */
+            updatedAt: string;
+        };
+        /** @description 여러 배너 켜기·끄기 */
+        BannerEnabledRequest: {
+            /**
+             * @description 배너 ID들
+             * @example [
+             *       1,
+             *       2
+             *     ]
+             */
+            ids: number[];
+            /** @description 켜짐 */
+            enabled: boolean;
+        };
         /** @description 올린 본문 이미지 */
         RichTextImageUploadResponse: {
             /**
@@ -2067,6 +2301,17 @@ export interface components {
              */
             temporaryPassword: string;
         };
+        /** @description moa: 사용자 ID 목록 (한꺼번에 지우기) */
+        UserIdsRequest: {
+            /**
+             * @description 사용자 ID들
+             * @example [
+             *       1,
+             *       2
+             *     ]
+             */
+            ids: number[];
+        };
         /** @description 역할 만들기 요청 */
         RoleCreateRequest: {
             /**
@@ -2111,6 +2356,17 @@ export interface components {
              */
             ids: number[];
         };
+        /** @description 팝업 ID 목록 (한꺼번에 지우기) */
+        PopupIdsRequest: {
+            /**
+             * @description 팝업 ID들
+             * @example [
+             *       1,
+             *       2
+             *     ]
+             */
+            ids: number[];
+        };
         /** @description 공지 만들기 */
         NoticeCreateRequest: {
             /**
@@ -2124,6 +2380,17 @@ export interface components {
             pinned: boolean;
             /** @description true면 바로 게시, false면 임시 저장 */
             publish: boolean;
+        };
+        /** @description 공지 ID 목록 (한꺼번에 지우기) */
+        NoticeIdsRequest: {
+            /**
+             * @description 공지 ID들
+             * @example [
+             *       1,
+             *       2
+             *     ]
+             */
+            ids: number[];
         };
         /** @description 메뉴 만들기 요청 */
         MenuCreateRequest: {
@@ -2211,6 +2478,17 @@ export interface components {
              */
             sortOrder?: number;
         };
+        /** @description 배너 ID 목록 (한꺼번에 지우기) */
+        BannerIdsRequest: {
+            /**
+             * @description 배너 ID들
+             * @example [
+             *       1,
+             *       2
+             *     ]
+             */
+            ids: number[];
+        };
         /** @description 사용자 */
         UserGetResponse: {
             /**
@@ -2239,13 +2517,6 @@ export interface components {
             passwordChangeRequired: boolean;
             /** @description moa: 비밀번호가 있는지. 없으면(소셜 회원) 비밀번호 변경을 숨긴다 (010 US2-AC3) */
             hasPassword: boolean;
-            /**
-             * @description moa: 계정 바 아바타 키. 프로필이 없거나 목록에서 빠진 키면 default (009 FR-014)
-             * @example default
-             */
-            avatar: string;
-            /** @description moa: 마이페이지를 쓸 수 있는지. 관리자 계정(ADMIN)이면 거짓 (009 FR-016) */
-            mypageAllowed: boolean;
         };
         MyPermissionResponse: {
             permissions: string[];
@@ -2268,11 +2539,6 @@ export interface components {
         /** @description 가입 때 동의받을 현재 약관 */
         TermsResponse: {
             terms: components["schemas"]["Item"][];
-        };
-        /** @description 기본 아바타 목록 */
-        AvatarListResponse: {
-            /** @description 아바타 키 (순서대로). 그림은 프론트 /avatars/<키>.svg */
-            avatars: string[];
         };
         /** @description 개인 알림 */
         NotificationResponse: {
@@ -2709,6 +2975,76 @@ export interface components {
              */
             actor: "SCHEDULER" | "PERSON";
         };
+        /** @description 팝업 관리 검색 조건. 모두 선택 */
+        PopupSearchRequest: {
+            /**
+             * @description 제목에 들어 있는 글자
+             * @example 시즌
+             */
+            keyword?: string;
+            /**
+             * @description 상태. 비면 끝난 것만 빼고, ALL이면 모두
+             * @enum {string}
+             */
+            status?: "SCHEDULED" | "ACTIVE" | "ENDED" | "DISABLED" | "ALL";
+        };
+        /** @description 페이징 응답 */
+        PageResponsePopupAdminListResponse: {
+            /** @description 항목 */
+            content: components["schemas"]["PopupAdminListResponse"][];
+            /**
+             * Format: int32
+             * @description 페이지 번호 (0부터)
+             */
+            page: number;
+            /**
+             * Format: int32
+             * @description 페이지 크기
+             */
+            size: number;
+            /**
+             * Format: int64
+             * @description 전체 항목 수
+             */
+            totalElements: number;
+            /**
+             * Format: int32
+             * @description 전체 페이지 수
+             */
+            totalPages: number;
+        };
+        /** @description 팝업 관리 목록 항목 */
+        PopupAdminListResponse: {
+            /**
+             * Format: int64
+             * @description 팝업 ID
+             */
+            id: number;
+            /** @description 제목 */
+            title: string;
+            /**
+             * Format: date-time
+             * @description 노출 시작 일시
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description 노출 끝 일시. 없으면 끌 때까지
+             */
+            endsAt?: string;
+            /**
+             * Format: int32
+             * @description 순서
+             */
+            sortOrder: number;
+            /** @description 켜짐 */
+            enabled: boolean;
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status: "SCHEDULED" | "ACTIVE" | "ENDED" | "DISABLED";
+        };
         /** @description 권한 (코드에 등록된 것) */
         PermissionResponse: {
             /**
@@ -2907,6 +3243,78 @@ export interface components {
             /** @description 항목 (사용 안 함 포함, 정렬 순서대로) */
             codes: components["schemas"]["CodeListResponse"][];
         };
+        /** @description 배너 관리 검색 조건. 모두 선택 */
+        BannerSearchRequest: {
+            /**
+             * @description 이름에 들어 있는 글자
+             * @example 윈터
+             */
+            keyword?: string;
+            /**
+             * @description 상태. 비면 끝난 것만 빼고, ALL이면 모두
+             * @enum {string}
+             */
+            status?: "SCHEDULED" | "ACTIVE" | "ENDED" | "DISABLED" | "ALL";
+        };
+        /** @description 배너 관리 목록 항목 */
+        BannerAdminListResponse: {
+            /**
+             * Format: int64
+             * @description 배너 ID
+             */
+            id: number;
+            /** @description 이름 */
+            name: string;
+            /** @description 넓은 화면 이미지 주소 */
+            wideImageUrl: string;
+            /**
+             * Format: date-time
+             * @description 노출 시작 일시
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description 노출 끝 일시. 없으면 끌 때까지
+             */
+            endsAt?: string;
+            /**
+             * Format: int32
+             * @description 순서
+             */
+            sortOrder: number;
+            /** @description 켜짐 */
+            enabled: boolean;
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status: "SCHEDULED" | "ACTIVE" | "ENDED" | "DISABLED";
+        };
+        /** @description 페이징 응답 */
+        PageResponseBannerAdminListResponse: {
+            /** @description 항목 */
+            content: components["schemas"]["BannerAdminListResponse"][];
+            /**
+             * Format: int32
+             * @description 페이지 번호 (0부터)
+             */
+            page: number;
+            /**
+             * Format: int32
+             * @description 페이지 크기
+             */
+            size: number;
+            /**
+             * Format: int64
+             * @description 전체 항목 수
+             */
+            totalElements: number;
+            /**
+             * Format: int32
+             * @description 전체 페이지 수
+             */
+            totalPages: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -2916,50 +3324,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    getMyProfile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ProfileGetResponse"];
-                };
-            };
-        };
-    };
-    saveProfile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProfileSaveRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ProfileGetResponse"];
-                };
-            };
-        };
-    };
     changePassword: {
         parameters: {
             query?: never;
@@ -2979,30 +3343,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    changeNickname: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NicknameChangeRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["NicknameChangeResponse"];
-                };
             };
         };
     };
@@ -3327,12 +3667,102 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["NoticeAdminResponse"];
+                    "*/*": components["schemas"]["PopupAdminResponse"];
                 };
             };
         };
     };
     modify_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PopupSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PopupAdminResponse"];
+                };
+            };
+        };
+    };
+    delete_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    setEnabled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PopupEnabledRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NoticeAdminResponse"];
+                };
+            };
+        };
+    };
+    modify_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3358,7 +3788,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3404,7 +3834,7 @@ export interface operations {
             };
         };
     };
-    modify_2: {
+    modify_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3430,7 +3860,7 @@ export interface operations {
             };
         };
     };
-    delete_3: {
+    delete_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -3472,7 +3902,7 @@ export interface operations {
             };
         };
     };
-    setEnabled: {
+    setEnabled_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3592,7 +4022,7 @@ export interface operations {
             };
         };
     };
-    setEnabled_1: {
+    setEnabled_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3626,6 +4056,96 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["CodeGroupOrderRequest"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BannerAdminResponse"];
+                };
+            };
+        };
+    };
+    modify_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BannerSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BannerAdminResponse"];
+                };
+            };
+        };
+    };
+    delete_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    setEnabled_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BannerEnabledRequest"];
             };
         };
         responses: {
@@ -3913,6 +4433,28 @@ export interface operations {
             };
         };
     };
+    deleteAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserIdsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getRoles: {
         parameters: {
             query?: never;
@@ -4031,7 +4573,7 @@ export interface operations {
             };
         };
     };
-    deleteAll: {
+    deleteAll_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -4056,6 +4598,76 @@ export interface operations {
     search_1: {
         parameters: {
             query: {
+                request: components["schemas"]["PopupSearchRequest"];
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponsePopupAdminListResponse"];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PopupSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PopupAdminResponse"];
+                };
+            };
+        };
+    };
+    deleteAll_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PopupIdsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    search_2: {
+        parameters: {
+            query: {
                 request: components["schemas"]["NoticeSearchRequest"];
                 page?: number;
                 size?: number;
@@ -4077,7 +4689,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -4123,6 +4735,28 @@ export interface operations {
             };
         };
     };
+    deleteAll_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeIdsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getMenus: {
         parameters: {
             query?: never;
@@ -4143,7 +4777,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4167,7 +4801,7 @@ export interface operations {
             };
         };
     };
-    deleteAll_1: {
+    deleteAll_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4281,6 +4915,76 @@ export interface operations {
             };
         };
     };
+    search_3: {
+        parameters: {
+            query: {
+                request: components["schemas"]["BannerSearchRequest"];
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseBannerAdminListResponse"];
+                };
+            };
+        };
+    };
+    create_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BannerSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BannerAdminResponse"];
+                };
+            };
+        };
+    };
+    deleteAll_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BannerIdsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -4359,26 +5063,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": string;
-                };
-            };
-        };
-    };
-    getAvatars: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["AvatarListResponse"];
                 };
             };
         };
@@ -4469,7 +5153,7 @@ export interface operations {
             };
         };
     };
-    get_2: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;

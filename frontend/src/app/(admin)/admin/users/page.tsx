@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/api"
+import { BulkToolbar } from "@/components/kit/bulk-toolbar"
 import { confirm } from "@/components/kit/confirm-dialog"
 import { type Column, DataTable } from "@/components/kit/data-table"
 import { ListPage } from "@/components/kit/page-header"
@@ -18,6 +19,7 @@ import type { AdminUser } from "@/types/user-admin"
 import { CreateUserDrawer, UserDrawer, UserStatus } from "./user-drawer"
 import { UserExtraDialogs, useUserExtraActions } from "./user-extras"
 import { rolesText } from "./user-roles"
+import { SocialBadges } from "./user-social"
 import { ROLES, TemporaryPasswordDialog, useInvalidateUsers, useUserErrorText } from "./user-dialogs"
 
 // 사용자 관리 (user-admin 헬퍼, 권한 USER_MANAGE)
@@ -29,6 +31,7 @@ import { ROLES, TemporaryPasswordDialog, useInvalidateUsers, useUserErrorText } 
 //   - 내 행: 계정 종류 바꾸기·로그인 막기(잠그기)·삭제 (B001)
 //   - 다룰 수 없는 계정(protection): 최고 관리자 계정, 나보다 권한이 많은 관리자 계정 (A005)
 //   - 비밀번호 없는 계정(소셜): 비밀번호 초기화 (B001)
+// 일괄 처리는 삭제만이다 (2026-11-24, FR-006). 위에서 지울 수 없는 행은 체크 칸이 꺼진다
 const DEFAULTS = { keyword: "", role: "", locked: "" }
 
 export default function UsersPage() {
@@ -54,6 +57,31 @@ export default function UsersPage() {
   })
 
   const isSelf = (u: AdminUser) => u.id === me?.id
+  // moa: 일괄 삭제 (FR-006, research R18). 드로어에서 지울 수 없는 행(내 계정, 최고 관리자 계정, 다룰 수 없는 계정)은 고를 수 없다
+  //   고른 것은 이 조건(쪽·검색) 안에서만 산다. 조건이 바뀌거나 지워져 목록에서 빠진 행은 고른 것에서 빠진다
+  const rows = users.data?.content ?? []
+  const canSelect = (u: AdminUser) => !u.protection && !u.superAdmin && !isSelf(u)
+  const paramsKey = JSON.stringify(search.params)
+  const [picked, setPicked] = useState<{ key: string; ids: number[] }>({ key: paramsKey, ids: [] })
+  const selected =
+    picked.key === paramsKey ? picked.ids.filter((id) => rows.some((u) => u.id === id && canSelect(u))) : []
+
+  const bulkRemove = async () => {
+    const ids = selected
+    const ok = await confirm({
+      title: t("bulkRemoveTitle", { count: ids.length }),
+      description: t("bulkRemoveDescription"),
+      confirmLabel: t("remove"),
+      destructive: true,
+    })
+    if (!ok) return
+    run.mutate(async () => {
+      await api.v1.userAdmin.bulkDelete(ids)
+      setPicked({ key: paramsKey, ids: [] })
+      if (openId !== undefined && ids.includes(openId)) setOpenId(undefined)
+      toast.success(t("bulkRemoved", { count: ids.length }))
+    })
+  }
 
   const toggleLock = async (u: AdminUser) => {
     const ok = await confirm({
@@ -95,10 +123,14 @@ export default function UsersPage() {
     {
       key: "loginId",
       header: t("loginId"),
+      // moa: 소셜 계정은 아이디 뒤에 제공자 배지 (FR-004)
       cell: (u) => (
-        <button type="button" className="text-left" onClick={() => setOpenId(u.id)}>
-          {u.loginId}
-        </button>
+        <span className="flex flex-wrap items-center gap-1.5">
+          <button type="button" className="text-left" onClick={() => setOpenId(u.id)}>
+            {u.loginId}
+          </button>
+          <SocialBadges user={u} />
+        </span>
       ),
     },
     { key: "name", header: t("name") },
@@ -150,14 +182,36 @@ export default function UsersPage() {
         </SearchPanel>
       }
     >
-      <DataTable
-        caption={t("title")}
-        columns={columns}
-        query={users}
-        search={search}
-        rowKey={(u) => u.id}
-        onRowClick={(u) => setOpenId(u.id)}
-      />
+      <div className="flex flex-col gap-2">
+        {/* 일괄 처리 줄은 늘 같은 자리·높이 (001-admin-menus FR-010) */}
+        <BulkToolbar
+          label={t("bulkToolbar")}
+          selected={selected.length > 0 ? t("bulkSelected", { count: selected.length }) : t("bulkHint")}
+        >
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={selected.length === 0 || run.isPending}
+            onClick={() => void bulkRemove()}
+          >
+            {t("remove")}
+          </Button>
+        </BulkToolbar>
+        <DataTable
+          caption={t("title")}
+          columns={columns}
+          query={users}
+          search={search}
+          rowKey={(u) => u.id}
+          onRowClick={(u) => setOpenId(u.id)}
+          selection={{
+            selected,
+            onChange: (ids) => setPicked({ key: paramsKey, ids: ids.map(Number) }),
+            canSelect,
+            rowLabel: (u) => u.loginId,
+          }}
+        />
+      </div>
       <CreateUserDrawer open={creating} onOpenChange={setCreating} />
       <UserDrawer
         user={opened}
