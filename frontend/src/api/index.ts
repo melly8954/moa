@@ -9,6 +9,7 @@ import { menuApi } from "./menu"
 import { notificationApi } from "./notification"
 import { noticeAdminApi, noticeApi } from "./notice"
 import { oauthApi, termsApi } from "./oauth"
+import { profileApi } from "./profile"
 import { purgeLogApi } from "./purge-log"
 import { roleApi } from "./role"
 import { userAdminApi } from "./user-admin"
@@ -41,6 +42,7 @@ export const api = {
     noticeAdmin: noticeAdminApi,
     notification: notificationApi,
     oauth: oauthApi,
+    profile: profileApi,
     terms: termsApi,
     purgeLog: purgeLogApi,
     role: roleApi,

@@ -57,7 +57,7 @@
 
 ## R5. 닉네임 변경 제한 (FR-004, 잠정)
 
-- **결정**: `tb_user_profile.nickname_changed_at`이 비어 있으면 가입 뒤 첫 변경이라 바로 바꾼다(US2-AC6). 값이 있으면 그 시각 + 30일 전에는 409 `NICKNAME_CHANGE_TOO_SOON`(B202)과 다시 바꿀 수 있는 시각(`availableAt`)을 돌려준다(US2-AC4). 바꾸면 지금 시각을 적는다. 같은 값으로 저장하면 아무것도 바꾸지 않고 시각도 그대로다(Edge Cases)
+- **결정**: `tb_user_profile.nickname_changed_at`이 비어 있으면 가입 뒤 첫 변경이라 바로 바꾼다(US2-AC6). 값이 있으면 그 시각 + 30일 전에는 409 `NICKNAME_CHANGE_TOO_SOON`(B202)이다(US2-AC4). 다시 바꿀 수 있는 시각은 오류에 싣지 않고 프로필 조회 응답의 `nicknameChangeableAt`(지금 바꿀 수 있으면 null)으로 주어 화면이 미리 안내하고 입력을 막는다. B202는 동시 저장·화면 우회 대비다(키트 `BusinessException`·`ErrorResponse`를 고치지 않으려고, 2026-11-22). 바꾸면 지금 시각을 적는다. 같은 값으로 저장하면 아무것도 바꾸지 않고 시각도 그대로다(Edge Cases)
   - 30일은 `ProfileProperties.nicknameCooldown`(기본 `30d`) 설정 값 하나다
 - **이유**: 가입 때 닉네임을 정하는 010은 이 칸을 건드리지 않으므로 "가입 뒤 첫 변경"을 따로 기록하지 않아도 된다. 관리자의 드로어 이름 바꾸기(`002-admin-users` FR-007)는 이 제한을 받지 않는다(spec "나중에 고칠 곳" 002)
 - **대안**: 변경 이력 테이블 — 지금 필요한 것은 마지막 시각 하나다
@@ -74,9 +74,9 @@
 
 ## R7. 디스코드 태그 (FR-008)
 
-- **결정**: `discord_tag` VARCHAR(32), 검증 `^(?!.*\.\.)[a-z0-9_.]{2,32}$`. 저장 전에 앞뒤 공백만 지우고 대소문자는 바꾸지 않는다(대문자는 형식 오류, US3-AC4). 공개 범위 enum `DiscordVisibility`: `PRIVATE`(기본), `FRIENDS`(친구·팔로워만, 잠정), `MEMBERS`(전체 회원)
+- **결정**: `discord_tag` VARCHAR(32), 검증 `^(?!.*\.\.)[a-z0-9_.]{2,32}$`. 저장 전에 앞뒤 공백만 지우고 대소문자는 바꾸지 않는다(대문자는 형식 오류, US3-AC4). 공개 범위 enum `DiscordVisibility`: `PRIVATE`(기본), `FRIENDS`(친구만, 잠정), `MEMBERS`(전체 회원)
 - **이유**: spec이 새 사용자명 형식을 입력 규칙으로 정했다. 대문자를 조용히 소문자로 바꾸면 회원이 잘못 적은 것을 모른다
-- **친구·팔로워(잠정)**: 정의는 친구·팔로우 기능이 정한다. 이번에는 값만 저장하고, 다른 회원에게 보이는 API를 만들지 않으므로(R9) 판단 코드도 두지 않는다
+- **친구(잠정)**: 정의는 `014-friends-follow` FR-004를 따른다. 이번에는 값만 저장하고, 다른 회원에게 보이는 API를 만들지 않으므로(R9) 판단 코드도 두지 않는다
 
 ## R8. 게임 정보 (FR-010, FR-011)
 
@@ -151,6 +151,7 @@
   - 기존 회원: 010 마이그레이션(`*__social_login.sql`)이 삭제되지 않은 회원(`role = 'USER'`, 시스템 계정 제외)에 행을 만들고 `nickname_key` = `LOWER(TRIM(name))`, `nickname_tag` = `LPAD(ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(name)) ORDER BY id), 4, '0')`로 채운다(MariaDB 11.4). 규칙 이전 이름이 겹쳐도 태그가 달라 모두 값을 갖는다
   - 키트가 계정을 만드는 경로(첫 관리자 `UserService.bootstrapAdmin`, 관리자의 계정 만들기 `UserAdminService.create`)는 고치지 않는다. 이 계정은 행 없이(태그 없이) 남는다. 관리자 계정(`ADMIN`)은 마이페이지를 쓰지 않고(FR-016), 관리자가 만든 회원(`USER`)이면 마이페이지에서 처음 저장할 때 행을 만들고 태그를 정한다(R8의 "없으면 만든 뒤"와 같은 자리)
   - 관리자 이름 바꾸기(`002-admin-users` FR-007, `UserAdminService.rename`): 프로필 행이 있으면 `nickname_key`를 바꾸고 태그를 `keepOrAssign`으로 맞춘다(R4). 변경 제한(R5)은 받지 않는다. **010이 dev에 구현했다**(프로필 행이 있으면 `NicknamePolicy` 규칙도 검사한다, 010 research R14). 002 스펙 갱신은 spec "나중에 고칠 곳" 002에 더한다
+  - 행이 없는 회원이 동시에 처음 저장하면 `tb_user_profile` PK(`user_id`) 충돌(또는 없는 행을 함께 잠가 생긴 교착)이 난다. 태그 충돌처럼 새 트랜잭션으로 다시 하고(최대 3번), 다시 할 때는 행이 있어 고치기 경로로 간다. 3번 다 실패하면 409 R002 (2026-11-22)
   - 탈퇴(soft delete)한 회원의 행을 지우거나 태그를 풀어 주는 일은 회원 탈퇴 스펙이 정한다(spec 가정). 그 전까지 탈퇴 회원의 태그는 그 닉네임에서 쓰인 채로 남는다
 - **010과의 경계**: 010이 먼저 병합됐다(2026-11-22, PR #67). 009 구현은 010의 `tb_user_profile`·`NicknamePolicy`·`NicknameTags`·가입 때 행 만들기를 그대로 쓰고, 칸만 더한다
 - **이유**: 닉네임이 처음 정해지는 때는 가입이고, 태그도 그때 정해야 바로 `닉네임#태그`로 구별된다. 첫 마이페이지 진입 때 만들면 GET이 쓰기가 된다. 기존 회원은 마이그레이션이 한 번에 채운다
@@ -166,5 +167,5 @@
 | FR-004 변경 제한 | R5: 첫 변경 바로, 그 뒤 30일 | `ProfileProperties.nicknameCooldown`과 첫 변경 판단 |
 | FR-007 만 14세 미만 | R6: 막지 않음, 출생 연도 1900~올해 | 010 가입 흐름과 함께 정함. 막기로 하면 출생 연도 검증과 가입 화면 |
 | FR-007 나이·성별 공개 개별 | R6: 칸 하나 `age_gender_public` | 칸 둘로 나누는 마이그레이션 하나, 응답·폼 |
-| FR-013 친구·팔로워 정의 | R7·R9: `FRIENDS` 값만 저장, 지금은 아무에게도 안 보임 | `ProfileVisibility`의 `FRIENDS` 판단 (친구 기능이 생길 때) |
+| FR-013 친구 기능 전에도 "친구만"을 고를 수 있게 할지 | R7·R9: `FRIENDS` 값만 저장, 지금은 아무에게도 안 보임 | `ProfileVisibility`의 `FRIENDS` 판단 (친구 기능이 생길 때) |
 | FR-013 보기 범위 | R9: 규칙만 `ProfileVisibility`에, 보는 API 없음 | `ProfileVisibility`와 그 규칙을 쓰는 화면 |
