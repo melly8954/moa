@@ -23,8 +23,29 @@ public class UserReader {
 		return userRepository.findById(id);
 	}
 
+	/** moa 018: 유예 중인 회원도 나온다 (아이디는 파기할 때까지 붙잡는다) */
 	public Optional<User> findByLoginId(String loginId) {
 		return userRepository.findByLoginId(loginId);
+	}
+
+	/** moa 018: 유예 중인 회원도 나온다 (복구). 관리자가 지운 회원은 나오지 않는다 */
+	public Optional<User> findIncludingWithdrawn(Long id) {
+		return userRepository.findIncludingWithdrawn(id);
+	}
+
+	/** moa 018: 탈퇴·복구 전에 행을 잠가 읽는다. 트랜잭션 안에서 부른다 */
+	public Optional<User> findForUpdateIncludingWithdrawn(Long id) {
+		return userRepository.findForUpdateIncludingWithdrawn(id);
+	}
+
+	/** moa 018: 지운 회원과 파기된 회원까지 */
+	public Optional<User> findInAnyState(Long id) {
+		return userRepository.findInAnyState(id);
+	}
+
+	/** moa 018: 스스로 탈퇴한 회원인지 (유예 중, 파기됨) */
+	public boolean existsWithdrawn(Long id) {
+		return userRepository.countWithdrawn(id) > 0;
 	}
 
 	/** 지우지 않은 ADMIN이 하나라도 있는지 */

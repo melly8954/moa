@@ -27,7 +27,7 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 
 - [X] T001 구현 브랜치 `feat/018-member-withdrawal`을 최신 `dev`에서 딴 뒤 확인한다: backend/src/main/resources/db/migration의 마지막 번호(계획 때 `V12`), B/common/exception/ErrorCode.java에 `A401`·`A402`·`A403`이 없는지, 008·014·017 구현이 dev에 들어왔으면 `tb_user.name`·`UserRepository`·`tb_user_profile`을 읽는 새 곳이 있는지(있으면 research R8의 "막히지 않는 넷"과 plan "담당자 알림 목록"을 먼저 고치고 보고한다)
 - [X] T002 Hibernate 조건 시험: BT/api/UserRestrictionAcceptanceTest.java(`AcceptanceTest` 상속)를 만들어 **지금 있는** `deleted_at IS NULL` 조건이 지운 `User`에 붙는지 본다: `UserRepository.findById`, QueryDSL `selectFrom(user)`, 다른 엔터티(`UserSocialAccount`)에서 `user`로 가는 왼쪽 조인·안쪽 조인(`on` 조건), `JPAExpressions` 서브쿼리. native 쿼리로 읽은 `User`가 나오고 고친 값이 저장되는지도 본다. `.\gradlew.bat dbTest --tests "*UserRestrictionAcceptanceTest"`로 돌린다(사용자 지시). 결과를 research.md R8 "확인할 것"에 적는다. **조인에 조건이 붙지 않으면 멈추고 보고한다** — **이번 구현**: 7개 통과. 모두 조건이 붙는다 (research R8)
-- [ ] T003 plan.md "공용 파일"과 "haily 코드" 표의 바꿀 내용을 초안으로 보고하고 승인받는다. haily 코드 다섯 건(007 `notify` 한 줄과 지우기 메서드, 006 지우기 메서드, 013 종류 "회원", `tb_purge_log.target` COMMENT)은 2026-11-25에 승인됐다. 기존 동작은 바꾸지 않고 더하기만 한다. 승인 전에는 [공용] 작업을 시작하지 않는다
+- [X] T003 plan.md "공용 파일"과 "haily 코드" 표의 바꿀 내용을 초안으로 보고하고 승인받는다. haily 코드 다섯 건(007 `notify` 한 줄과 지우기 메서드, 006 지우기 메서드, 013 종류 "회원", `tb_purge_log.target` COMMENT)은 2026-11-25에 승인됐다. 기존 동작은 바꾸지 않고 더하기만 한다. 승인 전에는 [공용] 작업을 시작하지 않는다
 
 **Checkpoint**: 조인 시험 결과가 R8에 적혔고 공용 파일이 승인됐다
 
@@ -37,19 +37,19 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 
 **Purpose**: 모든 스토리가 기대는 것. `User` 조건이 바뀌므로 이 단계 끝에 백엔드 테스트 전체를 돌린다
 
-- [ ] T004 backend/src/main/resources/db/migration/V<다음 번호>__member_withdrawal.sql: 머리 주석 `-- moa: 회원 탈퇴 시각·파기 시각. 스펙 specs/018-member-withdrawal (FR-009·FR-012·FR-013·FR-019, data-model.md)`
+- [X] T004 backend/src/main/resources/db/migration/V13__member_withdrawal.sql (번호는 PR 직전에 다시 본다): 머리 주석 `-- moa: 회원 탈퇴 시각·파기 시각. 스펙 specs/018-member-withdrawal (FR-009·FR-012·FR-013·FR-019, data-model.md)`
   - `ALTER TABLE tb_user ADD COLUMN withdrawn_at DATETIME(6) NULL COMMENT '탈퇴한 시각 (NULL: 탈퇴 안 함)' AFTER password_change_required, ADD COLUMN purged_at DATETIME(6) NULL COMMENT '개인정보 파기 시각 (NULL: 파기 안 함)' AFTER withdrawn_at`, 인덱스 `idx_user_purged_at_withdrawn_at (purged_at, withdrawn_at)`, `idx_user_purged_at_deleted_at (purged_at, deleted_at)`
   - [haily, 승인됨] `ALTER TABLE tb_purge_log MODIFY COLUMN target VARCHAR(30) NOT NULL COMMENT '파기 대상 종류 (LOGIN_HISTORY, NOTIFICATION, REFRESH_TOKEN, RICH_TEXT_IMAGE, MEMBER)'`
   - `uk_user_login_id_active_key`와 `active_key`는 고치지 않는다. 행을 넣거나 고치지 않는다
-- [ ] T005 [공용] B/api/entity/user/User.java: `withdrawnAt`, `purgedAt`(읽기만), `withdraw(now)`(값이 있으면 그대로), `restore()`, `isWithdrawn()`. `@SQLRestriction("deleted_at IS NULL AND withdrawn_at IS NULL")`을 상수 `User.ACTIVE`로 두고 쓴다. 조건의 이유(research R8)를 주석에 적는다
-- [ ] T006 [공용] B/api/repository/jpa/user/UserRepository.java·B/api/repository/reader/user/UserReader.java: `findByLoginId`를 native(`select * from tb_user where login_id = :loginId and deleted_at is null`)로 바꾼다. `findIncludingWithdrawn(id)`, `findForUpdateIncludingWithdrawn(id)`(`for update`), `existsWithdrawn(id)`를 native로 더한다(모두 `deleted_at is null`, `existsWithdrawn`은 `deleted_at`을 보지 않음). 관리자 코드(`UserAdminReader`, `UserAdminService`, `RoleUserReader`)는 고치지 않는다 (T005 뒤)
-- [ ] T007 [P] [공용] B/common/exception/ErrorCode.java: `ACCOUNT_WITHDRAWN`(A401, 401), `ACCOUNT_PURGE_PENDING`(A402, 401), `RECOVERY_NOT_AVAILABLE`(A403, 400). frontend/messages/ko.json `errors`에 세 문구
-- [ ] T008 [P] B/api/service/user/WithdrawalProperties.java(`app.withdrawal`: `grace-days` 기본 30, `cleanup-cron` 기본 `0 20 5 * * *`)와 [공용] backend/src/main/resources/application.yaml
-- [ ] T009 [P] B/api/dto/user/: `MemberWithdrawnEvent`, `MemberRestoredEvent`, `MemberPurgedEvent`(회원 ID, 일어난 때), `MemberStatusDto`(상태 ACTIVE·WITHDRAWN·DELETED·PURGED, 탈퇴한 때, 파기한 때)
-- [ ] T010 B/api/service/user/MemberStatusService.java: `find(userId)`(native라 유예 중·지움·파기 모두 나온다, FR-018), `isWithdrawn(userId)`, `purgeAt(withdrawnAt)`, 유예가 남았는지. 파기된 회원의 `withdrawn_at`도 준다 (T006·T008·T009 뒤)
-- [ ] T011 [P] B/api/service/user/MemberDisplay.java: `nameOf(Optional<User>)`가 비었으면 "탈퇴한 회원". 상수로 두고 T035의 고정값과 함께 쓴다 (FR-008)
-- [ ] T012 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build`, `bootRun`으로 Flyway와 `ddl-auto: validate` 통과를 본다 (사용자가 띄운다)
-- [ ] T013 **백엔드 테스트 전체**: `.\gradlew.bat build`와 `.\gradlew.bat dbTest`를 로컬에서 돌린다(사용자 지시). T002의 시험도 새 조건(`withdrawn_at`)으로 넓혀 함께 돈다. **깨지는 기존 테스트가 있으면 고치지 말고 이유와 함께 보고하고 멈춘다** (원칙 V)
+- [X] T005 [공용] B/api/entity/user/User.java: `withdrawnAt`, `purgedAt`(읽기만), `withdraw(now)`(값이 있으면 그대로), `restore()`, `isWithdrawn()`. `@SQLRestriction("deleted_at IS NULL AND withdrawn_at IS NULL")`을 상수 `User.ACTIVE`로 두고 쓴다. 조건의 이유(research R8)를 주석에 적는다
+- [X] T006 [공용] B/api/repository/jpa/user/UserRepository.java·B/api/repository/reader/user/UserReader.java: `findByLoginId`를 native(`select * from tb_user where login_id = :loginId and deleted_at is null`)로 바꾼다. `findIncludingWithdrawn(id)`, `findForUpdateIncludingWithdrawn(id)`(`for update`), `existsWithdrawn(id)`를 native로 더한다(모두 `deleted_at is null`, `existsWithdrawn`은 `deleted_at`을 보지 않음). 관리자 코드(`UserAdminReader`, `UserAdminService`, `RoleUserReader`)는 고치지 않는다 (T005 뒤)
+- [X] T007 [P] [공용] B/common/exception/ErrorCode.java: `ACCOUNT_WITHDRAWN`(A401, 401), `ACCOUNT_PURGE_PENDING`(A402, 401), `RECOVERY_NOT_AVAILABLE`(A403, 400). frontend/messages/ko.json `errors`에 세 문구
+- [X] T008 [P] B/api/service/user/WithdrawalProperties.java(`app.withdrawal`: `grace-days` 기본 30, `cleanup-cron` 기본 `0 20 5 * * *`)와 [공용] backend/src/main/resources/application.yaml
+- [X] T009 [P] B/api/dto/user/: `MemberWithdrawnEvent`, `MemberRestoredEvent`, `MemberPurgedEvent`(회원 ID, 일어난 때), `MemberStatusDto`(상태 ACTIVE·WITHDRAWN·DELETED·PURGED, 탈퇴한 때, 파기한 때)
+- [X] T010 B/api/service/user/MemberStatusService.java: `find(userId)`(native라 유예 중·지움·파기 모두 나온다, FR-018), `isWithdrawn(userId)`, `purgeAt(withdrawnAt)`, 유예가 남았는지. 파기된 회원의 `withdrawn_at`도 준다 (T006·T008·T009 뒤)
+- [X] T011 [P] B/api/service/user/MemberDisplay.java: `nameOf(Optional<User>)`가 비었으면 "탈퇴한 회원". 상수로 두고 T035의 고정값과 함께 쓴다 (FR-008)
+- [X] T012 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build`, `bootRun`으로 Flyway와 `ddl-auto: validate` 통과를 본다 (사용자가 띄운다)
+- [X] T013 **백엔드 테스트 전체**: `.\gradlew.bat build`와 `.\gradlew.bat dbTest`를 로컬에서 돌린다(사용자 지시). T002의 시험도 새 조건(`withdrawn_at`)으로 넓혀 함께 돈다. **깨지는 기존 테스트가 있으면 고치지 말고 이유와 함께 보고하고 멈춘다** (원칙 V)
 
 **Checkpoint**: `User` 조건이 바뀌어도 기존 기능이 그대로다. 관리자 코드는 바뀌지 않았다
 
@@ -90,7 +90,7 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 **Independent Test**: 탈퇴한 회원으로 로그인해 안내를 보고 복구한 뒤 프로필과 관리자 목록을 본다
 
 - [ ] T026 [US2] B/common/security/recovery/: `RecoveryCookies`(`withdrawal_recovery`, 회원 ID·탈퇴 시각 서명, 발급자 `…:recovery`, 10분, HttpOnly, `SameSite=Strict`, Path `/api/v1/auth/recovery`), `WithdrawnAccountException extends ServiceException`(회원 ID, 탈퇴 시각), 높은 순서의 `@RestControllerAdvice`(쿠키를 쓰고 같은 `ErrorResponse`). 키트 `GlobalExceptionHandler`·`ApiAuthTokenController`는 고치지 않는다 (R5)
-- [ ] T027 [US2] [공용] B/api/service/user/UserService.java `authenticate`: 비밀번호 틀림 A006 → 잠김 A007 → 유예 중 `WithdrawnAccountException`(A401) → 파기 대기 A402. A401·A402도 `LoginAttemptedEvent.failed`. 틀린 비밀번호에서는 탈퇴를 보지 않는다 (T006·T007·T010·T026 뒤)
+- [ ] T027 [US2] [공용] B/api/service/user/UserService.java `authenticate`: 비밀번호 틀림 A006 → 잠김 A007 → 유예 중 `WithdrawnAccountException`(A401) → 파기 대기 A402. A401·A402도 `LoginAttemptedEvent.failed`. **탈퇴 확인은 비밀번호가 맞은 다음에만 한다**(사용자 조건). 틀린 비밀번호에서는 탈퇴를 보지 않고 지금과 같은 A006이다 (T006·T007·T010·T026 뒤)
 - [ ] T028 [US2] [공용] B/api/service/user/SocialAccountService.java `findLinkedUser`를 `findIncludingWithdrawn`으로, B/api/dto/user/SocialLoginUserDto.java에 탈퇴 상태, B/api/application/v1/auth/SocialLoginApplication.java `logIn`: 잠김 → 유예 중(쿠키 + `/sign-in/recover`, 실패 이력 A401) → 파기 대기(`oauthError=purgePending`, A402) (010 콜백 표)
 - [ ] T029 [US2] B/api/service/user/MemberWithdrawalService.java `restore(userId, withdrawnAt, now)`: 잠긴 행에서 쿠키의 탈퇴 시각과 같은지(아니면 A403), 잠김 A007, 유예 지남 A402, 아니면 `user.restore()` (T019 뒤)
 - [ ] T030 [US2] B/api/application/v1/user/AccountRecoveryApplication.java: 트랜잭션 안에서 T029 → `revokeAll` → `MemberRestoredEvent`. 커밋 뒤 `AuthTokenService.issue`, `LoginAttemptedEvent.succeeded`. `getRecovery`(쿠키의 회원이 지금도 그 탈퇴 상태인지 보고 `purgeAt`)
@@ -114,7 +114,7 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 - [ ] T037 [P] [US3] B/common/security/token/RefreshTokenEraser.java: 그 회원의 `tb_refresh_token` 행 DELETE. 키트 `RefreshTokenRepository`·`AuthTokenService`는 고치지 않는다
 - [ ] T038 [US3] B/api/service/user/MemberPurgeService.java: 대상 ID 찾기, `eraseIfDue(userId, cutoff, now)`(잠금 → 다시 확인 → 회원 도메인 행 삭제 → 회원 행 덮기, 대상이 아니면 거짓)
 - [ ] T039 [US3] B/api/application/v1/user/MemberPurgeApplication.java: 회원마다 `TransactionTemplate` 하나로 T038 → T036 → T037 → `PersonalDataPurgedEvent(MEMBER, COLUMN_ERASE, 1, null, userId)` → `MemberPurgedEvent`. 한 회원이 실패하면 회원 ID와 예외 클래스 이름만 로그에 남기고 계속한다. 파기한 수를 돌려준다 (R6·R9)
-- [ ] T040 [US3] B/api/scheduler/MemberPurgeCleaner.java: `@Scheduled(cron = "${app.withdrawal.cleanup-cron:0 20 5 * * *}")`. 파기한 수를 로그에, 유예가 끝난 뒤 4일이 지나도 남은 회원이 있으면 그 수를 ERROR로
+- [ ] T040 [US3] B/api/scheduler/MemberPurgeCleaner.java: `@Scheduled(cron = "${app.withdrawal.cleanup-cron:0 20 5 * * *}", zone = "${app.withdrawal.cleanup-zone:Asia/Seoul}")` (서버 시간대와 상관없이 Asia/Seoul 05:20). 파기한 수를 로그에, 유예가 끝난 뒤 4일이 지나도 남은 회원이 있으면 그 수를 ERROR로
 
 **Checkpoint**: 두 종류의 회원이 파기되고 이력이 남는다
 
@@ -164,7 +164,7 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 | US1-AC13 관리자 목록에 없음, 복구하면 나옴 | 인수 | T048 |
 | US2-AC1 소셜 로그인 → 복구 안내 | 인수 | T049 |
 | US2-AC2 비밀번호 로그인 → 복구 안내 | 인수 | T049 |
-| US2-AC3 틀린 비밀번호로는 모름 | 인수 (A006, 쿠키 없음) | T049 |
+| US2-AC3 틀린 비밀번호로는 모름 | 인수 (유예 중·파기 대기인 탈퇴 회원에 틀린 비밀번호 → 탈퇴하지 않은 회원·없는 아이디와 똑같은 A006 응답, 쿠키 없음, 접속 이력도 A006) | T049 |
 | US2-AC4 복구하면 그대로 | 인수 + e2e | T049, T055 |
 | US2-AC5 취소하면 탈퇴 상태 그대로 | 프론트 단위 | T054 |
 | US2-AC6 복구한 회원은 파기되지 않음 | 인수 | T050 |

@@ -70,7 +70,7 @@ spec에 미결 표시가 없다. 아래는 spec이 plan에 맡긴 것을 코드�
   | 아이디·비밀번호 | 401 A401 + 복구 쿠키 → 화면이 `/sign-in/recover`로 | 401 A402 |
   | 소셜 콜백 | 복구 쿠키 + `/sign-in/recover`로 이동 | `/sign-in?oauthError=purgePending` |
 
-  - 확인 순서: 비밀번호 틀림 A006 → 잠김 A007 → 탈퇴 A401·A402. 틀린 비밀번호로는 탈퇴를 알 수 없고(US2-AC3), 잠긴 회원은 복구 안내를 보지 못한다(US2-AC8)
+  - 확인 순서: 비밀번호 틀림 A006 → 잠김 A007 → 탈퇴 A401·A402. **탈퇴 확인(A401·A402)은 비밀번호가 맞은 다음에만 한다.** 비밀번호가 틀리면 탈퇴 여부와 관계없이 지금과 같은 A006이고 쿠키도 없다(2026-11-25 사용자 조건, 계정 존재·탈퇴 여부가 새지 않게). 틀린 비밀번호로는 탈퇴를 알 수 없고(US2-AC3), 잠긴 회원은 복구 안내를 보지 못한다(US2-AC8)
   - 복구 쿠키 `withdrawal_recovery`: 회원 ID와 탈퇴 시각을 담아 JWT 키로 서명, 발급자 `…:recovery`, 10분, HttpOnly, `SameSite=Strict`, Path `/api/v1/auth/recovery`. `OAuthCookies`와 같은 방식이다. 탈퇴 시각이 지금 값과 다르면 쓸 수 없다(다시 탈퇴한 뒤 옛 쿠키 막기)
   - `GET /api/v1/auth/recovery` → 200 `{purgeAt}`. 쿠키가 없거나 맞지 않으면 400 A403
   - `POST /api/v1/auth/recovery` → 회원 행 잠금 → 잠김 A007, 유예 지남 A402, 상태 다름 A403 → `withdrawn_at` 비움 → `revokeAll` → "복구됨" 이벤트 → 커밋 → 토큰 발급(로그인과 같은 응답), 쿠키 지움
@@ -84,7 +84,7 @@ spec에 미결 표시가 없다. 아래는 spec이 plan에 맡긴 것을 코드�
 
 ## R6. 30일 뒤 파기 (FR-013·FR-014)
 
-- **Decision**: `api/scheduler/MemberPurgeCleaner`가 매일 `app.withdrawal.cleanup-cron`(기본 `0 20 5 * * *`, 다른 정리 04:30~05:10 뒤)에 돈다
+- **Decision**: `api/scheduler/MemberPurgeCleaner`가 매일 `app.withdrawal.cleanup-cron`(기본 `0 20 5 * * *`, 다른 정리 04:30~05:10 뒤)에 **Asia/Seoul 시각으로** 돈다. 저장소에 서버 시간대 설정이 없어 `@Scheduled`는 JVM 기본 시간대를 쓰므로 `zone`(`app.withdrawal.cleanup-zone`, 기본 `Asia/Seoul`)을 명시한다. 다른 정리기는 zone이 없어 서버 시간대를 따른다(고치지 않는다). 30일 비교는 저장된 시각과 같은 서버 시간대의 `LocalDateTime`이라 cron의 시간대와 상관없다
   1. 대상 ID를 native로 읽는다(`User`의 기본 조건을 타지 않게). 둘을 합친다
      - 스스로 탈퇴: `purged_at is null and withdrawn_at <= 지금 − 30일`
      - 관리자가 지움: `purged_at is null and withdrawn_at is null and deleted_at <= 지금 − 30일 and role = 'USER'` (시스템 계정 제외, FR-019). 이 기능 전에 지운 회원도 `purged_at`이 비어 있어 처음 돌 때 들어간다 (US3-AC15)

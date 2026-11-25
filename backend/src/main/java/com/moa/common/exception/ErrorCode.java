@@ -37,6 +37,10 @@ public enum ErrorCode {
 	TERMS_NOT_AGREED("A017", HttpStatus.BAD_REQUEST, "필수 약관에 동의해 주세요."),
 	// moa 009 마이페이지 (specs/009-mypage contracts/profile-api.md)
 	MYPAGE_NOT_ALLOWED("A201", HttpStatus.FORBIDDEN, "관리자 계정은 마이페이지를 쓸 수 없습니다."),
+	// moa 018 회원 탈퇴 (specs/018-member-withdrawal contracts/withdrawal-api.md). 본인 확인에 성공한 다음에만 쓴다
+	ACCOUNT_WITHDRAWN("A401", HttpStatus.UNAUTHORIZED, "탈퇴한 계정입니다. 유예 기간 안에 복구할 수 있습니다."),
+	ACCOUNT_PURGE_PENDING("A402", HttpStatus.UNAUTHORIZED, "복구할 수 있는 기간이 지난 계정입니다."),
+	RECOVERY_NOT_AVAILABLE("A403", HttpStatus.BAD_REQUEST, "복구할 수 없습니다. 다시 로그인해 주세요."),
 
 	// R: 리소스
 	NOT_FOUND("R001", HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
