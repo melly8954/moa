@@ -22,7 +22,8 @@ class ApiDocsAcceptanceTest extends AcceptanceTest {
 
 		assertThat(docs).hasStatus(200);
 		assertThat(docs).bodyJson().extractingPath("$.components.schemas.UserGetResponse.required").asArray()
-			.containsExactlyInAnyOrder("id", "loginId", "name", "role", "passwordChangeRequired", "hasPassword");
+			.containsExactlyInAnyOrder("id", "loginId", "name", "role", "passwordChangeRequired", "hasPassword",
+				"avatar", "mypageAllowed");
 		assertThat(docs).bodyJson().extractingPath("$.components.schemas.ErrorResponse.required").asArray()
 			.containsExactlyInAnyOrder("code", "message", "timestamp", "path");
 		assertThat(docs).bodyJson().extractingPath("$.components.schemas.AuthRefreshResponse.required").asArray()
