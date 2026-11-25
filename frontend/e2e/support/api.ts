@@ -37,7 +37,9 @@ export async function signedIn(
     route.fulfill({ json: { accessToken: "e2e-token", tokenType: "Bearer", expiresIn: 900 } }),
   )
   const role = me.role ?? (menus.length > 0 ? "ADMIN" : "USER")
-  await page.route("**/api/v1/users/me", (route) => route.fulfill({ json: { ...E2E_ME, role, ...me } }))
+  await page.route("**/api/v1/users/me", (route) =>
+    route.fulfill({ json: { ...E2E_ME, role, mypageAllowed: role !== "ADMIN", ...me } }),
+  )
   await page.route("**/api/v1/users/me/permissions", (route) => route.fulfill({ json: { permissions } }))
 }
 
