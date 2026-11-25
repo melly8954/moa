@@ -6,7 +6,7 @@ package com.moa.api.dto.user;
 public enum DiscordVisibility {
 	/** 아무에게도 */
 	PRIVATE,
-	/** 친구·팔로워만. 친구·팔로우 기능이 생기기 전에는 아무에게도 보이지 않는다 */
+	/** 친구만. 친구의 정의는 specs/014-friends-follow FR-004를 따른다. 친구 기능이 생기기 전에는 아무에게도 보이지 않는다 */
 	FRIENDS,
 	/** 로그인한 회원 모두 */
 	MEMBERS

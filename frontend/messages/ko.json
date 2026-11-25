@@ -185,7 +185,7 @@
     "discordVisibility": "디스코드 공개 범위",
     "discordVisibilities": {
       "PRIVATE": "비공개",
-      "FRIENDS": "친구·팔로워만",
+      "FRIENDS": "친구만",
       "MEMBERS": "전체 회원"
     },
     "playTimes": "플레이 가능 시간대",

@@ -31,7 +31,7 @@ public final class ProfileVisibility {
 			return Optional.empty();
 		}
 		boolean ageGender = profile.ageGenderPublic();
-		// FRIENDS(친구·팔로워만)는 친구·팔로우 기능이 생기기 전까지 아무에게도 보이지 않는다 (Edge Cases)
+		// FRIENDS(친구만)는 친구 기능(specs/014-friends-follow)이 생기기 전까지 아무에게도 보이지 않는다 (Edge Cases)
 		boolean discord = profile.discordVisibility() == DiscordVisibility.MEMBERS;
 		return Optional.of(new VisibleProfile(profile.nickname(), profile.nicknameTag(), profile.avatar(),
 			profile.bio(), ageGender ? profile.age() : null, ageGender ? profile.gender() : null,

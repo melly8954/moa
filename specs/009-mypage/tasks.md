@@ -19,7 +19,7 @@ description: "마이페이지 (mypage) 작업 목록"
 - **(010 순서)**: `010-social-login`과 같은 파일·같은 판단을 고치는 작업. **2026-11-22: 010이 dev에 먼저 들어갔다(PR #67)**. 그래서 "009 먼저" 경우를 지우고 dev에 있는 010 코드에 맞춰 적었다 (research R11·R14)
   - 010이 dev에 만든 것: 010 마이그레이션(`*__social_login.sql`)의 `tb_user_profile`(최소형)과 기존 회원 채우기, 엔터티 `UserProfile`·`UserProfileReader`·`UserProfileWriter`, `NicknamePolicy`·`NicknameTags`·B201, 가입 때 프로필 행, 관리자 이름 바꾸기의 태그 맞추기, `/users/me`의 `hasPassword`, 계정 바(`account-bar.tsx`)의 아이디 줄·비밀번호 변경 숨김. 009는 이것들을 새로 만들지 않는다
   - 010이 만들지 않은 것: 관리자·운영자 판단(`MemberActivityPolicy`). 009가 만든다 (T011)
-- **(잠정)**: 스펙 [NEEDS CLARIFICATION](닉네임 규칙, 변경 제한, 만 14세 미만, 나이·성별 공개 개별 여부, 친구·팔로워, 보기 범위)에 기댄 부분. 확정되면 research "열린 질문의 처리"의 자리만 고친다
+- **(잠정)**: 스펙 [NEEDS CLARIFICATION](닉네임 규칙, 변경 제한, 만 14세 미만, 나이·성별 공개 개별 여부, 친구 기능 전의 "친구만", 보기 범위)에 기댄 부분. 확정되면 research "열린 질문의 처리"의 자리만 고친다
 - 경로는 저장소 루트 기준이다. 백엔드 패키지 `backend/src/main/java/com/moa/`는 `B/`로 줄여 쓴다
 
 ---
@@ -110,7 +110,7 @@ description: "마이페이지 (mypage) 작업 목록"
 
 - [ ] T032 [US3] ProfileService `save(userId, request)`(닉네임·게임 정보 제외): `requireProfileForUpdate` 뒤 모든 칸을 보낸 값으로 바꾼다(`null`·빈 배열은 "비움", US3-AC5). 검증(V001 칸 오류): `bio` 500자 이내, `birthYear` 1900~올해(미래 연도 불가, (잠정) 만 14세 미만은 막지 않음), `gender`는 `Gender` 값, `discordTag`는 앞뒤 공백만 지우고 `^(?!.*\.\.)[a-z0-9_.]{2,32}$`(대문자는 형식 오류, 소문자로 바꾸지 않음), `discordVisibility`는 `DiscordVisibility` 값이고 보내지 않으면 `PRIVATE` (FR-006~FR-008, research R6·R7, US3-AC1~AC5). 응답은 GET과 같은 모양
 - [ ] T033 [US3] ApiMyProfileController에 `PUT /api/v1/users/me/profile`과 요청 DTO(B/api/controller/v1/user/request/ProfileSaveRequest.java: `avatar`, `bio`, `birthYear`, `gender`, `ageGenderPublic`, `discordTag`, `discordVisibility`, `playTimes`)를 더한다. 길이·형식은 Bean Validation, 목록·연도 범위는 서비스 (contracts "프로필 저장")
-- [ ] T034 [US3] frontend profile-form.tsx에 자기소개(500자 카운터), 출생 연도(옆에 나이), 성별(남성·여성·밝히지 않음), "나이·성별 공개" 토글 하나(잠정), 디스코드 태그와 공개 범위(비공개·친구·팔로워만·전체 회원, 기본 비공개)를 넣고 "저장" 단추로 `api.v1.profile.save`. 서버 V001 `errors[].field`를 그 칸에 보인다. 성공하면 `profile`·`me` 쿼리 무효화 (US3-AC1~AC5)
+- [ ] T034 [US3] frontend profile-form.tsx에 자기소개(500자 카운터), 출생 연도(옆에 나이), 성별(남성·여성·밝히지 않음), "나이·성별 공개" 토글 하나(잠정), 디스코드 태그와 공개 범위(비공개·친구만·전체 회원, 기본 비공개)를 넣고 "저장" 단추로 `api.v1.profile.save`. 서버 V001 `errors[].field`를 그 칸에 보인다. 성공하면 `profile`·`me` 쿼리 무효화 (US3-AC1~AC5)
 
 **Checkpoint**: 소개·나이·성별·디스코드를 적고 지운다
 
@@ -162,7 +162,7 @@ description: "마이페이지 (mypage) 작업 목록"
 - [ ] T043 backend/에서 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build` (DB 테스트 제외)
 - [ ] T044 frontend/에서 `npm run gen:api`(local 백엔드 실행 중)로 `src/types/schema.d.ts`를 다시 만들고, T017·T023의 손으로 쓴 타입을 생성 타입으로 바꾼 뒤 `npm run format`, `npm run check`
 - [ ] T045 specs/009-mypage/quickstart.md "수동 확인" 1~22를 사람이 직접 수행한다. 8번(파티 멤버 목록)은 008 구현 뒤에 한다
-- [ ] T046 spec "나중에 고칠 곳" 목록(001 FR-005, 002 FR-004·FR-007 — 이름 바꾸기의 태그 맞추기와 `닉네임#태그` 표시 포함, 004 FR-001 표에 `PLAY_TIME`, 008 FR-027·가정, 친구·팔로우 기능, README 경계 줄)을 PR 설명에 적어 각 담당에게 알린다 (사람이 한다. 이 기능에서 그 스펙들을 고치지 않는다)
+- [ ] T046 spec "나중에 고칠 곳" 목록(001 FR-005, 002 FR-004·FR-007 — 이름 바꾸기의 태그 맞추기와 `닉네임#태그` 표시 포함, 004 FR-001 표에 `PLAY_TIME`, 008 FR-027·가정, `014-friends-follow`, README 경계 줄)을 PR 설명에 적어 각 담당에게 알린다 (사람이 한다. 이 기능에서 그 스펙들을 고치지 않는다)
 - [ ] T047 PR 설명에 010과 겹친 작업(T011·T022·T023·T024)을 dev의 010 코드 위에 어떻게 더했는지 적는다(`MemberActivityPolicy`는 009가 새로 만들었고 010 US5가 쓴다). 키트로 옮길 것도 적는다: 계정 바의 아바타·마이페이지 항목(T024), `UserGetResponse`·`Me` 칸(T022·T023) (원칙 III)
 
 ---
@@ -246,4 +246,4 @@ Phase 10 안: T050, T051, T052, T053
 
 1. **MVP**: Phase 1 → 2 → 3(US1) → 4(US2). 내 프로필 보기와 닉네임 바꾸기, 계정 바의 닉네임 표시만으로 배포 검토 가능
 2. US3(소개·나이·성별·디스코드) → US4(아바타) → US5(게임 정보) → US6(시간대)
-3. Polish → 테스트(맨 끝) → PR. 잠정 작업(닉네임 규칙·예약어, 변경 제한 30일, 만 14세 미만, 나이·성별 공개 개별, 친구·팔로워, 보기 범위, 전적 사이트 틀, 아바타 그림)은 확정되는 대로 research "열린 질문의 처리"의 자리를 고친다
+3. Polish → 테스트(맨 끝) → PR. 잠정 작업(닉네임 규칙·예약어, 변경 제한 30일, 만 14세 미만, 나이·성별 공개 개별, 친구 기능 전의 "친구만", 보기 범위, 전적 사이트 틀, 아바타 그림)은 확정되는 대로 research "열린 질문의 처리"의 자리를 고친다
