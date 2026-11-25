@@ -33,7 +33,7 @@
 ### 규칙
 
 - `purged_count`가 0 이하인 이벤트는 저장하지 않는다 (FR-003)
-- `actor_type`이 `SCHEDULER`면 `actor_user_id`·`target_user_id`는 NULL이다
+- `actor_type`이 `SCHEDULER`면 `actor_user_id`는 NULL이다. `target_user_id`는 회원 파기(`018-member-withdrawal` FR-014)만 값이 있고 나머지 정리는 NULL이다
 - 저장 뒤 고치지 않는다 (목록은 보기만, FR-009)
 - `created_at`이 지금 − 365일보다 이전이면 정리 때 지운다 (FR-006)
 

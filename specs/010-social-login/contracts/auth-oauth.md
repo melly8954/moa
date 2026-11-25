@@ -56,6 +56,8 @@
 | `error=access_denied` (취소) | 아무것도 안 함 | LOGIN: `/sign-in` / LINK: `/settings` (US3-AC1) |
 | state 불일치·만료, 교환·확인 실패 | 실패 이력 (R8) | LOGIN: `/sign-in?oauthError=failed` / LINK: `/settings?socialLink=failed` (US3-AC2) |
 | LOGIN, 연결된 회원 있음, 잠김 | 실패 이력 (A007) | `/sign-in?oauthError=locked` (US2-AC2) |
+| LOGIN, 연결된 회원 있음, 탈퇴 유예 중 (`018-member-withdrawal`) | 실패 이력 (A401), 로그인시키지 않음, 복구 쿠키 | `/sign-in/recover?next=…` (018 US2-AC1) |
+| LOGIN, 연결된 회원 있음, 유예가 끝나고 파기 전 (`018-member-withdrawal`) | 실패 이력 (A402), 로그인시키지 않음 | `/sign-in?oauthError=purgePending` (018 US2-AC9) |
 | LOGIN, 연결된 회원 있음 | 성공 이력, `AuthTokenService.issue` → 리프레시 쿠키 심기 | `/auth/oauth/done?next=…` (US2-AC1, US5-AC2) |
 | LOGIN, 연결 없음, 이메일 없음·미인증 | 실패 이력 (A014), 회원 안 만듦 | `/sign-in?oauthError=emailUnverified` (US1-AC12) |
 | LOGIN, 연결 없음, 재가입 제한 | 실패 이력 (A016), 회원 안 만듦 | `/sign-in?oauthError=rejoinBlocked` (US1-AC10·AC11) |
