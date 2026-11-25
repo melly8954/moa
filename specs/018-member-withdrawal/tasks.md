@@ -25,8 +25,8 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 
 **Purpose**: 설계가 기대는 것을 먼저 확인한다
 
-- [ ] T001 구현 브랜치 `feat/018-member-withdrawal`을 최신 `dev`에서 딴 뒤 확인한다: backend/src/main/resources/db/migration의 마지막 번호(계획 때 `V12`), B/common/exception/ErrorCode.java에 `A401`·`A402`·`A403`이 없는지, 008·014·017 구현이 dev에 들어왔으면 `tb_user.name`·`UserRepository`·`tb_user_profile`을 읽는 새 곳이 있는지(있으면 research R8의 "막히지 않는 넷"과 plan "담당자 알림 목록"을 먼저 고치고 보고한다)
-- [ ] T002 Hibernate 조건 시험: BT/api/UserRestrictionAcceptanceTest.java(`AcceptanceTest` 상속)를 만들어 **지금 있는** `deleted_at IS NULL` 조건이 지운 `User`에 붙는지 본다: `UserRepository.findById`, QueryDSL `selectFrom(user)`, 다른 엔터티(`UserSocialAccount`)에서 `user`로 가는 왼쪽 조인·안쪽 조인(`on` 조건), `JPAExpressions` 서브쿼리. native 쿼리로 읽은 `User`가 나오고 고친 값이 저장되는지도 본다. `.\gradlew.bat dbTest --tests "*UserRestrictionAcceptanceTest"`로 돌린다(사용자 지시). 결과를 research.md R8 "확인할 것"에 적는다. **조인에 조건이 붙지 않으면 멈추고 보고한다**
+- [X] T001 구현 브랜치 `feat/018-member-withdrawal`을 최신 `dev`에서 딴 뒤 확인한다: backend/src/main/resources/db/migration의 마지막 번호(계획 때 `V12`), B/common/exception/ErrorCode.java에 `A401`·`A402`·`A403`이 없는지, 008·014·017 구현이 dev에 들어왔으면 `tb_user.name`·`UserRepository`·`tb_user_profile`을 읽는 새 곳이 있는지(있으면 research R8의 "막히지 않는 넷"과 plan "담당자 알림 목록"을 먼저 고치고 보고한다)
+- [X] T002 Hibernate 조건 시험: BT/api/UserRestrictionAcceptanceTest.java(`AcceptanceTest` 상속)를 만들어 **지금 있는** `deleted_at IS NULL` 조건이 지운 `User`에 붙는지 본다: `UserRepository.findById`, QueryDSL `selectFrom(user)`, 다른 엔터티(`UserSocialAccount`)에서 `user`로 가는 왼쪽 조인·안쪽 조인(`on` 조건), `JPAExpressions` 서브쿼리. native 쿼리로 읽은 `User`가 나오고 고친 값이 저장되는지도 본다. `.\gradlew.bat dbTest --tests "*UserRestrictionAcceptanceTest"`로 돌린다(사용자 지시). 결과를 research.md R8 "확인할 것"에 적는다. **조인에 조건이 붙지 않으면 멈추고 보고한다** — **이번 구현**: 7개 통과. 모두 조건이 붙는다 (research R8)
 - [ ] T003 plan.md "공용 파일"과 "haily 코드" 표의 바꿀 내용을 초안으로 보고하고 승인받는다. haily 코드 다섯 건(007 `notify` 한 줄과 지우기 메서드, 006 지우기 메서드, 013 종류 "회원", `tb_purge_log.target` COMMENT)은 2026-11-25에 승인됐다. 기존 동작은 바꾸지 않고 더하기만 한다. 승인 전에는 [공용] 작업을 시작하지 않는다
 
 **Checkpoint**: 조인 시험 결과가 R8에 적혔고 공용 파일이 승인됐다

@@ -115,7 +115,8 @@ spec에 미결 표시가 없다. 아래는 spec이 plan에 맡긴 것을 코드�
 - **이름**: 조회에 없는 회원은 `MemberDisplay`가 "탈퇴한 회원"으로 바꾼다. 파기된 회원도 조회에 없으므로 모든 기능이 어차피 해야 하는 일이다. 회원 상태는 `MemberStatusService.find(userId)`로 준다(활동, 탈퇴, 지움, 파기와 그 시각. FR-018)
 - **이 조건으로 막히지 않는 넷** (담당자에게 알린다. [plan.md](./plan.md) "담당자 알림 목록"): 프로필 표(`tb_user_profile`)를 `User` 없이 읽기, 숏폼 자체, 개인 알림, 문의 답변
   - `tb_user_profile`은 숨길 수 없다. 닉네임 태그를 파기 전까지 붙잡아야 한다
-- **확인할 것 (구현 첫 작업)**: Hibernate가 `find`, QueryDSL 조회, 왼쪽·안쪽 조인, 서브쿼리에 이 조건을 붙이는지. 지금 있는 `deleted_at` 조건으로 먼저 시험한다. 조인에 붙지 않으면 멈추고 묻는다. `NoticeReader`는 서브쿼리에 `deletedAt.isNull()`을 직접 적고 있다
+- **확인한 것 (T002, 2026-11-25, Hibernate 7.4.13, `UserRestrictionAcceptanceTest` 7개 통과)**: 지금 있는 `deleted_at` 조건으로 시험했다. 조건은 `findById`, 메서드 이름 쿼리, QueryDSL `selectFrom`, 왼쪽 조인, 안쪽 조인, 서브쿼리에 모두 붙는다. 왼쪽 조인은 행이 남고 회원 값이 NULL이며, 안쪽 조인은 행이 빠진다. native 쿼리로 읽은 엔터티는 조건을 타지 않고, 고친 값이 저장된다
+  - 그래서 다른 기능은 왼쪽 조인이나 따로 읽기로 하고 NULL이면 "탈퇴한 회원"을 쓴다. 안쪽 조인이면 행이 빠진다 (plan "담당자 알림 목록")
 - **Alternatives considered**
   - 각 기능이 거르게 알리기만: 빠뜨리면 이름이 새고 `docs/privacy.md` 원칙을 어긴다. 남의 기능 여러 곳을 고쳐야 한다
   - 표시 정책 클래스만: 부르지 않으면 샌다
