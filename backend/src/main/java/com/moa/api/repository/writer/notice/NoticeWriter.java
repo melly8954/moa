@@ -23,4 +23,9 @@ public class NoticeWriter {
 	public NoticeRead saveRead(NoticeRead read) {
 		return noticeReadRepository.save(read);
 	}
+
+	/** 이 사용자의 확인 기록(사용자마다 한 행, 키가 사용자 ID)을 지운다. 없으면 그대로 */
+	public void deleteRead(Long userId) {
+		noticeReadRepository.deleteById(userId);
+	}
 }

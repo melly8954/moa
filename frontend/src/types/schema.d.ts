@@ -558,6 +558,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/me/withdrawal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 회원 탈퇴
+         * @description 닉네임이 다르면 V001(칸 nickname), 관리자 계정은 A201. 성공하면 리프레시 쿠키를 지우고 완전 삭제 예정 시각을 준다. 이미 탈퇴한 요청이 겹치면 처음 시각으로 답한다
+         */
+        post: operations["withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/rich-text/images": {
         parameters: {
             query?: never;
@@ -616,6 +636,30 @@ export interface paths {
          * @description 리프레시 토큰으로 액세스 토큰을 다시 받는다. 리프레시 토큰도 새 것으로 바뀐다
          */
         post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/recovery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 복구 안내
+         * @description 완전 삭제 예정 시각. 복구 쿠키가 없거나 맞지 않으면 A403, 유예가 지났으면 A402
+         */
+        get: operations["getRecovery"];
+        put?: never;
+        /**
+         * 복구
+         * @description 탈퇴 전 그대로 돌아오고 로그인과 같은 토큰을 준다. 복구 쿠키를 지운다. 쿠키가 없거나 맞지 않으면(이미 복구함·다시 탈퇴함) A403, 잠겼으면 A007, 유예가 지났으면 A402
+         */
+        post: operations["recover"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2331,6 +2375,22 @@ export interface components {
             /** @description 켜짐 */
             enabled: boolean;
         };
+        /** @description 회원 탈퇴 요청 */
+        WithdrawalRequest: {
+            /**
+             * @description 확인용으로 입력한 지금 닉네임 (대소문자 구별)
+             * @example 모아
+             */
+            nickname: string;
+        };
+        /** @description 회원 탈퇴 결과 */
+        WithdrawalResponse: {
+            /**
+             * Format: date-time
+             * @description 완전 삭제 예정 시각. 이때까지 다시 로그인해 복구할 수 있다
+             */
+            purgeAt: string;
+        };
         /** @description 올린 본문 이미지 */
         RichTextImageUploadResponse: {
             /**
@@ -2905,6 +2965,14 @@ export interface components {
             accessible: boolean;
             /** @description 하위 메뉴 */
             children: components["schemas"]["MyMenuResponse"][];
+        };
+        /** @description 탈퇴한 계정의 복구 안내 */
+        RecoveryResponse: {
+            /**
+             * Format: date-time
+             * @description 완전 삭제 예정 시각. 이때까지 복구할 수 있다
+             */
+            purgeAt: string;
         };
         /** @description 설정된 소셜 로그인 제공자 */
         OAuthProvidersResponse: {
@@ -4429,6 +4497,30 @@ export interface operations {
             };
         };
     };
+    withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WithdrawalRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WithdrawalResponse"];
+                };
+            };
+        };
+    };
     upload: {
         parameters: {
             query?: never;
@@ -4530,6 +4622,46 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getRecovery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RecoveryResponse"];
+                };
+            };
+        };
+    };
+    recover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AuthRefreshResponse"];
                 };
             };
         };

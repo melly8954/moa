@@ -67,6 +67,7 @@
 |---|---|---|
 | `app.withdrawal.grace-days` | 30 | 유예 기간 (`docs/privacy.md`와 같은 값) |
 | `app.withdrawal.cleanup-cron` | `0 20 5 * * *` | 파기 정리 시각 |
+| `app.withdrawal.cleanup-zone` | `Asia/Seoul` | 정리 시각의 시간대. 서버 시간대와 상관없이 이 시각으로 돈다 |
 
 ## 이벤트
 

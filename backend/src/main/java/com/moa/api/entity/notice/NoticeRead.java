@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(name = "tb_notice_read")
-@HardDelete(reason = "사용자마다 마지막 확인 시각 한 행만 덮어쓴다. 지울 일이 없고 이력이 아니다")
+@HardDelete(reason = "사용자마다 마지막 확인 시각 한 행만 덮어쓰고 이력이 아니다. 회원 파기 때 지운다 (specs/018-member-withdrawal FR-013)")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class NoticeRead {
 

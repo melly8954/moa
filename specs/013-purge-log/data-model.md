@@ -7,7 +7,7 @@
 | 열 | 타입 | NULL | 뜻 (COMMENT) |
 |---|---|---|---|
 | `id` | `BIGINT AUTO_INCREMENT` | 아님 | PK |
-| `target` | `VARCHAR(30)` | 아님 | `'파기 대상 종류 (LOGIN_HISTORY, NOTIFICATION, REFRESH_TOKEN, RICH_TEXT_IMAGE)'` |
+| `target` | `VARCHAR(30)` | 아님 | `'파기 대상 종류 (LOGIN_HISTORY, NOTIFICATION, REFRESH_TOKEN, RICH_TEXT_IMAGE, MEMBER)'` |
 | `purge_method` | `VARCHAR(20)` | 아님 | `'파기 방법 (ROW_DELETE, COLUMN_ERASE)'` |
 | `purged_count` | `INT` | 아님 | `'파기 건수 (1 이상)'` |
 | `actor_type` | `VARCHAR(20)` | 아님 | `'처리자 종류 (SCHEDULER, PERSON)'` |
@@ -24,7 +24,7 @@
 
 | enum | 값 | 화면 이름 |
 |---|---|---|
-| `PurgeTarget` | `LOGIN_HISTORY`, `NOTIFICATION`, `REFRESH_TOKEN`, `RICH_TEXT_IMAGE` | 접속 이력, 알림, 리프레시 토큰, 본문 이미지 |
+| `PurgeTarget` | `LOGIN_HISTORY`, `NOTIFICATION`, `REFRESH_TOKEN`, `RICH_TEXT_IMAGE`, `MEMBER` | 접속 이력, 알림, 리프레시 토큰, 본문 이미지, 회원(`018-member-withdrawal`) |
 | `PurgeMethod` | `ROW_DELETE`, `COLUMN_ERASE` | 행 삭제, 개인정보 열 삭제 |
 | `PurgeActor` | `SCHEDULER`, `PERSON` | 정리기, 사람 |
 

@@ -48,15 +48,18 @@ spec에 미결 표시가 없다. 아래는 spec이 plan에 맡긴 것을 코드�
 ## R3. 실시간 연결 끊기 (FR-006)
 
 - **Decision**
-  - 새 연결: moa의 `WebSocketMessageBrokerConfigurer`를 하나 더 두어 inbound 채널에 인터셉터를 더한다. `CONNECT`의 사용자가 탈퇴했으면 거절한다. 키트 `WebSocketConfig`·`StompAuthInterceptor`는 고치지 않는다
-  - 열린 연결: `WebSocketHandlerDecoratorFactory`로 세션을 기억하고 `SessionConnectedEvent`로 회원과 잇는다. 탈퇴가 커밋된 뒤 그 회원의 세션을 닫는다
+  - 새 연결: inbound 채널에 moa 인터셉터(`BlockedAccountStompInterceptor`)를 더한다. 키트 `StompAuthInterceptor`가 정한 `CONNECT`의 사용자가 막힌 계정(`AccountAccessChecker`)이면 거절한다(HTTP와 같이 A002). 키트 `WebSocketConfig`·`StompAuthInterceptor`는 고치지 않는다
+    - **순서**: moa 인터셉터는 키트 인증 인터셉터 다음에 돌아야 한다(사용자가 정해진 뒤). 설정(`WebSocketMessageBrokerConfigurer`)의 인터셉터는 설정의 `@Order` 순으로 붙는데, 키트 `WebSocketConfig`는 순서가 없어 `LOWEST_PRECEDENCE`로 정렬되므로 어떤 `@Order`로도 그 뒤에 설 수 없다(같은 값이면 빈 등록 순서라 정해지지 않는다). 그래서 moa 인터셉터는 설정으로 붙이지 않고, `SmartInitializingSingleton`(`BlockedAccountInterceptorRegistrar`)이 모든 설정이 채널을 만든 뒤 `clientInboundChannel`의 맨 끝에 덧붙인다. 서버가 연결을 받기 전이다. 순서는 인수 테스트(`WithdrawalRealtimeAcceptanceTest`)가 확인한다
+  - 열린 연결: 회원과 세션의 연결은 Spring `SimpUserRegistry`가 안다(`SessionConnectedEvent`·`SessionDisconnectEvent`로 채운다). moa는 `WebSocketHandlerDecoratorFactory`로 세션 ID → `WebSocketSession`만 기억한다(`RealtimeSessions`). 탈퇴가 커밋된 뒤 `closeAll(userId)`가 레지스트리에서 그 회원의 세션 ID를 찾아 닫는다. 레지스트리는 메시지 브로커 설정을 거쳐 만들어지므로 순환을 피해 `ObjectProvider`로 늦게 찾는다
+  - 연결 직후 탈퇴: CONNECT 확인을 지난 직후 탈퇴가 커밋되면 그 연결은 아직 레지스트리에 없어 `closeAll`을 비껴간다. `RealtimeSessions`가 `SessionConnectedEvent`에서 한 번 더 확인해 막힌 계정이면 닫는다(2026-11-26). 클라이언트는 CONNECTED를 받기 전이나 직후에 끊긴다
   - 닫기는 Application이 커밋 뒤 직접 부른다. "탈퇴됨" 이벤트에 붙는 처리는 없다 (FR-017)
 - **서버가 여럿일 때**: 다른 서버의 세션은 닫지 못한다. 키트 브로커가 서버 메모리라 그 세션에는 개인 메시지도 닿지 않는다(키트 `WebSocketConfig` 주의와 같은 한계). 다시 연결하면 막힌다
 
 ## R4. 탈퇴 API (FR-003~FR-005·FR-009)
 
 - **Decision**: `POST /api/v1/users/me/withdrawal` `{nickname}` → 200 `{purgeAt}`, 리프레시 쿠키를 지운다
-  - 순서: 관리자 계정이면 A201(`MemberActivityPolicy.requireMypageAllowed`) → 회원 행 잠금(`SELECT … FOR UPDATE`) → 닉네임 확인(V001, 칸 `nickname`) → `withdrawn_at` = 지금 → `revokeAll` → 푸시 구독 모두 삭제(`NotificationService.deleteSubscriptionsOf`, FR-021) → "탈퇴됨" 이벤트 → 커밋 → 실시간 연결 닫기
+  - 순서: 회원 행 잠금(`SELECT … FOR UPDATE`) → 관리자 계정이면 A201(`MemberActivityPolicy.requireMypageAllowed`) → 닉네임 확인(V001, 칸 `nickname`) → `withdrawn_at` = 지금 → `revokeAll` → 푸시 구독 모두 삭제(`NotificationService.deleteSubscriptionsOf`, FR-021) → "탈퇴됨" 이벤트 → 커밋 → 실시간 연결 닫기
+  - 잠금이 먼저다: 관리자 확인이 먼저 회원을 읽으면 그 엔터티가 영속성 컨텍스트에 남아, 잠근 뒤의 native 조회도 옛 값(탈퇴 전)을 돌려준다. 그러면 동시에 들어온 두 번째 탈퇴가 시각을 덮는다(2026-11-26 재현·수정). 탈퇴 시각은 DB와 같게 마이크로초로 자른다
   - 닉네임 비교: 입력과 `tb_user.name`을 `NicknamePolicy.normalize`(NFC, 앞뒤 공백 제거)로 맞춘 뒤 `equals`. 대소문자를 구별한다
   - 이미 탈퇴했으면(동시에 두 번) 시각을 바꾸지 않고 같은 `purgeAt`으로 200 (spec Edge Case)
 - **Rationale**: 되돌릴 수 있는 일이라 `DELETE`로 두지 않는다. 확인 값을 본문으로 받는다
@@ -70,7 +73,7 @@ spec에 미결 표시가 없다. 아래는 spec이 plan에 맡긴 것을 코드�
   | 아이디·비밀번호 | 401 A401 + 복구 쿠키 → 화면이 `/sign-in/recover`로 | 401 A402 |
   | 소셜 콜백 | 복구 쿠키 + `/sign-in/recover`로 이동 | `/sign-in?oauthError=purgePending` |
 
-  - 확인 순서: 비밀번호 틀림 A006 → 잠김 A007 → 탈퇴 A401·A402. 틀린 비밀번호로는 탈퇴를 알 수 없고(US2-AC3), 잠긴 회원은 복구 안내를 보지 못한다(US2-AC8)
+  - 확인 순서: 비밀번호 틀림 A006 → 잠김 A007 → 탈퇴 A401·A402. **탈퇴 확인(A401·A402)은 비밀번호가 맞은 다음에만 한다.** 비밀번호가 틀리면 탈퇴 여부와 관계없이 지금과 같은 A006이고 쿠키도 없다(2026-11-25 사용자 조건, 계정 존재·탈퇴 여부가 새지 않게). 틀린 비밀번호로는 탈퇴를 알 수 없고(US2-AC3), 잠긴 회원은 복구 안내를 보지 못한다(US2-AC8)
   - 복구 쿠키 `withdrawal_recovery`: 회원 ID와 탈퇴 시각을 담아 JWT 키로 서명, 발급자 `…:recovery`, 10분, HttpOnly, `SameSite=Strict`, Path `/api/v1/auth/recovery`. `OAuthCookies`와 같은 방식이다. 탈퇴 시각이 지금 값과 다르면 쓸 수 없다(다시 탈퇴한 뒤 옛 쿠키 막기)
   - `GET /api/v1/auth/recovery` → 200 `{purgeAt}`. 쿠키가 없거나 맞지 않으면 400 A403
   - `POST /api/v1/auth/recovery` → 회원 행 잠금 → 잠김 A007, 유예 지남 A402, 상태 다름 A403 → `withdrawn_at` 비움 → `revokeAll` → "복구됨" 이벤트 → 커밋 → 토큰 발급(로그인과 같은 응답), 쿠키 지움
@@ -84,7 +87,7 @@ spec에 미결 표시가 없다. 아래는 spec이 plan에 맡긴 것을 코드�
 
 ## R6. 30일 뒤 파기 (FR-013·FR-014)
 
-- **Decision**: `api/scheduler/MemberPurgeCleaner`가 매일 `app.withdrawal.cleanup-cron`(기본 `0 20 5 * * *`, 다른 정리 04:30~05:10 뒤)에 돈다
+- **Decision**: `api/scheduler/MemberPurgeCleaner`가 매일 `app.withdrawal.cleanup-cron`(기본 `0 20 5 * * *`, 다른 정리 04:30~05:10 뒤)에 **Asia/Seoul 시각으로** 돈다. 저장소에 서버 시간대 설정이 없어 `@Scheduled`는 JVM 기본 시간대를 쓰므로 `zone`(`app.withdrawal.cleanup-zone`, 기본 `Asia/Seoul`)을 명시한다. 다른 정리기는 zone이 없어 서버 시간대를 따른다(고치지 않는다). 30일 비교는 저장된 시각과 같은 서버 시간대의 `LocalDateTime`이라 cron의 시간대와 상관없다
   1. 대상 ID를 native로 읽는다(`User`의 기본 조건을 타지 않게). 둘을 합친다
      - 스스로 탈퇴: `purged_at is null and withdrawn_at <= 지금 − 30일`
      - 관리자가 지움: `purged_at is null and withdrawn_at is null and deleted_at <= 지금 − 30일 and role = 'USER'` (시스템 계정 제외, FR-019). 이 기능 전에 지운 회원도 `purged_at`이 비어 있어 처음 돌 때 들어간다 (US3-AC15)
@@ -115,7 +118,8 @@ spec에 미결 표시가 없다. 아래는 spec이 plan에 맡긴 것을 코드�
 - **이름**: 조회에 없는 회원은 `MemberDisplay`가 "탈퇴한 회원"으로 바꾼다. 파기된 회원도 조회에 없으므로 모든 기능이 어차피 해야 하는 일이다. 회원 상태는 `MemberStatusService.find(userId)`로 준다(활동, 탈퇴, 지움, 파기와 그 시각. FR-018)
 - **이 조건으로 막히지 않는 넷** (담당자에게 알린다. [plan.md](./plan.md) "담당자 알림 목록"): 프로필 표(`tb_user_profile`)를 `User` 없이 읽기, 숏폼 자체, 개인 알림, 문의 답변
   - `tb_user_profile`은 숨길 수 없다. 닉네임 태그를 파기 전까지 붙잡아야 한다
-- **확인할 것 (구현 첫 작업)**: Hibernate가 `find`, QueryDSL 조회, 왼쪽·안쪽 조인, 서브쿼리에 이 조건을 붙이는지. 지금 있는 `deleted_at` 조건으로 먼저 시험한다. 조인에 붙지 않으면 멈추고 묻는다. `NoticeReader`는 서브쿼리에 `deletedAt.isNull()`을 직접 적고 있다
+- **확인한 것 (T002, 2026-11-25, Hibernate 7.4.13, `UserRestrictionAcceptanceTest` 7개 통과)**: 지금 있는 `deleted_at` 조건으로 시험했다. 조건은 `findById`, 메서드 이름 쿼리, QueryDSL `selectFrom`, 왼쪽 조인, 안쪽 조인, 서브쿼리에 모두 붙는다. 왼쪽 조인은 행이 남고 회원 값이 NULL이며, 안쪽 조인은 행이 빠진다. native 쿼리로 읽은 엔터티는 조건을 타지 않고, 고친 값이 저장된다
+  - 그래서 다른 기능은 왼쪽 조인이나 따로 읽기로 하고 NULL이면 "탈퇴한 회원"을 쓴다. 안쪽 조인이면 행이 빠진다 (plan "담당자 알림 목록")
 - **Alternatives considered**
   - 각 기능이 거르게 알리기만: 빠뜨리면 이름이 새고 `docs/privacy.md` 원칙을 어긴다. 남의 기능 여러 곳을 고쳐야 한다
   - 표시 정책 클래스만: 부르지 않으면 샌다
@@ -132,7 +136,7 @@ spec에 미결 표시가 없다. 아래는 spec이 plan에 맡긴 것을 코드�
   - 머리·탭·권한 확인은 `components/profile/mypage-frame.tsx`에 모아 두 화면이 쓴다. 지금 탭은 prop으로 받는다
   - 계정 관리 항목: `components/account-management/items.ts`의 배열(키, 순서, 컴포넌트). 지금은 비어 있다. "탈퇴하기"는 배열 밖에서 늘 맨 아래 오른쪽에 그린다 (US4-AC1·AC2)
   - 확인 창은 입력이 있어 `confirm()`이 아니라 `AlertDialog`로 만든다. 닫으면 입력을 비운다
-  - 탈퇴 뒤: 로그아웃과 같은 순서(`disablePush` → 탈퇴 → `signOut`)로 `/sign-in?withdrawnUntil=<시각>`에 가서 안내를 보인다
+  - 탈퇴 뒤: 서버는 탈퇴 때 리프레시 쿠키와 그 회원의 푸시 구독을 모두 지운다(FR-021). 화면은 브라우저 쪽 구독만 해제하고(`unsubscribeBrowserOnly`) `/sign-in?withdrawnUntil=<시각>`을 새로 연다(`window.location.replace`). 새로 열면 메모리의 액세스 토큰과 캐시도 사라진다. 탈퇴 뒤에는 서버 API를 부르지 않는다: 부르면 A002 → 재발급 A003으로 `AuthGate`가 "로그인이 만료됐어요" 안내를 띄우고 `/sign-in`으로 덮어쓴다. 처음 적은 `disablePush` → 탈퇴 → `signOut` 순서는 탈퇴가 실패해도 알림이 꺼지고, `signOut`이 `AuthGate`를 거쳐 쿼리 없는 `/sign-in`으로 보내 안내가 사라져서 바꿨다
   - 복구 화면 `/sign-in/recover`: 완전 삭제 예정 시각, "복구하기", "취소"
 - **[공용] 파일**: `sign-in/page.tsx`, `next-path.ts`, `ko.json`, `api/index.ts`, `oauth-error-alert.tsx`, 파기 이력 화면. 바꿀 내용을 먼저 보고하고 승인받는다
 

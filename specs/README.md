@@ -28,7 +28,7 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 알림 | 알림 (실시간 전달, 개인 알림함, 브라우저 알림) | moa, 키트 websocket | `007-notifications` | 구현됨. 개인 알림을 보내는 기능은 각 기능이 `NotificationApplication.notify`로 붙는다. 알림을 보내는 기능은 FR-012 규칙을 따른다 |
 | 마케팅 | 배너·팝업 관리 (관리 화면과 사용자 쪽 노출) | moa | `016-banner-popup` | 구현됨 (담당: haily). 사용자 화면 노출은 자리가 정해진 뒤 |
 | 고객센터 | FAQ와 1:1 문의 (관리 화면과 사용자 목록·작성, 답변 알림) | moa | `017-customer-center` | 기획 중 (담당: haily). 사용자 셸의 메뉴 자리는 사용자 쪽 담당과 맞춘다 |
-| 회원 | 탈퇴 계정 복구 | moa | - | 보류: 탈퇴 상태가 정해진 뒤. 유예 기간(30일)은 `docs/privacy.md`가 정했다(2026-11-21). 탈퇴 상태·복구·완전 삭제는 회원 탈퇴 스펙이 맡는다(`009-mypage`·`010-social-login`) |
+| 회원 | 탈퇴 계정 복구 | moa | `018-member-withdrawal` | 구현됨: 018 US2(30일 안에 다시 로그인해 복구)에 들어갔다 |
 | 회원 | 회원 제재·해제 | moa | - | 미정 |
 | 신고 | 신고 처리 | moa | - | 미정 |
 | 게임 | 게임·모드·티어 관리 | moa | - | 다른 담당, 추후 |
@@ -43,7 +43,7 @@ psw-dev-kit admin 프리셋 전체(code, login-history, menu, rbac, user-admin)�
 | 회원 | 마이페이지 (프로필: 닉네임, 아바타, 소개, 게임 정보) | moa | `009-mypage` | 기획 중 |
 | 회원 | 소셜 로그인 (구글, 디스코드) | moa | `010-social-login` | 일부 구현됨: 구글 가입·로그인·안내, 관리자 기록. 디스코드와 계정 연결·해제(US5)는 구현 전 |
 | 회원 | 개인정보처리방침 공개 페이지 (전문, 버전·시행일, 화면 아래 링크) | moa (문안 구조는 010 약관) | `012` | 예약 (담당: haily) |
-| 회원 | 회원 탈퇴 (계정 관리 탭, 30일 복구, 파기) | moa | `018-member-withdrawal` | 기획 중 (담당: jeonggi4007) |
+| 회원 | 회원 탈퇴 (계정 관리 탭, 30일 복구, 파기) | moa | `018-member-withdrawal` | 구현됨 (담당: jeonggi4007) |
 | 회원 | 회원 프로필 보기, 친구, 팔로우 | moa | `014-friends-follow` | 스펙 작성 중 (담당: hyeonchang) |
 | 모임 | 크루(반영구 모임), 크루원 모집 | moa | - | 008 다음 |
 | 모임 | 크루 내전, 크루 간 경기 매칭 | moa | - | 크루 다음 |
