@@ -74,10 +74,10 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 
 ### 프론트
 
-- [ ] T022 [P] [US1] F/types/withdrawal.ts, F/api/withdrawal.ts(`withdraw`, `recovery`, `recover`), [공용] F/api/index.ts에 `withdrawal`
-- [ ] T023 [US1] F/components/profile/mypage-frame.tsx(머리, 탭 링크 "프로필"·"계정 관리", 권한 확인. 지금 탭은 prop)와 F/app/(account)/account/profile/page.tsx가 그것을 쓰게. 저장하지 않은 프로필이 있으면 기존 `useUnsavedChanges`가 탭 링크를 잡는다. 기존 `profile-page.dom.test.tsx`가 그대로 통과해야 한다 (R10)
-- [ ] T024 [US1] F/components/account-management/: `items.ts`(키·순서·컴포넌트 배열, 지금은 빈 배열), `withdraw-section.tsx`(맨 아래 오른쪽 빨간 단추), `withdraw-dialog.tsx`(안내 세 가지, 닉네임 입력, 같아야 켜짐, 닫으면 비움, V001은 칸 아래). F/app/(account)/account/profile/manage/page.tsx (contracts/screens.md)
-- [ ] T025 [US1] 탈퇴 성공 뒤: `disablePush` → 로그아웃 → `/sign-in?withdrawnUntil=<시각>`. F/components/auth/withdrawal-notice.tsx와 [공용] F/app/(public)/sign-in/page.tsx, [공용] F/lib/next-path.ts(계정 관리·복구 경로), [공용] frontend/messages/ko.json
+- [X] T022 [P] [US1] F/types/withdrawal.ts, F/api/withdrawal.ts(`withdraw`, `recovery`, `recover`), [공용] F/api/index.ts에 `withdrawal`
+- [X] T023 [US1] F/components/profile/mypage-frame.tsx(머리, 탭 링크 "프로필"·"계정 관리", 권한 확인. 지금 탭은 prop)와 F/app/(account)/account/profile/page.tsx가 그것을 쓰게. 저장하지 않은 프로필이 있으면 기존 `useUnsavedChanges`가 탭 링크를 잡는다. 기존 `profile-page.dom.test.tsx`가 그대로 통과해야 한다 (R10)
+- [X] T024 [US1] F/components/account-management/: `items.ts`(키·순서·컴포넌트 배열, 지금은 빈 배열), `withdraw-section.tsx`(맨 아래 오른쪽 빨간 단추), `withdraw-dialog.tsx`(안내 세 가지, 닉네임 입력, 같아야 켜짐, 닫으면 비움, V001은 칸 아래). F/app/(account)/account/profile/manage/page.tsx (contracts/screens.md)
+- [X] T025 [US1] 탈퇴 성공 뒤: 브라우저 구독만 해제(`unsubscribeBrowserOnly`) → `/sign-in?withdrawnUntil=<시각>`을 새로 연다 (research R10). F/components/auth/withdrawal-notice.tsx와 [공용] F/app/(public)/sign-in/page.tsx, [공용] F/lib/next-path.ts(계정 관리·복구 경로), [공용] frontend/messages/ko.json
 
 **Checkpoint**: 탈퇴하고 다음 요청부터 막힌다
 

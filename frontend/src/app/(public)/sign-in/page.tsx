@@ -9,6 +9,7 @@ import { Controller, useForm } from "react-hook-form"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
 import { OAuthErrorAlert } from "@/components/auth/oauth-error-alert"
+import { WithdrawalNotice } from "@/components/auth/withdrawal-notice"
 import { fetchLandingPath } from "@/components/shell/landing"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -75,6 +76,10 @@ export default function SignInPage() {
       <CardContent>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
+            {/* moa: 탈퇴한 뒤의 복구 기한 안내 (?withdrawnUntil=, specs/018-member-withdrawal US1-AC5) */}
+            <Suspense fallback={null}>
+              <WithdrawalNotice />
+            </Suspense>
             {/* moa: 소셜 로그인 실패 안내 (?oauthError=, specs/010-social-login US3) */}
             <Suspense fallback={null}>
               <OAuthErrorAlert />

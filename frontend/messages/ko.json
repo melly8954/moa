@@ -98,7 +98,8 @@
       "disabled": "지금은 이 방식으로 로그인할 수 없어요.",
       "emailUnverified": "제공자에서 이메일 인증을 마친 뒤 다시 시도해 주세요.",
       "emailInUse": "다른 방식으로 가입된 이메일이에요. 원래 방식으로 로그인해 주세요."
-    }
+    },
+    "withdrawnNotice": "탈퇴했어요. {date}까지 다시 로그인하면 복구할 수 있어요."
   },
   "signUp": {
     "title": "닉네임을 정해 주세요",
@@ -193,7 +194,26 @@
     },
     "playTimes": "플레이 가능 시간대",
     "save": "저장",
-    "saved": "프로필을 저장했어요."
+    "saved": "프로필을 저장했어요.",
+    "tabs": {
+      "label": "마이페이지 탭",
+      "profile": "프로필",
+      "manage": "계정 관리"
+    }
+  },
+  "accountManagement": {
+    "withdraw": {
+      "open": "탈퇴하기",
+      "title": "정말 탈퇴할까요?",
+      "noticeRecover": "30일 안에 다시 로그인하면 계정을 복구할 수 있어요.",
+      "noticePurge": "30일이 지나면 계정과 개인정보가 완전히 삭제되고 되돌릴 수 없어요.",
+      "noticeContent": "작성한 글, 댓글, 파티, 메시지는 남고 작성자는 \"탈퇴한 회원\"으로 보여요.",
+      "nicknameLabel": "닉네임",
+      "nicknameHelp": "확인을 위해 지금 닉네임 {nickname}을(를) 입력해 주세요.",
+      "nicknameMismatch": "닉네임이 달라요.",
+      "cancel": "취소",
+      "confirm": "탈퇴하기"
+    }
   },
   "unsaved": {
     "title": "저장하지 않고 나갈까요?",

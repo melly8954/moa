@@ -134,7 +134,7 @@ spec에 미결 표시가 없다. 아래는 spec이 plan에 맡긴 것을 코드�
   - 머리·탭·권한 확인은 `components/profile/mypage-frame.tsx`에 모아 두 화면이 쓴다. 지금 탭은 prop으로 받는다
   - 계정 관리 항목: `components/account-management/items.ts`의 배열(키, 순서, 컴포넌트). 지금은 비어 있다. "탈퇴하기"는 배열 밖에서 늘 맨 아래 오른쪽에 그린다 (US4-AC1·AC2)
   - 확인 창은 입력이 있어 `confirm()`이 아니라 `AlertDialog`로 만든다. 닫으면 입력을 비운다
-  - 탈퇴 뒤: 로그아웃과 같은 순서(`disablePush` → 탈퇴 → `signOut`)로 `/sign-in?withdrawnUntil=<시각>`에 가서 안내를 보인다
+  - 탈퇴 뒤: 서버는 탈퇴 때 리프레시 쿠키와 그 회원의 푸시 구독을 모두 지운다(FR-021). 화면은 브라우저 쪽 구독만 해제하고(`unsubscribeBrowserOnly`) `/sign-in?withdrawnUntil=<시각>`을 새로 연다(`window.location.replace`). 새로 열면 메모리의 액세스 토큰과 캐시도 사라진다. 탈퇴 뒤에는 서버 API를 부르지 않는다: 부르면 A002 → 재발급 A003으로 `AuthGate`가 "로그인이 만료됐어요" 안내를 띄우고 `/sign-in`으로 덮어쓴다. 처음 적은 `disablePush` → 탈퇴 → `signOut` 순서는 탈퇴가 실패해도 알림이 꺼지고, `signOut`이 `AuthGate`를 거쳐 쿼리 없는 `/sign-in`으로 보내 안내가 사라져서 바꿨다
   - 복구 화면 `/sign-in/recover`: 완전 삭제 예정 시각, "복구하기", "취소"
 - **[공용] 파일**: `sign-in/page.tsx`, `next-path.ts`, `ko.json`, `api/index.ts`, `oauth-error-alert.tsx`, 파기 이력 화면. 바꿀 내용을 먼저 보고하고 승인받는다
 
