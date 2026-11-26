@@ -2,7 +2,9 @@ package com.moa.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doReturn;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -17,9 +19,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.support.AbstractMessageChannel;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.moa.api.realtime.BlockedAccountStompInterceptor;
 import com.moa.common.security.Role;
+import com.moa.common.security.access.AccountAccessChecker;
 import com.moa.common.websocket.StompAuthInterceptor;
 import com.moa.support.RealtimeAcceptanceTest;
 import com.moa.support.TestUsers;
@@ -31,6 +35,10 @@ class WithdrawalRealtimeAcceptanceTest extends RealtimeAcceptanceTest {
 
 	private static final long MEMBER = 10L;
 	private static final long OTHER = 11L;
+
+	/** 연결 직후 탈퇴를 만들려고 첫 확인만 바꾼다. 다른 시험에서는 그대로 돈다 */
+	@MockitoSpyBean
+	private AccountAccessChecker accountAccessChecker;
 
 	@Autowired
 	@Qualifier("clientInboundChannel")
@@ -88,6 +96,28 @@ class WithdrawalRealtimeAcceptanceTest extends RealtimeAcceptanceTest {
 		assertThat(second.isConnected()).isFalse();
 		assertThat(other.isConnected()).isTrue();
 		other.disconnect();
+	}
+
+	@Test
+	@DisplayName("FR-006 CONNECT 확인을 지난 직후 탈퇴가 커밋돼 닫기를 비껴간 연결도, 연결이 맺어질 때 다시 확인해 닫는다")
+	void withdrawnRightAfterConnectCheckIsClosed() throws Exception {
+		testUsers.create(MEMBER, "member", null, Role.USER);
+		jdbcTemplate.update("update tb_user set withdrawn_at = ? where id = ?", LocalDateTime.now(), MEMBER);
+		// CONNECT 인터셉터가 물을 때는 아직 탈퇴 전이었던 것으로 둔다 (그 뒤 탈퇴가 커밋된 상황)
+		doReturn(false).doCallRealMethod().when(accountAccessChecker).isBlocked(MEMBER);
+
+		// 서버가 CONNECTED를 보낸 직후 닫으므로, 클라이언트는 연결이 맺어지기 전에 끊기거나 맺어진 직후 끊긴다. 둘 다 연결이 남지 않는다
+		StompSession session;
+		try {
+			session = connect(bearer(MEMBER, Role.USER.name())).get(5, TimeUnit.SECONDS);
+		} catch (ExecutionException closedBeforeConnected) {
+			return;
+		}
+		long deadline = System.currentTimeMillis() + 5000;
+		while (session.isConnected() && System.currentTimeMillis() < deadline) {
+			Thread.sleep(50);
+		}
+		assertThat(session.isConnected()).isFalse();
 	}
 
 	private static int indexOf(List<ChannelInterceptor> interceptors, Class<?> type) {

@@ -51,13 +51,15 @@ spec에 미결 표시가 없다. 아래는 spec이 plan에 맡긴 것을 코드�
   - 새 연결: inbound 채널에 moa 인터셉터(`BlockedAccountStompInterceptor`)를 더한다. 키트 `StompAuthInterceptor`가 정한 `CONNECT`의 사용자가 막힌 계정(`AccountAccessChecker`)이면 거절한다(HTTP와 같이 A002). 키트 `WebSocketConfig`·`StompAuthInterceptor`는 고치지 않는다
     - **순서**: moa 인터셉터는 키트 인증 인터셉터 다음에 돌아야 한다(사용자가 정해진 뒤). 설정(`WebSocketMessageBrokerConfigurer`)의 인터셉터는 설정의 `@Order` 순으로 붙는데, 키트 `WebSocketConfig`는 순서가 없어 `LOWEST_PRECEDENCE`로 정렬되므로 어떤 `@Order`로도 그 뒤에 설 수 없다(같은 값이면 빈 등록 순서라 정해지지 않는다). 그래서 moa 인터셉터는 설정으로 붙이지 않고, `SmartInitializingSingleton`(`BlockedAccountInterceptorRegistrar`)이 모든 설정이 채널을 만든 뒤 `clientInboundChannel`의 맨 끝에 덧붙인다. 서버가 연결을 받기 전이다. 순서는 인수 테스트(`WithdrawalRealtimeAcceptanceTest`)가 확인한다
   - 열린 연결: 회원과 세션의 연결은 Spring `SimpUserRegistry`가 안다(`SessionConnectedEvent`·`SessionDisconnectEvent`로 채운다). moa는 `WebSocketHandlerDecoratorFactory`로 세션 ID → `WebSocketSession`만 기억한다(`RealtimeSessions`). 탈퇴가 커밋된 뒤 `closeAll(userId)`가 레지스트리에서 그 회원의 세션 ID를 찾아 닫는다. 레지스트리는 메시지 브로커 설정을 거쳐 만들어지므로 순환을 피해 `ObjectProvider`로 늦게 찾는다
+  - 연결 직후 탈퇴: CONNECT 확인을 지난 직후 탈퇴가 커밋되면 그 연결은 아직 레지스트리에 없어 `closeAll`을 비껴간다. `RealtimeSessions`가 `SessionConnectedEvent`에서 한 번 더 확인해 막힌 계정이면 닫는다(2026-11-26). 클라이언트는 CONNECTED를 받기 전이나 직후에 끊긴다
   - 닫기는 Application이 커밋 뒤 직접 부른다. "탈퇴됨" 이벤트에 붙는 처리는 없다 (FR-017)
 - **서버가 여럿일 때**: 다른 서버의 세션은 닫지 못한다. 키트 브로커가 서버 메모리라 그 세션에는 개인 메시지도 닿지 않는다(키트 `WebSocketConfig` 주의와 같은 한계). 다시 연결하면 막힌다
 
 ## R4. 탈퇴 API (FR-003~FR-005·FR-009)
 
 - **Decision**: `POST /api/v1/users/me/withdrawal` `{nickname}` → 200 `{purgeAt}`, 리프레시 쿠키를 지운다
-  - 순서: 관리자 계정이면 A201(`MemberActivityPolicy.requireMypageAllowed`) → 회원 행 잠금(`SELECT … FOR UPDATE`) → 닉네임 확인(V001, 칸 `nickname`) → `withdrawn_at` = 지금 → `revokeAll` → 푸시 구독 모두 삭제(`NotificationService.deleteSubscriptionsOf`, FR-021) → "탈퇴됨" 이벤트 → 커밋 → 실시간 연결 닫기
+  - 순서: 회원 행 잠금(`SELECT … FOR UPDATE`) → 관리자 계정이면 A201(`MemberActivityPolicy.requireMypageAllowed`) → 닉네임 확인(V001, 칸 `nickname`) → `withdrawn_at` = 지금 → `revokeAll` → 푸시 구독 모두 삭제(`NotificationService.deleteSubscriptionsOf`, FR-021) → "탈퇴됨" 이벤트 → 커밋 → 실시간 연결 닫기
+  - 잠금이 먼저다: 관리자 확인이 먼저 회원을 읽으면 그 엔터티가 영속성 컨텍스트에 남아, 잠근 뒤의 native 조회도 옛 값(탈퇴 전)을 돌려준다. 그러면 동시에 들어온 두 번째 탈퇴가 시각을 덮는다(2026-11-26 재현·수정). 탈퇴 시각은 DB와 같게 마이크로초로 자른다
   - 닉네임 비교: 입력과 `tb_user.name`을 `NicknamePolicy.normalize`(NFC, 앞뒤 공백 제거)로 맞춘 뒤 `equals`. 대소문자를 구별한다
   - 이미 탈퇴했으면(동시에 두 번) 시각을 바꾸지 않고 같은 `purgeAt`으로 200 (spec Edge Case)
 - **Rationale**: 되돌릴 수 있는 일이라 `DELETE`로 두지 않는다. 확인 값을 본문으로 받는다

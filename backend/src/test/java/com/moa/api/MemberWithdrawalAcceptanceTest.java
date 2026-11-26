@@ -2,6 +2,8 @@ package com.moa.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
@@ -13,6 +15,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,12 +27,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.jayway.jsonpath.JsonPath;
 import com.moa.api.application.v1.notification.NotificationApplication;
 import com.moa.api.dto.notification.NotificationType;
+import com.moa.api.service.user.MemberActivityPolicy;
 import com.moa.common.security.Role;
 import com.moa.common.security.recovery.RecoveryCookies;
 import com.moa.common.security.recovery.RecoveryTicket;
@@ -62,6 +68,11 @@ class MemberWithdrawalAcceptanceTest extends AcceptanceTest {
 	private static final long OTHER_ID = 11L;
 	private static final String LOGIN_ID = "moa_kim";
 	private static final String PASSWORD = "member1234!";
+	private static final String LATE_REQUEST = "late-withdrawal";
+
+	/** 관리자 확인과 행 잠금의 순서를 시험하려고 멈출 자리를 만든다. 다른 시험에서는 그대로 돈다 */
+	@MockitoSpyBean
+	private MemberActivityPolicy memberActivityPolicy;
 
 	@Autowired
 	private TestUsers testUsers;
@@ -227,6 +238,52 @@ class MemberWithdrawalAcceptanceTest extends AcceptanceTest {
 
 		assertThat(recover(login(LOGIN_ID, PASSWORD).getResponse().getCookie(RECOVERY_COOKIE))).hasStatus(200);
 		assertThat(adminListLoginIds(admin)).contains(LOGIN_ID);
+	}
+
+	@Test
+	@DisplayName("Edge 한 요청이 관리자 확인까지 한 사이에 다른 요청이 탈퇴해도 탈퇴는 한 번이고, 탈퇴 시각이 덮이지 않는다")
+	void interleavedWithdrawalsKeepFirstTime() throws Exception {
+		CountDownLatch checked = new CountDownLatch(1);
+		CountDownLatch release = new CountDownLatch(1);
+		// "늦은 요청"은 관리자 확인을 마친 뒤 멈춘다. 그 사이 "먼저 끝난 요청"이 탈퇴를 마치려 한다
+		doAnswer(invocation -> {
+			invocation.callRealMethod();
+			if (LATE_REQUEST.equals(Thread.currentThread().getName())) {
+				checked.countDown();
+				release.await(10, TimeUnit.SECONDS);
+			}
+			return null;
+		}).when(memberActivityPolicy).requireMypageAllowed(anyLong());
+		ExecutorService executor = Executors.newFixedThreadPool(2);
+		try {
+			Future<MvcTestResult> late = executor.submit(() -> {
+				Thread.currentThread().setName(LATE_REQUEST);
+				return withdraw(member, LOGIN_ID);
+			});
+			assertThat(checked.await(10, TimeUnit.SECONDS)).isTrue();
+			Future<MvcTestResult> early = executor.submit(() -> {
+				Thread.currentThread().setName("early-withdrawal");
+				return withdraw(member, LOGIN_ID);
+			});
+			// 고친 뒤에는 늦은 요청이 행을 잡고 있어 먼저 끝나지 못한다. 잠깐 기다린 뒤 늦은 요청을 풀어 준다
+			try {
+				early.get(1, TimeUnit.SECONDS);
+			} catch (TimeoutException ignored) {
+				// 행 잠금을 기다리는 중
+			}
+			release.countDown();
+
+			MvcTestResult first = early.get(30, TimeUnit.SECONDS);
+			MvcTestResult second = late.get(30, TimeUnit.SECONDS);
+			assertThat(first).hasStatus(200);
+			assertThat(second).hasStatus(200);
+			String purgeAt = JsonPath.read(body(first), "$.purgeAt");
+			assertThat((String)JsonPath.read(body(second), "$.purgeAt")).isEqualTo(purgeAt);
+			assertThat(withdrawnAt(MEMBER_ID).plusDays(30)).isEqualTo(OffsetDateTime.parse(purgeAt).toLocalDateTime());
+		} finally {
+			release.countDown();
+			executor.shutdownNow();
+		}
 	}
 
 	@Test

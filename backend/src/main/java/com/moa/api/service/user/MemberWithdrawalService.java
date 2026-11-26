@@ -28,6 +28,17 @@ public class MemberWithdrawalService {
 	private final WithdrawalProperties withdrawalProperties;
 
 	/**
+	 * 탈퇴 전에 회원 행을 잠근다. 트랜잭션 안에서 다른 조회보다 먼저 부른다.
+	 * 다른 조회(관리자 확인 등)가 먼저 엔터티를 올리면, 잠근 뒤에도 Hibernate가 그 옛 엔터티를 돌려줘 동시에 들어온 탈퇴의 시각을 덮는다.
+	 *
+	 * @throws ServiceException 없는 회원이면 R001
+	 */
+	public void lock(Long userId) {
+		userReader.findForUpdateIncludingWithdrawn(userId)
+			.orElseThrow(() -> new ServiceException(ErrorCode.NOT_FOUND));
+	}
+
+	/**
 	 * 닉네임을 확인하고 탈퇴시킨다. 회원 행을 잠가 읽으므로 트랜잭션 안에서 부른다.
 	 *
 	 * @param nickname 회원이 입력한 닉네임. 앞뒤 공백·유니코드 정규화를 맞춘 뒤 대소문자를 구별해 비교한다
