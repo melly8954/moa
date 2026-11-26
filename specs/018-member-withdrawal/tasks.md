@@ -126,16 +126,16 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 
 **Independent Test**: 시험용 항목과 시험용 리스너를 붙여 본다
 
-- [ ] T041 [US4] F/components/account-management/items.ts: 항목을 순서대로 그리고 "탈퇴하기"를 늘 맨 아래에 두는지, 빈 배열이면 빈 자리가 없는지 (T024에서 만든 것을 다듬는다). 항목을 더하는 방법을 주석에 적는다
-- [ ] T042 [US4] T009 이벤트 세 개의 Javadoc에 붙이는 방법을 적는다: `@TransactionalEventListener(AFTER_COMMIT)`, "탈퇴됨"은 되돌릴 수 있는 것만, 개인정보 삭제는 "파기됨"에, 실패 기록과 다시 시도는 붙이는 기능의 몫 (FR-017)
+- [X] T041 [US4] F/components/account-management/items.ts: 항목을 순서대로 그리고 "탈퇴하기"를 늘 맨 아래에 두는지, 빈 배열이면 빈 자리가 없는지 (T024에서 만든 것을 다듬는다). 항목을 더하는 방법을 주석에 적는다
+- [X] T042 [US4] T009 이벤트 세 개의 Javadoc에 붙이는 방법을 적는다: `@TransactionalEventListener(AFTER_COMMIT)`, "탈퇴됨"은 되돌릴 수 있는 것만, 개인정보 삭제는 "파기됨"에, 실패 기록과 다시 시도는 붙이는 기능의 몫 (FR-017)
 
 ---
 
 ## Phase 7: Polish
 
-- [ ] T043 backend/에서 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build`
-- [ ] T044 frontend/에서 `npm run gen:api`(사용자가 띄운 local 백엔드)로 F/types/schema.d.ts를 다시 만들고 T022의 손으로 쓴 타입을 바꾼 뒤 `npm run format`, `npm run check`
-- [ ] T045 문서: `docs/privacy.md` 보관 기간 표의 "회원 탈퇴 스펙" 칸을 `018`로, specs/013-purge-log contracts·data-model의 값 목록에 `MEMBER`, specs/README.md 018 상태. 013(haily 문서)은 바뀐 줄을 보고한다
+- [X] T043 backend/에서 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build`
+- [X] T044 frontend/에서 `npm run gen:api`(사용자가 띄운 local 백엔드)로 F/types/schema.d.ts를 다시 만들고 T022의 손으로 쓴 타입을 바꾼 뒤 `npm run format`, `npm run check`
+- [X] T045 문서: `docs/privacy.md` 보관 기간 표의 "회원 탈퇴 스펙" 칸을 `018`로, specs/013-purge-log contracts·data-model의 값 목록에 `MEMBER`, specs/README.md 018 상태. 013(haily 문서)은 바뀐 줄을 보고한다
 - [ ] T046 quickstart.md "수동 확인"을 사람이 직접 한다
 - [ ] T047 plan.md "담당자 알림 목록"을 PR 설명에 적어 각 담당에게 알린다 (사람이 한다)
 
@@ -200,21 +200,21 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 
 ### 작업
 
-- [ ] T048 BT/api/MemberWithdrawalAcceptanceTest.java(`AcceptanceTest` 상속, `CodeSeed.restore()`): US1의 "인수" AC. Edge: 동시에 두 번 탈퇴, 탈퇴와 겹친 재발급, 탈퇴 뒤 로그인 없이 되는 API
-- [ ] T049 BT/api/MemberWithdrawalAcceptanceTest.java에 US2의 "인수" AC(US2-AC6 제외). Edge: 다시 탈퇴한 뒤의 옛 복구 쿠키, 유예 중 잠김
-- [ ] T050 [P] BT/api/MemberPurgeAcceptanceTest.java: US2-AC6, US3-AC1~AC5·AC8~AC13·AC15·AC16. 파기를 동시에 두 번, 복구와 파기를 동시에, 지운 회원의 아이디를 새 계정이 쓰는 중
-- [ ] T051 [P] BT/api/MemberPurgeFailureAcceptanceTest.java(스파이·시험용 리스너, 따로 뜨는 컨텍스트): US3-AC6·AC7·AC14, US4-AC3~AC6
-- [ ] T052 [P] BT/api/service/user/: `MemberDisplayTest`, 복구 쿠키 단위 테스트(위조·만료·용도 다름)
-- [ ] T053 [P] frontend/tests/unit/account-management.dom.test.tsx: US1-AC1·AC2·AC3·AC9, US4-AC1·AC2
-- [ ] T054 [P] frontend/tests/unit/recover-page.dom.test.tsx: US2-AC5, A403이면 로그인 화면, 로그인 A401이면 복구 화면
-- [ ] T055 [P] frontend/e2e/withdrawal.spec.ts: 핵심 흐름 둘 — US1-AC5(탈퇴 → 로그인 화면 안내), US2-AC4(로그인 → 복구 → 첫 화면)
-- [ ] T056 [P] BT/api/WithdrawalRealtimeAcceptanceTest.java(`RealtimeAcceptanceTest` 상속): 탈퇴하면 열린 연결이 닫히고 다시 연결할 수 없다 (FR-006)
-- [ ] T057 기존 인수·단위·e2e 테스트를 바꿀 것이 나오면 고치지 않고 이유와 함께 먼저 묻는다 (원칙 V)
-- [ ] T058 PR 직전 `git fetch` 뒤 dev를 병합하고 마이그레이션 번호를 마지막 + 1로 정한다(파일 이름 바꾸기), `bash scripts/check-migration-numbers.sh`
-- [ ] T059 `npm run check`
-- [ ] T060 **백엔드 테스트 전체**: `.\gradlew.bat build`, `.\gradlew.bat dbTest`를 로컬에서 돌린다 (사용자 지시)
-- [ ] T061 push 전에 **e2e 전체**(`npm run test:e2e`)를 로컬에서 돌린다. [공용] 프론트 파일(`sign-in`, `next-path.ts`, `ko.json`)을 바꿨기 때문이다
-- [ ] T062 **첫 실행 확인** (구현 PR 병합 전): 관리자가 지운 지 30일이 넘은 회원 수를 세어 보여주고 사용자 확인을 받는다. 처음 돌 때 되돌릴 수 없이 한꺼번에 파기되기 때문이다 (FR-019). 조회만 한다: `SELECT COUNT(*) FROM tb_user WHERE role = 'USER' AND deleted_at <= NOW(6) - INTERVAL 30 DAY AND id <> 1`(시스템 계정 제외). 로컬 DB에서 세고, 데이터가 있는 다른 환경(개발·운영)이 있으면 사람이 같은 조회를 돌려 수를 알린다. 수를 PR 설명에 적고 haily에게 알린다
+- [X] T048 BT/api/MemberWithdrawalAcceptanceTest.java(`AcceptanceTest` 상속, `CodeSeed.restore()`): US1의 "인수" AC. Edge: 동시에 두 번 탈퇴, 탈퇴와 겹친 재발급, 탈퇴 뒤 로그인 없이 되는 API
+- [X] T049 BT/api/MemberWithdrawalAcceptanceTest.java에 US2의 "인수" AC(US2-AC6 제외). Edge: 다시 탈퇴한 뒤의 옛 복구 쿠키, 유예 중 잠김
+- [X] T050 [P] BT/api/MemberPurgeAcceptanceTest.java: US2-AC6, US3-AC1~AC5·AC8~AC13·AC15·AC16. 파기를 동시에 두 번, 복구와 파기를 동시에, 지운 회원의 아이디를 새 계정이 쓰는 중
+- [X] T051 [P] BT/api/MemberPurgeFailureAcceptanceTest.java(스파이·시험용 리스너, 따로 뜨는 컨텍스트): US3-AC6·AC7·AC14, US4-AC3~AC6
+- [X] T052 [P] BT/api/service/user/: `MemberDisplayTest`, 복구 쿠키 단위 테스트(위조·만료·용도 다름)
+- [X] T053 [P] frontend/tests/unit/account-management.dom.test.tsx: US1-AC1·AC2·AC3·AC9, US4-AC1·AC2
+- [X] T054 [P] frontend/tests/unit/recover-page.dom.test.tsx: US2-AC5, A403이면 로그인 화면, 로그인 A401이면 복구 화면
+- [X] T055 [P] frontend/e2e/withdrawal.spec.ts: 핵심 흐름 둘 — US1-AC5(탈퇴 → 로그인 화면 안내), US2-AC4(로그인 → 복구 → 첫 화면)
+- [X] T056 [P] BT/api/WithdrawalRealtimeAcceptanceTest.java(`RealtimeAcceptanceTest` 상속): 탈퇴하면 열린 연결이 닫히고 다시 연결할 수 없다 (FR-006)
+- [X] T057 기존 인수·단위·e2e 테스트를 바꿀 것이 나오면 고치지 않고 이유와 함께 먼저 묻는다 (원칙 V) — **이번 구현**: 바꾼 기존 테스트 없음
+- [X] T058 PR 직전 `git fetch` 뒤 dev를 병합하고 마이그레이션 번호를 마지막 + 1로 정한다(파일 이름 바꾸기), `bash scripts/check-migration-numbers.sh` — **이번 구현**: dev에 새 커밋 없음, V13 그대로, 검사 통과
+- [X] T059 `npm run check`
+- [X] T060 **백엔드 테스트 전체**: `.\gradlew.bat build`, `.\gradlew.bat dbTest`를 로컬에서 돌린다 (사용자 지시) — **이번 구현**: build 통과, dbTest 32개 클래스 326개 통과
+- [X] T061 push 전에 **e2e 전체**(`npm run test:e2e`)를 로컬에서 돌린다. [공용] 프론트 파일(`sign-in`, `next-path.ts`, `ko.json`)을 바꿨기 때문이다 — **이번 구현**: 318개 통과, 2개는 폭 조건으로 원래 건너뜀
+- [ ] T062 **첫 실행 확인** (구현 PR 병합 전): 관리자가 지운 지 30일이 넘은 회원 수를 세어 보여주고 사용자 확인을 받는다. 처음 돌 때 되돌릴 수 없이 한꺼번에 파기되기 때문이다 (FR-019). 조회만 한다: `SELECT COUNT(*) FROM tb_user WHERE role = 'USER' AND deleted_at <= NOW(6) - INTERVAL 30 DAY AND id <> 1`(시스템 계정 제외). 로컬 DB에서 세고, 데이터가 있는 다른 환경(개발·운영)이 있으면 사람이 같은 조회를 돌려 수를 알린다. 수를 PR 설명에 적고 haily에게 알린다 — **이번 구현**: 로컬 DB는 0명(관리자가 지운 지 30일 넘은 USER 0, 탈퇴한 지 30일 넘은 회원 0, 2026-11-26). 공용 서버(개발·운영) DB는 사용자가 따로 확인한다
 
 ---
 
