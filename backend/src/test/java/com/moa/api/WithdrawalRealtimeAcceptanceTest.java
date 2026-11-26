@@ -11,6 +11,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.support.AbstractMessageChannel;
@@ -28,6 +30,7 @@ import com.moa.support.TestUsers;
 class WithdrawalRealtimeAcceptanceTest extends RealtimeAcceptanceTest {
 
 	private static final long MEMBER = 10L;
+	private static final long OTHER = 11L;
 
 	@Autowired
 	@Qualifier("clientInboundChannel")
@@ -62,6 +65,29 @@ class WithdrawalRealtimeAcceptanceTest extends RealtimeAcceptanceTest {
 
 		assertThatThrownBy(() -> connect(bearer(MEMBER, Role.USER.name())).get(5, TimeUnit.SECONDS))
 			.isInstanceOf(ExecutionException.class);
+	}
+
+	@Test
+	@DisplayName("FR-006 탈퇴하면 이 서버에 열린 그 회원의 연결이 닫히고, 다른 회원의 연결은 그대로다")
+	void withdrawalClosesOpenConnections() throws Exception {
+		testUsers.create(MEMBER, "member", null, Role.USER);
+		testUsers.create(OTHER, "other", null, Role.USER);
+		StompSession first = connected(MEMBER, Role.USER.name());
+		StompSession second = connected(MEMBER, Role.USER.name());
+		StompSession other = connected(OTHER, Role.USER.name());
+
+		assertThat(mvc.post().uri("/api/v1/users/me/withdrawal")
+			.header(HttpHeaders.AUTHORIZATION, bearer(MEMBER, Role.USER.name()))
+			.contentType(MediaType.APPLICATION_JSON).content("{\"nickname\":\"member\"}").exchange()).hasStatus(200);
+
+		long deadline = System.currentTimeMillis() + 5000;
+		while ((first.isConnected() || second.isConnected()) && System.currentTimeMillis() < deadline) {
+			Thread.sleep(50);
+		}
+		assertThat(first.isConnected()).isFalse();
+		assertThat(second.isConnected()).isFalse();
+		assertThat(other.isConnected()).isTrue();
+		other.disconnect();
 	}
 
 	private static int indexOf(List<ChannelInterceptor> interceptors, Class<?> type) {
