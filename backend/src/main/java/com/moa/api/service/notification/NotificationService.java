@@ -91,6 +91,12 @@ public class NotificationService {
 		return notificationWriter.deleteSubscriptionsOf(userId);
 	}
 
+	/** 파기한 회원의 알림과 푸시 구독을 모두 지운다 (specs/018-member-withdrawal FR-013) */
+	public void deleteAllOf(Long userId) {
+		notificationWriter.deleteNotificationsOf(userId);
+		notificationWriter.deleteSubscriptionsOf(userId);
+	}
+
 	/** 만료된 구독을 지운다 (푸시 서버가 404·410을 돌려줬을 때) */
 	public void deleteSubscription(String endpoint) {
 		notificationReader.findSubscription(endpoint).ifPresent(notificationWriter::deleteSubscription);

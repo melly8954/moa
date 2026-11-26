@@ -115,6 +115,11 @@ public class NoticeService {
 		return noticeReader.existsPublishedAfter(lastSeen);
 	}
 
+	/** 파기한 회원의 공지 확인 기록을 지운다 (specs/018-member-withdrawal FR-013). 없으면 그대로 */
+	public void deleteReadOf(Long userId) {
+		noticeWriter.deleteRead(userId);
+	}
+
 	private Notice require(Long id) {
 		return noticeReader.findById(id).orElseThrow(() -> new ServiceException(ErrorCode.NOT_FOUND));
 	}

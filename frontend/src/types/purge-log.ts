@@ -1,6 +1,6 @@
 // 파기 이력 API의 응답·조건 (moa, specs/013-purge-log. 백엔드 PurgeLogListResponse)
 
-export type PurgeTarget = "LOGIN_HISTORY" | "NOTIFICATION" | "REFRESH_TOKEN" | "RICH_TEXT_IMAGE"
+export type PurgeTarget = "LOGIN_HISTORY" | "NOTIFICATION" | "REFRESH_TOKEN" | "RICH_TEXT_IMAGE" | "MEMBER"
 
 export type PurgeLog = {
   id: number

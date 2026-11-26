@@ -108,13 +108,13 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 
 **Independent Test**: 시각을 앞당긴 회원들을 두고 정리를 돌려 저장된 것과 파기 이력을 본다
 
-- [ ] T034 [US3] [haily, 승인됨] B/common/purgelog/PurgeTarget.java에 `MEMBER`(주석 "회원 (탈퇴·관리자 삭제)"), F/types/purge-log.ts, F/app/(admin)/admin/purge-logs/page.tsx `TARGETS`, ko.json `purgeLog` 종류 이름 "회원"
-- [ ] T035 [US3] B/api/repository/{jpa,reader,writer}/user/: 파기 대상 ID(native, research R6의 두 조건, 시스템 계정 제외), 행 잠금과 다시 확인용 조회(native `for update`), 회원 행 덮기(native UPDATE, data-model "파기할 때"), 프로필·시간대·게임 정보·소셜·약관 동의 행 삭제. `tb_user_game_profile`은 엔터티가 없으므로 native DELETE
-- [ ] T036 [US3] [haily, 승인됨] B/api/service/notification/NotificationService.java(알림·푸시 구독 지우기), B/api/service/notice/NoticeService.java(공지 확인 지우기)와 그 writer. 메서드 더하기만
-- [ ] T037 [P] [US3] B/common/security/token/RefreshTokenEraser.java: 그 회원의 `tb_refresh_token` 행 DELETE. 키트 `RefreshTokenRepository`·`AuthTokenService`는 고치지 않는다
-- [ ] T038 [US3] B/api/service/user/MemberPurgeService.java: 대상 ID 찾기, `eraseIfDue(userId, cutoff, now)`(잠금 → 다시 확인 → 회원 도메인 행 삭제 → 회원 행 덮기, 대상이 아니면 거짓)
-- [ ] T039 [US3] B/api/application/v1/user/MemberPurgeApplication.java: 회원마다 `TransactionTemplate` 하나로 T038 → T036 → T037 → `PersonalDataPurgedEvent(MEMBER, COLUMN_ERASE, 1, null, userId)` → `MemberPurgedEvent`. 한 회원이 실패하면 회원 ID와 예외 클래스 이름만 로그에 남기고 계속한다. 파기한 수를 돌려준다 (R6·R9)
-- [ ] T040 [US3] B/api/scheduler/MemberPurgeCleaner.java: `@Scheduled(cron = "${app.withdrawal.cleanup-cron:0 20 5 * * *}", zone = "${app.withdrawal.cleanup-zone:Asia/Seoul}")` (서버 시간대와 상관없이 Asia/Seoul 05:20). 파기한 수를 로그에, 유예가 끝난 뒤 4일이 지나도 남은 회원이 있으면 그 수를 ERROR로
+- [X] T034 [US3] [haily, 승인됨] B/common/purgelog/PurgeTarget.java에 `MEMBER`(주석 "회원 (탈퇴·관리자 삭제)"), F/types/purge-log.ts, F/app/(admin)/admin/purge-logs/page.tsx `TARGETS`, ko.json `purgeLog` 종류 이름 "회원"
+- [X] T035 [US3] B/api/repository/{jpa,reader,writer}/user/: 파기 대상 ID(native, research R6의 두 조건, 시스템 계정 제외), 행 잠금과 다시 확인용 조회(native `for update`), 회원 행 덮기(native UPDATE, data-model "파기할 때"), 프로필·시간대·게임 정보·소셜·약관 동의 행 삭제. `tb_user_game_profile`은 엔터티가 없으므로 native DELETE
+- [X] T036 [US3] [haily, 승인됨] B/api/service/notification/NotificationService.java(알림·푸시 구독 지우기), B/api/service/notice/NoticeService.java(공지 확인 지우기)와 그 writer. 메서드 더하기만
+- [X] T037 [P] [US3] B/common/security/token/RefreshTokenEraser.java: 그 회원의 `tb_refresh_token` 행 DELETE. 키트 `RefreshTokenRepository`·`AuthTokenService`는 고치지 않는다
+- [X] T038 [US3] B/api/service/user/MemberPurgeService.java: 대상 ID 찾기, `eraseIfDue(userId, cutoff, now)`(잠금 → 다시 확인 → 회원 도메인 행 삭제 → 회원 행 덮기, 대상이 아니면 거짓)
+- [X] T039 [US3] B/api/application/v1/user/MemberPurgeApplication.java: 회원마다 `TransactionTemplate` 하나로 T038 → T036 → T037 → `PersonalDataPurgedEvent(MEMBER, COLUMN_ERASE, 1, null, userId)` → `MemberPurgedEvent`. 한 회원이 실패하면 회원 ID와 예외 클래스 이름만 로그에 남기고 계속한다. 파기한 수를 돌려준다 (R6·R9)
+- [X] T040 [US3] B/api/scheduler/MemberPurgeCleaner.java: `@Scheduled(cron = "${app.withdrawal.cleanup-cron:0 20 5 * * *}", zone = "${app.withdrawal.cleanup-zone:Asia/Seoul}")` (서버 시간대와 상관없이 Asia/Seoul 05:20). 파기한 수를 로그에, 유예가 끝난 뒤 4일이 지나도 남은 회원이 있으면 그 수를 ERROR로
 
 **Checkpoint**: 두 종류의 회원이 파기되고 이력이 남는다
 

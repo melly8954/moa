@@ -32,6 +32,11 @@ public class NotificationWriter {
 		return notificationRepository.deleteCreatedBefore(cutoff);
 	}
 
+	/** 이 회원의 알림을 모두 지운다. 지운 수를 돌려준다 */
+	public int deleteNotificationsOf(Long userId) {
+		return notificationRepository.deleteByUserId(userId);
+	}
+
 	public PushSubscription saveSubscription(PushSubscription subscription) {
 		return pushSubscriptionRepository.save(subscription);
 	}
