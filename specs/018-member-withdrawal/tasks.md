@@ -136,7 +136,7 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 - [X] T043 backend/에서 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build`
 - [X] T044 frontend/에서 `npm run gen:api`(사용자가 띄운 local 백엔드)로 F/types/schema.d.ts를 다시 만들고 T022의 손으로 쓴 타입을 바꾼 뒤 `npm run format`, `npm run check`
 - [X] T045 문서: `docs/privacy.md` 보관 기간 표의 "회원 탈퇴 스펙" 칸을 `018`로, specs/013-purge-log contracts·data-model의 값 목록에 `MEMBER`, specs/README.md 018 상태. 013(haily 문서)은 바뀐 줄을 보고한다
-- [ ] T046 quickstart.md "수동 확인"을 사람이 직접 한다
+- [X] T046 quickstart.md "수동 확인"을 사람이 직접 한다 — **이번 구현** (2026-11-26, 사용자 확인, 문제 없음): 비밀번호·구글 회원 탈퇴→복구, 틀린 비밀번호는 일반 실패(A006), 유예 중 관리자 목록에서 숨김·복구 뒤 다시 보임, 31일 앞당긴 구글 회원 파기(tb_user 덮기, 딸린 행 0, 파기 이력 MEMBER 1건, 관리자 파기 이력 화면에 "회원"), 파기 뒤 같은 구글 계정은 새 가입 화면, 활동 회원 실시간 연결 정상
 - [ ] T047 plan.md "담당자 알림 목록"을 PR 설명에 적어 각 담당에게 알린다 (사람이 한다)
 
 ---
