@@ -19,6 +19,12 @@ export function safeNextPath(value: string | null | undefined): string | undefin
   return value
 }
 
+// moa: 복구 화면 주소. 로그인 뒤 돌아갈 주소(next)를 이어 붙인다 (specs/018-member-withdrawal contracts/screens.md)
+export function recoverPath(next?: string): string {
+  const safe = safeNextPath(next)
+  return safe && safe !== "/" ? `${RECOVER_PATH}?next=${encodeURIComponent(safe)}` : RECOVER_PATH
+}
+
 // moa: 탈퇴한 뒤의 로그인 화면. 복구 기한(완전 삭제 예정 시각)을 안내한다 (specs/018-member-withdrawal US1-AC5)
 export function withdrawnSignInPath(purgeAt: string): string {
   return `${SIGN_IN_PATH}?withdrawnUntil=${encodeURIComponent(purgeAt)}`

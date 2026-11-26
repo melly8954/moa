@@ -1,5 +1,6 @@
 package com.moa.api.application.v1.auth;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -14,6 +15,7 @@ import com.moa.api.dto.user.SocialSignUpCheck;
 import com.moa.api.dto.user.UserDto;
 import com.moa.api.service.user.NicknameTags;
 import com.moa.api.service.user.SocialAccountService;
+import com.moa.api.service.user.WithdrawalProperties;
 import com.moa.common.exception.ErrorCode;
 import com.moa.common.security.LoginAttemptedEvent;
 import com.moa.common.security.oauth.OAuthCookies;
@@ -26,6 +28,8 @@ import com.moa.common.security.oauth.OAuthSecrets;
 import com.moa.common.security.oauth.OAuthSignup;
 import com.moa.common.security.oauth.OAuthState;
 import com.moa.common.security.oauth.SocialProvider;
+import com.moa.common.security.recovery.RecoveryCookies;
+import com.moa.common.security.recovery.RecoveryTicket;
 import com.moa.common.security.token.AuthTokenService;
 import com.moa.common.security.token.IssuedTokens;
 import com.moa.common.security.token.RefreshTokenTransport;
@@ -52,6 +56,8 @@ public class SocialLoginApplication {
 	static final String SIGN_IN_PATH = "/sign-in";
 	static final String SIGN_UP_PATH = "/sign-up/nickname";
 	static final String DONE_PATH = "/auth/oauth/done";
+	/** moa 018: 탈퇴한 계정 복구 화면 (specs/018-member-withdrawal research R5) */
+	static final String RECOVER_PATH = "/sign-in/recover";
 	private static final String LOGIN_MODE = "login";
 	private static final String ACCESS_DENIED = "access_denied";
 	private static final int SUBJECT_PREFIX_LENGTH = 8;
@@ -63,6 +69,8 @@ public class SocialLoginApplication {
 	private final RefreshTokenTransport refreshTokenTransport;
 	private final TransactionTemplate transactionTemplate;
 	private final ApplicationEventPublisher eventPublisher;
+	private final RecoveryCookies recoveryCookies;
+	private final WithdrawalProperties withdrawalProperties;
 
 	/**
 	 * 인가 시작 (contracts "authorize", US1). state·nonce·PKCE를 만들어 oauth_state 쿠키에 담고 제공자 인가 화면 주소를 준다.
@@ -92,6 +100,7 @@ public class SocialLoginApplication {
 	 *   <li>취소(access_denied): 안내 없이 로그인 화면</li>
 	 *   <li>state·제공자 불일치, 교환·확인 실패: oauthError=failed</li>
 	 *   <li>연결된 회원: 잠겼으면 oauthError=locked, 아니면 토큰 발급 뒤 /auth/oauth/done</li>
+	 *   <li>moa 018 연결된 회원이 탈퇴함: 유예 중이면 복구 쿠키 + /sign-in/recover, 유예가 지났으면 oauthError=purgePending</li>
 	 *   <li>연결 없음: 가입 확인에 막히면 oauthError=emailUnverified|emailInUse, 통과하면 회원을 만들지 않고
 	 *       oauth_signup 쿠키를 심어 닉네임 화면</li>
 	 * </ul>
@@ -178,12 +187,26 @@ public class SocialLoginApplication {
 		return tokens;
 	}
 
-	/** 연결된 회원 로그인 (FR-003, US2). 잠긴 회원은 아이디·비밀번호 로그인과 똑같이 막는다 */
+	/**
+	 * 연결된 회원 로그인 (FR-003, US2). 잠긴 회원은 아이디·비밀번호 로그인과 똑같이 막는다.
+	 * moa 018: 탈퇴한 회원도 같은 순서로 막는다. 잠김 → 유예 중(복구 쿠키 + 복구 화면, 실패 A401) → 파기 대기(실패 A402)
+	 * (specs/018-member-withdrawal research R5, contracts 콜백 표)
+	 */
 	private String logIn(SocialLoginUserDto linked, String next, HttpServletRequest request,
 		HttpServletResponse response) {
 		if (linked.locked()) {
 			recordFailure(linked.user().loginId(), ErrorCode.ACCOUNT_LOCKED);
 			return signInWithError("locked");
+		}
+		LocalDateTime withdrawnAt = linked.withdrawnAt();
+		if (withdrawnAt != null) {
+			if (withdrawalProperties.recoverable(withdrawnAt, LocalDateTime.now())) {
+				recordFailure(linked.user().loginId(), ErrorCode.ACCOUNT_WITHDRAWN);
+				recoveryCookies.write(response, new RecoveryTicket(linked.user().id(), withdrawnAt));
+				return withNext(RECOVER_PATH, next);
+			}
+			recordFailure(linked.user().loginId(), ErrorCode.ACCOUNT_PURGE_PENDING);
+			return signInWithError("purgePending");
 		}
 		IssuedTokens tokens = authTokenService.issue(linked.user().toPrincipal());
 		refreshTokenTransport.write(request, response, tokens);

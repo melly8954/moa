@@ -89,14 +89,14 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 
 **Independent Test**: 탈퇴한 회원으로 로그인해 안내를 보고 복구한 뒤 프로필과 관리자 목록을 본다
 
-- [ ] T026 [US2] B/common/security/recovery/: `RecoveryCookies`(`withdrawal_recovery`, 회원 ID·탈퇴 시각 서명, 발급자 `…:recovery`, 10분, HttpOnly, `SameSite=Strict`, Path `/api/v1/auth/recovery`), `WithdrawnAccountException extends ServiceException`(회원 ID, 탈퇴 시각), 높은 순서의 `@RestControllerAdvice`(쿠키를 쓰고 같은 `ErrorResponse`). 키트 `GlobalExceptionHandler`·`ApiAuthTokenController`는 고치지 않는다 (R5)
-- [ ] T027 [US2] [공용] B/api/service/user/UserService.java `authenticate`: 비밀번호 틀림 A006 → 잠김 A007 → 유예 중 `WithdrawnAccountException`(A401) → 파기 대기 A402. A401·A402도 `LoginAttemptedEvent.failed`. **탈퇴 확인은 비밀번호가 맞은 다음에만 한다**(사용자 조건). 틀린 비밀번호에서는 탈퇴를 보지 않고 지금과 같은 A006이다 (T006·T007·T010·T026 뒤)
-- [ ] T028 [US2] [공용] B/api/service/user/SocialAccountService.java `findLinkedUser`를 `findIncludingWithdrawn`으로, B/api/dto/user/SocialLoginUserDto.java에 탈퇴 상태, B/api/application/v1/auth/SocialLoginApplication.java `logIn`: 잠김 → 유예 중(쿠키 + `/sign-in/recover`, 실패 이력 A401) → 파기 대기(`oauthError=purgePending`, A402) (010 콜백 표)
-- [ ] T029 [US2] B/api/service/user/MemberWithdrawalService.java `restore(userId, withdrawnAt, now)`: 잠긴 행에서 쿠키의 탈퇴 시각과 같은지(아니면 A403), 잠김 A007, 유예 지남 A402, 아니면 `user.restore()` (T019 뒤)
-- [ ] T030 [US2] B/api/application/v1/user/AccountRecoveryApplication.java: 트랜잭션 안에서 T029 → `revokeAll` → `MemberRestoredEvent`. 커밋 뒤 `AuthTokenService.issue`, `LoginAttemptedEvent.succeeded`. `getRecovery`(쿠키의 회원이 지금도 그 탈퇴 상태인지 보고 `purgeAt`)
-- [ ] T031 [US2] B/api/controller/v1/auth/ApiAccountRecoveryController.java(`@PermitAll`): `GET`·`POST /api/v1/auth/recovery` (contracts/withdrawal-api.md)
-- [ ] T032 [US2] F/app/(public)/sign-in/recover/page.tsx: 완전 삭제 예정 시각, "복구하기", "취소". A403이면 `/sign-in`. 성공하면 로그인과 같이 `next` 또는 첫 화면 (T022·T025 뒤)
-- [ ] T033 [US2] [공용] F/app/(public)/sign-in/page.tsx: A401이면 `/sign-in/recover`(`next` 붙임). [공용] F/components/auth/oauth-error-alert.tsx에 `purgePending`, ko.json 문구
+- [X] T026 [US2] B/common/security/recovery/: `RecoveryCookies`(`withdrawal_recovery`, 회원 ID·탈퇴 시각 서명, 발급자 `…:recovery`, 10분, HttpOnly, `SameSite=Strict`, Path `/api/v1/auth/recovery`), `WithdrawnAccountException extends ServiceException`(회원 ID, 탈퇴 시각), 높은 순서의 `@RestControllerAdvice`(쿠키를 쓰고 같은 `ErrorResponse`). 키트 `GlobalExceptionHandler`·`ApiAuthTokenController`는 고치지 않는다 (R5)
+- [X] T027 [US2] [공용] B/api/service/user/UserService.java `authenticate`: 비밀번호 틀림 A006 → 잠김 A007 → 유예 중 `WithdrawnAccountException`(A401) → 파기 대기 A402. A401·A402도 `LoginAttemptedEvent.failed`. **탈퇴 확인은 비밀번호가 맞은 다음에만 한다**(사용자 조건). 틀린 비밀번호에서는 탈퇴를 보지 않고 지금과 같은 A006이다 (T006·T007·T010·T026 뒤)
+- [X] T028 [US2] [공용] B/api/service/user/SocialAccountService.java `findLinkedUser`를 `findIncludingWithdrawn`으로, B/api/dto/user/SocialLoginUserDto.java에 탈퇴 상태, B/api/application/v1/auth/SocialLoginApplication.java `logIn`: 잠김 → 유예 중(쿠키 + `/sign-in/recover`, 실패 이력 A401) → 파기 대기(`oauthError=purgePending`, A402) (010 콜백 표)
+- [X] T029 [US2] B/api/service/user/MemberWithdrawalService.java `restore(userId, withdrawnAt, now)`: 잠긴 행에서 쿠키의 탈퇴 시각과 같은지(아니면 A403), 잠김 A007, 유예 지남 A402, 아니면 `user.restore()` (T019 뒤)
+- [X] T030 [US2] B/api/application/v1/user/AccountRecoveryApplication.java: 트랜잭션 안에서 T029 → `revokeAll` → `MemberRestoredEvent`. 커밋 뒤 `AuthTokenService.issue`, `LoginAttemptedEvent.succeeded`. `getRecovery`(쿠키의 회원이 지금도 그 탈퇴 상태인지 보고 `purgeAt`)
+- [X] T031 [US2] B/api/controller/v1/auth/ApiAccountRecoveryController.java(`@PermitAll`): `GET`·`POST /api/v1/auth/recovery` (contracts/withdrawal-api.md)
+- [X] T032 [US2] F/app/(public)/sign-in/recover/page.tsx: 완전 삭제 예정 시각, "복구하기", "취소". A403이면 `/sign-in`. 성공하면 로그인과 같이 `next` 또는 첫 화면 (T022·T025 뒤)
+- [X] T033 [US2] [공용] F/app/(public)/sign-in/page.tsx: A401이면 `/sign-in/recover`(`next` 붙임). [공용] F/components/auth/oauth-error-alert.tsx에 `purgePending`, ko.json 문구
 
 **Checkpoint**: 탈퇴와 복구가 함께 된다 (MVP)
 

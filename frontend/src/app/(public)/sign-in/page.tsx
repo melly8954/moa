@@ -18,13 +18,15 @@ import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from "@/com
 import { Input } from "@/components/ui/input"
 import { useFieldErrorText } from "@/i18n/field-error"
 import { useErrorMessages } from "@/lib/error-messages"
-import { currentNextPath } from "@/lib/next-path"
+import { currentNextPath, recoverPath } from "@/lib/next-path"
 import { type SignInInput, signInSchema } from "@/lib/schemas/sign-in"
 import { SITE } from "@/lib/site"
 import { useAuthStore } from "@/stores/auth"
 
 // moa: 화면에 단추를 둘 소셜 로그인 제공자 (specs/010-social-login FR-001). 디스코드는 나중에 더한다
 const SOCIAL_PROVIDERS = ["google"] as const
+// moa: 탈퇴한 계정 (specs/018-member-withdrawal research R5)
+const ACCOUNT_WITHDRAWN = "A401"
 
 // 폼 만드는 모양의 예시이기도 하다: Zod 스키마 → react-hook-form → shadcn Field → api 호출 → 오류 표시
 export default function SignInPage() {
@@ -58,6 +60,11 @@ export default function SignInPage() {
       router.replace(await fetchLandingPath(queryClient))
     } catch (error) {
       const apiError = toApiError(error)
+      // moa: 비밀번호가 맞은 탈퇴 회원(A401). 서버가 복구 쿠키를 심었다. 복구 화면으로 (specs/018-member-withdrawal US2-AC2)
+      if (apiError.code === ACCOUNT_WITHDRAWN) {
+        router.replace(recoverPath(currentNextPath()))
+        return
+      }
       // 서버 V001: 해당 칸만 오류로 표시하고 공통 문구를 보인다
       for (const fieldError of apiError.fieldErrors) {
         if (fieldError.field in values) form.setError(fieldError.field as keyof SignInInput, { message: "" })

@@ -1,5 +1,7 @@
 package com.moa.api.service.user;
 
+import java.time.LocalDateTime;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import com.moa.common.exception.ErrorCode;
 import com.moa.common.exception.ServiceException;
 import com.moa.common.security.LoginAttemptedEvent;
 import com.moa.common.security.Role;
+import com.moa.common.security.recovery.WithdrawnAccountException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +29,7 @@ public class UserService {
 	private final UserWriter userWriter;
 	private final PasswordEncoder passwordEncoder;
 	private final ApplicationEventPublisher eventPublisher;
+	private final WithdrawalProperties withdrawalProperties;
 
 	/**
 	 * @throws ServiceException 없으면 R001
@@ -41,8 +45,11 @@ public class UserService {
 	 * 성공·실패 모두 LoginAttemptedEvent를 낸다 (접속 이력 등이 받는다).
 	 *
 	 * 잠긴 계정은 비밀번호가 맞을 때만 A007로 알린다 (틀린 비밀번호로 잠김 여부를 알 수 없게).
+	 * moa 018: 탈퇴도 같다. 비밀번호가 맞고 잠기지 않았을 때만 A401·A402로 알린다. 틀리면 탈퇴했어도 A006이다
+	 * (specs/018-member-withdrawal research R5, US2-AC3·AC8)
 	 *
-	 * @throws ServiceException 아이디가 없거나, 비밀번호가 틀리거나, 비밀번호로 로그인할 수 없는 계정이면 A006. 잠긴 계정이면 A007
+	 * @throws ServiceException 아이디가 없거나, 비밀번호가 틀리거나, 비밀번호로 로그인할 수 없는 계정이면 A006. 잠긴 계정이면 A007.
+	 *         탈퇴해 유예 중이면 A401({@link WithdrawnAccountException}, 복구 쿠키가 붙는다), 유예가 지났으면 A402
 	 */
 	public UserDto authenticate(String loginId, String rawPassword) {
 		User user = userReader.findByLoginId(loginId).orElse(null);
@@ -56,8 +63,22 @@ public class UserService {
 			eventPublisher.publishEvent(LoginAttemptedEvent.failed(loginId, ErrorCode.ACCOUNT_LOCKED.getCode()));
 			throw new ServiceException(ErrorCode.ACCOUNT_LOCKED);
 		}
+		if (user.isWithdrawn()) {
+			throw withdrawn(loginId, user);
+		}
 		eventPublisher.publishEvent(LoginAttemptedEvent.succeeded(loginId, user.getId()));
 		return UserDto.from(user);
+	}
+
+	/** moa 018: 본인 확인에 성공한 탈퇴 회원. 실패로 남긴다 (spec 가정) */
+	private ServiceException withdrawn(String loginId, User user) {
+		LocalDateTime withdrawnAt = user.getWithdrawnAt();
+		if (withdrawalProperties.recoverable(withdrawnAt, LocalDateTime.now())) {
+			eventPublisher.publishEvent(LoginAttemptedEvent.failed(loginId, ErrorCode.ACCOUNT_WITHDRAWN.getCode()));
+			return new WithdrawnAccountException(user.getId(), withdrawnAt);
+		}
+		eventPublisher.publishEvent(LoginAttemptedEvent.failed(loginId, ErrorCode.ACCOUNT_PURGE_PENDING.getCode()));
+		return new ServiceException(ErrorCode.ACCOUNT_PURGE_PENDING);
 	}
 
 	/**
