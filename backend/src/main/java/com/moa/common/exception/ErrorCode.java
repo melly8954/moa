@@ -44,6 +44,8 @@ public enum ErrorCode {
 	INVALID_STATE("B001", HttpStatus.CONFLICT, "현재 상태에서 할 수 없는 요청입니다."),
 	// 닉네임 (specs/009-mypage research R4). 010 가입·009 변경·관리자 이름 바꾸기가 함께 쓴다
 	NICKNAME_TAGS_EXHAUSTED("B201", HttpStatus.CONFLICT, "이 닉네임은 더 쓸 수 없습니다. 다른 닉네임을 골라 주세요."),
+	// 고객센터 (specs/017-customer-center research R9)
+	FAQ_LIMIT_EXCEEDED("B301", HttpStatus.CONFLICT, "FAQ는 200개까지 둘 수 있습니다."),
 
 	// S: 시스템
 	INTERNAL_ERROR("S001", HttpStatus.INTERNAL_SERVER_ERROR, "처리 중 문제가 발생했습니다.");

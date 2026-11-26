@@ -33,6 +33,10 @@ class AdminCodesAcceptanceTest extends AcceptanceTest {
 
 	@BeforeEach
 	void createGroups() {
+		// 마이그레이션이 넣은 그룹(SUPPORT_CATEGORY, specs/004-admin-codes FR-001)은 DatabaseCleaner가 첫 테스트 뒤에야 지운다.
+		// 이 클래스가 먼저 돌아도 같게 시험 그룹만 남긴다
+		jdbcTemplate.update("DELETE FROM tb_code");
+		jdbcTemplate.update("DELETE FROM tb_code_group");
 		assertThat(post(GROUPS, "{\"groupCode\":\"" + GENRE_GROUP + "\",\"name\":\"시험 장르\",\"description\":\"게임 장르\"}"))
 			.hasStatus(201);
 		assertThat(post(GROUPS, "{\"groupCode\":\"" + REASON_GROUP + "\",\"name\":\"시험 사유\"}")).hasStatus(201);

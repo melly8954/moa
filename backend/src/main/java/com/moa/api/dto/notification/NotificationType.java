@@ -6,5 +6,7 @@ package com.moa.api.dto.notification;
  */
 public enum NotificationType {
 	/** 운영자가 한 사용자에게 알리는 시스템 알림 */
-	SYSTEM
+	SYSTEM,
+	/** 1:1 문의에 처음 답변했다 (specs/017-customer-center FR-012) */
+	INQUIRY_ANSWERED
 }

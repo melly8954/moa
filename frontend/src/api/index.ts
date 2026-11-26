@@ -15,6 +15,8 @@ import { userAdminApi } from "./user-admin"
 import { richTextApi } from "./rich-text"
 import { bannerAdminApi } from "./banner"
 import { popupAdminApi } from "./popup"
+import { faqAdminApi, faqApi } from "./faq"
+import { inquiryAdminApi, inquiryApi } from "./inquiry"
 // @helpers:imports
 
 // 백엔드 API 창구. 화면은 이것만 부른다 (axios·fetch를 직접 부르지 않는다)
@@ -48,6 +50,10 @@ export const api = {
     richText: richTextApi,
     bannerAdmin: bannerAdminApi,
     popupAdmin: popupAdminApi,
+    faq: faqApi,
+    faqAdmin: faqAdminApi,
+    inquiry: inquiryApi,
+    inquiryAdmin: inquiryAdminApi,
     // @helpers:api
   },
 }

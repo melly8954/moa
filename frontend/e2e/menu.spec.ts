@@ -302,13 +302,15 @@ test("US2-AC1 일반 회원 사이드바에는 관리 메뉴가 없다 @wide", a
   await signedIn(page)
   await page.route("**/api/v1/notices/new", (route) => route.fulfill({ json: { hasNew: false } }))
   await page.goto("/")
-  await expect(menuLinks(page)).toHaveText(["홈", "공지"])
+  await expect(menuLinks(page)).toHaveText(["홈", "공지", "고객센터"])
 })
 
-test("US2-AC4 일반 회원은 로그인하면 사용자 셸 첫 화면이 열리고 사이드바에 홈, 공지가 있다 @wide", async ({ page }) => {
+test("US2-AC4 일반 회원은 로그인하면 사용자 셸 첫 화면이 열리고 사이드바에 홈, 공지, 고객센터가 있다 @wide", async ({
+  page,
+}) => {
   await signIn(page, [])
   await expect(page).toHaveURL(/\/$/)
-  await expect(menuLinks(page)).toHaveText(["홈", "공지"])
+  await expect(menuLinks(page)).toHaveText(["홈", "공지", "고객센터"])
 })
 
 // moa (specs/001-admin-menus FR-005·FR-006, research R27·R28, 2026-11-21): 셸은 계정 종류로 고른다
