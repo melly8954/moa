@@ -1,5 +1,6 @@
 package com.moa.api.application.v1.notification;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.moa.api.dto.notification.NotificationDto;
 import com.moa.api.dto.notification.NotificationType;
 import com.moa.api.service.notification.NotificationService;
+import com.moa.api.service.user.MemberStatusService;
 import com.moa.common.helper.webpush.WebPushSender;
 import com.moa.common.purgelog.PersonalDataPurgedEvent;
 import com.moa.common.purgelog.PurgeTarget;
@@ -24,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class NotificationApplication {
 
 	private final NotificationService notificationService;
+	private final MemberStatusService memberStatusService;
 	private final WebPushSender webPushSender;
 	private final ApplicationEventPublisher eventPublisher;
 
@@ -31,9 +34,13 @@ public class NotificationApplication {
 	 * 한 사용자에게 개인 알림을 보낸다.
 	 *
 	 * @param link 관련 화면 경로 (/로 시작)
+	 * @return 탈퇴한 회원이면 만들지 않고 null (specs/018-member-withdrawal FR-022, docs/privacy.md "원칙")
 	 */
 	@Transactional
-	public NotificationDto notify(Long userId, NotificationType type, String title, String link) {
+	public @Nullable NotificationDto notify(Long userId, NotificationType type, String title, String link) {
+		if (memberStatusService.isWithdrawn(userId)) {
+			return null;
+		}
 		NotificationDto notification = notificationService.create(userId, type, title, link);
 		eventPublisher.publishEvent(new NotificationCreatedEvent(notification));
 		return notification;

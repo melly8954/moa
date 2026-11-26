@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
+import org.hibernate.Session;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.moa.api.application.v1.notification.NotificationApplication;
+import com.moa.api.dto.notification.NotificationType;
 import com.moa.api.dto.user.MemberStatusDto;
 import com.moa.api.entity.user.User;
 import com.moa.api.repository.jpa.user.UserRepository;
@@ -43,6 +46,9 @@ class UserRestrictionAcceptanceTest extends AcceptanceTest {
 
 	@Autowired
 	private MemberStatusService memberStatusService;
+
+	@Autowired
+	private NotificationApplication notificationApplication;
 
 	@Autowired
 	private JPAQueryFactory queryFactory;
@@ -197,5 +203,22 @@ class UserRestrictionAcceptanceTest extends AcceptanceTest {
 			assertThat(status.withdrawnAt()).isNotNull();
 			assertThat(status.purgedAt()).isNotNull();
 		});
+	}
+
+	@Test
+	@DisplayName("FR-022 notify의 탈퇴 확인(native)은 부르는 쪽의 대기 변경을 먼저 DB로 내보내지 않는다")
+	void withdrawnCheckDoesNotFlushPendingChanges() {
+		transactionTemplate.executeWithoutResult(status -> {
+			userRepository.findById(VISIBLE).orElseThrow().rename("대기중이름");
+			Session session = entityManager.unwrap(Session.class);
+			assertThat(session.isDirty()).isTrue();
+
+			assertThat(notificationApplication.notify(VISIBLE, NotificationType.SYSTEM, "제목", "/")).isNotNull();
+			assertThat(notificationApplication.notify(WITHDRAWN, NotificationType.SYSTEM, "제목", "/")).isNull();
+
+			assertThat(session.isDirty()).as("탈퇴 확인이 flush하지 않아 변경이 아직 대기 중이다").isTrue();
+		});
+		assertThat(jdbcTemplate.queryForObject("select name from tb_user where id = ?", String.class, VISIBLE))
+			.isEqualTo("대기중이름");
 	}
 }

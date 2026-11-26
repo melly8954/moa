@@ -48,8 +48,9 @@ spec에 미결 표시가 없다. 아래는 spec이 plan에 맡긴 것을 코드�
 ## R3. 실시간 연결 끊기 (FR-006)
 
 - **Decision**
-  - 새 연결: moa의 `WebSocketMessageBrokerConfigurer`를 하나 더 두어 inbound 채널에 인터셉터를 더한다. `CONNECT`의 사용자가 탈퇴했으면 거절한다. 키트 `WebSocketConfig`·`StompAuthInterceptor`는 고치지 않는다
-  - 열린 연결: `WebSocketHandlerDecoratorFactory`로 세션을 기억하고 `SessionConnectedEvent`로 회원과 잇는다. 탈퇴가 커밋된 뒤 그 회원의 세션을 닫는다
+  - 새 연결: inbound 채널에 moa 인터셉터(`BlockedAccountStompInterceptor`)를 더한다. 키트 `StompAuthInterceptor`가 정한 `CONNECT`의 사용자가 막힌 계정(`AccountAccessChecker`)이면 거절한다(HTTP와 같이 A002). 키트 `WebSocketConfig`·`StompAuthInterceptor`는 고치지 않는다
+    - **순서**: moa 인터셉터는 키트 인증 인터셉터 다음에 돌아야 한다(사용자가 정해진 뒤). 설정(`WebSocketMessageBrokerConfigurer`)의 인터셉터는 설정의 `@Order` 순으로 붙는데, 키트 `WebSocketConfig`는 순서가 없어 `LOWEST_PRECEDENCE`로 정렬되므로 어떤 `@Order`로도 그 뒤에 설 수 없다(같은 값이면 빈 등록 순서라 정해지지 않는다). 그래서 moa 인터셉터는 설정으로 붙이지 않고, `SmartInitializingSingleton`(`BlockedAccountInterceptorRegistrar`)이 모든 설정이 채널을 만든 뒤 `clientInboundChannel`의 맨 끝에 덧붙인다. 서버가 연결을 받기 전이다. 순서는 인수 테스트(`WithdrawalRealtimeAcceptanceTest`)가 확인한다
+  - 열린 연결: 회원과 세션의 연결은 Spring `SimpUserRegistry`가 안다(`SessionConnectedEvent`·`SessionDisconnectEvent`로 채운다). moa는 `WebSocketHandlerDecoratorFactory`로 세션 ID → `WebSocketSession`만 기억한다(`RealtimeSessions`). 탈퇴가 커밋된 뒤 `closeAll(userId)`가 레지스트리에서 그 회원의 세션 ID를 찾아 닫는다. 레지스트리는 메시지 브로커 설정을 거쳐 만들어지므로 순환을 피해 `ObjectProvider`로 늦게 찾는다
   - 닫기는 Application이 커밋 뒤 직접 부른다. "탈퇴됨" 이벤트에 붙는 처리는 없다 (FR-017)
 - **서버가 여럿일 때**: 다른 서버의 세션은 닫지 못한다. 키트 브로커가 서버 메모리라 그 세션에는 개인 메시지도 닿지 않는다(키트 `WebSocketConfig` 주의와 같은 한계). 다시 연결하면 막힌다
 

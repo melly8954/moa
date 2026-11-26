@@ -2,12 +2,16 @@ package com.moa.api.repository.jpa.user;
 
 import java.util.Optional;
 
+import org.hibernate.jpa.HibernateHints;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
 import com.moa.api.entity.user.User;
 import com.moa.common.repository.SoftDeleteRepository;
 import com.moa.common.security.Role;
+
+import jakarta.persistence.QueryHint;
 
 /**
  * moa 018 (specs/018-member-withdrawal research R8): JPQL·메서드 이름 쿼리는 활동 중인 회원만 본다(User.ACTIVE).
@@ -31,7 +35,12 @@ public interface UserRepository extends SoftDeleteRepository<User, Long> {
 	@Query(value = "select * from tb_user where id = :id", nativeQuery = true)
 	Optional<User> findInAnyState(@Param("id") Long id);
 
-	/** moa 018: 스스로 탈퇴한 회원이면 1. 요청마다 부르므로 PK로 한 행만 본다 */
+	/**
+	 * moa 018: 스스로 탈퇴한 회원이면 1. 요청마다 부르므로 PK로 한 행만 본다.
+	 * native 쿼리는 Hibernate가 무엇을 읽는지 몰라 부르기 전에 대기 변경을 모두 DB로 내보낸다(AUTO). 다른 기능의 트랜잭션 중간(notify 등)에서
+	 * 불리므로 내보내지 않게 한다(COMMIT). withdrawn_at은 탈퇴·복구 트랜잭션만 바꾸고, 같은 트랜잭션에서 바꾼 뒤 이것을 부르는 곳은 없다
+	 */
+	@QueryHints(@QueryHint(name = HibernateHints.HINT_FLUSH_MODE, value = "COMMIT"))
 	@Query(value = "select count(*) from tb_user where id = :id and withdrawn_at is not null", nativeQuery = true)
 	long countWithdrawn(@Param("id") Long id);
 

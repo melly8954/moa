@@ -63,14 +63,14 @@ description: "회원 탈퇴 (member-withdrawal) 작업 목록"
 
 ### 백엔드
 
-- [ ] T014 [US1] B/common/security/access/: `AccountAccessChecker`(`isBlocked(Long userId)`), `AccountAccessFilter`(인증된 요청에서 막혔으면 `SecurityContext`를 비우고 `RestAuthenticationEntryPoint.ERROR_CODE_ATTRIBUTE`에 `ACCESS_TOKEN_EXPIRED`), `HttpSecurityCustomizer` 빈(`addFilterAfter(…, JwtAuthenticationFilter.class)`). 키트 `SecurityConfig`·`JwtAuthenticationFilter`는 고치지 않는다 (research R2)
-- [ ] T015 [US1] B/api/service/user/WithdrawnAccountChecker.java: `AccountAccessChecker` 구현, `existsWithdrawn` (T006·T014 뒤)
-- [ ] T016 [US1] B/api/realtime/: moa `WebSocketMessageBrokerConfigurer`(inbound 인터셉터: 탈퇴한 회원의 `CONNECT` 거절), 세션 기억(`WebSocketHandlerDecoratorFactory` + `SessionConnectedEvent`·`SessionDisconnectEvent`)과 `closeAll(userId)`. 키트 `WebSocketConfig`·`StompAuthInterceptor`는 고치지 않는다 (R3)
-- [ ] T017 [US1] [haily, 승인됨] B/api/service/notification/NotificationService.java와 그 reader·writer·repository: `deleteSubscriptionsOf(userId)` (FR-021). 메서드 더하기만
-- [ ] T018 [US1] [haily, 승인됨] B/api/application/v1/notification/NotificationApplication.java: `notify` 맨 앞에 `MemberStatusService.isWithdrawn(userId)`면 null을 돌려주는 한 줄. 반환에 `@Nullable`. 주석에 근거(FR-022, `docs/privacy.md` 원칙) (T010 뒤)
-- [ ] T019 [US1] B/api/service/user/MemberWithdrawalService.java: `withdraw(userId, nickname, now)`. 잠긴 행(`findForUpdateIncludingWithdrawn`)에서 이미 탈퇴했으면 그 시각을 돌려주고, 아니면 `NicknamePolicy.normalize`로 맞춘 닉네임이 다르면 V001(칸 `nickname`), 같으면 `user.withdraw(now)` (R4)
-- [ ] T020 [US1] B/api/application/v1/user/MemberWithdrawalApplication.java: `TransactionTemplate` 안에서 `MemberActivityPolicy.requireMypageAllowed` → T019 → `AuthTokenService.revokeAll` → `deleteSubscriptionsOf` → `MemberWithdrawnEvent`. 커밋 뒤 `closeAll(userId)`. 로그에는 회원 ID만 (R4·R9, T016·T017·T019 뒤)
-- [ ] T021 [US1] B/api/controller/v1/user/ApiMyWithdrawalController.java(+ request, response): `POST /api/v1/users/me/withdrawal` `{nickname}` → 200 `{purgeAt}`, `RefreshTokenTransport.clear` (contracts/withdrawal-api.md)
+- [X] T014 [US1] B/common/security/access/: `AccountAccessChecker`(`isBlocked(Long userId)`), `AccountAccessFilter`(인증된 요청에서 막혔으면 `SecurityContext`를 비우고 `RestAuthenticationEntryPoint.ERROR_CODE_ATTRIBUTE`에 `ACCESS_TOKEN_EXPIRED`), `HttpSecurityCustomizer` 빈(`addFilterAfter(…, JwtAuthenticationFilter.class)`). 키트 `SecurityConfig`·`JwtAuthenticationFilter`는 고치지 않는다 (research R2)
+- [X] T015 [US1] B/api/service/user/WithdrawnAccountChecker.java: `AccountAccessChecker` 구현, `existsWithdrawn` (T006·T014 뒤)
+- [X] T016 [US1] B/api/realtime/: moa `WebSocketMessageBrokerConfigurer`(inbound 인터셉터: 탈퇴한 회원의 `CONNECT` 거절), 세션 기억(`WebSocketHandlerDecoratorFactory` + `SessionConnectedEvent`·`SessionDisconnectEvent`)과 `closeAll(userId)`. 키트 `WebSocketConfig`·`StompAuthInterceptor`는 고치지 않는다 (R3) — **이번 구현**: 회원↔세션은 Spring `SimpUserRegistry`, 인터셉터는 채널 맨 끝에 덧붙여 키트 다음에 돈다 (research R3)
+- [X] T017 [US1] [haily, 승인됨] B/api/service/notification/NotificationService.java와 그 reader·writer·repository: `deleteSubscriptionsOf(userId)` (FR-021). 메서드 더하기만
+- [X] T018 [US1] [haily, 승인됨] B/api/application/v1/notification/NotificationApplication.java: `notify` 맨 앞에 `MemberStatusService.isWithdrawn(userId)`면 null을 돌려주는 한 줄. 반환에 `@Nullable`. 주석에 근거(FR-022, `docs/privacy.md` 원칙) (T010 뒤)
+- [X] T019 [US1] B/api/service/user/MemberWithdrawalService.java: `withdraw(userId, nickname, now)`. 잠긴 행(`findForUpdateIncludingWithdrawn`)에서 이미 탈퇴했으면 그 시각을 돌려주고, 아니면 `NicknamePolicy.normalize`로 맞춘 닉네임이 다르면 V001(칸 `nickname`), 같으면 `user.withdraw(now)` (R4)
+- [X] T020 [US1] B/api/application/v1/user/MemberWithdrawalApplication.java: `TransactionTemplate` 안에서 `MemberActivityPolicy.requireMypageAllowed` → T019 → `AuthTokenService.revokeAll` → `deleteSubscriptionsOf` → `MemberWithdrawnEvent`. 커밋 뒤 `closeAll(userId)`. 로그에는 회원 ID만 (R4·R9, T016·T017·T019 뒤)
+- [X] T021 [US1] B/api/controller/v1/user/ApiMyWithdrawalController.java(+ request, response): `POST /api/v1/users/me/withdrawal` `{nickname}` → 200 `{purgeAt}`, `RefreshTokenTransport.clear` (contracts/withdrawal-api.md)
 
 ### 프론트
 
