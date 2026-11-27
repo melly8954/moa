@@ -58,7 +58,7 @@
 | I. 스펙이 먼저다 | 통과 | spec.md에 이 기능의 `[NEEDS CLARIFICATION]`이 없다(2026-11-22, 11-27 답함). plan에서 정한 값(30일, 5,000명, 커서 크기)은 spec과 research에 있다 |
 | II. AC마다 테스트 하나 | 통과 | AC 41개마다 테스트를 둔다. 이름에 AC 번호를 적는다. e2e는 핵심 흐름 2개만이다 |
 | III. 키트를 따른다 | 통과 (Complexity Tracking) | 계층·엔터티·오류·페이지 규칙은 키트 골격을 따른다. 키트 user-admin의 `UserAdminService.create`에 공개 ID 만들기 한 줄을 더한다(R1). 010이 같은 서비스의 `rename`을 이미 고친 선례가 있다 |
-| IV. 기존 기능은 제자리에서 고친다 | 통과 | 001 메뉴·연결 화면 표, 007 알림 종류, 008 회원 응답의 `publicId`, 009 `ProfileVisibility`의 친구 판단(R8), 013 `PurgeTarget`, `docs/privacy.md` 보관 기간 표와 "탈퇴 회원 파기"는 그 자리에서 고친다. 009 제안("친구만")은 009 담당이 고친다 |
+| IV. 기존 기능은 제자리에서 고친다 | 통과 | 001 메뉴·연결 화면 표, 007 알림 종류, 008 회원 응답의 `publicId`, 009 `ProfileVisibility`의 친구 판단(R8), 013 `PurgeTarget`, `docs/privacy.md` 보관 기간 표와 "탈퇴 회원 파기"는 그 자리에서 고친다. 009의 "친구만"은 009가 이미 반영했다 |
 | V. 테스트를 고쳐서 통과시키지 않는다 | 통과 | `AdminMenusAcceptanceTest`의 사용자 메뉴 기대값은 001 FR-007 표를 먼저 고친 뒤 맞춘다. `ProfileVisibilityTest`의 `FRIENDS` 기대값은 009 spec FR-013과 이 스펙 FR-015로 근거가 바뀐 뒤 맞춘다 |
 | VI. 시크릿을 다루지 않는다 | 통과 | 새 비밀값이 없다. 시험 회원 `user2`의 비밀번호는 사람이 넣는다 |
 | 기술 제약: DB 규칙 | 통과 | 테이블·열·인덱스 이름, COMMENT, 1:1 테이블의 PK·감사 열 이유는 data-model.md에 `docs/db.md`대로 적었다 |

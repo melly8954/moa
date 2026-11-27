@@ -87,7 +87,7 @@
   - 지금 `view`는 디스코드 `FRIENDS`를 아무에게도 보이지 않는다(그 자리에 "친구 기능이 생기기 전까지" 주석). 014가 `view(profile, viewerUserId, boolean viewerIsFriend)`를 더해 `FRIENDS`면 친구에게만 보이게 하고, 기존 두 인자 `view`는 `viewerIsFriend = false`로 넘긴다. 기존 기능을 그 자리에서 고치는 것이다(원칙 IV). 009 담당에게 PR에서 알린다
   - 친구인지는 014의 `FriendService.areFriends`로 Application(`MemberProfileApplication`)이 구해 넘긴다(계층 규칙)
   - 프로필 읽기는 009의 `ProfileService`(또는 `ProfileApplication`이 쓰는 읽기)로 `ProfileDto`를 얻는다. 행이 없는 회원(관리자가 만든 회원)은 닉네임과 기본 아바타만 보인다(009 research R14)
-  - 009가 공개 범위 이름을 "친구만"으로 바꾸면(spec FR-015 제안) 값 이름은 `FRIENDS` 그대로 두고 문구만 바꾸면 된다. 009 화면은 이미 "친구만"으로 보인다
+  - 009는 공개 범위 이름을 이미 "친구만"으로 바꿨다(2026-11-25). 값 이름 `FRIENDS`는 그대로다
 - **Rationale**: 공개 규칙의 주인은 009다(`009-mypage` research R9). 같은 규칙을 두 곳에 두면 어긋난다
 - **Alternatives considered**: 014가 `VisibleProfile`을 받아 디스코드 칸만 다시 채우기: 규칙이 두 곳으로 나뉜다
 
