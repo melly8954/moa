@@ -6,6 +6,7 @@ import {
   ClipboardList,
   FileText,
   Folder,
+  Gamepad2,
   History,
   House,
   List,
@@ -44,6 +45,8 @@ export const MENU_ICONS: Record<string, LucideIcon> = {
   megaphone: Megaphone,
   // moa: 관리 메뉴 묶음 "운영" (specs/001-admin-menus FR-001)
   briefcase: BriefcaseBusiness,
+  // moa: 사용자 메뉴 "모집" (specs/008-party FR-030)
+  gamepad: Gamepad2,
 }
 
 // 모르는 이름이면 아이콘 없음 (셸이 이름 첫 글자를 보인다)
