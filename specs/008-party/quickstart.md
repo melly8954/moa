@@ -14,7 +14,7 @@
 npm run test:e2e -- e2e/party.spec.ts                 # spec.md "e2e로 확인할 흐름" 3개
 ```
 
-기대: 이름이 `US<n>-AC<m>`인 테스트가 spec.md의 AC 75개와 하나씩 맞고 모두 통과한다.
+기대: 이름이 `US<n>-AC<m>`인 테스트가 spec.md의 AC 77개와 하나씩 맞고 모두 통과한다.
 
 ## 화면 확인
 
