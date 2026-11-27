@@ -2,6 +2,7 @@ package com.moa.api.service.user;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -30,6 +31,7 @@ import com.moa.common.exception.ServiceException;
 import com.moa.common.security.Role;
 import com.moa.common.security.oauth.OAuthIdentity;
 import com.moa.common.security.oauth.OAuthSignup;
+import com.moa.common.security.oauth.SocialProvider;
 import com.moa.common.terms.TermsProperties;
 import com.moa.common.terms.TermsType;
 
@@ -59,16 +61,21 @@ public class SocialAccountService {
 	private final NicknameTags nicknameTags;
 	private final TermsProperties termsProperties;
 
-	/** 이 소셜 계정이 연결된 회원 (FR-003) */
+	/** 이 소셜 계정이 연결된 회원 (FR-003). moa 018: 탈퇴(유예 중·파기 대기)한 회원도 나온다 (관리자가 지운 회원은 아니다) */
 	public Optional<SocialLoginUserDto> findLinkedUser(OAuthIdentity identity) {
 		return userSocialAccountReader.findByProviderAndSubject(identity.provider(), identity.subject())
-			.flatMap(account -> userReader.find(account.getUserId()))
-			.map(user -> new SocialLoginUserDto(UserDto.from(user), user.isLocked()));
+			.flatMap(account -> userReader.findIncludingWithdrawn(account.getUserId()))
+			.map(user -> new SocialLoginUserDto(UserDto.from(user), user.isLocked(), user.getWithdrawnAt()));
 	}
 
 	/** 소셜 계정이 하나라도 연결된 회원인지 (FR-007) */
 	public boolean isSocialMember(Long userId) {
 		return userSocialAccountReader.existsByUserId(userId);
+	}
+
+	/** 회원마다 연결된 제공자. 연결이 없는 회원은 빠진다 (specs/002-admin-users FR-004, research R17) */
+	public Map<Long, List<SocialProvider>> providersOf(Collection<Long> userIds) {
+		return userSocialAccountReader.providersOf(userIds);
 	}
 
 	/**

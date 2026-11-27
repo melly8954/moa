@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.moa.api.application.v1.user.UserAdminApplication;
 import com.moa.api.controller.v1.admin.user.request.UserCreateRequest;
+import com.moa.api.controller.v1.admin.user.request.UserIdsRequest;
 import com.moa.api.controller.v1.admin.user.request.UserRenameRequest;
 import com.moa.api.controller.v1.admin.user.request.UserRoleChangeRequest;
 import com.moa.api.controller.v1.admin.user.request.UserSearchRequest;
@@ -122,6 +123,17 @@ public class ApiAdminUserController {
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> delete(@CurrentUser AuthPrincipal actor, @PathVariable Long id) {
 		userAdminApplication.delete(actor, id);
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "한꺼번에 지우기",
+		description = "moa (specs/002-admin-users FR-006): 한 트랜잭션. 지우기와 같이 소프트 삭제, 역할 빼기, 모든 기기에서 로그아웃. "
+			+ "없는 계정 R001, 다룰 수 없는 계정(나보다 권한이 많은 관리자 계정) A005, 최고 관리자 계정·자기 자신 B001이 "
+			+ "하나라도 있으면 아무것도 지우지 않는다")
+	@PostMapping("/bulk-delete")
+	public ResponseEntity<Void> deleteAll(@CurrentUser AuthPrincipal actor,
+		@Valid @RequestBody UserIdsRequest request) {
+		userAdminApplication.deleteAll(actor, request.ids());
 		return ResponseEntity.noContent().build();
 	}
 }

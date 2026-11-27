@@ -26,6 +26,7 @@ import type { AdminUser } from "@/types/user-admin"
 import { ROLES, TemporaryPasswordPanel, useInvalidateUsers, useUserErrorText } from "./user-dialogs"
 import type { UserAction } from "./user-extras"
 import { UserRoles, useGivenRoles } from "./user-roles"
+import { loginMethodText, passwordHint } from "./user-social"
 
 // 사용자 드로어 (moa, specs/002-admin-users FR-007, US3·US4, research R7·R11·R16). 목록에서 행을 누르면 열린다
 // 2026-11-22: 세 구역으로 나눈다 (사용자가 미리보기 세 안 중 A를 골랐다)
@@ -149,6 +150,8 @@ export function UserDrawer({
             <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
               <dt className="text-muted-foreground">{t("loginId")}</dt>
               <dd>{user.loginId}</dd>
+              <dt className="text-muted-foreground">{t("loginMethod")}</dt>
+              <dd>{loginMethodText(user, t)}</dd>
               <dt className="text-muted-foreground">{t("status")}</dt>
               <dd>
                 <UserStatus user={user} />
@@ -230,7 +233,7 @@ export function UserDrawer({
                 onCheckedChange={() => onToggleLock()}
               />
             </SettingRow>
-            <SettingRow label={t("password")} hint={t(user.hasPassword ? "resetHint" : "noPasswordHint")}>
+            <SettingRow label={t("password")} hint={passwordHint(user, t)}>
               <Button
                 size="sm"
                 variant="outline"

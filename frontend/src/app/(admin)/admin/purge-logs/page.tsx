@@ -14,7 +14,7 @@ import type { PurgeLog, PurgeTarget } from "@/types/purge-log"
 // 개인정보 파기 이력 (moa, specs/013-purge-log US2, 권한 PURGE_LOG_READ)
 // 조건: 기간·대상 종류. 처음 기간은 접속 이력 화면과 같다(FR-009). 늘 최신순이라 열 정렬은 없다. 보기만 한다
 const DEFAULTS = { from: "", to: "", target: "" }
-const TARGETS: PurgeTarget[] = ["LOGIN_HISTORY", "NOTIFICATION", "REFRESH_TOKEN", "RICH_TEXT_IMAGE"]
+const TARGETS: PurgeTarget[] = ["LOGIN_HISTORY", "NOTIFICATION", "REFRESH_TOKEN", "RICH_TEXT_IMAGE", "MEMBER"]
 
 export default function PurgeLogsPage() {
   const t = useTranslations("purgeLog")

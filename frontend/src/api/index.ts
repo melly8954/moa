@@ -9,10 +9,14 @@ import { menuApi } from "./menu"
 import { notificationApi } from "./notification"
 import { noticeAdminApi, noticeApi } from "./notice"
 import { oauthApi, termsApi } from "./oauth"
+import { profileApi } from "./profile"
 import { purgeLogApi } from "./purge-log"
 import { roleApi } from "./role"
 import { userAdminApi } from "./user-admin"
 import { richTextApi } from "./rich-text"
+import { bannerAdminApi } from "./banner"
+import { popupAdminApi } from "./popup"
+import { withdrawalApi } from "./withdrawal"
 // @helpers:imports
 
 // 백엔드 API 창구. 화면은 이것만 부른다 (axios·fetch를 직접 부르지 않는다)
@@ -39,11 +43,15 @@ export const api = {
     noticeAdmin: noticeAdminApi,
     notification: notificationApi,
     oauth: oauthApi,
+    profile: profileApi,
     terms: termsApi,
     purgeLog: purgeLogApi,
     role: roleApi,
     userAdmin: userAdminApi,
     richText: richTextApi,
+    bannerAdmin: bannerAdminApi,
+    popupAdmin: popupAdminApi,
+    withdrawal: withdrawalApi,
     // @helpers:api
   },
 }

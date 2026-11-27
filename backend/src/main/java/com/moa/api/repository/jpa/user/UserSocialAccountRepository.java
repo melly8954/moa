@@ -1,5 +1,7 @@
 package com.moa.api.repository.jpa.user;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +14,8 @@ public interface UserSocialAccountRepository extends JpaRepository<UserSocialAcc
 	Optional<UserSocialAccount> findByProviderAndSubject(SocialProvider provider, String subject);
 
 	boolean existsByUserId(Long userId);
+
+	List<UserSocialAccount> findAllByUserIdIn(Collection<Long> userIds);
 
 	boolean existsByEmail(String email);
 }

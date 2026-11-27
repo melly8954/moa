@@ -91,7 +91,7 @@ test("계정 줄 이름이 길면 말줄임하고, 마우스를 올리면 툴팁
 }) => {
   const name = "운영자 (접속 이력만) 아주 긴 이름"
   const loginId = "operator-with-a-long-login-id"
-  await signedIn(page, { me: { name, loginId } })
+  await signedIn(page, { me: { name, loginId, role: "ADMIN" } })
   await page.goto("/")
   const footer = page.locator('[data-slot="sidebar-footer"]')
   const shown = footer.getByText(name, { exact: true })

@@ -64,6 +64,7 @@ moa는 관리 화면을 왼쪽 그룹 목록 · 오른쪽 그룹 상세(항목 �
   | `OVERWATCH_MODE`, `OVERWATCH_POSITION`, `OVERWATCH_TIER` | `008-party` | 같은 표 |
   | `VALORANT_MODE`, `VALORANT_POSITION`, `VALORANT_TIER` | `008-party` | 같은 표 |
   | `PUBG_MODE`, `PUBG_TIER` | `008-party` | 같은 표 |
+  | `SUPPORT_CATEGORY` | `017-customer-center` | `017-customer-center` spec.md FR-003 |
 
 - **FR-002**: 기능이 코드 그룹을 새로 쓰면 그 기능의 스펙에 그룹(코드, 이름, 설명)과 초기 코드를 적고, 마이그레이션으로 그룹과 초기 코드를 넣고, FR-001 표에 한 줄 더한다(MUST). 관리자가 이미 만든 그룹을 쓰게 되면 마이그레이션으로 넣지 않고 그 그룹 코드를 그대로 읽으며 FR-001 표에만 더한다
 - **FR-003**: 공통코드는 캐시 없이 쓴다. 백오피스 기반은 프리셋 밖 헬퍼(redis)를 쓰지 않기 때문이다

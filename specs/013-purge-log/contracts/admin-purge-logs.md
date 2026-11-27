@@ -12,7 +12,7 @@
 |---|---|---|
 | `from` | 날짜 (`2026-11-01`) | 시작일 (포함) |
 | `to` | 날짜 | 종료일 (포함, 그날 끝까지). `from`보다 이르면 V001 |
-| `target` | `LOGIN_HISTORY` \| `NOTIFICATION` \| `REFRESH_TOKEN` \| `RICH_TEXT_IMAGE` | 대상 종류. 없으면 전체 |
+| `target` | `LOGIN_HISTORY` \| `NOTIFICATION` \| `REFRESH_TOKEN` \| `RICH_TEXT_IMAGE` \| `MEMBER` | 대상 종류. 없으면 전체 |
 | `page` | 정수, 0부터 | 기본 0 |
 | `size` | 정수 1~100 | 기본 20 |
 

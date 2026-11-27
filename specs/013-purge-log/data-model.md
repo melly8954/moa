@@ -7,7 +7,7 @@
 | 열 | 타입 | NULL | 뜻 (COMMENT) |
 |---|---|---|---|
 | `id` | `BIGINT AUTO_INCREMENT` | 아님 | PK |
-| `target` | `VARCHAR(30)` | 아님 | `'파기 대상 종류 (LOGIN_HISTORY, NOTIFICATION, REFRESH_TOKEN, RICH_TEXT_IMAGE)'` |
+| `target` | `VARCHAR(30)` | 아님 | `'파기 대상 종류 (LOGIN_HISTORY, NOTIFICATION, REFRESH_TOKEN, RICH_TEXT_IMAGE, MEMBER)'` |
 | `purge_method` | `VARCHAR(20)` | 아님 | `'파기 방법 (ROW_DELETE, COLUMN_ERASE)'` |
 | `purged_count` | `INT` | 아님 | `'파기 건수 (1 이상)'` |
 | `actor_type` | `VARCHAR(20)` | 아님 | `'처리자 종류 (SCHEDULER, PERSON)'` |
@@ -24,7 +24,7 @@
 
 | enum | 값 | 화면 이름 |
 |---|---|---|
-| `PurgeTarget` | `LOGIN_HISTORY`, `NOTIFICATION`, `REFRESH_TOKEN`, `RICH_TEXT_IMAGE` | 접속 이력, 알림, 리프레시 토큰, 본문 이미지 |
+| `PurgeTarget` | `LOGIN_HISTORY`, `NOTIFICATION`, `REFRESH_TOKEN`, `RICH_TEXT_IMAGE`, `MEMBER` | 접속 이력, 알림, 리프레시 토큰, 본문 이미지, 회원(`018-member-withdrawal`) |
 | `PurgeMethod` | `ROW_DELETE`, `COLUMN_ERASE` | 행 삭제, 개인정보 열 삭제 |
 | `PurgeActor` | `SCHEDULER`, `PERSON` | 정리기, 사람 |
 
@@ -33,7 +33,7 @@
 ### 규칙
 
 - `purged_count`가 0 이하인 이벤트는 저장하지 않는다 (FR-003)
-- `actor_type`이 `SCHEDULER`면 `actor_user_id`·`target_user_id`는 NULL이다
+- `actor_type`이 `SCHEDULER`면 `actor_user_id`는 NULL이다. `target_user_id`는 회원 파기(`018-member-withdrawal` FR-014)만 값이 있고 나머지 정리는 NULL이다
 - 저장 뒤 고치지 않는다 (목록은 보기만, FR-009)
 - `created_at`이 지금 − 365일보다 이전이면 정리 때 지운다 (FR-006)
 

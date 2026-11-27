@@ -35,6 +35,12 @@ public enum ErrorCode {
 	SOCIAL_EMAIL_UNVERIFIED("A014", HttpStatus.BAD_REQUEST, "제공자에서 이메일 인증을 마친 뒤 다시 시도해 주세요."),
 	SOCIAL_EMAIL_IN_USE("A015", HttpStatus.CONFLICT, "다른 방식으로 가입된 이메일입니다."),
 	TERMS_NOT_AGREED("A017", HttpStatus.BAD_REQUEST, "필수 약관에 동의해 주세요."),
+	// moa 009 마이페이지 (specs/009-mypage contracts/profile-api.md)
+	MYPAGE_NOT_ALLOWED("A201", HttpStatus.FORBIDDEN, "관리자 계정은 마이페이지를 쓸 수 없습니다."),
+	// moa 018 회원 탈퇴 (specs/018-member-withdrawal contracts/withdrawal-api.md). 본인 확인에 성공한 다음에만 쓴다
+	ACCOUNT_WITHDRAWN("A401", HttpStatus.UNAUTHORIZED, "탈퇴한 계정입니다. 유예 기간 안에 복구할 수 있습니다."),
+	ACCOUNT_PURGE_PENDING("A402", HttpStatus.UNAUTHORIZED, "복구할 수 있는 기간이 지난 계정입니다."),
+	RECOVERY_NOT_AVAILABLE("A403", HttpStatus.BAD_REQUEST, "복구할 수 없습니다. 다시 로그인해 주세요."),
 
 	// R: 리소스
 	NOT_FOUND("R001", HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
@@ -44,6 +50,8 @@ public enum ErrorCode {
 	INVALID_STATE("B001", HttpStatus.CONFLICT, "현재 상태에서 할 수 없는 요청입니다."),
 	// 닉네임 (specs/009-mypage research R4). 010 가입·009 변경·관리자 이름 바꾸기가 함께 쓴다
 	NICKNAME_TAGS_EXHAUSTED("B201", HttpStatus.CONFLICT, "이 닉네임은 더 쓸 수 없습니다. 다른 닉네임을 골라 주세요."),
+	// 다시 바꿀 수 있는 시각은 오류에 싣지 않고 프로필 조회의 nicknameChangeableAt으로 준다 (specs/009-mypage research R5)
+	NICKNAME_CHANGE_TOO_SOON("B202", HttpStatus.CONFLICT, "아직 닉네임을 바꿀 수 없습니다."),
 
 	// S: 시스템
 	INTERNAL_ERROR("S001", HttpStatus.INTERNAL_SERVER_ERROR, "처리 중 문제가 발생했습니다.");

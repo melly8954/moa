@@ -17,9 +17,11 @@ import com.moa.api.dto.user.UserAdminDto;
 import com.moa.api.dto.user.UserAdminRowDto;
 import com.moa.api.service.role.AccessRoleService;
 import com.moa.api.service.role.RoleUserService;
+import com.moa.api.service.user.SocialAccountService;
 import com.moa.api.service.user.UserAdminService;
 import com.moa.common.security.AuthPrincipal;
 import com.moa.common.security.Role;
+import com.moa.common.security.oauth.SocialProvider;
 import com.moa.common.security.permission.PermissionGuard;
 import com.moa.common.security.permission.PermissionRegistry;
 import com.moa.common.security.token.AuthTokenService;
@@ -45,6 +47,7 @@ public class UserAdminApplication {
 	private final AccessRoleService accessRoleService;
 	private final PermissionGuard permissionGuard;
 	private final PermissionRegistry permissionRegistry;
+	private final SocialAccountService socialAccountService;
 
 	@Transactional(readOnly = true)
 	public Page<UserAdminRowDto> search(AuthPrincipal actor, String keyword, Role role, Boolean locked,
@@ -121,6 +124,26 @@ public class UserAdminApplication {
 		authTokenService.revokeAll(id);
 	}
 
+	/**
+	 * moa: 한꺼번에 지우기 (FR-006, research R18). 고른 계정을 모두 먼저 보고 나서 지운다. 없는 계정 R001, 다룰 수 없는 계정 A005,
+	 * 최고 관리자 계정·자기 자신 B001이 하나라도 있으면 아무것도 지우지 않는다. 지운 계정마다 역할을 빼고 로그아웃시킨다
+	 */
+	@Transactional
+	public void deleteAll(AuthPrincipal actor, List<Long> ids) {
+		List<Long> targets = ids.stream().distinct().toList();
+		List<UserAdminDto> users = targets.stream().map(userAdminService::get).toList();
+		for (RowFacts fact : rowFacts(actor, users)) {
+			userAdminService.requireNotProtected(fact.row().protection());
+			userAdminService.requireNotSuperAdmin(fact.row().superAdmin());
+			userAdminService.requireNotSelf(actor, fact.user().id());
+		}
+		for (Long id : targets) {
+			userAdminService.delete(actor, id);
+			accessRoleService.removeAllRolesOf(id);
+			authTokenService.revokeAll(id);
+		}
+	}
+
 	/** moa: 최고 관리자 계정이면 B001 (FR-007, research R13) */
 	private void requireNotSuperAdmin(Long id) {
 		userAdminService.requireNotSuperAdmin(accessRoleService.isSuperAdmin(id));
@@ -133,11 +156,15 @@ public class UserAdminApplication {
 		return user;
 	}
 
-	/** moa: 한 쪽의 계정에 역할·최고 관리자·다루기 범위를 붙인다. 쿼리를 계정마다 하지 않고 한 번에 한다 (R10) */
+	/**
+	 * moa: 한 쪽의 계정에 역할·최고 관리자·다루기 범위·소셜 제공자를 붙인다. 쿼리를 계정마다 하지 않고 한 번에 한다
+	 * (R10·R17)
+	 */
 	private List<RowFacts> rowFacts(AuthPrincipal actor, List<UserAdminDto> users) {
 		List<Long> ids = users.stream().map(UserAdminDto::id).toList();
 		Map<Long, List<RoleUserDto.RoleRef>> roles = roleUserService.accessRolesOf(ids);
 		Set<Long> superAdmins = accessRoleService.findSuperAdminIds(ids);
+		Map<Long, List<SocialProvider>> providers = socialAccountService.providersOf(ids);
 		boolean actorHasAll = permissionGuard.hasAll(actor);
 		Set<String> mine = permissionGuard.permissions(actor);
 		Map<Long, Set<String>> permissions = actorHasAll ? Map.of() : accessRoleService.permissionsOf(ids);
@@ -153,7 +180,7 @@ public class UserAdminApplication {
 				}
 			}
 			return new RowFacts(user, new UserAdminRowDto(user, roles.getOrDefault(user.id(), List.of()),
-				superAdmins.contains(user.id()), protection));
+				superAdmins.contains(user.id()), protection, providers.getOrDefault(user.id(), List.of())));
 		}).toList();
 	}
 
