@@ -35,6 +35,10 @@ public enum ErrorCode {
 	SOCIAL_EMAIL_UNVERIFIED("A014", HttpStatus.BAD_REQUEST, "제공자에서 이메일 인증을 마친 뒤 다시 시도해 주세요."),
 	SOCIAL_EMAIL_IN_USE("A015", HttpStatus.CONFLICT, "다른 방식으로 가입된 이메일입니다."),
 	TERMS_NOT_AGREED("A017", HttpStatus.BAD_REQUEST, "필수 약관에 동의해 주세요."),
+	// moa 008 파티 (specs/008-party contracts/party-api.md "오류 코드")
+	PARTY_HOST_ONLY("A101", HttpStatus.FORBIDDEN, "방장만 할 수 있습니다."),
+	PARTY_MEMBER_ONLY("A102", HttpStatus.FORBIDDEN, "파티 멤버만 할 수 있습니다."),
+	PARTY_NOT_ALLOWED("A103", HttpStatus.FORBIDDEN, "관리자 계정은 파티를 쓸 수 없습니다."),
 	// moa 009 마이페이지 (specs/009-mypage contracts/profile-api.md)
 	MYPAGE_NOT_ALLOWED("A201", HttpStatus.FORBIDDEN, "관리자 계정은 마이페이지를 쓸 수 없습니다."),
 	// moa 018 회원 탈퇴 (specs/018-member-withdrawal contracts/withdrawal-api.md). 본인 확인에 성공한 다음에만 쓴다
@@ -48,6 +52,20 @@ public enum ErrorCode {
 
 	// B: 업무 규칙
 	INVALID_STATE("B001", HttpStatus.CONFLICT, "현재 상태에서 할 수 없는 요청입니다."),
+	// moa 008 파티 (specs/008-party contracts/party-api.md "오류 코드")
+	PARTY_FULL("B101", HttpStatus.CONFLICT, "정원이 찼습니다."),
+	PARTY_CLOSED("B102", HttpStatus.CONFLICT, "모집이 마감되었습니다."),
+	PARTY_ALREADY_JOINED("B103", HttpStatus.CONFLICT, "이미 파티에 속해 있습니다."),
+	PARTY_BANNED("B104", HttpStatus.CONFLICT, "이 파티에는 들어올 수 없습니다."),
+	PARTY_POSITION_FULL("B105", HttpStatus.CONFLICT, "그 포지션은 자리가 찼습니다."),
+	PARTY_POSITION_REQUIRED("B106", HttpStatus.BAD_REQUEST, "포지션을 골라 주세요."),
+	PARTY_INVITE_INVALID("B107", HttpStatus.NOT_FOUND, "유효하지 않은 초대입니다."),
+	PARTY_JOIN_REQUEST_PENDING("B108", HttpStatus.CONFLICT, "이미 대기 중인 신청이 있습니다."),
+	PARTY_CAPACITY_BELOW_MEMBERS("B109", HttpStatus.CONFLICT, "모집 인원을 지금 인원보다 작게 할 수 없습니다."),
+	PARTY_POSITION_OCCUPIED("B110", HttpStatus.CONFLICT, "멤버가 있는 포지션은 빼거나 줄일 수 없습니다."),
+	PARTY_GAME_LOCKED("B111", HttpStatus.CONFLICT, "멤버가 있는 포지션 파티는 게임을 바꿀 수 없습니다."),
+	PARTY_JOIN_POLICY_MISMATCH("B112", HttpStatus.CONFLICT, "이 참가 방식으로는 들어올 수 없습니다."),
+	PARTY_KICK_SELF("B113", HttpStatus.CONFLICT, "자기 자신을 내보낼 수 없습니다."),
 	// 닉네임 (specs/009-mypage research R4). 010 가입·009 변경·관리자 이름 바꾸기가 함께 쓴다
 	NICKNAME_TAGS_EXHAUSTED("B201", HttpStatus.CONFLICT, "이 닉네임은 더 쓸 수 없습니다. 다른 닉네임을 골라 주세요."),
 	// 다시 바꿀 수 있는 시각은 오류에 싣지 않고 프로필 조회의 nicknameChangeableAt으로 준다 (specs/009-mypage research R5)
