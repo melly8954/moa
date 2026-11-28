@@ -19,11 +19,12 @@
   - positions: `[{positionCode, slots, filled}]`
   - members: `[{userId, displayName, role, positionCode, tierCode, joinedAt}]`
   - me: `{relation: NONE|MEMBER|HOST|PENDING|BANNED, joinRequestId?}`
-  - invite: `{code, url}`. 멤버에게만 싣는다 (US4-AC1)
+  - invite: `{code, url}`. 멤버에게만 싣는다 (US4-AC1). `url`은 화면 경로 `/invite/{code}`이고 앞의 주소는 화면이 붙인다
 - **InvitePreview**
   - id, gameCode, modeCode, title, host, memberCount, capacity
   - positions
   - me.relation, joinable, reasonCode
+  - reasonCode는 들어올 수 없는 이유의 오류 코드다. B104(참가 제한), B103(이미 파티에 속함), B101(정원 참), B102(마감) 순서로 보고 처음 걸린 것 하나를 싣는다. 들어올 수 있으면 null이고 joinable이 true다. 로그인하지 않았으면 B104·B103은 보지 않는다
 
 ## 모집 페이지와 파티
 
@@ -33,21 +34,37 @@
 | `POST /parties` | 파티에 속하지 않은 회원 | 201 PartyDetail. 만든 회원이 HOST | V001 (칸 검증, 목록에 없는 코드, 포지션 없는 게임에 포지션, 자리 합이 2~10을 벗어남), B103 | US1-AC1~AC3, US10-AC1~AC4, US3-AC6 |
 | `GET /parties/{id}` | 누구나. PRIVATE는 멤버만 | 200 PartyDetail | R001 (없음, 해산, 멤버가 아닌 회원의 PRIVATE) | US2-AC3~AC5, FR-014 |
 | `PUT /parties/{id}` | 방장 | 200 PartyDetail. 게임, 모드, 제목, 소개, 인원, 포지션, 티어 | A101, V001, B109 (인원이 지금보다 작음), B110 (차지된 포지션 빼기·줄이기), B111 (멤버가 있는 포지션 파티의 게임 바꾸기) | US7-AC1, US10-AC10 |
-| `PUT /parties/{id}/join-policy` `{joinPolicy}` | 방장 | 200. APPROVAL에서 바뀌면 대기 신청을 CANCELLED로 | A101 | US7-AC2~AC4 |
-| `POST /parties/{id}/close` | 방장 | 200. CLOSED, closedByHost=true | A101 | US7-AC6 |
-| `POST /parties/{id}/reopen` | 방장 | 200. RECRUITING | A101, B101 (정원 참) | US7-AC6 |
+| `PUT /parties/{id}/join-policy` `{joinPolicy}` | 방장 | 200 PartyDetail. APPROVAL에서 바뀌면 대기 신청을 CANCELLED로 | A101 | US7-AC2~AC4 |
+| `POST /parties/{id}/close` | 방장 | 200 PartyDetail. CLOSED, closedByHost=true | A101 | US7-AC6 |
+| `POST /parties/{id}/reopen` | 방장 | 200 PartyDetail. RECRUITING | A101, B101 (정원 참) | US7-AC6 |
 | `POST /parties/{id}/invite-code` | 방장 | 200 `{code, url}`. 이전 코드는 못 쓴다 | A101 | US7-AC7 |
 | `DELETE /parties/{id}` | 방장 | 204. 해산 | A101 | US7-AC8 |
+
+만들기·고치기 요청의 칸
+
+- `gameCode`, `title`(1~50자)은 꼭 있다. `description`은 0~1000자이고 비우면 빈 문자열로 저장한다. `modeCode`, `tierMinCode`, `tierMaxCode`는 선택이다
+- 코드는 그 게임의 사용 중인 공통코드(`GAME`, `<게임>_MODE`·`_POSITION`·`_TIER`)에 있어야 한다. 없거나 꺼진 그룹은 빈 목록으로 본다. 고치기에서 게임을 바꾸지 않으면 그 게임이 꺼져 있어도 그대로 둔다
+- `positions: [{positionCode, slots}]`와 `hostPositionCode`
+  - `positions`가 비었으면 포지션 조건이 없다. 이때 `capacity`(2~10)가 꼭 있고 `hostPositionCode`는 보내지 않는다
+  - `positions`가 있으면 `hostPositionCode`가 꼭 있다. `hostPositionCode`가 `positions`에 없으면 그 포지션에 1자리를 더한다(롤은 모집할 포지션만 보낸다). `capacity`는 쓰지 않고 자리의 합(방장 포함)으로 정한다. 합이 2~10을 벗어나면 V001(`positions`)이다
+  - 롤은 자리가 늘 1이다. 같은 포지션을 두 번 보내면 V001이다
+- 고치기에서 포지션을 끄거나 켜서 멤버(방장 제외)의 포지션이 맞지 않게 되면 B110이다. 방장의 포지션은 `hostPositionCode`로 바뀐다
+- 고치기에서 인원을 지금 인원과 같게 하면 자동 마감하고, 자리가 늘면 방장이 직접 마감한 경우가 아닐 때 다시 모집한다
 
 ## 참가와 나가기
 
 | 호출 | 누가 | 성공 | 오류 | AC |
 |---|---|---|---|---|
-| `POST /parties/{id}/members` `{positionCode?, tierCode?}` | OPEN 파티의 비멤버 | 200 PartyDetail | B101 (정원 참), B102 (마감), B103 (이미 이 파티나 다른 파티에 속함), B104 (참가 제한), B105 (포지션 참), B106 (포지션 안 고름), B112 (OPEN이 아님) | US3-AC1~AC6, US10-AC5~AC8 |
+| `POST /parties/{id}/members` `{positionCode?, tierCode?}` | OPEN 파티의 비멤버 | 200 PartyDetail | B101 (정원 참), B102 (마감), B103 (이미 이 파티나 다른 파티에 속함), B104 (참가 제한), B105 (포지션 참), B106 (포지션 안 고름), B112 (APPROVAL 파티), R001 (없음, 해산, PRIVATE 파티), V001 (그 게임에 없는 tierCode) | US3-AC1~AC6, US10-AC5~AC8 |
 | `GET /parties/invites/{code}` | 누구나 | 200 InvitePreview | B107 (없는 코드, 바뀐 코드, 해산) | 화면 "초대 입장 화면" |
-| `POST /parties/invites/{code}/members` `{positionCode?, tierCode?}` | 비멤버 | 200 PartyDetail. 방식과 상관없이 바로 멤버. 그 회원의 대기 신청은 모두 CANCELLED | B107, B101, B102, B103, B104, B105, B106 | US4-AC2~AC7 |
+| `POST /parties/invites/{code}/members` `{positionCode?, tierCode?}` | 비멤버 | 200 PartyDetail. 방식과 상관없이 바로 멤버. 그 회원의 대기 신청은 모두 CANCELLED | B107, B101, B102, B103, B104, B105, B106, V001 (그 게임에 없는 tierCode) | US4-AC2~AC7 |
 | `DELETE /parties/{id}/members/me` | 멤버 | 204. 방장이면 다음 방장으로 넘김. 마지막이면 해산 | A102 | US6-AC1~AC5 |
 | `DELETE /parties/{id}/members/{userId}` | 방장 | 204. tb_party_ban에 KICKED | A101, R001 (멤버 아님), B113 (자기 자신) | US7-AC5 |
+
+- 참가·초대 입장·신청의 본문은 조건이 없는 파티면 비워 보내도 된다
+- 초대 코드는 대소문자를 가리지 않는다 (대문자로 바꿔 찾는다)
+- `tierCode`는 선택이고, 보내면 그 파티 게임의 `<게임>_TIER` 코드여야 한다(아니면 V001). 티어 범위 밖이어도 막지 않는다 (FR-024)
+- 멤버가 아닌 회원에게 PRIVATE 파티는 없는 파티다 (FR-014). 그래서 PRIVATE 파티에 참가·신청하면 B112가 아니라 R001이다
 
 멤버가 되는 모든 길(참가, 승인, 초대 입장)에서 처리 순서는 같다.
 
@@ -66,9 +83,9 @@
 
 | 호출 | 누가 | 성공 | 오류 | AC |
 |---|---|---|---|---|
-| `POST /parties/{id}/join-requests` `{positionCode?, tierCode?}` | APPROVAL 파티의 비멤버 | 201 `{joinRequestId}` PENDING | B101, B102, B103 (다른 파티에 속함), B104, B105, B106, B108 (이미 대기 중), B112 (APPROVAL이 아님) | US5-AC1, US5-AC7 |
+| `POST /parties/{id}/join-requests` `{positionCode?, tierCode?}` | APPROVAL 파티의 비멤버 | 201 `{joinRequestId}` PENDING | B101, B102, B103 (다른 파티에 속함), B104, B105, B106, B108 (이미 대기 중), B112 (OPEN 파티), R001 (없음, 해산, PRIVATE 파티), V001 (그 게임에 없는 tierCode) | US5-AC1, US5-AC7 |
 | `GET /parties/{id}/join-requests` | 방장 | 200 `[{joinRequestId, user, positionCode, tierCode, appliedAt}]` 대기 중만 신청순 | A101 | US5-AC2, US5-AC8 |
-| `POST /parties/{id}/join-requests/{joinRequestId}/approve` | 방장 | 200 PartyDetail | A101, B101, B105, B103 (신청자가 그사이 다른 파티에 들어감), R001 (대기 중이 아님) | US5-AC3, US5-AC5 |
+| `POST /parties/{id}/join-requests/{joinRequestId}/approve` | 방장 | 200 PartyDetail | A101, B101, B105, B103 (신청자가 그사이 다른 파티에 들어감), R001 (대기 중이 아님), A103 (신청자가 관리자 계정) | US5-AC3, US5-AC5 |
 | `POST /parties/{id}/join-requests/{joinRequestId}/reject` | 방장 | 204. tb_party_ban에 REJECTED | A101, R001 | US5-AC4 |
 | `DELETE /parties/{id}/join-requests/me` | 신청자 | 204. CANCELLED | R001 (대기 신청 없음) | US5-AC6 |
 
@@ -82,9 +99,11 @@
 
 | 호출 | 누가 | 성공 | 오류 | AC |
 |---|---|---|---|---|
-| `GET /parties/{id}/messages?before={id}&size=50` | 멤버 | 200 `{items: [Message], hasMore}`. 오래된 것부터. `before`가 없으면 마지막 50개 | A102, R001 (해산) | US9-AC2, US9-AC4, US9-AC6 |
+| `GET /parties/{id}/messages?before={id}&size=50` | 멤버 | 200 `{items: [Message], hasMore}`. 오래된 것부터. `before`도 `after`도 없으면 마지막 `size`개 | A102, R001 (해산), V001 (`before`와 `after`를 함께 줌) | US9-AC2, US9-AC4, US9-AC6 |
 | `GET /parties/{id}/messages?after={id}` | 멤버 | 200 `{items, hasMore}`. 그 id 뒤의 것 (다시 연결된 뒤) | A102 | FR-018 |
 | `POST /parties/{id}/messages` `{content}` | 멤버 | 201 Message. 커밋 뒤 `/topic/parties/{id}`로 보낸다 | A102, V001 (빈 값, 500자 넘음), R001 | US9-AC1, US9-AC5 |
+
+`size`는 1~100이고 기본 50이다. `hasMore`는 그 방향(`before`면 더 오래된 쪽, `after`면 더 새 쪽)으로 더 있는지다.
 
 Message의 항목은 id, type(`CHAT`·`SYSTEM`), sender(`{userId, displayName}`), content, systemEvent, subject(`{userId, displayName}`), sentAt이다.
 

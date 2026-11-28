@@ -1,6 +1,7 @@
 package com.moa.api.repository.reader.user;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +24,11 @@ public class UserReader {
 
 	public Optional<User> find(Long id) {
 		return userRepository.findById(id);
+	}
+
+	/** 활동 중인 회원만. 탈퇴(유예 중)·파기된 회원은 빠진다 */
+	public List<User> findAll(Collection<Long> ids) {
+		return ids.isEmpty() ? List.of() : userRepository.findByIdIn(ids);
 	}
 
 	/** moa 018: 유예 중인 회원도 나온다 (아이디는 파기할 때까지 붙잡는다) */

@@ -97,7 +97,7 @@
 | position_code, tier_code | VARCHAR(50) NULL | 신청할 때 고른 값 |
 | status | VARCHAR(20) NOT NULL | `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED` |
 | decided_at | DATETIME(6) NULL | 승인·거절·취소한 시각 (NULL: 대기 중) |
-| pending_key | 가상 컬럼 | status가 PENDING이면 0, 아니면 id |
+| pending_key | 가상 컬럼 | status가 PENDING이면 1, 아니면 NULL (active_key와 같은 방식. 가상 열에는 AUTO_INCREMENT 열을 못 쓴다) |
 
 - `uk_party_join_request_party_id_user_id_pending_key (party_id, user_id, pending_key)`: 한 파티에 대기 신청은 하나 (US5-AC7)
 - `idx_party_join_request_user_id (user_id)`: 내 대기 신청 목록 (US8)
@@ -154,7 +154,7 @@ PENDING ──승인──▶ APPROVED
 
 같은 마이그레이션 파일에 넣는다 (spec.md FR-030, research.md R11).
 
-- `tb_menu`에 사용자 메뉴 두 줄: "모집"(`screen_key` = `RECRUIT`, 공개 범위 `PUBLIC`), "내 파티"(`MY_PARTY`, `MEMBER`). `audience` = `USER`, `enabled` = true, 상위 메뉴 없음, 순서는 지금 사용자 메뉴 뒤다
+- `tb_menu`에 사용자 메뉴 두 줄: "모집"(`screen_key` = `RECRUIT`, 공개 범위 `PUBLIC`), "내 파티"(`MY_PARTY`, `MEMBER`). `audience` = `USER`, `enabled` = true, 상위 메뉴 없음, 순서는 001 FR-007 표 순서대로 공지(20)와 고객센터(90) 사이인 30, 40이다
 - `screen_key`로 찾고 이미 있으면 넣지 않는다. 고정 id를 쓰지 않는다. 열은 `V2__seed.sql`의 홈·공지 줄을 따른다
 
 ## 알림 종류

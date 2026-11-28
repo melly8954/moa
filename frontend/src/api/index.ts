@@ -20,6 +20,7 @@ import { withdrawalApi } from "./withdrawal"
 import { faqAdminApi, faqApi } from "./faq"
 import { inquiryAdminApi, inquiryApi } from "./inquiry"
 import { legalApi } from "./legal"
+import { partyApi } from "./party"
 // @helpers:imports
 
 // 백엔드 API 창구. 화면은 이것만 부른다 (axios·fetch를 직접 부르지 않는다)
@@ -55,6 +56,7 @@ export const api = {
     bannerAdmin: bannerAdminApi,
     popupAdmin: popupAdminApi,
     withdrawal: withdrawalApi,
+    party: partyApi,
     faq: faqApi,
     faqAdmin: faqAdminApi,
     inquiry: inquiryApi,

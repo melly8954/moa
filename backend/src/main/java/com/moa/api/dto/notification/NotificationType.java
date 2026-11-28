@@ -7,6 +7,18 @@ package com.moa.api.dto.notification;
 public enum NotificationType {
 	/** 운영자가 한 사용자에게 알리는 시스템 알림 */
 	SYSTEM,
+	/** 승인 파티에 참가 신청이 옴. 받는 사람: 방장 (specs/008-party FR-029) */
+	PARTY_APPLIED,
+	/** 참가 신청이 승인됨. 받는 사람: 신청자 */
+	PARTY_APPROVED,
+	/** 참가 신청이 거절됨. 받는 사람: 신청자 */
+	PARTY_REJECTED,
+	/** 방장을 이어받음. 받는 사람: 새 방장 */
+	PARTY_HOST_CHANGED,
+	/** 파티에서 내보내짐. 받는 사람: 내보내진 회원 */
+	PARTY_KICKED,
+	/** 방장이 파티를 해산함. 받는 사람: 방장 말고 멤버와 대기 신청자 */
+	PARTY_DISSOLVED,
 	/** 1:1 문의에 처음 답변했다 (specs/017-customer-center FR-012) */
 	INQUIRY_ANSWERED
 }

@@ -26,12 +26,12 @@
 
 | type | 주소 | payload | 화면이 할 일 | AC |
 |---|---|---|---|---|
-| `MESSAGE` | topic | Message ([party-api.md](./party-api.md) 채팅) | 채팅 끝에 붙인다 | US9-AC1, US9-AC3 |
-| `MEMBERS_CHANGED` | topic | `{members, positions, memberCount, capacity, status, hostUserId}` | 멤버 목록, 빈자리, 방장 표시를 바꾼다 | US9-AC7 |
-| `PARTY_UPDATED` | topic | PartyDetail의 파티 정보 부분 | 정보와 참가 방식을 바꾼다 | FR-028 |
-| `PARTY_DISSOLVED` | topic | `{}` | 알리고 모집 페이지로 보낸다 | US9-AC8 |
-| `KICKED` | user queue | `{partyId}` | 알리고 모집 페이지로 보낸다 | US9-AC8 |
-| `JOIN_REQUESTS_CHANGED` | 방장의 user queue | `{pendingCount}` | 신청 목록을 다시 불러온다 | US9-AC9 |
+| `MESSAGE` | topic | Message ([party-api.md](./party-api.md) 채팅). 나간 회원의 LEFT 안내를 보낸 뒤 그 회원의 구독을 끊는다 | 채팅 끝에 붙인다 | US9-AC1, US9-AC3 |
+| `MEMBERS_CHANGED` | topic | `{members, positions, memberCount, capacity, status, hostUserId}`. 들어옴, 나감(해산이 아닐 때), 내보냄, 정보 고치기 뒤 | 멤버 목록, 빈자리, 방장 표시를 바꾼다 | US9-AC7 |
+| `PARTY_UPDATED` | topic | `{id, gameCode, modeCode, title, description, joinPolicy, status, closedByHost, capacity, memberCount, positionEnabled, tierMinCode, tierMaxCode, positions, openPositions, invite}`. 정보 고치기, 참가 방식 바꾸기, 마감, 재개, 초대 코드 새로 만들기 뒤. 파티 주소는 멤버만 구독하므로 `invite`도 싣는다 | 정보, 참가 방식, 상태, 초대 코드를 바꾼다 | FR-028 |
+| `PARTY_DISSOLVED` | topic | `{}`. 방장이 해산할 때만. 마지막 멤버가 나가 해산되면 받을 사람이 없어 보내지 않는다 | 알리고 모집 페이지로 보낸다 | US9-AC8 |
+| `KICKED` | 내보내진 회원의 user queue | `{partyId}`. 보낸 뒤 그 회원의 파티 주소 구독을 끊는다 | 알리고 모집 페이지로 보낸다 | US9-AC8 |
+| `JOIN_REQUESTS_CHANGED` | 방장의 user queue | `{pendingCount}`. 신청, 취소, 승인, 거절 뒤와, 대기 신청이 저절로 취소될 때(신청자가 다른 파티에 들어감, 승인 방식에서 바뀜, 신청자 탈퇴) 그 파티의 방장에게 | 신청 목록을 다시 불러온다 | US9-AC9 |
 
 ## 개인 알림과의 관계
 

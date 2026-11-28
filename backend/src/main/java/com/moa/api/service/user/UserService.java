@@ -1,6 +1,10 @@
 package com.moa.api.service.user;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,6 +42,21 @@ public class UserService {
 		return userReader.find(id)
 			.map(UserDto::from)
 			.orElseThrow(() -> new ServiceException(ErrorCode.NOT_FOUND));
+	}
+
+	/**
+	 * 다른 회원에게 보일 이름들 (moa 008 파티 멤버·채팅). 탈퇴했거나 지워진 회원은 "탈퇴한 회원"이다 (MemberDisplay)
+	 *
+	 * @return 받은 ID마다 이름. 순서는 보장하지 않는다
+	 */
+	public Map<Long, String> displayNames(Collection<Long> ids) {
+		Map<Long, String> found = userReader.findAll(ids).stream()
+			.collect(Collectors.toMap(User::getId, User::getName));
+		Map<Long, String> names = new HashMap<>();
+		for (Long id : ids) {
+			names.put(id, found.getOrDefault(id, MemberDisplay.WITHDRAWN_NAME));
+		}
+		return names;
 	}
 
 	/**

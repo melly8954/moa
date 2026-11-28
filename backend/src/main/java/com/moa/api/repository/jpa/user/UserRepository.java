@@ -1,6 +1,7 @@
 package com.moa.api.repository.jpa.user;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,4 +56,7 @@ public interface UserRepository extends SoftDeleteRepository<User, Long> {
 	List<Long> findIdsWithdrawnBefore(@Param("cutoff") LocalDateTime cutoff);
 
 	boolean existsByRole(Role role);
+
+	/** 활동 중인 회원만 나온다 (User.ACTIVE). 없는 ID는 빠진다 */
+	List<User> findByIdIn(Collection<Long> ids);
 }
