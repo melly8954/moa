@@ -72,13 +72,16 @@ test("US2-AC2·AC3 사용자 셸 본문 맨 아래에 푸터 줄이 있고 처�
   await page.route("**/api/v1/notices/new", (route) => route.fulfill({ json: { hasNew: false } }))
   await page.goto("/")
   const privacy = footer(page).getByRole("link", { name: "개인정보처리방침" })
-  await expect(privacy).toBeVisible()
-  const weight = await privacy.evaluate((el) => Number(getComputedStyle(el).fontWeight))
-  expect(weight).toBeGreaterThanOrEqual(600)
+  // 첫 화면은 로그인 확인 뒤 다시 그려진다. 한 번 읽지 않고 맞을 때까지 다시 본다 (CI에서 다시 그리는 중에 빈 값을 읽었다)
+  await expect(privacy).toHaveCSS("font-weight", "600")
   // 본문이 짧아도 화면 맨 아래에 붙는다
-  const box = await footer(page).boundingBox()
-  const viewport = page.viewportSize()
-  expect(box && viewport && box.y + box.height).toBeGreaterThan((viewport?.height ?? 0) - 80)
+  const viewportHeight = page.viewportSize()?.height ?? 0
+  await expect
+    .poll(async () => {
+      const box = await footer(page).boundingBox()
+      return box ? box.y + box.height : 0
+    })
+    .toBeGreaterThan(viewportHeight - 80)
   await privacy.click()
   await expect(page).toHaveURL(/\/privacy$/)
 })
