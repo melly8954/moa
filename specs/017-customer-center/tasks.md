@@ -169,8 +169,8 @@ description: "고객센터 (customer-center) 작업 목록"
 ## Phase 8: Polish & Cross-Cutting
 
 - [X] T045 PR 직전에 `git fetch` 뒤 `origin/dev`의 마지막 마이그레이션 번호와 `ErrorCode`의 `B3xx`를 다시 본다. 다른 기능이 `V14`나 `B301`을 썼으면 파일 이름·코드와 data-model.md·plan.md·contracts/api.md·research.md·이 tasks.md를 다음 번호로 바꾼다 (`docs/db.md`, CI `migration-numbers`). 같은 때 specs/README.md의 017 줄 상태를 "구현됨. 탈퇴 회원 문의 1년 보관(US5)은 회원 탈퇴 스펙 뒤"로 바꾼다
-- [ ] T046 frontend/에서 local 백엔드를 띄운 채 `npm run gen:api`로 F/types/schema.d.ts를 다시 만들고, T016·T031의 손으로 쓴 타입 중 생성 타입으로 바꿀 수 있는 것을 바꾼다
-- [ ] T047 backend/에서 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build`(`ArchitectureTest` 포함), 한 번 `bootRun`으로 V14 적용과 `validate`를 확인한다(공유 local DB 주의: 이 브랜치를 쓰는 작업 사본에서만). frontend/에서 `npm run format`, `npm run check`
+- [X] T046 frontend/에서 local 백엔드를 띄운 채 `npm run gen:api`로 F/types/schema.d.ts를 다시 만들고, T016·T031의 손으로 쓴 타입 중 생성 타입으로 바꿀 수 있는 것을 바꾼다
+- [X] T047 backend/에서 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build`(`ArchitectureTest` 포함), 한 번 `bootRun`으로 V14 적용과 `validate`를 확인한다(공유 local DB 주의: 이 브랜치를 쓰는 작업 사본에서만). frontend/에서 `npm run format`, `npm run check`
 - [ ] T048 quickstart.md "화면 확인" 1~8을 사람이 직접 한다. 시험 계정 비밀번호가 필요하므로 에이전트는 하지 않는다 (원칙 VI)
 
 ---
