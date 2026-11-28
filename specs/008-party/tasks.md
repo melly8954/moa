@@ -41,7 +41,7 @@ description: "파티 (party) 작업 목록"
 
 **Purpose**: 스키마, 시드, 알림 종류. 의존성은 007이 이미 넣어 더할 것이 없다 (`spring-boot-starter-websocket`, `@stomp/stompjs`)
 
-- [ ] T001 `MIG/V<다음 번호>__party.sql`을 만든다. data-model.md 그대로이고, 규칙은 `docs/db.md`다 (research.md R8)
+- [x] T001 `MIG/V<다음 번호>__party.sql`을 만든다. data-model.md 그대로이고, 규칙은 `docs/db.md`다 (research.md R8)
   - 번호는 지금 정하지 않는다. 파일 이름은 임시로 dev의 마지막 번호 + 1로 두고, PR 직전에 dev를 병합한 뒤 다시 마지막 번호 + 1로 맞춘다. CI `migration-numbers`가 막으면 번호를 올린다
   - 파일 머리 주석: `-- moa: 파티 테이블, 게임 공통코드, 파티 알림 종류. 스펙 specs/008-party (data-model.md, FR-002, FR-029)`
   - 테이블 6개: `tb_party`, `tb_party_position`, `tb_party_member`, `tb_party_join_request`, `tb_party_ban`, `tb_party_message`
@@ -57,7 +57,7 @@ description: "파티 (party) 작업 목록"
   - 메뉴 시드 (data-model.md "메뉴 시드"): `tb_menu`에 사용자 메뉴 "모집"(`RECRUIT`, `PUBLIC`)과 "내 파티"(`MY_PARTY`, `MEMBER`)를 지금 사용자 메뉴 뒤에 넣는다. `screen_key`로 찾고 이미 있으면 넣지 않는다
   - `tb_notification.type`의 COMMENT에 파티 알림 종류 6개를 더한다. `MODIFY COLUMN`으로 `VARCHAR(30) NOT NULL`을 그대로 옮겨 적는다 (data-model.md "알림 종류")
   - 다 쓰면 `bootRun`으로 한 번 띄워 Flyway 적용과 `ddl-auto: validate` 통과를 본다 (`docs/db.md`). 엔터티(T005)가 생긴 뒤에 본다
-- [ ] T002 [P] `BE/api/dto/notification/NotificationType.java`에 FR-029의 종류 6개를 더한다: `PARTY_APPLIED`, `PARTY_APPROVED`, `PARTY_REJECTED`, `PARTY_HOST_CHANGED`, `PARTY_KICKED`, `PARTY_DISSOLVED` (research.md R13)
+- [x] T002 [P] `BE/api/dto/notification/NotificationType.java`에 FR-029의 종류 6개를 더한다: `PARTY_APPLIED`, `PARTY_APPROVED`, `PARTY_REJECTED`, `PARTY_HOST_CHANGED`, `PARTY_KICKED`, `PARTY_DISSOLVED` (research.md R13)
   - API 응답에도 나가는 값이라, 화면 작업 전에 `npm run gen:api`로 프론트 타입을 다시 만든다 (T034)
 
 ---
@@ -70,26 +70,26 @@ description: "파티 (party) 작업 목록"
 
 ### 백엔드
 
-- [ ] T003 `BE/common/exception/ErrorCode.java`에 contracts/party-api.md "오류 코드" 표의 16개를 그 상태값 그대로 더한다
+- [x] T003 `BE/common/exception/ErrorCode.java`에 contracts/party-api.md "오류 코드" 표의 16개를 그 상태값 그대로 더한다
   - `A101` 403 방장만, `A102` 403 멤버만, `A103` 403 관리자 계정은 파티를 쓸 수 없음 (FR-012)
   - `B101` 409 정원 참, `B102` 409 마감, `B103` 409 이미 파티에 속함, `B104` 409 참가 제한, `B105` 409 포지션 참
   - `B106` 400 포지션 필요, `B107` 404 유효하지 않은 초대, `B108` 409 대기 신청 있음, `B109` 409 인원을 지금보다 작게
   - `B110` 409 차지된 포지션 빼기·줄이기, `B111` 409 게임 바꾸기 불가, `B112` 409 이 참가 방식으로는 못 들어옴, `B113` 409 자기 자신 내보내기
-- [ ] T004 [P] frontend/messages/ko.json의 `errors`에 T003의 16개 코드 문구를 더한다
-- [ ] T005 [P] `BE/api/entity/party/`에 엔터티 6개를 만든다
+- [x] T004 [P] frontend/messages/ko.json의 `errors`에 T003의 16개 코드 문구를 더한다
+- [x] T005 [P] `BE/api/entity/party/`에 엔터티 6개를 만든다
   - `Party`: `SoftDeleteEntity` + `@SQLRestriction(SoftDeleteEntity.NOT_DELETED)`
   - `PartyPosition`, `PartyMember`, `PartyJoinRequest`, `PartyBan`, `PartyMessage`: `@HardDelete(reason)`. reason은 data-model.md 각 테이블 머리의 문장이다
   - enum `JoinPolicy`, `PartyStatus`, `PartyRole`, `JoinRequestStatus`, `BanReason`, `MessageType`, `SystemEvent`
   - 컬럼 길이와 NULL 여부는 T001과 같다
   - 모두 `@Table(name = "tb_…")`을 적는다. 인덱스·유니크는 엔터티에 적지 않는다 (`docs/db.md` "엔터티")
   - `Party`에 상태를 바꾸는 메서드를 둔다: `close(byHost)`, `reopen()`, `changeHost(userId)`, `changeJoinPolicy()`, `regenerateInviteCode(code)`. 전이 규칙은 data-model.md "상태 전이"다
-- [ ] T006 [P] `BE/api/repository/jpa/party/`에 리포지토리 6개를 만든다
+- [x] T006 [P] `BE/api/repository/jpa/party/`에 리포지토리 6개를 만든다
   - `PartyRepository`는 `SoftDeleteRepository`를 상속한다. 나머지는 `JpaRepository`다
   - `PartyRepository`에 `@Lock(PESSIMISTIC_WRITE)` `findForUpdateById(Long id)`를 둔다 (research.md R6, 선례 `RefreshTokenRepository`)
   - `PartyMessageRepository`에 커서 조회 두 가지를 둔다. `before`가 있으면 `id < before` 큰 순으로 51개를 가져와 뒤집는다. `after`가 있으면 `id > after` 작은 순으로 51개를 가져온다. 51번째가 있으면 `hasMore`다 (research.md R5)
-- [ ] T007 `BE/api/repository/reader/party/PartyReader.java`, `BE/api/repository/writer/party/PartyWriter.java`를 만든다. 모집 페이지 목록은 QueryDSL로 `status = RECRUITING AND join_policy IN (OPEN, APPROVAL)`과 선택 조건 `game_code`, `mode_code`를 걸고 `id DESC`로 `Page`를 돌려준다. Writer의 멤버 저장은 `saveAndFlush`로 해 유니크 충돌이 그 자리에서 나게 한다
-- [ ] T008 `BE/api/dto/party/`에 Dto를 만든다: `PartyDto`, `PartyPositionDto`, `PartyMemberDto`(userId, displayName, role, positionCode, tierCode, joinedAt), `PartyJoinRequestDto`, `PartyMessageDto`. 표시 이름은 `tb_user.name`을 조인해 채운다
-- [ ] T009 `BE/api/application/v1/party/PartyApplication.java`의 뼈대를 만든다
+- [x] T007 `BE/api/repository/reader/party/PartyReader.java`, `BE/api/repository/writer/party/PartyWriter.java`를 만든다. 모집 페이지 목록은 QueryDSL로 `status = RECRUITING AND join_policy IN (OPEN, APPROVAL)`과 선택 조건 `game_code`, `mode_code`를 걸고 `id DESC`로 `Page`를 돌려준다. Writer의 멤버 저장은 `saveAndFlush`로 해 유니크 충돌이 그 자리에서 나게 한다
+- [x] T008 `BE/api/dto/party/`에 Dto를 만든다: `PartyDto`, `PartyPositionDto`, `PartyMemberDto`(userId, displayName, role, positionCode, tierCode, joinedAt), `PartyJoinRequestDto`, `PartyMessageDto`. 표시 이름은 `tb_user.name`을 조인해 채운다
+- [x] T009 `BE/api/application/v1/party/PartyApplication.java`의 뼈대를 만든다
   - `isMember`
   - 멤버가 되는 공통 처리 `admit(partyId, userId, positionCode, tierCode, via)`. 순서는 contracts/party-api.md "멤버가 되는 모든 길"의 단계다
     1. 파티 락
@@ -107,13 +107,13 @@ description: "파티 (party) 작업 목록"
   - 관리자 계정 막기 (FR-012, research.md R14): 만들기·`admit`(참가, 승인 대상, 초대 입장)·신청·내 파티 앞에서 `MemberActivityPolicy.isManagerAccount(userId)`면 A103이다. 승인은 신청자 쪽을 본다
   - 멤버 저장의 `DataIntegrityViolationException`은 `PartyMemberService`가 받아 B103으로 바꾼다 (research.md R6)
 
-- [ ] T010 `BE/api/controller/ws/party/`에 구독 권한 검사를 만든다 (research.md R3)
+- [x] T010 `BE/api/controller/ws/party/`에 구독 권한 검사를 만든다 (research.md R3)
   - `PartySubscriptionInterceptor`(`ChannelInterceptor`)
     - `SUBSCRIBE /topic/parties/{id}`면 세션 사용자(`StompPrincipal`)의 ID로 `PartyApplication.isMember(partyId, userId)`를 확인하고, 아니면 막는다
     - 구독을 강제로 끊기 위해 사용자별 구독 id를 기록한다 (contracts/party-realtime.md "멤버가 아니게 된 회원")
   - `PartyWebSocketConfig`(`WebSocketMessageBrokerConfigurer`)의 `configureClientInboundChannel`로 위 인터셉터를 붙인다. 키트 `WebSocketConfig`는 고치지 않는다
   - 막은 SUBSCRIBE가 연결 전체(알림 포함)를 끊는지 로컬에서 확인하고, 결과를 research.md R3 "주의"에 적는다
-- [ ] T011 `BE/api/application/v1/party/PartyRealtimeNotifier.java`를 만든다
+- [x] T011 `BE/api/application/v1/party/PartyRealtimeNotifier.java`를 만든다
   - `@TransactionalEventListener(phase = AFTER_COMMIT)`로 파티 이벤트(record)를 받아 `SimpMessagingTemplate`으로 보낸다. 007의 알림 리스너와 같은 방식이다
   - 이벤트 6종(`MESSAGE`, `MEMBERS_CHANGED`, `PARTY_UPDATED`, `PARTY_DISSOLVED`, `KICKED`, `JOIN_REQUESTS_CHANGED`)과 주소는 contracts/party-realtime.md "이벤트" 표다
   - 모양은 `{type, partyId, payload, occurredAt}`이다
@@ -121,20 +121,20 @@ description: "파티 (party) 작업 목록"
   - `KICKED`와 멤버가 나간 경우에는 그 회원의 `/topic/parties/{id}` 구독을 끊는다 (T010 기록 사용)
 ### 프론트
 
-- [ ] T012 [P] `FE/api/party.ts`를 만들고 `FE/api/index.ts`의 `api.v1`에 `party`로 등록한다
+- [x] T012 [P] `FE/api/party.ts`를 만들고 `FE/api/index.ts`의 `api.v1`에 `party`로 등록한다
   - 이 작업은 파일을 만들고 `api.v1.party`로 등록하는 데까지다. 함수는 비워 둔다
   - 함수는 각 스토리의 화면 작업이 그 스토리가 쓰는 경로만큼 더한다. 경로는 contracts/party-api.md를 따르고, 응답 타입은 `npm run gen:api` 뒤 `Schema<"...">`로 쓴다
-- [ ] T013 [P] 기존 실시간 연결에 파티를 붙인다 (contracts/party-realtime.md "연결", research.md R5)
+- [x] T013 [P] 기존 실시간 연결에 파티를 붙인다 (contracts/party-realtime.md "연결", research.md R5)
   - `FE/providers/realtime-provider.tsx`
     - `RESYNC_KEYS`에 파티 쿼리 키를 더한다
     - 연결 상태(연결됨·끊김)를 읽는 훅(예: `useRealtimeConnected`)을 내보낸다
     - `useRealtimeSubscription`이 구독 경로로 `null`을 받으면 구독하지 않게 한다 (멤버가 아닐 때 구독하지 않기, research.md R3)
   - `FE/lib/party-realtime.ts`에 파티 구독 훅 `usePartyChannel(partyId | null, onEvent)`와 개인 구독 훅 `useMyPartyQueue(onEvent)`를 둔다. 둘 다 `useRealtimeSubscription` 위에 만든다
-- [ ] T014 [P] `BE/api/screen/PartyScreens.java`에 사용자 연결 화면 둘을 등록한다 (spec.md FR-030, research.md R11, `NoticeScreens`와 같은 방식)
+- [x] T014 [P] `BE/api/screen/PartyScreens.java`에 사용자 연결 화면 둘을 등록한다 (spec.md FR-030, research.md R11, `NoticeScreens`와 같은 방식)
   - `ScreenDefinition.user("RECRUIT", "모집", "/recruit", false)`, `ScreenDefinition.user("MY_PARTY", "내 파티", "/my-party", true)`
   - 로그인 필요 여부는 그 화면이 쓰는 API와 같다: `GET /parties`는 누구나, `GET /parties/me`는 회원만 (001 FR-008)
   - 메뉴는 서버 메뉴라 프론트 `menu.ts`와 ko.json `menu`에는 더하지 않는다. 메뉴 줄은 T001 마이그레이션이 넣는다
-- [ ] T015 [P] frontend/messages/ko.json에 `party` 키를 만든다
+- [x] T015 [P] frontend/messages/ko.json에 `party` 키를 만든다
   - 하위 묶음: `recruit`, `create`, `detail`, `join`, `invite`, `host`, `chat`, `myParty`, `confirm`
   - `chat.system`에 JOINED·LEFT·KICKED·HOST_CHANGED 안내 문구(`{name}` 자리 포함)를 둔다
 
