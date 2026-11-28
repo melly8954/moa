@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { useErrorMessages } from "@/lib/error-messages"
 import { type PartyInput, partySchema, toPartySaveRequest } from "@/lib/schemas/party"
-import type { PartyDetail } from "@/types/party"
+import type { PartyDetail, PartyModifyRequest, PartySaveRequest } from "@/types/party"
 import { partyDetailKey } from "./use-party"
 
 // 파티 → 고치기 폼 값. 방장 포지션은 방장 멤버의 포지션이다
@@ -60,7 +60,12 @@ export function EditPartyDialog({
   const form = useForm<PartyInput>({ resolver: zodResolver(partySchema), values: open ? toInput(party) : undefined })
 
   const save = useMutation({
-    mutationFn: (values: PartyInput) => api.v1.party.modify(party.id, toPartySaveRequest(values)),
+    mutationFn: (values: PartyInput) => {
+      // 참가 방식은 방장 메뉴에서 따로 바꾼다 (PUT /join-policy)
+      const body: PartyModifyRequest = toPartySaveRequest(values)
+      delete (body as Partial<PartySaveRequest>).joinPolicy
+      return api.v1.party.modify(party.id, body)
+    },
     onSuccess: (detail) => {
       queryClient.setQueryData(partyDetailKey(party.id), detail)
       toast.success(t("saved"))

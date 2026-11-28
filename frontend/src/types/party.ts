@@ -65,6 +65,10 @@ export type PartySaveRequest = {
   hostPositionCode?: string
 }
 
+// 고치기 (PUT /parties/{id}, 백엔드 PartyModifyRequest). 참가 방식은 PUT /join-policy로 따로 바꾸므로 싣지 않는다
+//   모든 칸을 보낸 값으로 바꾼다 (빠진 칸은 비운다)
+export type PartyModifyRequest = Omit<PartySaveRequest, "joinPolicy">
+
 // 참가·신청·초대 입장의 몸통
 export type PartyJoinRequestBody = { positionCode?: string; tierCode?: string }
 
@@ -78,7 +82,7 @@ export type InvitePreview = {
   memberCount: number
   capacity: number
   positions: PartyPosition[]
-  me: { relation: PartyRelation }
+  me: { relation: PartyRelation; joinRequestId?: number | null }
   joinable: boolean
   // 못 들어오는 이유 (오류 코드: B101, B102, B103, B104 등)
   reasonCode: string | null

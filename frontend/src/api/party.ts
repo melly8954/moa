@@ -11,6 +11,7 @@ import type {
   PartyJoinRequestItem,
   PartyMessage,
   PartyMessagePage,
+  PartyModifyRequest,
   PartySaveRequest,
 } from "@/types/party"
 import { http } from "./client"
@@ -25,7 +26,7 @@ export const partyApi = {
     http.get<PageResponse<PartySummary>>(base, { params, skipAuth: true }).then((res) => res.data),
   // 만들기 (T017). 만든 회원이 방장이다
   create: (data: PartySaveRequest) => http.post<PartyDetail>(base, data).then((res) => res.data),
-  // 초대 입장 (T027)
+  // 초대 입장 (T027). 코드는 대소문자를 가리지 않는다
   getInvite: (code: string) =>
     http.get<InvitePreview>(`${base}/invites/${encodeURIComponent(code)}`).then((res) => res.data),
   joinByInvite: (code: string, data: PartyJoinRequestBody = {}) =>
@@ -34,11 +35,13 @@ export const partyApi = {
   me: () => http.get<MyParty>(`${base}/me`).then((res) => res.data),
   // 파티 화면 (T020). 로그인 없이도 열린다. 토큰이 있으면 실어 me.relation을 받는다
   get: (id: number) => http.get<PartyDetail>(`${base}/${id}`).then((res) => res.data),
-  modify: (id: number, data: PartySaveRequest) => http.put<PartyDetail>(`${base}/${id}`, data).then((res) => res.data),
+  modify: (id: number, data: PartyModifyRequest) =>
+    http.put<PartyDetail>(`${base}/${id}`, data).then((res) => res.data),
   changeJoinPolicy: (id: number, joinPolicy: JoinPolicy) =>
-    http.put<void>(`${base}/${id}/join-policy`, { joinPolicy }).then(() => undefined),
-  close: (id: number) => http.post<void>(`${base}/${id}/close`).then(() => undefined),
-  reopen: (id: number) => http.post<void>(`${base}/${id}/reopen`).then(() => undefined),
+    http.put<PartyDetail>(`${base}/${id}/join-policy`, { joinPolicy }).then((res) => res.data),
+  close: (id: number) => http.post<PartyDetail>(`${base}/${id}/close`).then((res) => res.data),
+  reopen: (id: number) => http.post<PartyDetail>(`${base}/${id}/reopen`).then((res) => res.data),
+  // 초대 코드 새로 만들기. url은 화면 경로(/invite/{code})라 화면이 사이트 주소를 붙인다 (inviteUrlOf)
   regenerateInviteCode: (id: number) => http.post<PartyInvite>(`${base}/${id}/invite-code`).then((res) => res.data),
   dissolve: (id: number) => http.delete<void>(`${base}/${id}`).then(() => undefined),
   // 참가와 나가기 (T022, T031, T033)

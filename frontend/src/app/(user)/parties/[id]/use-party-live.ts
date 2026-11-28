@@ -14,7 +14,7 @@ export const RECRUIT_PATH = "/recruit"
 
 // 파티 화면의 실시간 반영 (T025, contracts/party-realtime.md "이벤트")
 //   멤버일 때만 /topic/parties/{id}를 구독한다. 아니면 null (막힌 구독이 알림과 함께 쓰는 연결을 끊을 수 있다, research.md R3)
-//   MESSAGE: 채팅 끝에 붙인다 / MEMBERS_CHANGED·PARTY_UPDATED: 파티 캐시를 고친다
+//   MESSAGE: 채팅 끝에 붙인다 / MEMBERS_CHANGED·PARTY_UPDATED: 파티 캐시를 고친다 (PARTY_UPDATED에는 초대 코드도 온다)
 //   PARTY_DISSOLVED, 개인 KICKED: 알리고 모집 페이지로 보낸다. 해산은 방장이 한 일이라 방장 화면에는 알리지 않는다(방장 동작이 옮겨 보낸다)
 //   개인 JOIN_REQUESTS_CHANGED: 방장의 신청 목록을 다시 읽는다
 //   신청 대기 중이면 개인 알림(승인·거절, 007 /user/queue/notifications)이 올 때 파티 화면을 다시 읽는다
@@ -67,7 +67,7 @@ export function usePartyLive(id: number, party: PartyDetail | undefined) {
       }
       case "PARTY_UPDATED":
         queryClient.setQueryData<PartyDetail>(partyDetailKey(id), (old) =>
-          old ? { ...old, ...(event.payload as Partial<PartyDetail>), me: old.me, invite: old.invite } : old,
+          old ? { ...old, ...(event.payload as Partial<PartyDetail>), me: old.me } : old,
         )
         return
       case "PARTY_DISSOLVED":

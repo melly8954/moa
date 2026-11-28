@@ -39,12 +39,12 @@ export function HostActions({ party }: { party: PartyDetail }) {
   const [editOpen, setEditOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
-  const run = async (action: () => Promise<unknown>, done: string) => {
+  // 참가 방식·마감·재개는 바뀐 파티(PartyDetail)를 돌려주므로 그것으로 화면을 바꾼다
+  const run = async (action: () => Promise<PartyDetail>, done: string) => {
     setBusy(true)
     try {
-      await action()
+      queryClient.setQueryData(partyDetailKey(party.id), await action())
       toast.success(done)
-      await queryClient.invalidateQueries({ queryKey: partyDetailKey(party.id), exact: true })
     } catch (error) {
       toast.error(describeError(error).message)
     } finally {
@@ -65,7 +65,10 @@ export function HostActions({ party }: { party: PartyDetail }) {
   const regenerate = async () => {
     if (!(await confirm({ title: t("confirm.regenerateTitle"), description: t("confirm.regenerateDescription") })))
       return
-    await run(() => api.v1.party.regenerateInviteCode(party.id), t("host.regenerated"))
+    await run(async () => {
+      const invite = await api.v1.party.regenerateInviteCode(party.id)
+      return { ...(queryClient.getQueryData<PartyDetail>(partyDetailKey(party.id)) ?? party), invite }
+    }, t("host.regenerated"))
   }
 
   const dissolve = async () => {
