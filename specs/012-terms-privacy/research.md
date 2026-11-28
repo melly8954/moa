@@ -4,10 +4,10 @@ Technical Context에 미결은 없다. 아래는 moa 프론트 코드(010 약관
 
 ## R1. 문안을 두는 곳과 모양
 
-- **Decision**: 프론트 `src/content/legal/`에 문서(`terms`, `privacy`)마다 폴더를 두고, 버전마다 TS 파일 하나(`<버전>.ts`)를 둔다. 파일은 `LegalVersion`을 낸다: `version`(버전 이름), `effectiveDate`(시행일 `YYYY-MM-DD`, 한국 날짜), `title`, `summary`(가입 화면의 요약, 이용약관만), `sections`(장마다 `{ id, heading, html }`). `src/content/legal/index.ts`가 문서별 버전 목록을 모은다
+- **Decision**: 프론트 `src/content/legal/`에 문서(`terms`, `privacy`)마다 폴더를 두고, 버전마다 TS 파일 하나(`<버전>.ts`)를 둔다. 파일은 `LegalVersion`을 낸다: `version`(버전 이름), `effectiveDate`(시행일 `YYYY-MM-DD`, 한국 날짜), `title`, `sections`(장마다 `{ id, heading, html }`). `src/content/legal/index.ts`가 문서별 버전 목록을 모은다
 - 본문은 장마다 HTML 조각으로 쓴다(문단, 목록, 표, 링크, 조 제목 `h3`). 장 제목(`h2`)과 목차는 `sections`의 `heading`·`id`로 만든다
 - **Rationale**:
-  - FR-003(장·조 제목, 목록, 표, 목차). 010의 문안은 `summary`·`body` 평문(`whitespace-pre-line`)이라 표와 목차를 만들 수 없다
+  - FR-003(장·조 제목, 목록, 표, 목차). 010의 문안은 `summary`·`body` 평문(`whitespace-pre-line`)이라 표와 목차를 만들 수 없다. 가입 화면은 2026-11-28부터 요약 없이 전문을 보이므로(spec FR-005) 요약 칸도 두지 않는다
   - 새 의존성 없이 쓸 수 있다. 마크다운을 쓰려면 렌더러(`react-markdown`, `remark-gfm`)를 더해야 한다
   - 장을 나눠 두면 목차·바로 가기(`#id`)를 문안에서 다시 찾지 않아도 된다
   - 문안은 우리가 쓴 고정 파일이지만, 그리는 곳에서 DOMPurify 기본 설정(표 포함)으로 한 번 거른다(R3)
@@ -18,8 +18,8 @@ Technical Context에 미결은 없다. 아래는 moa 프론트 코드(010 약관
 
 ## R2. 010 가입 화면과 원문 하나로 쓰기 (FR-010)
 
-- **Decision**: 이용약관(`SERVICE`)의 원문은 `src/content/legal/terms/`로 옮기고, 010의 `src/content/terms/index.ts`의 `termsText(type, version)`은 `SERVICE`면 legal 목록에서 그 버전 이름의 `summary`와 본문을 찾는다. `PRIVACY`(개인정보 수집·이용 동의)는 처리방침과 다른 문서라 지금처럼 `src/content/terms/draft.json`에 둔다
-  - 가입 화면의 펼친 전문은 평문 대신 R3의 문서 보기 부품(작은 모양)으로 그린다
+- **Decision**: 이용약관(`SERVICE`)의 원문은 `src/content/legal/terms/`로 옮기고, 010의 `src/content/terms/index.ts`의 `termsText(type, version)`은 `SERVICE`면 legal 목록에서 그 버전 이름의 문안을 찾는다. `PRIVACY`(개인정보 수집·이용 동의)는 처리방침과 다른 문서라 지금처럼 `src/content/terms/draft.json`에 둔다
+  - 가입 화면의 약관 칸(spec FR-005, 2026-11-28): 요약·펼치기(`Collapsible`)를 없애고 전문을 높이가 정해진 상자(`max-h-48 overflow-y-auto`)에 바로 보인다. 이용약관은 R3의 문서 보기 부품(작은 모양, 목차 없음), 개인정보 수집·이용 동의는 지금의 평문(`whitespace-pre-line`). 상자 아래 "더보기"(`/terms`)와 "개인정보처리방침 보기"(`/privacy`)는 새 탭(`target="_blank" rel="noopener"`)
   - 가입 화면이 동의받는 버전은 지금처럼 서버 설정(`app.terms.service-version`, 010 R11)이 정한다. 공개 화면의 "지금 시행 중"은 시행일로 정한다. 둘이 다를 수 있다(spec Edge Cases)
   - 이용약관 첫 버전은 010의 자리표시 문안을 옮기고 버전 이름 `draft`, 시행일은 개발용으로 `2026-11-01`로 둔다. 실서비스 전에 팀 문안과 실제 시행일로 바꾼다 (010 tasks T056)
 - **Rationale**: FR-010(같은 원본), 010 FR-013 줄(2026-11-27)
@@ -59,9 +59,11 @@ Technical Context에 미결은 없다. 아래는 moa 프론트 코드(010 약관
 
 ## R7. 링크 자리 (FR-004, FR-005)
 
-- **Decision**:
-  - 로그인 화면(`/sign-in`, `/sign-in/recover`)과 가입 화면(`/sign-up/nickname`) 맨 아래: `src/components/legal/legal-links.tsx`의 "이용약관 · 개인정보처리방침" 줄. 가입 화면의 약관 칸 옆 링크와 맨 아래 줄은 새 탭(`target="_blank" rel="noopener"`)으로 연다(FR-005, US2-AC4). 로그인 화면은 같은 탭
-  - 사용자 셸: `sidebar-shell.tsx`의 계정 줄 밑에 자리(`footer` 속성)를 더하고 `user-shell.tsx`만 링크 줄을 넘긴다. 관리 셸은 넘기지 않는다. 접힌 사이드바에서는 정보 아이콘 단추(`Info`)와 두 링크가 든 메뉴(`001-admin-menus` FR-005 2026-11-27 줄)
+- **Decision** (2026-11-28, 푸터 줄):
+  - 푸터 줄 하나를 `src/components/legal/legal-footer.tsx`로 만든다: "이용약관 · 개인정보처리방침"(처리방침 굵게), 작은 글자, 가운데. 속성 `newTab`이면 새 탭으로 연다
+  - 로그인 화면(`/sign-in`, `/sign-in/recover`)과 가입 화면(`/sign-up/nickname`) 맨 아래에 둔다. 가입 화면만 `newTab`(spec FR-005, US2-AC4)
+  - 사용자 셸: `sidebar-shell.tsx`의 본문 영역 맨 아래에 자리(`footer` 속성)를 더하고 `user-shell.tsx`만 푸터 줄을 넘긴다. 본문 영역을 세로 flex로 두어 본문이 짧으면 화면 맨 아래에 붙는다. 사이드바를 접거나 서랍이 되어도 본문 영역이라 같다. 관리 셸은 넘기지 않는다
+  - 문서 화면(`(legal)` 레이아웃) 맨 아래에도 같은 줄을 둔다(인쇄 때 숨김)
 - **Rationale**: spec US2, 001 FR-005
 - **키트**: `sidebar-shell.tsx`의 자리 더하기는 키트로 옮길 목록에 더한다 (`moa-to-kit-backlog`)
 
@@ -69,7 +71,7 @@ Technical Context에 미결은 없다. 아래는 moa 프론트 코드(010 약관
 
 - **Decision**: 백엔드 변경이 없어 API 통합 테스트는 없다. AC는 단위 테스트와 e2e로 본다
   - 단위(`tests/unit/legal.test.ts`): 버전 고르기(US1-AC1·AC2, US3-AC1·AC4의 날짜 규칙), 배포 전 검사(R6)
-  - e2e(`e2e/legal.spec.ts`): 로그인 없이·회원·관리자 계정으로 두 화면 열기(US1-AC1~AC3), 표·가로 넘침·접근성·목차(US1-AC4·AC5), 머리 줄 링크(US1-AC6), 로그인·가입·사이드바(펼침·접힘·서랍)·관리 셸 링크(US2-AC1~AC5), 버전 목록·예전 버전·예정 안내(US3-AC1~AC3). 날짜에 따라 바뀌는 것은 e2e에서 날짜를 바꾸지 않고 단위 테스트로 본다
+  - e2e(`e2e/legal.spec.ts`): 로그인 없이·회원·관리자 계정으로 두 화면 열기(US1-AC1~AC3), 표·가로 넘침·접근성·목차(US1-AC4·AC5), 머리 줄 링크(US1-AC6), 로그인·가입·사용자 셸(펼침·접힘·좁은 폭) 푸터 줄, 가입 화면의 전문 상자와 새 탭, 관리 셸에 푸터 없음(US2-AC1~AC5), 버전 목록·예전 버전·예정 안내(US3-AC1~AC3). 날짜에 따라 바뀌는 것은 e2e에서 날짜를 바꾸지 않고 단위 테스트로 본다
   - e2e용 문안: 화면을 서버에서 그려 브라우저에서 가로챌 수 없고, 처음 배포 때 문서마다 버전이 하나뿐이라 예전·예정 화면을 실제 문안으로 볼 수 없다. 그래서 `src/content/legal/fixture.ts`(시행된 버전 둘 + 예정 버전 하나, 표 포함)를 두고, 환경 변수 `LEGAL_CONTENT=fixture`일 때만 그 목록을 쓴다. Playwright가 띄우는 서버에만 이 값을 준다. `NODE_ENV=production`에서는 이 값을 무시한다
   - 실제 문안 목록은 단위 테스트(R6)가 본다
 - **Rationale**: 원칙 II(AC마다 테스트). 이 기능은 화면만 있다
