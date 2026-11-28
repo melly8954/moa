@@ -15,9 +15,9 @@
 
 **Language/Version**: Java 21 (Spring Boot 4.1.2), TypeScript 5 (Next 16.3)
 
-**Primary Dependencies**: 기존 의존성(백엔드 Jackson, 프론트 react-query·DOMPurify·next-intl). 새 의존성 없음
+**Primary Dependencies**: 기존 의존성(백엔드 Jackson·jsoup(rich-text 헬퍼), 프론트 react-query·DOMPurify·next-intl). 새 의존성 없음
 
-**Storage**: DB 테이블 없음. 문안은 백엔드 `src/main/resources/legal/<문서>/<버전>.json`, 시작 때 한 번 읽는다. 설정 `app.legal.location`·`app.legal.zone`
+**Storage**: DB 테이블 없음. 문안은 백엔드 `src/main/resources/legal/<문서>/<버전>.json`(메타) + `<버전>.html`(본문), 시작 때 리소스 패턴으로 한 번 읽는다. 설정 `app.legal.location`·`app.legal.zone`
 
 **Testing**: 인수 테스트 `LegalAcceptanceTest`(PR CI `dbTest`, 테스트용 문안 `classpath:legal-test/`), 단위 테스트 `LegalServiceTest`·`LegalCatalogTest`(`./gradlew build`), 프론트 `npm run check`, e2e `legal.spec.ts`(API 가로채기)와 고친 `social-login.spec.ts`
 
@@ -69,18 +69,18 @@ specs/012-terms-privacy/
 backend/
 ├── src/main/resources/application.yaml               # app.legal.location, app.legal.zone
 ├── src/main/resources/legal/
-│   ├── terms/draft.json                              # 010 자리표시 이용약관을 옮김
-│   └── privacy/draft.json                            # 처리방침 첫 버전 (11-21 초안 + 018)
+│   ├── terms/draft.{json,html}                       # 010 자리표시 이용약관을 옮김
+│   └── privacy/draft.{json,html}                     # 처리방침 첫 버전 (11-21 초안 + 018)
 ├── src/main/java/com/moa/
-│   ├── common/legal/                                 # LegalDocument, LegalVersion, LegalProperties, LegalCatalog(시작 때 읽기·검사)
+│   ├── common/legal/                                 # LegalDocument, LegalVersion, LegalProperties, LegalCatalog(리소스 패턴으로 읽기, jsoup으로 장 나누기, 검사)
 │   └── api/
-│       ├── controller/v1/legal/ApiLegalController.java   # @PermitAll, response/
+│       ├── controller/v1/legal/ApiLegalController.java   # @PermitAll, {document}는 문자열(없으면 R001), response/
 │       ├── application/v1/legal/LegalApplication.java    # 오늘(한국 날짜)을 구해 넘김
 │       ├── service/legal/LegalService.java               # 지금·예정·예전 고르기, 없으면 R001
 │       ├── repository/reader/legal/LegalReader.java      # LegalCatalog 읽기
 │       └── dto/legal/                                    # LegalVersionDto, VersionState
 └── src/test/
-    ├── resources/legal-test/{terms,privacy}/{old,draft,next}.json
+    ├── resources/legal-test/{terms,privacy}/{old,draft,next}.{json,html}
     └── java/com/moa/
         ├── api/LegalAcceptanceTest.java
         ├── api/service/legal/LegalServiceTest.java   # 단위

@@ -11,7 +11,7 @@
 | `GET /api/v1/legal/{document}/versions/{version}` | 버전 하나 (예전·지금·예정) | 200 {document, version, effectiveDate, title, sections[…], state, currentVersion} |
 
 - `state`: `CURRENT`, `PAST`, `UPCOMING` (data-model "버전 상태")
-- 없는 `document`, 없는 `version`이면 404 `R001`
+- 없는 `document`, 없는 `version`이면 404 `R001` (주소 값을 문자열로 받아 서비스가 판단한다. 400이 되지 않는다, research R4)
 - 010 가입 화면은 이용약관 칸의 전문을 `GET /api/v1/legal/terms/versions/{가입 동의 버전}`으로 받는다 (research R2). 가입 동의 버전은 지금처럼 `GET /api/v1/terms`
 
 ## AC와 확인 방법

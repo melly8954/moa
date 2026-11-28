@@ -6,9 +6,11 @@ Technical Context에 미결은 없다. 아래는 moa 코드(010 약관 API·설�
 
 ## R1. 문안을 두는 곳과 모양
 
-- **Decision**: 백엔드 리소스 `src/main/resources/legal/<문서>/<버전>.json`에 버전마다 파일 하나를 둔다. DB에 넣지 않는다
-  - 파일 칸: `version`(버전 이름), `effectiveDate`(시행일 `YYYY-MM-DD`, 한국 날짜), `title`, `sections`(장마다 `{ "id", "heading", "html" }`)
-  - 본문은 장마다 HTML 조각이다(문단, `h3` 조 제목, 목록, 표, 링크). 목차는 `sections`의 `heading`·`id`로 만든다
+- **Decision**: 백엔드 리소스 `src/main/resources/legal/<문서>/`에 버전마다 파일 두 개를 둔다. DB에 넣지 않는다 (2026-11-28 plan 검토로 둘로 나눔)
+  - `<버전>.json`: 메타 정보 `version`(버전 이름), `effectiveDate`(시행일 `YYYY-MM-DD`, 한국 날짜), `title`
+  - `<버전>.html`: 본문. 장마다 `<section id="retention"><h2>보유 기간</h2>…</section>` 꼴의 보통 HTML이다(장 안에 문단, `h3` 조 제목, 목록, 표, 링크)
+  - 백엔드가 시작할 때 HTML을 jsoup으로 읽어 장 목록(`id`, `heading` = `h2` 글자, `html` = `h2`를 뺀 나머지)을 만든다. jsoup은 rich-text 헬퍼가 이미 쓴다(새 의존성 아님). 목차는 이 장 목록으로 만든다
+  - 파일 찾기는 Spring `PathMatchingResourcePatternResolver`로 `classpath*:legal/*/*.json` 패턴을 쓴다. 배포 jar 안에서는 폴더 목록을 파일 시스템처럼 읽을 수 없기 때문이다. 같은 이름의 `.html`을 짝으로 읽는다
   - 문서 키는 `terms`(이용약관), `privacy`(개인정보처리방침). 백엔드 enum `LegalDocument`(`TERMS`, `PRIVACY`), 주소에는 소문자
   - 리소스 위치는 설정 `app.legal.location`(기본 `classpath:legal/`)이다. 인수 테스트는 테스트용 위치를 준다(R8)
 - **Rationale**:
@@ -19,6 +21,7 @@ Technical Context에 미결은 없다. 아래는 moa 코드(010 약관 API·설�
   - 프론트 코드에 두고 Next 서버에서 그리기(처음 plan): 다른 화면과 구조가 달라진다
   - DB 테이블: 관리 화면이 없는데 테이블·마이그레이션·시드가 늘어난다
   - 마크다운 파일: 렌더러 의존성이 늘고 표·목차 처리가 따로 필요하다
+  - 본문 HTML을 JSON 문자열에 넣기(처음 plan): 따옴표를 모두 이스케이프하고 줄바꿈을 쓸 수 없어, 표와 조항이 많은 긴 문서를 팀이 고치기 어렵다
 
 ## R2. 010 가입 화면과 원문 하나로 쓰기 (FR-010)
 
@@ -44,7 +47,7 @@ Technical Context에 미결은 없다. 아래는 moa 코드(010 약관 API·설�
 - **Decision**: `ApiLegalController`(`/api/v1/legal`, `@PermitAll`, `@SecurityRequirements`)
   - `GET /api/v1/legal/{document}`: 지금 시행 중인 버전 전문 + 예정 버전(있으면 버전·시행일) + 버전 목록(버전·시행일·상태)
   - `GET /api/v1/legal/{document}/versions/{version}`: 그 버전 전문과 상태(`CURRENT`·`PAST`·`UPCOMING`), 지금 버전 이름
-  - `{document}`가 `terms`·`privacy`가 아니거나 없는 버전이면 404 `R001`
+  - `{document}`가 `terms`·`privacy`가 아니거나 없는 버전이면 404 `R001`. 주소 값은 문자열로 받고 서비스가 문서 키로 바꾼다. enum으로 바로 받으면 변환 실패가 공통 오류 처리(`GlobalExceptionHandler`의 `MethodArgumentTypeMismatchException`)에서 400 `V001`이 되기 때문이다 (2026-11-28 plan 검토)
   - 계층: 컨트롤러 → `LegalApplication`(트랜잭션 없음, 오늘 날짜를 구해 넘김) → `LegalService`(버전 고르기, 없으면 R001) → `LegalReader`(R1의 목록을 읽음). 목록 읽기는 `common/legal/LegalCatalog`(리소스를 시작 때 한 번 읽어 들고 있음)
 - **Rationale**: spec FR-001(누구나), FR-002·FR-006. 레이어 규칙(`ArchitectureTest`)을 따른다. 리소스는 시작 때 한 번 읽어 요청마다 파일을 읽지 않는다
 - **Alternatives considered**: 010의 `/api/v1/terms`에 붙이기. 그 API는 "가입 때 동의받을 버전"이라 뜻이 다르다
@@ -63,11 +66,13 @@ Technical Context에 미결은 없다. 아래는 moa 코드(010 약관 API·설�
 - **Decision**: `LegalCatalog`가 시작할 때 리소스를 읽으며 검사하고, 어기면 애플리케이션이 뜨지 않는다. 같은 검사를 단위 테스트(`LegalCatalogTest`, `./gradlew build`)로도 본다
   - 문서마다 시행일이 오늘 이전인 버전이 적어도 하나
   - 한 문서 안에서 시행일과 버전 이름이 겹치지 않음
-  - 파일 이름과 `version`이 같음, `version`은 영문 소문자·숫자·`-`·`.`만
+  - 파일 이름과 `version`이 같음, `version`은 영문 소문자·숫자·`-`·`.`만, `.json`마다 짝 `.html`이 있음
+  - 본문 HTML의 맨 위가 `<section id>` + `<h2>`로만 이루어짐(장 밖의 글이 없음)
   - `effectiveDate`가 `YYYY-MM-DD` 꼴, `sections`가 비지 않고 `id`가 겹치지 않음
   - 본문 HTML에 `<script`, `<iframe`, `<style`, `on…=` 이벤트 속성, `javascript:` 주소가 없음
   - `app.terms.service-version`이 이용약관 버전에 있음 (R2)
 - **Rationale**: 문안이 배포 파일이라 잘못되면 시작 때 막는 것이 가장 가깝다. 단위 테스트는 PR CI `build`에서 먼저 잡는다
+- `LegalCatalogTest`는 파일 시스템 경로가 아니라 R1과 같은 리소스 패턴(`classpath*:legal/*/*.json`)으로 실제 문안을 읽어, 배포 jar에서와 같은 방식으로 찾히는지 본다
 - **처리방침과 `docs/privacy.md` 맞추기(FR-009, SC-003)**: 자동으로 보지 않는다. 처리방침 문안이나 `docs/privacy.md`를 고치는 PR에서 사람이 대조한다(quickstart "문안 대조")
 
 ## R7. 화면 경로·화면 틀·푸터 줄 (FR-001, FR-004, FR-011)
@@ -83,7 +88,7 @@ Technical Context에 미결은 없다. 아래는 moa 코드(010 약관 API·설�
 ## R8. 테스트
 
 - **Decision**:
-  - 인수 테스트 `LegalAcceptanceTest`(`AcceptanceTest` 상속, PR CI `dbTest`): 테스트용 리소스 위치(`app.legal.location=classpath:legal-test/`)에 문서마다 예전(`old`, `2000-01-01`)·지금(`draft`, `2020-01-01`)·예정(`next`, `2099-01-01`) 세 버전을 두고(지금 버전 이름이 `draft`라 R6의 `app.terms.service-version` 검사를 통과한다) API로 US1-AC1·AC2·AC3(로그인 없이·회원·관리자 토큰), US3-AC1·AC2·AC3, 없는 문서·버전 404를 본다
+  - 인수 테스트 `LegalAcceptanceTest`(`AcceptanceTest` 상속, PR CI `dbTest`): 테스트용 리소스 위치(`app.legal.location=classpath:legal-test/`)에 문서마다 예전(`old`, `2000-01-01`)·지금(`draft`, `2020-01-01`)·예정(`next`, `2099-01-01`) 세 버전(`.json`·`.html` 짝, 처리방침 `draft`에는 표 하나)을 두고(지금 버전 이름이 `draft`라 R6의 `app.terms.service-version` 검사를 통과한다) API로 US1-AC1·AC2·AC3(로그인 없이·회원·관리자 토큰), US3-AC1·AC2·AC3, 없는 문서·버전 404를 본다
   - 단위 테스트(`./gradlew build`): `LegalServiceTest`(오늘을 넣어 지금·예정·예전 고르기, US3-AC4의 시행일 당일 전환), `LegalCatalogTest`(R6 검사, 실제 `legal/` 리소스가 통과)
   - e2e `e2e/legal.spec.ts`: 다른 화면처럼 `page.route`로 `/api/v1/legal/**`를 가로챈다. 표·가로 넘침·접근성·목차(US1-AC4·AC5), 머리 줄(US1-AC6), 로그인·가입·사용자 셸 푸터 줄과 관리 셸에 없음(US2-AC1~AC3·AC5), 가입 화면 전문 상자와 새 탭(US2-AC4), 안내 띠·버전 목록·예전 버전 화면(US3 화면 쪽)
   - 010 가입 e2e(`social-login.spec.ts`)는 이용약관 전문을 새 API에서 받으므로 그 경로도 가로챈다
