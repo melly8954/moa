@@ -15,7 +15,7 @@
 
 **Language/Version**: TypeScript 5 (Next 16.3). 백엔드(Java 21, Spring Boot 4.1.2) 변경 없음
 
-**Primary Dependencies**: 기존 프론트 의존성(DOMPurify, next-intl, base-ui). 새 의존성 없음
+**Primary Dependencies**: 기존 프론트 의존성(next-intl, base-ui). 새 의존성 없음. 문안은 고정 코드라 DOMPurify로 거르지 않고 서버에서 그린다(R3)
 
 **Storage**: 없음. 문안은 `frontend/src/content/legal/`의 TS 파일
 
@@ -67,11 +67,11 @@ specs/012-terms-privacy/
 ```text
 frontend/
 ├── src/content/legal/
-│   ├── index.ts                    # 문서별 버전 목록, LEGAL_CONTENT=fixture면 fixture 목록 (production 무시)
+│   ├── index.ts                    # 문서별 버전 목록. LEGAL_FIXTURE=true면 fixture 버전을 더한다
 │   ├── types.ts                    # LegalDocumentKey, LegalVersion
 │   ├── terms/draft.ts              # 이용약관 첫 버전 (010 자리표시 옮김)
 │   ├── privacy/draft.ts            # 처리방침 첫 버전 (11-21 초안 + 018)
-│   └── fixture.ts                  # e2e용 (시행 둘 + 예정 하나)
+│   └── fixture.ts                  # e2e용 더할 버전 (2000-01-01 예전, 2099-01-01 예정)
 ├── src/content/terms/index.ts      # 010 termsText: SERVICE는 legal 목록에서 (R2)
 ├── src/lib/legal.ts                # currentVersion, upcomingVersion, versionState, 오늘(한국 날짜)
 ├── src/components/legal/
@@ -86,7 +86,7 @@ frontend/
 ├── messages/ko.json                # legal
 ├── tests/unit/legal.test.ts
 ├── e2e/legal.spec.ts
-└── playwright.config.ts            # e2e 서버에 LEGAL_CONTENT=fixture
+└── playwright.config.ts            # e2e 서버 env에 LEGAL_FIXTURE=true (SHOW_DEV_PAGES와 같은 방식)
 ```
 
 **Structure Decision**: 이 기능은 프론트만 바꾼다. 문서 화면은 셸 없는 `(legal)` 경로 묶음에 둔다(공지가 처음 `(site)`를 둔 것과 같은 이유, 006 R7). 문안 고르기는 순수 함수로 나눠 단위 테스트로 본다.

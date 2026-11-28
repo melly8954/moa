@@ -10,7 +10,7 @@ Technical Context에 미결은 없다. 아래는 moa 프론트 코드(010 약관
   - FR-003(장·조 제목, 목록, 표, 목차). 010의 문안은 `summary`·`body` 평문(`whitespace-pre-line`)이라 표와 목차를 만들 수 없다. 가입 화면은 2026-11-28부터 요약 없이 전문을 보이므로(spec FR-005) 요약 칸도 두지 않는다
   - 새 의존성 없이 쓸 수 있다. 마크다운을 쓰려면 렌더러(`react-markdown`, `remark-gfm`)를 더해야 한다
   - 장을 나눠 두면 목차·바로 가기(`#id`)를 문안에서 다시 찾지 않아도 된다
-  - 문안은 우리가 쓴 고정 파일이지만, 그리는 곳에서 DOMPurify 기본 설정(표 포함)으로 한 번 거른다(R3)
+  - 문안은 저장소에 있는 고정 코드라 JSX와 같은 믿음 수준이다. 그리는 곳에서 거르지 않고, 위험한 내용이 없는지는 배포 전 검사(R6)가 본다(R3)
 - **Alternatives considered**:
   - 마크다운 파일 + `react-markdown`: 쓰기는 가장 편하지만 의존성 둘이 늘고, 키트 rich-text와 다른 렌더러가 생긴다
   - 장마다 JSX 컴포넌트: 법무 문안을 JSX로 쓰기 불편하고, 팀이 문안을 바꿀 때 문턱이 높다
@@ -27,9 +27,10 @@ Technical Context에 미결은 없다. 아래는 moa 프론트 코드(010 약관
 
 ## R3. 문서 보기 부품
 
-- **Decision**: `src/components/legal/legal-document.tsx`가 버전 하나를 그린다: 제목, 버전·시행일 줄, 목차(장 제목 링크), 장마다 `<section id>` + `<h2>` + 본문. 본문은 DOMPurify 기본 설정(표 허용)으로 거른 HTML을 `dangerouslySetInnerHTML`로 넣는다(키트 `rich-text-view.tsx`와 같은 방식). 표는 `overflow-x-auto` 상자로 감싸 표 안에서만 가로로 스크롤한다. 인쇄할 때는 화면 틀(머리 줄, 버전 안내 띠)을 `print:hidden`으로 감춘다
+- **Decision**: `src/components/legal/legal-document.tsx`가 버전 하나를 그린다: 제목, 버전·시행일 줄, 목차(장 제목 링크), 장마다 `<section id>` + `<h2>` + 본문. 본문 HTML은 거르지 않고 `dangerouslySetInnerHTML`로 넣는다. 서버 컴포넌트라 서버에서 완성된 화면이 나간다. 표는 `overflow-x-auto` 상자로 감싸 표 안에서만 가로로 스크롤한다. 인쇄할 때는 화면 틀(머리 줄, 버전 안내 띠)을 `print:hidden`으로 감춘다
   - 가입 화면은 같은 부품의 작은 모양(목차 없음, 높이 제한 스크롤)을 쓴다
-- **Rationale**: US1-AC4·AC5, Edge Cases(인쇄). 키트 `RichTextView`는 rich-text 허용 태그(표 없음)로 걸러 쓰지 못한다
+- **Rationale**: US1-AC4·AC5, Edge Cases(인쇄). 키트 `RichTextView`는 rich-text 허용 태그(표 없음)로 거르고, 거르기에 브라우저 DOM이 필요해 서버 렌더에서는 빈 칸을 그린다. 문서 화면은 서버에서 그리므로(R5) DOMPurify를 쓰면 처음 그림에 본문이 없다
+- **거르지 않는 이유**: 문안은 회원이 쓴 글이 아니라 PR로만 바뀌는 고정 코드다. 실수로 들어간 스크립트·이벤트 속성은 R6의 단위 테스트가 막는다 (2026-11-28 plan 검토)
 - **Alternatives considered**: `RichTextView`에 표를 허용하기. 키트 코드를 고치고, 회원이 쓰는 글(공지·팝업)에도 표가 열린다
 
 ## R4. 화면 경로와 화면 틀 (FR-001, FR-011)
@@ -54,6 +55,7 @@ Technical Context에 미결은 없다. 아래는 moa 프론트 코드(010 약관
   - 시행일이 오늘 이전인 버전이 적어도 하나
   - 한 문서 안에서 시행일과 버전 이름이 겹치지 않음
   - `effectiveDate`가 `YYYY-MM-DD` 꼴, `sections`가 비지 않고 `id`가 겹치지 않음
+  - 본문 HTML에 `<script`, `<iframe`, `<style`, `on…=` 이벤트 속성, `javascript:` 주소가 없음 (R3: 거르지 않고 그리므로)
 - **Rationale**: 문안이 코드 안에 있어 테스트로 막는 것이 가장 가깝다. 따로 스크립트를 두지 않는다
 - **처리방침과 `docs/privacy.md` 맞추기(FR-009, SC-003)**: 자동으로 보지 않는다. 처리방침 문안이나 `docs/privacy.md`를 고치는 PR에서 사람이 대조한다(quickstart "문안 대조"). 문안에 보관 기간 표가 하나 있어 대조가 쉽다
 
@@ -72,7 +74,9 @@ Technical Context에 미결은 없다. 아래는 moa 프론트 코드(010 약관
 - **Decision**: 백엔드 변경이 없어 API 통합 테스트는 없다. AC는 단위 테스트와 e2e로 본다
   - 단위(`tests/unit/legal.test.ts`): 버전 고르기(US1-AC1·AC2, US3-AC1·AC4의 날짜 규칙), 배포 전 검사(R6)
   - e2e(`e2e/legal.spec.ts`): 로그인 없이·회원·관리자 계정으로 두 화면 열기(US1-AC1~AC3), 표·가로 넘침·접근성·목차(US1-AC4·AC5), 머리 줄 링크(US1-AC6), 로그인·가입·사용자 셸(펼침·접힘·좁은 폭) 푸터 줄, 가입 화면의 전문 상자와 새 탭, 관리 셸에 푸터 없음(US2-AC1~AC5), 버전 목록·예전 버전·예정 안내(US3-AC1~AC3). 날짜에 따라 바뀌는 것은 e2e에서 날짜를 바꾸지 않고 단위 테스트로 본다
-  - e2e용 문안: 화면을 서버에서 그려 브라우저에서 가로챌 수 없고, 처음 배포 때 문서마다 버전이 하나뿐이라 예전·예정 화면을 실제 문안으로 볼 수 없다. 그래서 `src/content/legal/fixture.ts`(시행된 버전 둘 + 예정 버전 하나, 표 포함)를 두고, 환경 변수 `LEGAL_CONTENT=fixture`일 때만 그 목록을 쓴다. Playwright가 띄우는 서버에만 이 값을 준다. `NODE_ENV=production`에서는 이 값을 무시한다
+  - e2e용 문안: 화면을 서버에서 그려 브라우저에서 가로챌 수 없고, 처음 배포 때 문서마다 버전이 하나뿐이라 예전·예정 화면을 실제 문안으로 볼 수 없다. 그래서 `src/content/legal/fixture.ts`를 두고, 환경 변수 `LEGAL_FIXTURE=true`일 때만 쓴다 (2026-11-28 plan 검토로 고침)
+    - 테스트용 목록은 실제 목록을 **바꾸지 않고 더하기만** 한다: 문서마다 예전 버전(시행일 `2000-01-01`, 표 포함) 하나와 예정 버전(시행일 `2099-01-01`) 하나. 실제 `draft`가 그대로 지금 버전으로 남아 010 가입 e2e(`social-login.spec.ts`, 버전 `draft`)가 깨지지 않는다
+    - e2e 서버는 운영 모드(`npm run build && next start`)로 뜬다. 그래서 `NODE_ENV`로 막지 않고, 이미 있는 `SHOW_DEV_PAGES=true`처럼 그 환경 변수가 있을 때만 켠다. 값은 `playwright.config.ts`의 `webServer.env`에서만 준다. 실서비스 배포 설정에는 넣지 않는다
   - 실제 문안 목록은 단위 테스트(R6)가 본다
 - **Rationale**: 원칙 II(AC마다 테스트). 이 기능은 화면만 있다
 - **Alternatives considered**: "오늘"을 환경 변수로 바꾸기. 실제 문안이 한 버전뿐이면 예전·예정 화면을 만들 수 없다
