@@ -198,7 +198,7 @@ class CustomerCenterAcceptanceTest extends AcceptanceTest {
 			.update("update tb_code set enabled = false where group_code = 'SUPPORT_CATEGORY' and code = 'ETC'");
 
 		assertThat(asAdmin(post(ADMIN_FAQS, faq("ETC", "새 기타", "<p>답</p>", 0, true)))).hasStatus(400)
-			.bodyJson().extractingPath("$.fieldErrors[0].field").isEqualTo("categoryCode");
+			.bodyJson().extractingPath("$.errors[0].field").isEqualTo("categoryCode");
 		assertThat(asAdmin(put(ADMIN_FAQS + "/" + id, faq("ETC", "고친 기타", "<p>답</p>", 0, true)))).hasStatus(200)
 			.bodyJson().extractingPath("$.categoryName").isEqualTo("기타");
 		assertThat(questions(mvc.get().uri(FAQS).exchange())).isEmpty();
@@ -358,10 +358,10 @@ class CustomerCenterAcceptanceTest extends AcceptanceTest {
 			.update("update tb_code set enabled = false where group_code = 'SUPPORT_CATEGORY' and code = 'ETC'");
 
 		assertThat(asMember(MEMBER_A, post(INQUIRIES, inquiry("ETC", "기타", "내용", List.of())))).hasStatus(400)
-			.bodyJson().extractingPath("$.fieldErrors[0].field").isEqualTo("categoryCode");
+			.bodyJson().extractingPath("$.errors[0].field").isEqualTo("categoryCode");
 		assertThat(asMember(MEMBER_A, post(INQUIRIES,
 			inquiry("ACCOUNT", "가짜 이미지", "내용", List.of("/api/v1/rich-text/images/not-uploaded")))))
-			.hasStatus(400).bodyJson().extractingPath("$.fieldErrors[0].field").isEqualTo("imageUrls");
+			.hasStatus(400).bodyJson().extractingPath("$.errors[0].field").isEqualTo("imageUrls");
 	}
 
 	// ---- US4 관리자 답변 ----
