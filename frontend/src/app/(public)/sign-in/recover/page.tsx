@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
+import { LegalFooter } from "@/components/legal/legal-footer"
 import { fetchLandingPath } from "@/components/shell/landing"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -60,35 +61,39 @@ export default function RecoverPage() {
   const errorMessage =
     formError ?? (loadError && loadError.code !== NOT_AVAILABLE ? describeError(loadError).message : undefined)
 
+  // 맨 아래 푸터 줄 (specs/012-terms-privacy FR-004, US2-AC1)
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>
-          <h1>{t("title")}</h1>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        {errorMessage && (
-          <Alert variant="destructive">
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        )}
-        {recovery.isPending ? (
-          <Skeleton className="h-10 w-full" />
-        ) : (
-          recovery.data && (
-            <p className="text-sm">{t("description", { date: formatDateTime(recovery.data.purgeAt) })}</p>
-          )
-        )}
-      </CardContent>
-      <CardFooter className="justify-end gap-2">
-        <Button variant="outline" disabled={submitting} onClick={() => router.replace(SIGN_IN_PATH)}>
-          {t("cancel")}
-        </Button>
-        <Button disabled={!recovery.data || submitting} onClick={recover}>
-          {t("submit")}
-        </Button>
-      </CardFooter>
-    </Card>
+    <>
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>
+            <h1>{t("title")}</h1>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {errorMessage && (
+            <Alert variant="destructive">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+          {recovery.isPending ? (
+            <Skeleton className="h-10 w-full" />
+          ) : (
+            recovery.data && (
+              <p className="text-sm">{t("description", { date: formatDateTime(recovery.data.purgeAt) })}</p>
+            )
+          )}
+        </CardContent>
+        <CardFooter className="justify-end gap-2">
+          <Button variant="outline" disabled={submitting} onClick={() => router.replace(SIGN_IN_PATH)}>
+            {t("cancel")}
+          </Button>
+          <Button disabled={!recovery.data || submitting} onClick={recover}>
+            {t("submit")}
+          </Button>
+        </CardFooter>
+      </Card>
+      <LegalFooter className="mt-4" />
+    </>
   )
 }

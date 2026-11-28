@@ -1502,6 +1502,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/legal/{document}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 지금 시행 중인 문서
+         * @description 지금 버전 전문, 시행일이 가장 이른 예정 버전, 버전 목록. 지금 버전은 요청 때의 한국 날짜로 고른다
+         */
+        get: operations["document"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/legal/{document}/versions/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 문서 버전 하나
+         * @description 예전·지금·예정 버전 전문과 상태, 지금 시행 중인 버전 이름
+         */
+        get: operations["version"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/inquiries/{id}": {
         parameters: {
             query?: never;
@@ -3368,6 +3408,106 @@ export interface components {
             accessible: boolean;
             /** @description 하위 메뉴 */
             children: components["schemas"]["MyMenuResponse"][];
+        };
+        /** @description 지금 시행 중인 버전 */
+        Current: {
+            /**
+             * @description 버전 이름
+             * @example draft
+             */
+            version: string;
+            /**
+             * Format: date
+             * @description 시행일 (한국 날짜)
+             * @example 2026-11-01
+             */
+            effectiveDate: string;
+            /**
+             * @description 제목
+             * @example moa 개인정보처리방침
+             */
+            title: string;
+            /** @description 장 목록 */
+            sections: components["schemas"]["LegalSectionResponse"][];
+        };
+        /** @description 문서의 지금 버전 전문, 시행 예정 버전, 버전 목록 */
+        LegalDocumentResponse: {
+            /**
+             * @description 문서 키
+             * @example privacy
+             */
+            document: string;
+            /** @description 지금 시행 중인 버전 전문 */
+            current: components["schemas"]["Current"];
+            /** @description 시행일이 가장 이른 시행 예정 버전. 없으면 null */
+            upcoming?: components["schemas"]["Upcoming"];
+            /** @description 버전 목록. 시행일 최근순이고 예정 버전도 든다 */
+            versions: components["schemas"]["Item"][];
+        };
+        /** @description 문서의 장 하나 */
+        LegalSectionResponse: {
+            /**
+             * @description 장 바로 가기 주소(#id)
+             * @example retention
+             */
+            id: string;
+            /**
+             * @description 장 제목. 목차에 쓴다
+             * @example 개인정보의 보유 기간
+             */
+            heading: string;
+            /** @description 장 안의 HTML (제목 h2를 뺀 것). 문단, h3, 목록, 표, 링크 */
+            html: string;
+        };
+        /** @description 시행 예정 버전 */
+        Upcoming: {
+            /**
+             * @description 버전 이름
+             * @example 2027-01-01
+             */
+            version: string;
+            /**
+             * Format: date
+             * @description 시행일 (한국 날짜)
+             * @example 2027-01-01
+             */
+            effectiveDate: string;
+        };
+        /** @description 문서 버전 하나 (예전·지금·예정) */
+        LegalVersionResponse: {
+            /**
+             * @description 문서 키
+             * @example privacy
+             */
+            document: string;
+            /**
+             * @description 버전 이름
+             * @example draft
+             */
+            version: string;
+            /**
+             * Format: date
+             * @description 시행일 (한국 날짜)
+             * @example 2026-11-01
+             */
+            effectiveDate: string;
+            /**
+             * @description 제목
+             * @example moa 개인정보처리방침
+             */
+            title: string;
+            /** @description 장 목록 */
+            sections: components["schemas"]["LegalSectionResponse"][];
+            /**
+             * @description 오늘 기준 상태
+             * @enum {string}
+             */
+            state: "CURRENT" | "PAST" | "UPCOMING";
+            /**
+             * @description 지금 시행 중인 버전 이름
+             * @example draft
+             */
+            currentVersion: string;
         };
         /** @description 내 문의 목록 항목 */
         MyInquiryListResponse: {
@@ -6521,6 +6661,81 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MyMenuResponse"][];
+                };
+            };
+        };
+    };
+    document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description 문서 키 (terms, privacy)
+                 * @example privacy
+                 */
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 문서 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LegalDocumentResponse"];
+                };
+            };
+            /** @description 없는 문서 (R001) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LegalDocumentResponse"];
+                };
+            };
+        };
+    };
+    version: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description 문서 키 (terms, privacy)
+                 * @example privacy
+                 */
+                document: string;
+                /**
+                 * @description 버전 이름
+                 * @example draft
+                 */
+                version: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 버전 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LegalVersionResponse"];
+                };
+            };
+            /** @description 없는 문서나 버전 (R001) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LegalVersionResponse"];
                 };
             };
         };
