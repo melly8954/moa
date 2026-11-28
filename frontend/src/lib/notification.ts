@@ -18,7 +18,14 @@ export function safeLink(link: string): string {
 //   기능이 그 밖의 화면을 관련 화면으로 더할 때는 RELATED_SCREENS에 종류별 판정을 더한다 (그 기능의 스펙에 적는다)
 type RelatedScreen = (link: string, pathname: string) => boolean
 
-const RELATED_SCREENS: Partial<Record<NotificationType, RelatedScreen>> = {}
+// moa: 파티 (specs/008-party spec.md FR-029 "관련 화면"). 내보내짐·해산은 연결(/recruit)에 더해 파티 화면도 관련 화면이다
+//   파티 화면이 그 일을 직접 알리고 모집 페이지로 보낸다 (US9-AC8). 알림에 파티 id가 없어, 회원은 파티에 하나만 속하므로 파티 화면이면 관련 화면으로 본다
+const onPartyScreen: RelatedScreen = (_link, pathname) => /^\/parties\/\d+\/?$/.test(pathname)
+
+const RELATED_SCREENS: Partial<Record<NotificationType, RelatedScreen>> = {
+  PARTY_KICKED: onPartyScreen,
+  PARTY_DISSOLVED: onPartyScreen,
+}
 
 function pathOf(link: string): string {
   const path = safeLink(link).split(/[?#]/)[0]
