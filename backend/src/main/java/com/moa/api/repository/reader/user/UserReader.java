@@ -1,5 +1,6 @@
 package com.moa.api.repository.reader.user;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -53,6 +54,11 @@ public class UserReader {
 	/** moa 018: 스스로 탈퇴한 회원인지 (유예 중, 파기됨) */
 	public boolean existsWithdrawn(Long id) {
 		return userRepository.countWithdrawn(id) > 0;
+	}
+
+	/** moa 017: 이 시각 전에 스스로 탈퇴한 회원 ID (유예 중, 파기됨) */
+	public List<Long> findIdsWithdrawnBefore(LocalDateTime cutoff) {
+		return userRepository.findIdsWithdrawnBefore(cutoff);
 	}
 
 	/** 지우지 않은 ADMIN이 하나라도 있는지 */

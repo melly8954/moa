@@ -1,5 +1,6 @@
 package com.moa.api.repository.jpa.user;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +46,14 @@ public interface UserRepository extends SoftDeleteRepository<User, Long> {
 	@QueryHints(@QueryHint(name = HibernateHints.HINT_FLUSH_MODE, value = "COMMIT"))
 	@Query(value = "select count(*) from tb_user where id = :id and withdrawn_at is not null", nativeQuery = true)
 	long countWithdrawn(@Param("id") Long id);
+
+	/**
+	 * moa 017: 이 시각 전에 스스로 탈퇴한 회원 ID (유예 중, 파기됨). 복구한 회원은 withdrawn_at이 비어 빠진다.
+	 * 탈퇴 회원은 기본 조회에 없으므로 native로 읽는다 (specs/017-customer-center FR-017·research R10)
+	 */
+	@Query(value = "select id from tb_user where withdrawn_at is not null and withdrawn_at <= :cutoff",
+		nativeQuery = true)
+	List<Long> findIdsWithdrawnBefore(@Param("cutoff") LocalDateTime cutoff);
 
 	boolean existsByRole(Role role);
 

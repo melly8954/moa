@@ -18,5 +18,7 @@ public enum NotificationType {
 	/** 파티에서 내보내짐. 받는 사람: 내보내진 회원 */
 	PARTY_KICKED,
 	/** 방장이 파티를 해산함. 받는 사람: 방장 말고 멤버와 대기 신청자 */
-	PARTY_DISSOLVED
+	PARTY_DISSOLVED,
+	/** 1:1 문의에 처음 답변했다 (specs/017-customer-center FR-012) */
+	INQUIRY_ANSWERED
 }

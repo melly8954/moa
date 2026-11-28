@@ -17,6 +17,8 @@ import { richTextApi } from "./rich-text"
 import { bannerAdminApi } from "./banner"
 import { popupAdminApi } from "./popup"
 import { withdrawalApi } from "./withdrawal"
+import { faqAdminApi, faqApi } from "./faq"
+import { inquiryAdminApi, inquiryApi } from "./inquiry"
 import { partyApi } from "./party"
 // @helpers:imports
 
@@ -54,6 +56,10 @@ export const api = {
     popupAdmin: popupAdminApi,
     withdrawal: withdrawalApi,
     party: partyApi,
+    faq: faqApi,
+    faqAdmin: faqAdminApi,
+    inquiry: inquiryApi,
+    inquiryAdmin: inquiryAdminApi,
     // @helpers:api
   },
 }

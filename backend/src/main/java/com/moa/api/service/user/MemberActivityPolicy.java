@@ -51,6 +51,18 @@ public class MemberActivityPolicy {
 		}
 	}
 
+	/**
+	 * 회원 문의 API 앞에서 부른다 (specs/017-customer-center FR-011·research R4). 관리자 계정은 사용자 셸을 열 수 없어
+	 * 이 오류를 화면에서 볼 일이 없으므로 따로 코드를 두지 않고 A005로 막는다.
+	 *
+	 * @throws ServiceException 관리자 계정이면 A005, 회원이 없으면 R001
+	 */
+	public void requireMember(Long userId) {
+		if (isManagerAccount(userId)) {
+			throw new ServiceException(ErrorCode.FORBIDDEN);
+		}
+	}
+
 	private User requireUser(Long userId) {
 		return userReader.find(userId).orElseThrow(() -> new ServiceException(ErrorCode.NOT_FOUND));
 	}

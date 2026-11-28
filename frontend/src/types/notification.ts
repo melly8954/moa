@@ -1,8 +1,9 @@
 // 알림 API의 응답·요청 (specs/007-notifications contracts/notifications-api.md, contracts/realtime.md)
 
-// moa: 파티 알림 6종 (specs/008-party FR-029). 백엔드 NotificationType과 같다. gen:api를 돌리면 생성 타입과 맞춘다
+// moa: 파티 알림 6종 (specs/008-party FR-029), INQUIRY_ANSWERED: 1:1 문의에 답변이 등록됐다 (specs/017-customer-center FR-012). 백엔드 NotificationType과 같다. gen:api를 돌리면 생성 타입과 맞춘다
 export type NotificationType =
   | "SYSTEM"
+  | "INQUIRY_ANSWERED"
   | "PARTY_APPLIED"
   | "PARTY_APPROVED"
   | "PARTY_REJECTED"
