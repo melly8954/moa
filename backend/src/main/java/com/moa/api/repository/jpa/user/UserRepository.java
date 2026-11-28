@@ -1,5 +1,7 @@
 package com.moa.api.repository.jpa.user;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.hibernate.jpa.HibernateHints;
@@ -45,4 +47,7 @@ public interface UserRepository extends SoftDeleteRepository<User, Long> {
 	long countWithdrawn(@Param("id") Long id);
 
 	boolean existsByRole(Role role);
+
+	/** 활동 중인 회원만 나온다 (User.ACTIVE). 없는 ID는 빠진다 */
+	List<User> findByIdIn(Collection<Long> ids);
 }

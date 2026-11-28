@@ -40,6 +40,17 @@ public class MemberActivityPolicy {
 		}
 	}
 
+	/**
+	 * 파티 만들기·참가·신청·초대 입장·내 파티 앞에서 부른다 (specs/008-party FR-012, research R14).
+	 *
+	 * @throws ServiceException 관리자 계정이면 A103, 회원이 없으면 R001
+	 */
+	public void requirePartyAllowed(Long userId) {
+		if (isManagerAccount(userId)) {
+			throw new ServiceException(ErrorCode.PARTY_NOT_ALLOWED);
+		}
+	}
+
 	private User requireUser(Long userId) {
 		return userReader.find(userId).orElseThrow(() -> new ServiceException(ErrorCode.NOT_FOUND));
 	}
