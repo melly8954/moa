@@ -1,6 +1,7 @@
 # moa 디자인 시스템
 
 `spec.md`(020-ui-foundation)의 구체 값이다. 색 코드, 글꼴, 크기, 배치, 컴포넌트 규칙은 이 문서가 정본이다.
+적용 범위는 사용자 화면(사용자 셸, 로그인 등 공개 화면, 회원의 계정 화면)이다. 관리 셸 화면은 지금 모양·테마를 그대로 두고 이 문서를 적용하지 않는다(spec FR-022, 2026-11-28).
 화면을 만드는 사람과 AI 도구는 이 문서를 처음부터 끝까지 따른다. 이 문서에 없는 값이 필요하면 값을 지어내지 않고 이 문서에 먼저 더한다.
 
 - 단어: MUST는 반드시, MUST NOT은 절대 하지 않음, SHOULD는 이유가 없으면 따름
@@ -40,17 +41,17 @@ moa는 "게임 대기실의 전광판"이다. 어두운 흑연색 바탕 위에 
 - 바뀌는 수(실시간 인원, 안 읽은 수)는 `font-sans tabular-nums`로 쓴다. Chakra Petch는 큰 고정 수(프로필 수 줄)에만 쓴다
 - 한글 글꼴은 preload하지 않고 `display: "swap"`으로 기기 글꼴부터 보인다. 영문 표시 글꼴(Chakra Petch)만 preload한다
 
-`app/layout.tsx`에서 지금의 Geist 두 벌을 바꾼다 (구현 메모. 정확한 옵션, 특히 한글 글꼴의 `subsets`·`preload`는 plan에서 `node_modules/next/dist/docs/`로 확인한다):
+`app/layout.tsx`에서 세 벌을 더 받는다. 관리 셸이 쓰는 지금의 Geist 두 벌은 그대로 둔다 (구현 메모. 정확한 옵션, 특히 한글 글꼴의 `subsets`·`preload`는 plan에서 `node_modules/next/dist/docs/`로 확인한다):
 
 ```tsx
 import { Chakra_Petch, IBM_Plex_Mono, IBM_Plex_Sans_KR } from "next/font/google"
 
-const sans = IBM_Plex_Sans_KR({ variable: "--font-sans", weight: ["400", "500", "700"], display: "swap", preload: false })
+const plexKr = IBM_Plex_Sans_KR({ variable: "--font-plex-kr", weight: ["400", "500", "700"], display: "swap", preload: false })
 const display = Chakra_Petch({ variable: "--font-chakra", weight: ["600", "700"], subsets: ["latin"], display: "swap" })
 const mono = IBM_Plex_Mono({ variable: "--font-plex-mono", weight: ["400", "500"], subsets: ["latin"], display: "swap" })
 ```
 
-`globals.css` `@theme inline`에서는 `--font-display: var(--font-chakra), var(--font-sans)`, `--font-mono: var(--font-plex-mono)`로 잇는다(지금 `--font-mono: var(--font-geist-mono)`를 바꾼다). 대체 글꼴 목록은 `next/font`가 만드는 대체 글꼴 뒤에 위 표의 것을 붙인다.
+사용자 화면 범위(4.1절의 `[data-ui="moa"]`) 안에서만 `--font-sans: var(--font-plex-kr), <대체 글꼴>`, `--font-mono: var(--font-plex-mono), <대체 글꼴>`로 바꾸고, `@theme inline`에 `--font-display: var(--font-chakra), var(--font-sans)`를 더한다. 범위 밖(관리 셸)은 지금처럼 Geist다. `font-family`는 상속될 때 다시 계산되지 않으므로 범위를 붙인 요소에도 `font-sans`를 함께 단다. 대체 글꼴 목록은 `next/font`가 만드는 대체 글꼴 뒤에 위 표의 것을 붙인다.
 
 ## 3. 글자 크기
 
@@ -79,7 +80,19 @@ const mono = IBM_Plex_Mono({ variable: "--font-plex-mono", weight: ["400", "500"
 
 ### 4.1 토큰 값
 
-`app/theme.css`의 `:root`(밝게)와 `.dark`(어둡게)에 적는다. 테마 파일은 색 검사가 보지 않으므로 hex로 적는다. 화면 코드는 `bg-*`, `text-*`, `border-*` 테마 변수 클래스로만 쓴다(MUST).
+`app/theme.css`에 적되, 지금의 `:root`·`.dark` 값은 관리 셸용으로 그대로 두고 사용자 화면 범위 아래에 적는다(spec FR-022):
+
+```css
+/* moa 020: 사용자 화면 범위. 관리 셸은 위의 :root·.dark 값 그대로 */
+[data-ui="moa"] { /* 밝게 값 */ }
+[data-ui="moa"].dark, .dark [data-ui="moa"] { /* 어둡게 값 */ }
+```
+
+- 범위 표시(`data-ui="moa"`, 이름은 plan에서 확정)는 문서 뿌리(`<html>`)에 붙이는 것을 기본으로 한다. 창·메뉴·토스트는 `body` 바로 아래로 떠서 그려지므로, 셸 안쪽 요소에만 붙이면 떠 있는 층이 관리 셸 값으로 보인다
+- 어느 화면이 범위 안인지는 "관리 셸이 그리는가"로 정한다. `/admin/...`은 밖, 그 밖의 사용자 셸·공개 화면은 안, 계정 화면은 회원이면 안·관리자 계정이면 밖이다. 첫 그림부터 맞게 붙이는 방법(주소로 서버에서 정하기, 계정 화면은 역할로 정하기 등)은 plan에서 정한다
+- 새 토큰(시그널, 레일 등)은 범위 밖에도 있어야 클래스가 깨지지 않으므로 `:root`에도 같은 값을 두되, 관리 화면 코드는 쓰지 않는다
+
+테마 파일은 색 검사가 보지 않으므로 hex로 적는다. 화면 코드는 `bg-*`, `text-*`, `border-*` 테마 변수 클래스로만 쓴다(MUST).
 
 이름에 "새"가 붙은 줄은 지금 없는 토큰이라 `theme.css`에 값을, `globals.css`의 `@theme inline`에 `--color-<이름>: var(--<이름>)`을 더한다.
 
@@ -139,8 +152,8 @@ const mono = IBM_Plex_Mono({ variable: "--font-plex-mono", weight: ["400", "500"
 | `discord` (새) / `discord-foreground` (새) | `#5865F2` / `#FFFFFF` | `#5865F2` / `#FFFFFF` | Discord 브랜드 Blurple, 흰 로고 |
 | `google` (새) / `google-foreground` (새) / `google-border` (새) | `#FFFFFF` / `#1F1F1F` / `#747775` | `#131314` / `#E3E3E3` / `#8E918F` | Google Identity 로그인 단추 Light·Dark 테마 |
 
-- 지금 `.dark`의 `--sidebar-primary: oklch(0.488 0.243 264.376)`(보라빛 파랑)은 위 값으로 바꾼다
-- 지금 `--radius: 0.625rem`은 5절 값으로 바꾼다
+- 지금 `.dark`의 `--sidebar-primary: oklch(0.488 0.243 264.376)`(보라빛 파랑)은 사용자 화면 범위에서 위 값으로 덮는다. 관리 셸 값은 건드리지 않는다
+- `--radius`는 사용자 화면 범위에서만 5절 값으로 덮는다
 
 ### 4.2 대비 (계산값, WCAG 2.x 상대 휘도)
 
@@ -206,7 +219,7 @@ const mono = IBM_Plex_Mono({ variable: "--font-plex-mono", weight: ["400", "500"
 
 ### 모서리
 
-`--radius`를 `0.375rem`(6px)으로 바꾼다. 지금 `globals.css`의 배율이 그대로 따라 바뀐다.
+사용자 화면 범위에서 `--radius`를 `0.375rem`(6px)으로 덮는다. 지금 `globals.css`의 배율이 그대로 따라 바뀐다. 관리 셸은 지금 `0.625rem` 그대로다.
 
 | 클래스 | 값 | 쓰는 곳 |
 |---|---|---|
@@ -246,7 +259,7 @@ const mono = IBM_Plex_Mono({ variable: "--font-plex-mono", weight: ["400", "500"
 
 폭 기준은 Tailwind 기본값을 쓴다: `md` 768px, `lg` 1024px, `xl` 1280px. 좁은 화면 기준(767px 이하)은 지금 `use-mobile.ts`(768 미만)와 같다.
 
-`layout-tokens.css`의 값을 바꾸거나 더한다.
+`layout-tokens.css`에 더한다. 지금 값을 바꾸는 줄(레일·패널 폭, 머리 줄 높이)은 관리 셸이 쓰므로 사용자 화면 범위 아래에서만 덮거나, 사용자 셸 전용 이름으로 새로 둔다(plan에서 관리 셸이 쓰는 상수를 확인한다).
 
 | 상수 | 값 | 지금 값 | 쓰는 곳 |
 |---|---|---|---|
@@ -259,7 +272,7 @@ const mono = IBM_Plex_Mono({ variable: "--font-plex-mono", weight: ["400", "500"
 | `--tabbar-height` (새) | `3.5rem` (56px) | - | 좁은 화면 아래 탭 줄 (기기 아래 안전 여백은 더한다) |
 | `--page-padding` | `1rem` | 1rem | 그대로 |
 
-관리 셸은 이 배치를 쓰지 않고 지금 사이드바 한 겹을 그대로 쓴다. `--rail-width`·`--panel-width`를 관리 셸이 쓰고 있으면 관리 셸용 상수를 따로 둔다(plan에서 확인).
+관리 셸은 이 배치를 쓰지 않고 지금 사이드바 한 겹을 그대로 쓴다(spec FR-022).
 
 ### 6.2 메인 셸 (사용자 셸, 디스코드 × X)
 
@@ -637,7 +650,7 @@ const mono = IBM_Plex_Mono({ variable: "--font-plex-mono", weight: ["400", "500"
 - 영역: 레일·패널·아래 탭 줄 `<nav aria-label>`, 본문 `<main id="main">`, 곁줄 `<aside aria-label>`, 머리 줄 `<header>`. 레일과 패널의 이름은 다르게
 - 화면마다 `<h1>` 하나(본문 열 머리 줄 제목). 그 아래 제목 순서를 건너뛰지 않는다. 곁줄 묶음 제목은 `<h2>`
 - 첫 Tab에 "본문으로 건너뛰기"(`sr-only focus:not-sr-only`, `#main`으로)
-- 포커스: `focus-visible:ring-3 ring-ring/50`(지금 단추 방식)보다 또렷하게 `focus-visible:ring-2 ring-ring ring-offset-2 ring-offset-background`를 기준으로 한다. `outline-none`만 두고 대체 표시를 빼지 않는다(MUST NOT)
+- 포커스: 사용자 화면에서는 `focus-visible:ring-3 ring-ring/50`(지금 단추 방식)보다 또렷하게 `focus-visible:ring-2 ring-ring ring-offset-2 ring-offset-background`를 기준으로 한다(관리 셸은 지금 그대로). `outline-none`만 두고 대체 표시를 빼지 않는다(MUST NOT)
 - 키보드: 모든 행동은 Tab·Enter·Space·Esc로 된다. 메뉴·탭·라디오 같은 묶음 안은 방향키(`components/ui`가 해 준다). 세로 뷰어의 키는 `015` "세로 뷰어"대로
 - ARIA는 HTML로 안 될 때만: 토글 `aria-pressed`, 펼침 `aria-expanded`, 선택된 메뉴 `aria-current="page"`, 진행 중 `aria-busy`. `div role="button"`을 만들지 않는다
 - 색만으로 뜻을 말하지 않는다: 상태 배지에 글자, 연결됨에 글자, 오류 칸에 글자
@@ -669,17 +682,18 @@ AI가 만든 듯한 흔한 화면을 만드는 것들이다. 아래는 하지 �
 
 ## 14. 구현 메모 (plan에서 할 것)
 
-토큰 방식은 그대로이고, 값과 토큰을 더한다. 이 절은 무엇을 바꾸는지만 적는다.
+토큰 방식(테마 파일 한 개)은 그대로이고, 값과 토큰을 더한다. 새로 필요한 것은 사용자 화면 범위 하나다(spec FR-022). 관리 셸 화면은 아무것도 바뀌지 않아야 하고, 바뀌지 않았는지는 변경 전후 관리 화면 비교(spec SC-008)로 본다. 이 절은 무엇을 바꾸는지만 적는다.
 
-- `app/theme.css`: 4절 값으로 `:root`·`.dark`를 바꾸고 새 토큰(`signal`, `signal-foreground`, `signal-strong`, `rail`, `rail-foreground`, `success-strong`, `warning`, `warning-strong`, `info`, `info-strong`, `scrim`, `scrim-foreground`, `discord`, `discord-foreground`, `google`, `google-foreground`, `google-border`)을 더한다. 파일 머리 주석의 "shadcn/ui neutral 기본값"을 "moa 테마(020)"로 고친다
+- `app/theme.css`: 지금 `:root`·`.dark`는 관리 셸용으로 그대로 두고, 4.1절의 사용자 화면 범위 선택자 아래에 4절 값을 적는다. 새 토큰(`signal`, `signal-foreground`, `signal-strong`, `rail`, `rail-foreground`, `success-strong`, `warning`, `warning-strong`, `info`, `info-strong`, `scrim`, `scrim-foreground`, `discord`, `discord-foreground`, `google`, `google-foreground`, `google-border`)을 더한다. 파일 머리 주석에 "관리 셸은 shadcn/ui neutral 기본값, 사용자 화면은 moa 테마(020)"를 적는다
+- 범위 표시를 붙이는 곳: 문서 뿌리(`app/layout.tsx`의 `<html>`)에 붙여 떠 있는 층까지 덮는다. 어느 화면에 붙일지 정하는 방법은 4.1절, 정확한 구현은 plan
 - `app/globals.css` `@theme inline`: 새 색 토큰의 `--color-*`, `--font-display`, `--font-mono`를 새 변수로, `--radius-group`, 글자 크기 `--text-meta`·`--text-body`·`--text-title-sm`·`--text-display`·`--text-hero`(각 `--line-height`와 함께)
-- `app/layout-tokens.css`: 6.1절 배치 상수, 5절 움직임 토큰
-- `app/layout.tsx`: 2절 글꼴
-- `components/ui/button.tsx`: `signal` 종류를 더한다. 키트로 옮길 것으로 주석을 단다(지금 moa 주석 방식)
+- `app/layout-tokens.css`: 6.1절 배치 상수(관리 셸이 쓰는 이름은 범위 안에서만 덮는다), 5절 움직임 토큰
+- `app/layout.tsx`: 2절 글꼴 세 벌을 더 받는다. Geist는 관리 셸용으로 남긴다. 한글 글꼴은 관리 화면에서도 내려받지 않게(preload 없음, 범위 안에서만 쓰임) 한다
+- `components/ui/button.tsx`: `signal` 종류를 더한다(관리 화면은 쓰지 않으므로 관리 셸에 영향이 없다). 키트로 옮길 것으로 주석을 단다(지금 moa 주석 방식). 기존 종류의 클래스는 바꾸지 않는다
 - 사용자 셸: `components/shell/user-shell.tsx`가 지금 `SidebarShell`을 쓴다. 레일·패널·곁줄·아래 탭 줄을 가진 사용자 셸을 따로 만들고 관리 셸은 `SidebarShell`을 그대로 쓴다. 계정 줄(`account-bar.tsx`)은 그대로 패널 맨 아래에 둔다
 - `(public)/layout.tsx`, 로그인 화면: 6.4절 배치. 카드 걷어 내기, 소셜 단추를 폼 위로, Discord 단추 추가(동작은 `010`)
-- 포커스 표시: 지금 `components/ui`의 `focus-visible:ring-3 ring-ring/50`은 반투명이라 밝게에서 3:1에 모자랄 수 있다. 12절 기준(`ring-2 ring-ring ring-offset-2`)으로 바꾼다
-- 검사(`scripts/`): `check-colors.mjs`에 13절 ◆ 항목을 더하거나 `check-style.mjs`를 새로 둔다. `components/ui`는 그림자 검사에서 뺀다. `check-i18n.mjs`에 이모지 검사(`\p{Extended_Pictographic}`)를 더한다
+- 포커스 표시: 지금 `components/ui`의 `focus-visible:ring-3 ring-ring/50`은 반투명이라 밝게에서 3:1에 모자랄 수 있다. 컴포넌트 클래스를 고치면 관리 셸도 바뀌므로, 사용자 화면 범위 안에서만 12절 기준(`ring-2 ring-ring ring-offset-2`)이 되게 한다(범위 선택자 CSS 등, 방법은 plan)
+- 검사(`scripts/`): `check-colors.mjs`에 13절 ◆ 항목을 더하거나 `check-style.mjs`를 새로 둔다. `components/ui`는 그림자 검사에서 뺀다. 관리 화면 코드(`app/(admin)`, 관리 전용 컴포넌트)는 지금 모양을 두므로 빼도 된다. `check-i18n.mjs`에 이모지 검사(`\p{Extended_Pictographic}`)를 더한다
 - `public/brands/`: 제공자 공식 로고 파일
 - 견본 파일(spec FR-021): 셸, 프로필, 로그인, 피드 항목, 상태 다섯. 어디에 둘지(예: `(dev)` 화면)는 plan에서 정한다
 
@@ -688,7 +702,8 @@ AI가 만든 듯한 흔한 화면을 만드는 것들이다. 아래는 하지 �
 아래를 팀원의 AI 도구(시스템 지시, 규칙 파일)에 그대로 넣는다. 이 문서와 다르면 이 문서가 맞고, 이 절을 고친다.
 
 ```text
-너는 moa 프론트 화면을 만든다. specs/020-ui-foundation/design-system.md가 정본이다. 값을 지어내지 마라.
+너는 moa 프론트의 사용자 화면을 만든다. specs/020-ui-foundation/design-system.md가 정본이다. 값을 지어내지 마라.
+관리 화면(app/(admin), 관리 셸)은 이 규칙 밖이다. 관리 화면의 모양·테마·공용 컴포넌트의 기존 종류를 바꾸지 마라.
 
 색
 - 색은 테마 변수 클래스로만 쓴다: bg-background, text-foreground, bg-card, text-muted-foreground, border-border,
