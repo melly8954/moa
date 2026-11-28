@@ -14,8 +14,8 @@ type Realtime = { client: Client | null; connected: boolean }
 
 const RealtimeContext = createContext<Realtime>({ client: null, connected: false })
 
-// 다시 이어질 때 다시 읽을 쿼리 (벨 숫자, 알림 목록, 새 공지 여부)
-const RESYNC_KEYS = [["notifications"], ["notices", "new"]] as const
+// 다시 이어질 때 다시 읽을 쿼리 (벨 숫자, 알림 목록, 새 공지 여부, 파티 화면·내 파티 specs/008-party research R5)
+const RESYNC_KEYS = [["notifications"], ["notices", "new"], ["parties"]] as const
 
 export function RealtimeProvider({ wsUrl, children }: { wsUrl: string; children: React.ReactNode }) {
   const status = useAuthStore((s) => s.status)
@@ -53,15 +53,21 @@ export function RealtimeProvider({ wsUrl, children }: { wsUrl: string; children:
   return <RealtimeContext.Provider value={state}>{children}</RealtimeContext.Provider>
 }
 
+// 실시간 연결이 지금 이어져 있는지 (파티 화면의 "끊김" 표시와 다시 이은 뒤 채우기, specs/008-party research R5)
+export function useRealtimeConnected() {
+  return useContext(RealtimeContext).connected
+}
+
 // 구독 경로를 구독하고 메시지(JSON)를 handler로 넘긴다. 연결이 바뀌면 다시 구독한다
-export function useRealtimeSubscription<T>(destination: string, handler: (message: T) => void) {
+// 경로가 null이면 구독하지 않는다 (파티 멤버가 아닐 때, specs/008-party research R3)
+export function useRealtimeSubscription<T>(destination: string | null, handler: (message: T) => void) {
   const { client, connected } = useContext(RealtimeContext)
   const handlerRef = useRef(handler)
   useEffect(() => {
     handlerRef.current = handler
   })
   useEffect(() => {
-    if (!client || !connected) return
+    if (!client || !connected || !destination) return
     const subscription = client.subscribe(destination, (frame: IMessage) => {
       try {
         handlerRef.current(JSON.parse(frame.body) as T)

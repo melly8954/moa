@@ -916,5 +916,41 @@
   "settings": {
     "title": "설정",
     "description": "이 브라우저에서 받을 알림을 정한다"
+  },
+  "party": {
+    "recruit": {
+      "title": "모집",
+      "description": "함께 게임할 파티를 찾거나 만들어요."
+    },
+    "create": {
+      "title": "파티 만들기"
+    },
+    "detail": {
+      "title": "파티"
+    },
+    "join": {
+      "title": "참가하기"
+    },
+    "invite": {
+      "title": "초대"
+    },
+    "host": {
+      "title": "방장"
+    },
+    "chat": {
+      "title": "채팅",
+      "system": {
+        "JOINED": "{name}님이 들어왔어요.",
+        "LEFT": "{name}님이 나갔어요.",
+        "KICKED": "{name}님이 내보내졌어요.",
+        "HOST_CHANGED": "{name}님이 방장이 됐어요."
+      }
+    },
+    "myParty": {
+      "title": "내 파티"
+    },
+    "confirm": {
+      "leave": "파티에서 나갈까요?"
+    }
   }
 }
