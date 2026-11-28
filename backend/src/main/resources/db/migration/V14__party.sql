@@ -78,7 +78,7 @@ CREATE TABLE tb_party_join_request (
     updated_at     DATETIME(6)  NOT NULL,
     created_by     BIGINT       NOT NULL,
     updated_by     BIGINT       NOT NULL,
-    pending_key    BIGINT AS (IF(status = 'PENDING', 0, id)) VIRTUAL,
+    pending_key    TINYINT AS (IF(status = 'PENDING', 1, NULL)) VIRTUAL,
     PRIMARY KEY (id),
     UNIQUE KEY uk_party_join_request_party_id_user_id_pending_key (party_id, user_id, pending_key),
     KEY idx_party_join_request_user_id (user_id)

@@ -47,7 +47,7 @@ description: "파티 (party) 작업 목록"
   - 테이블 6개: `tb_party`, `tb_party_position`, `tb_party_member`, `tb_party_join_request`, `tb_party_ban`, `tb_party_message`
     - 열, 타입, NULL 여부, 인덱스·유니크 이름은 data-model.md 표다. 모든 테이블과 열에 COMMENT를 단다(`id`, 감사 열, `active_key` 제외). `DEFAULT`와 외래 키는 두지 않는다
     - `tb_party`는 소프트 삭제 열과 `active_key`(`tb_code_group`과 같은 정의), 나머지는 감사 열 4개다
-    - `tb_party_join_request.pending_key`는 가상 열이다(PENDING이면 0, 아니면 id)
+    - `tb_party_join_request.pending_key`는 가상 열이다(PENDING이면 1, 아니면 NULL. 유니크 키는 NULL끼리 겹쳐도 된다. MariaDB는 가상 열에 AUTO_INCREMENT 열을 못 쓴다)
     - 엔진·문자셋·정렬은 `V1__schema.sql`의 다른 테이블과 같다
   - 공통코드 시드 (data-model.md "공통코드 시드")
     - spec.md FR-002 표의 그룹 12개(`GAME`, `LOL_MODE`, `LOL_POSITION`, `LOL_TIER`, `OVERWATCH_MODE`, `OVERWATCH_POSITION`, `OVERWATCH_TIER`, `VALORANT_MODE`, `VALORANT_POSITION`, `VALORANT_TIER`, `PUBG_MODE`, `PUBG_TIER`)를 `tb_code_group`에, 코드를 `tb_code`에 넣는다

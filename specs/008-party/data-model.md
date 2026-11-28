@@ -97,7 +97,7 @@
 | position_code, tier_code | VARCHAR(50) NULL | 신청할 때 고른 값 |
 | status | VARCHAR(20) NOT NULL | `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED` |
 | decided_at | DATETIME(6) NULL | 승인·거절·취소한 시각 (NULL: 대기 중) |
-| pending_key | 가상 컬럼 | status가 PENDING이면 0, 아니면 id |
+| pending_key | 가상 컬럼 | status가 PENDING이면 1, 아니면 NULL (active_key와 같은 방식. 가상 열에는 AUTO_INCREMENT 열을 못 쓴다) |
 
 - `uk_party_join_request_party_id_user_id_pending_key (party_id, user_id, pending_key)`: 한 파티에 대기 신청은 하나 (US5-AC7)
 - `idx_party_join_request_user_id (user_id)`: 내 대기 신청 목록 (US8)
