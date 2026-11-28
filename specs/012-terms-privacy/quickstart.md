@@ -1,18 +1,18 @@
 # Quickstart: 이용약관·개인정보처리방침 공개 페이지 (terms-privacy)
 
-기대 결과의 기준은 [contracts/screens.md](./contracts/screens.md), [data-model.md](./data-model.md)다.
+기대 결과의 기준은 [contracts/api.md](./contracts/api.md), [contracts/screens.md](./contracts/screens.md), [data-model.md](./data-model.md)다.
 
 ## 자동 검증
 
-로컬에서는 빠른 검사만 돌린다. 화면 검사(e2e)는 PR CI가 돌린다 (`CLAUDE.md` 로컬 검사). 백엔드 변경은 없다.
+로컬에서는 빠른 검사만 돌린다. 인수 테스트(`dbTest`)와 화면 검사(e2e)는 PR CI가 돌린다 (`CLAUDE.md` 로컬 검사).
 
-`frontend/`에서 실행한다.
+`backend/`에서 `./gradlew build`(Windows는 `.\gradlew.bat`), `frontend/`에서 `npm run check`.
 
-```bash
-npm run check
-```
+기대:
 
-기대: `tests/unit/legal.test.ts`(버전 고르기, 배포 전 검사)가 통과한다. PR CI의 e2e `legal`(3폭, 가로 넘침·접근성)이 통과한다.
+- `build`: `LegalServiceTest`(버전 고르기, 시행일 당일 전환), `LegalCatalogTest`(실제 문안이 배포 전 검사 통과)
+- PR CI `dbTest`: `LegalAcceptanceTest`(contracts/api.md "AC와 확인 방법")
+- PR CI e2e `legal`(3폭, 가로 넘침·접근성)과 고친 `social-login`
 
 ## 화면 확인
 

@@ -1,13 +1,13 @@
 # Contract: 이용약관·개인정보처리방침 화면과 링크
 
-서버 API는 없다. 화면은 요청마다 서버에서 그린다 (research R5).
+화면은 다른 화면처럼 브라우저에서 그리고, 문안은 공개 문서 API([api.md](./api.md))에서 받는다 (research R4·R7).
 
-## 문서 화면 (`(legal)` 경로 묶음, research R4)
+## 문서 화면 (`(legal)` 경로 묶음, research R7)
 
 | 경로 | 보이는 것 |
 |---|---|
-| `/terms`, `/privacy` | 지금 시행 중인 버전. 예정 버전이 있으면 위에 안내 띠 |
-| `/terms/versions/{version}`, `/privacy/versions/{version}` | 그 버전. 지금 버전이 아니면 위에 안내 띠 |
+| `/terms`, `/privacy` | `GET /api/v1/legal/{document}`의 지금 버전. 예정 버전이 있으면 위에 안내 띠 |
+| `/terms/versions/{version}`, `/privacy/versions/{version}` | `GET …/versions/{version}`의 그 버전. 지금 버전이 아니면 위에 안내 띠 |
 
 누구나 연다. 로그인 확인을 하지 않는다. 관리자 계정도 막지 않는다 (FR-001).
 
@@ -25,7 +25,7 @@
 
 ### 없는 버전
 
-`/…/versions/{없는 버전}`: "없는 버전이에요" 안내와 "지금 버전 보기" 링크. 응답 코드는 404
+`/…/versions/{없는 버전}`: API가 404 `R001`이면 "없는 버전이에요" 안내와 "지금 버전 보기" 링크. 불러오는 동안은 뼈대(skeleton), 그 밖의 오류는 공통 오류 안내와 다시 시도
 
 ## 링크 (FR-004, FR-005, US2)
 
