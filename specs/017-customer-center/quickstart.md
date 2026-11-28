@@ -20,7 +20,7 @@ npm run check
 
 PR CI에서 기대하는 것:
 
-- `CustomerCenterAcceptanceTest`의 US1~US4 AC (화면 쪽 동작은 e2e, research R13). US5는 회원 탈퇴 스펙 뒤
+- `CustomerCenterAcceptanceTest`의 US1~US5 AC (화면 쪽 동작은 e2e, research R13)
 - 운영 하위 메뉴·사용자 메뉴·연결 화면을 더한 `AdminMenusAcceptanceTest`, 권한 트리를 더한 `AdminRolesAcceptanceTest`, 분류 그룹을 더한 `AdminCodesAcceptanceTest`
 - e2e `support`: 회원이 이미지를 붙여 문의 → 관리자가 답변 → 회원이 알림으로 상세를 연다. 관리자가 FAQ를 등록하고 사용자 FAQ에서 분류·검색으로 찾는다 (3폭, 가로 넘침·접근성)
 

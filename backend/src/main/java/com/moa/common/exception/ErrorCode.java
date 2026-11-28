@@ -52,6 +52,8 @@ public enum ErrorCode {
 	NICKNAME_TAGS_EXHAUSTED("B201", HttpStatus.CONFLICT, "이 닉네임은 더 쓸 수 없습니다. 다른 닉네임을 골라 주세요."),
 	// 다시 바꿀 수 있는 시각은 오류에 싣지 않고 프로필 조회의 nicknameChangeableAt으로 준다 (specs/009-mypage research R5)
 	NICKNAME_CHANGE_TOO_SOON("B202", HttpStatus.CONFLICT, "아직 닉네임을 바꿀 수 없습니다."),
+	// 고객센터 (specs/017-customer-center research R9)
+	FAQ_LIMIT_EXCEEDED("B301", HttpStatus.CONFLICT, "FAQ는 200개까지 둘 수 있습니다."),
 
 	// S: 시스템
 	INTERNAL_ERROR("S001", HttpStatus.INTERNAL_SERVER_ERROR, "처리 중 문제가 발생했습니다.");

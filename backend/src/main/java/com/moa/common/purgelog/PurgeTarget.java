@@ -13,5 +13,7 @@ public enum PurgeTarget {
 	/** 글에 쓰이지 않은 본문 이미지 */
 	RICH_TEXT_IMAGE,
 	/** 회원 (탈퇴·관리자 삭제, specs/018-member-withdrawal) */
-	MEMBER
+	MEMBER,
+	/** 탈퇴한 날부터 1년이 지난 회원의 1:1 문의 (specs/017-customer-center FR-017) */
+	INQUIRY
 }

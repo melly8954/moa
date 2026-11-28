@@ -15,6 +15,7 @@ export const E2E_ME = {
 export const USER_MENUS = [
   { id: 101, name: "홈", path: "/", icon: "home", children: [] },
   { id: 102, name: "공지", path: "/notices", icon: "megaphone", children: [] },
+  { id: 105, name: "고객센터", path: "/support", icon: "mail", children: [] },
 ]
 
 // 백엔드 없이 로그인한 상태로 화면을 연다: 재발급 요청에 토큰을, 내 정보·내 권한에 정해 둔 값을 돌려준다
