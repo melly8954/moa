@@ -9,6 +9,7 @@ import { Controller, useForm } from "react-hook-form"
 import { api } from "@/api"
 import { toApiError } from "@/api/error"
 import { OAuthErrorAlert } from "@/components/auth/oauth-error-alert"
+import { LegalFooter } from "@/components/legal/legal-footer"
 import { WithdrawalNotice } from "@/components/auth/withdrawal-notice"
 import { fetchLandingPath } from "@/components/shell/landing"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -73,81 +74,85 @@ export default function SignInPage() {
     }
   }
 
+  // 맨 아래 푸터 줄 (specs/012-terms-privacy FR-004, US2-AC1)
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>
-          <h1>{t("title", { name: SITE.name })}</h1>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form noValidate onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup>
-            {/* moa: 탈퇴한 뒤의 복구 기한 안내 (?withdrawnUntil=, specs/018-member-withdrawal US1-AC5) */}
-            <Suspense fallback={null}>
-              <WithdrawalNotice />
-            </Suspense>
-            {/* moa: 소셜 로그인 실패 안내 (?oauthError=, specs/010-social-login US3) */}
-            <Suspense fallback={null}>
-              <OAuthErrorAlert />
-            </Suspense>
-            {formError && (
-              <Alert variant="destructive">
-                <AlertDescription>{formError}</AlertDescription>
-              </Alert>
-            )}
-            <Controller
-              name="loginId"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="loginId">{t("loginId")}</FieldLabel>
-                  <Input
-                    {...field}
-                    id="loginId"
-                    autoComplete="username"
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={fieldState.invalid ? "loginId-error" : undefined}
-                  />
-                  {fieldState.invalid && <FieldError id="loginId-error" errors={fieldErrorText(fieldState.error)} />}
-                </Field>
+    <>
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>
+            <h1>{t("title", { name: SITE.name })}</h1>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form noValidate onSubmit={form.handleSubmit(onSubmit)}>
+            <FieldGroup>
+              {/* moa: 탈퇴한 뒤의 복구 기한 안내 (?withdrawnUntil=, specs/018-member-withdrawal US1-AC5) */}
+              <Suspense fallback={null}>
+                <WithdrawalNotice />
+              </Suspense>
+              {/* moa: 소셜 로그인 실패 안내 (?oauthError=, specs/010-social-login US3) */}
+              <Suspense fallback={null}>
+                <OAuthErrorAlert />
+              </Suspense>
+              {formError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{formError}</AlertDescription>
+                </Alert>
               )}
-            />
-            <Controller
-              name="password"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
-                  <Input
-                    {...field}
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={fieldState.invalid ? "password-error" : undefined}
-                  />
-                  {fieldState.invalid && <FieldError id="password-error" errors={fieldErrorText(fieldState.error)} />}
-                </Field>
-              )}
-            />
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {t("submit")}
-            </Button>
-            {social.length > 0 && <FieldSeparator>{t("or")}</FieldSeparator>}
-            {social.map((provider) => (
-              <Button
-                key={provider}
-                type="button"
-                variant="outline"
-                onClick={() => window.location.assign(api.v1.oauth.authorizePath(provider, currentNextPath()))}
-              >
-                {t(`continueWith.${provider}`)}
+              <Controller
+                name="loginId"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="loginId">{t("loginId")}</FieldLabel>
+                    <Input
+                      {...field}
+                      id="loginId"
+                      autoComplete="username"
+                      aria-invalid={fieldState.invalid}
+                      aria-describedby={fieldState.invalid ? "loginId-error" : undefined}
+                    />
+                    {fieldState.invalid && <FieldError id="loginId-error" errors={fieldErrorText(fieldState.error)} />}
+                  </Field>
+                )}
+              />
+              <Controller
+                name="password"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
+                    <Input
+                      {...field}
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      aria-invalid={fieldState.invalid}
+                      aria-describedby={fieldState.invalid ? "password-error" : undefined}
+                    />
+                    {fieldState.invalid && <FieldError id="password-error" errors={fieldErrorText(fieldState.error)} />}
+                  </Field>
+                )}
+              />
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {t("submit")}
               </Button>
-            ))}
-          </FieldGroup>
-        </form>
-      </CardContent>
-    </Card>
+              {social.length > 0 && <FieldSeparator>{t("or")}</FieldSeparator>}
+              {social.map((provider) => (
+                <Button
+                  key={provider}
+                  type="button"
+                  variant="outline"
+                  onClick={() => window.location.assign(api.v1.oauth.authorizePath(provider, currentNextPath()))}
+                >
+                  {t(`continueWith.${provider}`)}
+                </Button>
+              ))}
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+      <LegalFooter className="mt-4" />
+    </>
   )
 }
