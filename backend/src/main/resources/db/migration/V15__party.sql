@@ -208,14 +208,12 @@ FROM (SELECT 'GAME' AS group_code, 'LOL' AS code, '리그 오브 레전드' AS n
 WHERE NOT EXISTS (SELECT 1 FROM tb_code c
                   WHERE c.group_code = v.group_code AND c.code = v.code AND c.deleted_at IS NULL);
 
--- 9. 사용자 메뉴 "모집"(누구나)과 "내 파티"(회원만) (spec.md FR-030, 001 FR-007). 지금 사용자 메뉴 뒤에 screen_key로 없을 때만
+-- 9. 사용자 메뉴 "모집"(누구나)과 "내 파티"(회원만) (spec.md FR-030, 001 FR-007). 001 표 순서대로 공지(20)와 고객센터(90) 사이에 둔다. screen_key로 없을 때만
 INSERT INTO tb_menu (parent_id, name, screen_key, icon, sort_order, enabled, audience, visibility,
                      created_at, updated_at, created_by, updated_by)
-SELECT NULL, v.name, v.screen_key, v.icon, m.max_order + v.step, TRUE, 'USER', v.visibility, NOW(6), NOW(6), 1, 1
-FROM (SELECT '모집' AS name, 'RECRUIT' AS screen_key, 'gamepad' AS icon, 'PUBLIC' AS visibility, 10 AS step
-      UNION ALL SELECT '내 파티', 'MY_PARTY', 'users', 'MEMBER', 20) v
-CROSS JOIN (SELECT COALESCE(MAX(sort_order), 0) AS max_order
-            FROM tb_menu WHERE audience = 'USER' AND parent_id IS NULL AND deleted_at IS NULL) m
+SELECT NULL, v.name, v.screen_key, v.icon, v.sort_order, TRUE, 'USER', v.visibility, NOW(6), NOW(6), 1, 1
+FROM (SELECT '모집' AS name, 'RECRUIT' AS screen_key, 'gamepad' AS icon, 'PUBLIC' AS visibility, 30 AS sort_order
+      UNION ALL SELECT '내 파티', 'MY_PARTY', 'users', 'MEMBER', 40) v
 WHERE NOT EXISTS (SELECT 1 FROM tb_menu t WHERE t.screen_key = v.screen_key AND t.deleted_at IS NULL);
 
 -- 10. 알림 종류 COMMENT에 파티 알림 6개 (spec.md FR-029). 타입은 그대로 옮겨 적는다

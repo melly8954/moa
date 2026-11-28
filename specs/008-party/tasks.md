@@ -54,7 +54,7 @@ description: "파티 (party) 작업 목록"
     - 고정 id를 쓰지 않고 `group_code`로 잇는다. 같은 `group_code`가 이미 있으면 넣지 않는다(관리자 변경을 덮어쓰지 않는다)
     - 그룹은 `enabled` = true, `sort_order`는 지금 그룹 뒤로 이어서 준다. 코드의 정렬 순서는 표의 순서이고, 티어는 낮은 것부터 10, 20, 30…으로 매긴다
     - `created_by`·`updated_by`는 1이다
-  - 메뉴 시드 (data-model.md "메뉴 시드"): `tb_menu`에 사용자 메뉴 "모집"(`RECRUIT`, `PUBLIC`)과 "내 파티"(`MY_PARTY`, `MEMBER`)를 지금 사용자 메뉴 뒤에 넣는다. `screen_key`로 찾고 이미 있으면 넣지 않는다
+  - 메뉴 시드 (data-model.md "메뉴 시드"): `tb_menu`에 사용자 메뉴 "모집"(`RECRUIT`, `PUBLIC`)과 "내 파티"(`MY_PARTY`, `MEMBER`)를 001 FR-007 표 순서대로 공지(20)와 고객센터(90) 사이인 sort_order 30, 40으로 넣는다. `screen_key`로 찾고 이미 있으면 넣지 않는다
   - `tb_notification.type`의 COMMENT에 파티 알림 종류 6개를 더한다. `MODIFY COLUMN`으로 `VARCHAR(30) NOT NULL`을 그대로 옮겨 적는다 (data-model.md "알림 종류")
   - 다 쓰면 `bootRun`으로 한 번 띄워 Flyway 적용과 `ddl-auto: validate` 통과를 본다 (`docs/db.md`). 엔터티(T005)가 생긴 뒤에 본다
 - [x] T002 [P] `BE/api/dto/notification/NotificationType.java`에 FR-029의 종류 6개를 더한다: `PARTY_APPLIED`, `PARTY_APPROVED`, `PARTY_REJECTED`, `PARTY_HOST_CHANGED`, `PARTY_KICKED`, `PARTY_DISSOLVED` (research.md R13)

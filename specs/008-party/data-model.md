@@ -154,7 +154,7 @@ PENDING ──승인──▶ APPROVED
 
 같은 마이그레이션 파일에 넣는다 (spec.md FR-030, research.md R11).
 
-- `tb_menu`에 사용자 메뉴 두 줄: "모집"(`screen_key` = `RECRUIT`, 공개 범위 `PUBLIC`), "내 파티"(`MY_PARTY`, `MEMBER`). `audience` = `USER`, `enabled` = true, 상위 메뉴 없음, 순서는 지금 사용자 메뉴 뒤다
+- `tb_menu`에 사용자 메뉴 두 줄: "모집"(`screen_key` = `RECRUIT`, 공개 범위 `PUBLIC`), "내 파티"(`MY_PARTY`, `MEMBER`). `audience` = `USER`, `enabled` = true, 상위 메뉴 없음, 순서는 001 FR-007 표 순서대로 공지(20)와 고객센터(90) 사이인 30, 40이다
 - `screen_key`로 찾고 이미 있으면 넣지 않는다. 고정 id를 쓰지 않는다. 열은 `V2__seed.sql`의 홈·공지 줄을 따른다
 
 ## 알림 종류
