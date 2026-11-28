@@ -388,35 +388,35 @@ description: "파티 (party) 작업 목록"
 
 ### 테스트 지원
 
-- [ ] T039 [P] `BT/support/CodeSeed.java`를 만든다. `MenuSeed`와 같은 방식이다
+- [x] T039 [P] `BT/support/CodeSeed.java`를 만든다. `MenuSeed`와 같은 방식이다
   - 시드 값을 다시 적지 않는다. 마이그레이션이 끝난 직후의 `tb_code_group`·`tb_code` 표를 한 번 찍어 두고, `restore()`가 두 표를 비운 뒤 그대로 되돌린다
   - 클래스 주석에 "DatabaseCleaner가 시드를 지우므로 되돌린다"(004 research.md R3)를 적는다
-- [ ] T040 파티 마이그레이션의 시드에 맞춰 기존 테스트 둘을 맞춘다
+- [x] T040 파티 마이그레이션의 시드에 맞춰 기존 테스트 둘을 맞춘다
   - `BT/api/AdminMenusAcceptanceTest.java`: 사용자 메뉴 기대값("홈", "공지")을 001 FR-007 표(홈, 공지, 모집, 내 파티)에 맞춘다. 로그인하지 않은 사람에게는 "내 파티"(회원만)가 없다. 001 spec 표와 AC(US2-AC4, US3-AC1)는 docs PR에서 먼저 고쳤다 (원칙 V)
   - `BT/api/AdminCodesAcceptanceTest.java`가 파티 시드가 있어도 통과하게 한다
   - 이 테스트는 `@BeforeEach`에서 시험 그룹 둘을 만들고 트리에 "정확히 그 둘"이 있는지 본다. 파티 마이그레이션이 그룹 12개를 넣으므로, `@BeforeEach` 맨 앞에서 `tb_code`·`tb_code_group`을 비워 시험 그룹만 남긴다 (US1-AC6이 이미 같은 방법으로 표를 비운다)
   - 기대값을 바꾸는 것이 아니라 테스트의 처음 상태를 맞추는 것이다 (원칙 V). 004 spec.md FR-001 표에는 파티 그룹이 이미 있다
-- [ ] T041 [P] `BT/support/PartyFixtures.java`를 만든다
+- [x] T041 [P] `BT/support/PartyFixtures.java`를 만든다
   - `TestUsers`로 회원을 만들고, 파티와 멤버를 JdbcTemplate으로 바로 넣는 도우미를 둔다. 공개·승인·비공개 파티, 롤 포지션 파티, 멤버 n명
   - 시스템 계정(id 1)도 만든다
 
 ### 백엔드 인수 테스트
 
-- [ ] T042 [P] [US1] `BT/api/party/PartyCreateAcceptanceTest.java`에 US1-AC1~AC6을 하나씩 쓴다
+- [x] T042 [P] [US1] `BT/api/party/PartyCreateAcceptanceTest.java`에 US1-AC1~AC6을 하나씩 쓴다
   - AC1: `POST /api/v1/parties`가 201이고, `role`이 HOST인 멤버가 1명이다. `GET /parties`에 나온다
   - AC2: PRIVATE이면 응답에 `invite.code`(8자)가 있고, `GET /parties`에는 없다
   - AC3: 제목이 빔, 인원 1·11, 목록에 없는 게임 코드면 각각 400 V001이고 `errors`에 그 칸이 있다
   - AC4: 토큰이 없으면 401 A001이다
   - AC5: `GET /api/v1/codes/GAME`이 LOL, OVERWATCH, VALORANT, PUBG 순서다
   - AC6: `ADMIN` 계정이 만들기, 참가, 신청, 초대 입장, `GET /parties/me`를 하면 각각 403 A103이고 멤버·신청 행이 생기지 않는다
-- [ ] T043 [P] [US2] `BT/api/party/PartyBrowseAcceptanceTest.java`에 US2-AC1~AC6을 쓴다. 파티는 `PartyFixtures`로 넣는다
+- [x] T043 [P] [US2] `BT/api/party/PartyBrowseAcceptanceTest.java`에 US2-AC1~AC6을 쓴다. 파티는 `PartyFixtures`로 넣는다
   - AC1: RECRUITING인 OPEN·APPROVAL만 `id DESC`로 나온다. CLOSED와 PRIVATE은 없다. 카드 항목은 contracts PartySummary다
   - AC2: `gameCode`로, 그리고 `gameCode`+`modeCode`로 거른다
   - AC3: 상세 항목은 PartyDetail이고 `me.relation`이 NONE이다. 비멤버에게는 `invite`가 없다
   - AC4: 비멤버가 PRIVATE를 열면 404 R001이다
   - AC5: 해산된 파티는 404 R001이다
   - AC6: 토큰 없이 `GET /parties`와 공개 파티의 `GET /parties/{id}`가 200이고 `me.relation`이 NONE이다. 로그인 화면으로 보냈다 돌아오는 것은 e2e(T056 흐름 1 앞)에서 본다
-- [ ] T044 [P] [US3] `BT/api/party/PartyJoinAcceptanceTest.java`에 US3-AC1~AC7을 쓴다
+- [x] T044 [P] [US3] `BT/api/party/PartyJoinAcceptanceTest.java`에 US3-AC1~AC7을 쓴다
   - AC1: `POST /parties/{id}/members`가 200이고 memberCount가 +1이다
   - AC2: 마지막 자리가 차면 status CLOSED, closedByHost false가 되고 `GET /parties`에서 빠진다
   - AC3: 정원이 차면 409 B101, 마감이면 409 B102
@@ -424,7 +424,7 @@ description: "파티 (party) 작업 목록"
   - AC5: 한 자리 남은 파티에 두 회원이 `ExecutorService`와 `CountDownLatch`로 동시에 참가하면, 하나는 200이고 하나는 B101이며 멤버 수가 capacity와 같다
   - AC6: 다른 파티 멤버가 만들기·참가·신청·초대 입장을 하면 각각 409 B103이다
   - AC7: 승인 신청 두 개를 넣어 둔 회원이 공개 파티에 참가하면 두 신청이 CANCELLED가 된다
-- [ ] T045 [P] [US9] `BT/api/party/PartyChatAcceptanceTest.java`에 API 쪽 테스트를 쓴다
+- [x] T045 [P] [US9] `BT/api/party/PartyChatAcceptanceTest.java`에 API 쪽 테스트를 쓴다
   - AC1(저장됨): `POST /parties/{id}/messages`가 201이고 sender, content, sentAt이 있다
   - AC2: 메시지 120개를 넣고, 새 멤버가 `GET messages`로 마지막 50개를 오래된 순으로 받고 `hasMore` true다. `before`로 그 앞 50개를 받는다
   - AC3(저장됨): 참가·나가기·내보내기·방장 바뀜 뒤 SYSTEM 메시지(JOINED·LEFT·KICKED·HOST_CHANGED)가 있다
@@ -432,14 +432,14 @@ description: "파티 (party) 작업 목록"
   - AC5: 빈 값과 501자는 400 V001이다
   - AC6: 해산 뒤 읽으면 404 R001이다
   - FR-018: `after`로 그 뒤 것만 받는다
-- [ ] T046 [P] [US9] `BT/api/party/PartyRealtimeAcceptanceTest.java`(`RealtimeAcceptanceTest` 상속)에 전달 쪽 테스트를 쓴다
+- [x] T046 [P] [US9] `BT/api/party/PartyRealtimeAcceptanceTest.java`(`RealtimeAcceptanceTest` 상속)에 전달 쪽 테스트를 쓴다
   - AC1(전달됨): A가 보내면 B의 `/topic/parties/{id}` 구독에 `MESSAGE`가 1초 안에 온다
   - AC3(전달됨): 참가하면 `MESSAGE`(SYSTEM JOINED)가 온다
   - AC7: 참가하면 두 구독자에게 `MEMBERS_CHANGED`가 온다
   - AC8: 내보내면 그 회원의 `/user/queue/parties`에 `KICKED`가 오고 topic 구독이 끊긴다. 해산하면 `PARTY_DISSOLVED`가 온다
   - AC9: 신청 생성·취소·처리 뒤 방장의 user queue에 `JOIN_REQUESTS_CHANGED`가 온다
   - 구독 권한: 비멤버가 topic을 구독하면 막힌다. 토큰 없는 CONNECT는 키트 테스트(`WebSocketAcceptanceTest`)가 이미 본다
-- [ ] T047 [P] [US4] `BT/api/party/PartyInviteAcceptanceTest.java`에 US4-AC1~AC7을 쓴다
+- [x] T047 [P] [US4] `BT/api/party/PartyInviteAcceptanceTest.java`에 US4-AC1~AC7을 쓴다
   - AC1: 멤버의 상세에는 `invite.code`·`url`이 있다
   - AC2: PRIVATE 파티를 `POST /parties/invites/{code}/members`로 들어오면 200이다
   - AC3: 코드로 들어오면 200이다
@@ -447,7 +447,7 @@ description: "파티 (party) 작업 목록"
   - AC5: 없는 코드와 해산된 파티의 코드는 404 B107이다
   - AC6: `POST .../invite-code`로 새로 만든 뒤 이전 코드는 404 B107이다
   - AC7: 정원 참·마감이면 B101·B102다
-- [ ] T048 [P] [US5] `BT/api/party/PartyJoinRequestAcceptanceTest.java`에 US5-AC1~AC8을 쓴다
+- [x] T048 [P] [US5] `BT/api/party/PartyJoinRequestAcceptanceTest.java`에 US5-AC1~AC8을 쓴다
   - AC1: `POST /parties/{id}/join-requests`가 201 PENDING이다
   - AC2: 방장의 `GET .../join-requests`가 신청순이다
   - AC3: 승인하면 멤버가 되고, 마지막 자리면 CLOSED다
@@ -458,8 +458,8 @@ description: "파티 (party) 작업 목록"
   - AC8: 비방장이 목록·승인·거절을 하면 403 A101이다
   - 방장이 직접 마감한 파티에서도 자리가 있으면 승인이 된다 (FR-008)
   - OPEN 파티에 신청하면 B112다
-- [ ] T049 [P] [US6] `BT/api/party/PartyLeaveAcceptanceTest.java`에 US6-AC1~AC5를 쓴다
-- [ ] T062 [P] [US6] `BT/api/party/PartyWithdrawalAcceptanceTest.java`에 US6-AC7·AC8을 쓴다 (T061)
+- [x] T049 [P] [US6] `BT/api/party/PartyLeaveAcceptanceTest.java`에 US6-AC1~AC5를 쓴다
+- [x] T062 [P] [US6] `BT/api/party/PartyWithdrawalAcceptanceTest.java`에 US6-AC7·AC8을 쓴다 (T061)
   - AC7: 방장이 `MemberWithdrawalApplication`으로 탈퇴하면 이벤트 처리 뒤 가장 이른 멤버가 HOST이고 새 방장에게 `PARTY_HOST_CHANGED`가 하나다. LEFT 안내의 subject 이름이 "탈퇴한 회원"이다. 복구한 뒤에도 멤버 행이 없다
   - AC8: 신청 두 개가 CANCELLED이고 방장들에게 알림이 없다
   - 정리기: 리스너를 건너뛰고 멤버 행을 남긴 채 `PartyWithdrawalCleaner`를 부르면 정리된다
@@ -468,7 +468,7 @@ description: "파티 (party) 작업 목록"
   - AC3: 방장이 나가면 `joined_at`이 가장 이른 멤버가 HOST가 되고 `host_user_id`도 바뀐다. 같은 시각이면 id가 작은 쪽이다
   - AC4: 마지막 멤버가 나가면 해산된다(404). 대기 신청도 정리된다
   - AC5: 나간 회원이 다시 참가할 수 있다
-- [ ] T050 [P] [US7] `BT/api/party/PartyHostAcceptanceTest.java`에 US7-AC1~AC9를 쓴다
+- [x] T050 [P] [US7] `BT/api/party/PartyHostAcceptanceTest.java`에 US7-AC1~AC9를 쓴다
   - AC1: `PUT /parties/{id}`로 고친다. 인원을 지금보다 작게 하면 B109다
   - AC2·AC3: `PUT .../join-policy`로 PRIVATE이 되면 모집 페이지에서 빠지고, 되돌리면 다시 보인다
   - AC4: APPROVAL에서 바꾸면 대기 신청이 CANCELLED가 된다
@@ -477,7 +477,7 @@ description: "파티 (party) 작업 목록"
   - AC7: `POST .../invite-code` 뒤 이전 코드가 B107이다
   - AC8: `DELETE /parties/{id}`가 204이고 그 뒤 404이며 대기 신청이 정리된다
   - AC9: 비방장이 모두 하면 403 A101이다
-- [ ] T051 [P] [US10] `BT/api/party/PartyConditionAcceptanceTest.java`에 US10-AC1~AC10을 쓴다
+- [x] T051 [P] [US10] `BT/api/party/PartyConditionAcceptanceTest.java`에 US10-AC1~AC10을 쓴다
   - AC1: 롤에서 방장 MID, 모집 JUNGLE·TOP이면 capacity가 3이고 positions slots가 모두 1이다
   - AC2: 오버워치에서 TANK 1, DAMAGE 2, SUPPORT 2면 capacity가 5다
   - AC3: 조건이 없으면 positionEnabled false다
@@ -492,10 +492,10 @@ description: "파티 (party) 작업 목록"
     - 모드 코드가 그 게임의 `<game>_MODE`에 없으면 V001이다
     - tierMin의 정렬 순서가 tierMax보다 크면 V001이다
     - 롤 slots를 2로 주면 V001이다
-- [ ] T052 [P] [US8] `BT/api/party/MyPartyAcceptanceTest.java`에 US8-AC1·AC2를 쓴다
+- [x] T052 [P] [US8] `BT/api/party/MyPartyAcceptanceTest.java`에 US8-AC1·AC2를 쓴다
   - AC1: 신청 두 개가 신청순으로 나오고 party.title과 positionCode가 있다
   - AC2: PRIVATE 파티 멤버면 `party`와 `myRole`이 나온다
-- [ ] T053 [P] `BT/api/party/PartyNotificationAcceptanceTest.java`에 개인 알림 AC 6개를 쓴다 (FR-029)
+- [x] T053 [P] `BT/api/party/PartyNotificationAcceptanceTest.java`에 개인 알림 AC 6개를 쓴다 (FR-029)
   - 알림마다 "받는 사람에게 그 종류의 개인 알림이 하나 생기고, 일을 한 사람에게는 생기지 않는다"를 `tb_notification`(또는 알림 API)으로 본다. 토스트·브라우저 알림 모양은 007 테스트가 보므로 다시 보지 않는다
   - US5-AC9: 신청하면 방장에게 `PARTY_APPLIED`, 신청한 회원에게는 없다
   - US5-AC10: 승인하면 신청한 회원에게 `PARTY_APPROVED`, 방장에게는 없다
@@ -507,9 +507,9 @@ description: "파티 (party) 작업 목록"
 
 ### 프론트
 
-- [ ] T054 [P] `frontend/tests/unit/party-schema.test.ts`에 T017·T036 스키마의 경계값 테스트를 쓴다 (제목 0·1·50·51자, 인원 1·2·10·11, 포지션 조건을 켜면 인원이 slots 합)
-- [ ] T055 [P] `frontend/tests/unit/party-live.test.ts`에 T025의 이벤트별 캐시 반영 테스트를 쓴다
-- [ ] T056 [P] `frontend/e2e/party.spec.ts`에 spec.md "e2e로 확인할 흐름" 3개를 쓴다
+- [x] T054 [P] `frontend/tests/unit/party-schema.test.ts`에 T017·T036 스키마의 경계값 테스트를 쓴다 (제목 0·1·50·51자, 인원 1·2·10·11, 포지션 조건을 켜면 인원이 slots 합)
+- [x] T055 [P] `frontend/tests/unit/party-live.test.ts`에 T025의 이벤트별 캐시 반영 테스트를 쓴다
+- [x] T056 [P] `frontend/e2e/party.spec.ts`에 spec.md "e2e로 확인할 흐름" 3개를 쓴다
   1. 공개 파티를 만들고 다른 회원이 참가해 채팅을 주고받는다. 시작은 로그인하지 않은 채 모집 페이지를 보고 "파티 만들기"를 눌러 로그인 화면을 거쳐 돌아오는 것이다 (US2-AC6)
   2. 비공개 초대 링크로 들어온다
   3. 롤 포지션을 골라 들어온다
@@ -519,16 +519,16 @@ description: "파티 (party) 작업 목록"
 
 ### 추적
 
-- [ ] T057 AC 추적을 확인한다. `grep -rhoE 'US[0-9]+-AC[0-9]+' backend/src/test frontend/e2e | sort -u | wc -l`이 77인지 본다. 빠진 AC가 있으면 그 스토리의 테스트를 더한다
+- [x] T057 AC 추적을 확인한다. `grep -rhoE 'US[0-9]+-AC[0-9]+' backend/src/test frontend/e2e | sort -u | wc -l`이 77인지 본다. 빠진 AC가 있으면 그 스토리의 테스트를 더한다
 
 ---
 
 ## Phase 14: Polish & Cross-Cutting
 
-- [ ] T058 로컬 빠른 검사를 돌린다: backend/에서 `./gradlew spotlessApply`, `./gradlew build`, frontend/에서 `npm run format`, `npm run check`
+- [x] T058 로컬 빠른 검사를 돌린다: backend/에서 `./gradlew spotlessApply`, `./gradlew build`, frontend/에서 `npm run format`, `npm run check`
   - ArchitectureTest가 실패하면 research.md R10의 배치를 다시 본다
   - 인수 테스트(`dbTest`)와 e2e는 PR CI 결과로 보고, 실패하면 그때 고친다. 테스트를 고쳐서 통과시키지 않는다 (원칙 V)
-- [ ] T059 specs/README.md 사용자 쪽 표에서 `008-party` 상태를 `스펙 작성 중`에서 `구현됨`으로 바꾼다
+- [x] T059 specs/README.md 사용자 쪽 표에서 `008-party` 상태를 `스펙 작성 중`에서 `구현됨`으로 바꾼다
 - [ ] T060 quickstart.md "화면 확인"을 사람이 직접 한다. 시험 계정 비밀번호가 필요하므로 에이전트는 하지 않는다 (원칙 VI). 회원 계정이 둘 필요해 "준비"의 `user2`도 사람이 더한다
 
 ---
