@@ -1,6 +1,7 @@
 // 알림 API의 응답·요청 (specs/007-notifications contracts/notifications-api.md, contracts/realtime.md)
 
-export type NotificationType = "SYSTEM"
+// INQUIRY_ANSWERED: 1:1 문의에 답변이 등록됐다 (specs/017-customer-center FR-012)
+export type NotificationType = "SYSTEM" | "INQUIRY_ANSWERED"
 
 export type NotificationItem = {
   id: number

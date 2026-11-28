@@ -1,6 +1,6 @@
 # Data Model: 고객센터 (customer-center)
 
-마이그레이션 한 파일(`V<다음 번호>__customer_center.sql`, PR 직전에 번호를 정한다. 지금 dev는 `V10`까지이고 `016-banner-popup`이 `V11`을 쓸 예정이라 `V12`로 잡아 둔다)이 테이블, 분류 코드, 메뉴를 넣는다. 테이블·열·인덱스 규칙은 `docs/db.md`를 따른다.
+마이그레이션 한 파일(`V<다음 번호>__customer_center.sql`, PR 직전에 번호를 정한다. 2026-11-28에 dev가 `V13`(`018-member-withdrawal`)까지라 `V14`다)이 테이블, 분류 코드, 메뉴를 넣는다. 테이블·열·인덱스 규칙은 `docs/db.md`를 따른다.
 이미지 파일과 그 기록은 키트 `tb_rich_text_image`가 맡는다 (research R1·R2).
 
 ## FAQ (`tb_faq`)
@@ -99,7 +99,7 @@ answered_at IS NOT NULL  → ANSWERED (답변 완료)
 |---|---|
 | `NotificationType.INQUIRY_ANSWERED` | 답변 대기 문의에 처음 답변했을 때. 받는 사람 문의를 쓴 회원, 제목 "1:1 문의에 답변이 등록되었습니다", 연결 `/support/inquiries/{id}` |
 
-## 파기 (FR-017, research R10, 회원 탈퇴 스펙 뒤)
+## 파기 (FR-017, research R10)
 
 | 값 | 내용 |
 |---|---|

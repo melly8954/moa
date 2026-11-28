@@ -1,5 +1,7 @@
 package com.moa.api.service.user;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -27,5 +29,10 @@ public class MemberStatusService {
 	/** 스스로 탈퇴했는지. 유예 중과 파기된 뒤 모두 참이다 */
 	public boolean isWithdrawn(Long userId) {
 		return userReader.existsWithdrawn(userId);
+	}
+
+	/** 이 시각 전에 스스로 탈퇴한 회원 ID. 유예 중과 파기된 뒤 모두 든다 (specs/017-customer-center FR-017) */
+	public List<Long> findIdsWithdrawnBefore(LocalDateTime cutoff) {
+		return userReader.findIdsWithdrawnBefore(cutoff);
 	}
 }

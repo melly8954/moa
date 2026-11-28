@@ -102,14 +102,16 @@ class AdminRolesAcceptanceTest extends AcceptanceTest {
 		assertThat(result).hasStatus(200);
 		assertThat(result).bodyJson().extractingPath("$.menus[*].name").asArray().containsExactly("운영", "마케팅", "설정");
 		assertThat(result).bodyJson().extractingPath("$.menus[*].children[*].name").asArray()
-			.containsExactly("사용자 관리", "공지 관리", "접속 이력", "파기 이력", "배너 관리", "팝업 관리", "권한 관리", "메뉴 관리",
-				"코드 관리");
+			.containsExactly("사용자 관리", "공지 관리", "FAQ 관리", "문의 관리", "접속 이력", "파기 이력", "배너 관리", "팝업 관리", "권한 관리",
+				"메뉴 관리", "코드 관리");
 		assertThat(result).bodyJson().extractingPath("$.menus[*].children[*].permission.key").asArray()
-			.containsExactly("USER_MANAGE", "NOTICE_MANAGE", "LOGIN_HISTORY_READ", "PURGE_LOG_READ", "BANNER_MANAGE",
+			.containsExactly("USER_MANAGE", "NOTICE_MANAGE", "FAQ_MANAGE", "INQUIRY_MANAGE", "LOGIN_HISTORY_READ",
+				"PURGE_LOG_READ",
+				"BANNER_MANAGE",
 				"POPUP_MANAGE", "ROLE_MANAGE",
 				"MENU_MANAGE",
 				"CODE_MANAGE");
-		assertThat(result).bodyJson().extractingPath("$.menus[0].children[2].permission.name").isEqualTo("접속 이력 조회");
+		assertThat(result).bodyJson().extractingPath("$.menus[0].children[4].permission.name").isEqualTo("접속 이력 조회");
 		assertThat(result).bodyJson().extractingPath("$.unlisted.length()").isEqualTo(0);
 	}
 
