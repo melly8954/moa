@@ -23,6 +23,11 @@ public class UserProfileReader {
 		return repository.findById(userId);
 	}
 
+	/** moa 009: 고치기 전에 행을 잠가 읽는다 (SELECT … FOR UPDATE). 트랜잭션 안에서 부른다 */
+	public Optional<UserProfile> findForUpdate(Long userId) {
+		return repository.findForUpdate(userId);
+	}
+
 	/** 이 닉네임 키에서 쓰이는 태그 */
 	public Set<String> findUsedTags(String nicknameKey) {
 		return Set.copyOf(repository.findTagsByNicknameKey(nicknameKey));

@@ -1,6 +1,30 @@
 // npm run gen:api가 만든 파일이다. 손으로 고치지 않는다 (scripts/gen-api.mjs)
 
 export interface paths {
+    "/api/v1/users/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 프로필
+         * @description 프로필을 아직 만들지 않았으면 기본값. 관리자 계정은 A201
+         */
+        get: operations["getMyProfile"];
+        /**
+         * 프로필 저장
+         * @description 닉네임·게임 정보를 뺀 모든 칸을 보낸 값으로 바꾼다. 칸 오류는 V001, 관리자 계정은 A201
+         */
+        put: operations["saveProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/me/password": {
         parameters: {
             query?: never;
@@ -14,6 +38,26 @@ export interface paths {
          * @description 바꾸면 비밀번호 변경 요구(passwordChangeRequired)가 풀린다. 현재 비밀번호가 틀리거나 새 비밀번호가 같으면 V001, 비밀번호가 없는 계정(소셜)은 B001
          */
         put: operations["changePassword"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me/nickname": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 닉네임 바꾸기
+         * @description 지금과 같으면 그대로. 규칙 V001, 변경 제한 기간 안 B202(다시 바꿀 수 있는 시각은 프로필 조회의 nicknameChangeableAt), 태그가 다 차면 B201, 관리자 계정은 A201
+         */
+        put: operations["changeNickname"];
         post?: never;
         delete?: never;
         options?: never;
@@ -514,6 +558,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/me/withdrawal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 회원 탈퇴
+         * @description 닉네임이 다르면 V001(칸 nickname), 관리자 계정은 A201. 성공하면 리프레시 쿠키를 지우고 완전 삭제 예정 시각을 준다. 이미 탈퇴한 요청이 겹치면 처음 시각으로 답한다
+         */
+        post: operations["withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/rich-text/images": {
         parameters: {
             query?: never;
@@ -572,6 +636,30 @@ export interface paths {
          * @description 리프레시 토큰으로 액세스 토큰을 다시 받는다. 리프레시 토큰도 새 것으로 바뀐다
          */
         post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/recovery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 복구 안내
+         * @description 완전 삭제 예정 시각. 복구 쿠키가 없거나 맞지 않으면 A403, 유예가 지났으면 A402
+         */
+        get: operations["getRecovery"];
+        put?: never;
+        /**
+         * 복구
+         * @description 탈퇴 전 그대로 돌아오고 로그인과 같은 토큰을 준다. 복구 쿠키를 지운다. 쿠키가 없거나 맞지 않으면(이미 복구함·다시 탈퇴함) A403, 잠겼으면 A007, 유예가 지났으면 A402
+         */
+        post: operations["recover"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1105,6 +1193,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/profile/avatars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 기본 아바타 목록
+         * @description 로그인한 누구나 부를 수 있다
+         */
+        get: operations["getAvatars"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/notifications": {
         parameters: {
             query?: never;
@@ -1466,12 +1574,139 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description 프로필 저장 요청. 모든 칸을 보낸다. null이나 빈 배열은 비움 */
+        ProfileSaveRequest: {
+            /**
+             * @description 기본 아바타 키 (GET /api/v1/profile/avatars). null이면 default
+             * @example cat
+             */
+            avatar?: string;
+            /** @description 자기소개. 500자까지 */
+            bio?: string;
+            /**
+             * Format: int32
+             * @description 출생 연도. 1900~올해
+             * @example 2000
+             */
+            birthYear?: number;
+            /**
+             * @description 성별: MALE, FEMALE, UNDISCLOSED
+             * @example FEMALE
+             */
+            gender?: string;
+            /** @description 나이·성별 공개. null이면 거짓 */
+            ageGenderPublic?: boolean;
+            /**
+             * @description 디스코드 사용자 이름. 2~32자 영문 소문자·숫자·_·.
+             * @example moa_user.01
+             */
+            discordTag?: string;
+            /**
+             * @description 디스코드 공개 범위: PRIVATE, FRIENDS, MEMBERS. null이면 PRIVATE
+             * @example MEMBERS
+             */
+            discordVisibility?: string;
+            /** @description 플레이 시간대 (PLAY_TIME 코드) */
+            playTimes?: string[];
+        };
+        /** @description 플레이 가능 시간대 */
+        PlayTime: {
+            /**
+             * @description 코드
+             * @example WEEKDAY_EVENING
+             */
+            code: string;
+            /**
+             * @description 이름
+             * @example 평일 저녁
+             */
+            name: string;
+        };
+        /** @description 내 프로필 */
+        ProfileGetResponse: {
+            /**
+             * @description 닉네임 (tb_user.name)
+             * @example 모아
+             */
+            nickname: string;
+            /**
+             * @description 닉네임 태그. 프로필이 아직 없으면 null
+             * @example 0421
+             */
+            nicknameTag?: string;
+            /**
+             * @description 아바타 키. 목록에서 빠진 키면 default
+             * @example default
+             */
+            avatar: string;
+            /** @description 자기소개 */
+            bio?: string;
+            /**
+             * Format: int32
+             * @description 출생 연도
+             * @example 2000
+             */
+            birthYear?: number;
+            /**
+             * Format: int32
+             * @description 나이 (올해 − 출생 연도). 출생 연도가 없으면 null
+             * @example 26
+             */
+            age?: number;
+            /**
+             * @description 성별
+             * @enum {string}
+             */
+            gender?: "MALE" | "FEMALE" | "UNDISCLOSED";
+            /** @description 나이·성별 공개 */
+            ageGenderPublic: boolean;
+            /** @description 디스코드 사용자 이름 */
+            discordTag?: string;
+            /**
+             * @description 디스코드 공개 범위
+             * @enum {string}
+             */
+            discordVisibility: "PRIVATE" | "FRIENDS" | "MEMBERS";
+            /** @description 플레이 가능 시간대 (공통코드 순서, 꺼진 값도 이름과 함께) */
+            playTimes: components["schemas"]["PlayTime"][];
+            /**
+             * Format: date-time
+             * @description 다음에 닉네임을 바꿀 수 있는 시각. 지금 바꿀 수 있으면 null
+             */
+            nicknameChangeableAt?: string;
+        };
         /** @description 내 비밀번호 바꾸기 요청 */
         PasswordChangeRequest: {
             /** @description 지금 비밀번호 (임시 비밀번호 포함) */
             currentPassword: string;
             /** @description 새 비밀번호. 8~100자 */
             newPassword: string;
+        };
+        /** @description 닉네임 바꾸기 요청 */
+        NicknameChangeRequest: {
+            /**
+             * @description 새 닉네임. 2~12자 한글·영문·숫자·_
+             * @example 모아
+             */
+            nickname: string;
+        };
+        /** @description 닉네임 바꾸기 결과 */
+        NicknameChangeResponse: {
+            /**
+             * @description 닉네임
+             * @example 모아
+             */
+            nickname: string;
+            /**
+             * @description 닉네임 태그
+             * @example 0421
+             */
+            nicknameTag?: string;
+            /**
+             * Format: date-time
+             * @description 다음에 닉네임을 바꿀 수 있는 시각. 지금 바꿀 수 있으면 null
+             */
+            nicknameChangeableAt?: string;
         };
         /** @description 사용자 역할 바꾸기 요청 */
         UserRoleReplaceRequest: {
@@ -2140,6 +2375,22 @@ export interface components {
             /** @description 켜짐 */
             enabled: boolean;
         };
+        /** @description 회원 탈퇴 요청 */
+        WithdrawalRequest: {
+            /**
+             * @description 확인용으로 입력한 지금 닉네임 (대소문자 구별)
+             * @example 모아
+             */
+            nickname: string;
+        };
+        /** @description 회원 탈퇴 결과 */
+        WithdrawalResponse: {
+            /**
+             * Format: date-time
+             * @description 완전 삭제 예정 시각. 이때까지 다시 로그인해 복구할 수 있다
+             */
+            purgeAt: string;
+        };
         /** @description 올린 본문 이미지 */
         RichTextImageUploadResponse: {
             /**
@@ -2517,6 +2768,13 @@ export interface components {
             passwordChangeRequired: boolean;
             /** @description moa: 비밀번호가 있는지. 없으면(소셜 회원) 비밀번호 변경을 숨긴다 (010 US2-AC3) */
             hasPassword: boolean;
+            /**
+             * @description moa: 계정 바 아바타 키. 프로필이 없거나 목록에서 빠진 키면 default (009 FR-014)
+             * @example default
+             */
+            avatar: string;
+            /** @description moa: 마이페이지를 쓸 수 있는지. 관리자 계정(ADMIN)이면 거짓 (009 FR-016) */
+            mypageAllowed: boolean;
         };
         MyPermissionResponse: {
             permissions: string[];
@@ -2539,6 +2797,11 @@ export interface components {
         /** @description 가입 때 동의받을 현재 약관 */
         TermsResponse: {
             terms: components["schemas"]["Item"][];
+        };
+        /** @description 기본 아바타 목록 */
+        AvatarListResponse: {
+            /** @description 아바타 키 (순서대로). 그림은 프론트 /avatars/<키>.svg */
+            avatars: string[];
         };
         /** @description 개인 알림 */
         NotificationResponse: {
@@ -2702,6 +2965,14 @@ export interface components {
             accessible: boolean;
             /** @description 하위 메뉴 */
             children: components["schemas"]["MyMenuResponse"][];
+        };
+        /** @description 탈퇴한 계정의 복구 안내 */
+        RecoveryResponse: {
+            /**
+             * Format: date-time
+             * @description 완전 삭제 예정 시각. 이때까지 복구할 수 있다
+             */
+            purgeAt: string;
         };
         /** @description 설정된 소셜 로그인 제공자 */
         OAuthProvidersResponse: {
@@ -3324,6 +3595,50 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getMyProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProfileGetResponse"];
+                };
+            };
+        };
+    };
+    saveProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProfileGetResponse"];
+                };
+            };
+        };
+    };
     changePassword: {
         parameters: {
             query?: never;
@@ -3343,6 +3658,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    changeNickname: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NicknameChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NicknameChangeResponse"];
+                };
             };
         };
     };
@@ -4158,6 +4497,30 @@ export interface operations {
             };
         };
     };
+    withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WithdrawalRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WithdrawalResponse"];
+                };
+            };
+        };
+    };
     upload: {
         parameters: {
             query?: never;
@@ -4259,6 +4622,46 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getRecovery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RecoveryResponse"];
+                };
+            };
+        };
+    };
+    recover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AuthRefreshResponse"];
                 };
             };
         };
@@ -5063,6 +5466,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": string;
+                };
+            };
+        };
+    };
+    getAvatars: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AvatarListResponse"];
                 };
             };
         };

@@ -99,12 +99,19 @@ app:
     # 푸시 서버가 연락할 운영자 주소 (mailto:...)
     subject: ${WEB_PUSH_SUBJECT:}
 ---
-# moa: 개인정보 파기 이력 (specs/013-purge-log FR-006), 소셜 로그인 제공자 설정과 현재 약관 버전 (specs/010-social-login)
+# moa: 개인정보 파기 이력 (specs/013-purge-log FR-006), 소셜 로그인 제공자 설정과 현재 약관 버전 (specs/010-social-login),
+#   회원 탈퇴 (specs/018-member-withdrawal)
 app:
   purge-log:
     # 이 기간이 지난 파기 이력은 매일 지운다. 다른 정리(04:30~05:00)가 끝난 뒤에 돈다
     retention-days: ${PURGE_LOG_RETENTION_DAYS:365}
     cleanup-cron: ${PURGE_LOG_CLEANUP_CRON:0 10 5 * * *}
+  withdrawal:
+    # 탈퇴한 뒤 복구할 수 있는 날수. 지나면 파기한다. docs/privacy.md의 30일과 맞춘다
+    grace-days: ${WITHDRAWAL_GRACE_DAYS:30}
+    # 파기 정리. 서버 시간대와 상관없이 cleanup-zone의 시각으로 돈다
+    cleanup-cron: ${WITHDRAWAL_CLEANUP_CRON:0 20 5 * * *}
+    cleanup-zone: ${WITHDRAWAL_CLEANUP_ZONE:Asia/Seoul}
   oauth:
     google:
       # 셋 중 하나라도 비면 구글을 끈다 (단추 숨김, 시작·콜백 A008)

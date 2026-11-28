@@ -9,12 +9,14 @@ import { menuApi } from "./menu"
 import { notificationApi } from "./notification"
 import { noticeAdminApi, noticeApi } from "./notice"
 import { oauthApi, termsApi } from "./oauth"
+import { profileApi } from "./profile"
 import { purgeLogApi } from "./purge-log"
 import { roleApi } from "./role"
 import { userAdminApi } from "./user-admin"
 import { richTextApi } from "./rich-text"
 import { bannerAdminApi } from "./banner"
 import { popupAdminApi } from "./popup"
+import { withdrawalApi } from "./withdrawal"
 import { faqAdminApi, faqApi } from "./faq"
 import { inquiryAdminApi, inquiryApi } from "./inquiry"
 // @helpers:imports
@@ -43,6 +45,7 @@ export const api = {
     noticeAdmin: noticeAdminApi,
     notification: notificationApi,
     oauth: oauthApi,
+    profile: profileApi,
     terms: termsApi,
     purgeLog: purgeLogApi,
     role: roleApi,
@@ -50,6 +53,7 @@ export const api = {
     richText: richTextApi,
     bannerAdmin: bannerAdminApi,
     popupAdmin: popupAdminApi,
+    withdrawal: withdrawalApi,
     faq: faqApi,
     faqAdmin: faqAdminApi,
     inquiry: inquiryApi,

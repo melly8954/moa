@@ -16,7 +16,7 @@
 
 **Primary Dependencies**: 기존 키트 헬퍼(admin 프리셋 menu·rbac·code, rich-text, websocket 알림). 새 의존성 없음
 
-**Storage**: MariaDB. 새 테이블 `tb_faq`, `tb_inquiry`, `tb_inquiry_image`와 분류 코드·메뉴 행을 마이그레이션 한 파일로 넣는다(번호는 PR 직전 마지막+1, 지금 예상 `V12`). 이미지는 키트 `tb_rich_text_image`
+**Storage**: MariaDB. 새 테이블 `tb_faq`, `tb_inquiry`, `tb_inquiry_image`와 분류 코드·메뉴 행을 마이그레이션 한 파일로 넣는다(번호는 PR 직전 마지막+1, 지금은 `V14`). 이미지는 키트 `tb_rich_text_image`
 
 **Testing**: 인수 테스트 `CustomerCenterAcceptanceTest` (MockMvc + Testcontainers MariaDB, PR CI의 `dbTest`). 메뉴·권한·코드 그룹이 늘어 `AdminMenusAcceptanceTest`, `AdminRolesAcceptanceTest`, `AdminCodesAcceptanceTest`를 고친다. 프론트는 `npm run check`와 핵심 흐름 e2e 둘
 
@@ -67,7 +67,7 @@ specs/017-customer-center/
 
 ```text
 backend/
-├── src/main/resources/db/migration/V12__customer_center.sql  # tb_faq, tb_inquiry, tb_inquiry_image, 분류, 메뉴 (번호는 PR 직전에)
+├── src/main/resources/db/migration/V14__customer_center.sql  # tb_faq, tb_inquiry, tb_inquiry_image, 분류, 메뉴 (번호는 PR 직전에)
 ├── src/main/java/com/moa/api/
 │   ├── controller/v1/faq/                 # ApiFaqController (사용자, 로그인 없이)
 │   ├── controller/v1/inquiry/             # ApiInquiryController (회원)

@@ -33,7 +33,7 @@ class AdminCodesAcceptanceTest extends AcceptanceTest {
 
 	@BeforeEach
 	void createGroups() {
-		// 마이그레이션이 넣은 그룹(SUPPORT_CATEGORY, specs/004-admin-codes FR-001)은 DatabaseCleaner가 첫 테스트 뒤에야 지운다.
+		// 마이그레이션이 넣은 그룹(PLAY_TIME·SUPPORT_CATEGORY 등, specs/004-admin-codes FR-001)은 DatabaseCleaner가 첫 테스트 뒤에야 지운다.
 		// 이 클래스가 먼저 돌아도 같게 시험 그룹만 남긴다
 		jdbcTemplate.update("DELETE FROM tb_code");
 		jdbcTemplate.update("DELETE FROM tb_code_group");

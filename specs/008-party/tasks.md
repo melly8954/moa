@@ -302,6 +302,10 @@ description: "파티 (party) 작업 목록"
   - LEFT·HOST_CHANGED 안내와 `MEMBERS_CHANGED` 이벤트를 보낸다
   - 나간 회원의 구독을 끊는다
   - 개인 알림 (FR-029): 방장이 바뀌면 새 방장에게 `PARTY_HOST_CHANGED`를 보낸다. 마지막 멤버가 나가 자동 해산되면 보내지 않는다(받을 사람이 없다)
+- [ ] T061 [US6] 회원 탈퇴 처리를 붙인다 (FR-031, research.md R15)
+  - `PartyApplication.leaveByWithdrawal(userId)`: 속한 파티가 있으면 T030의 나가기 처리를 그대로 쓰고, PENDING 신청을 모두 CANCELLED로 바꾼다. 신청 취소는 방장에게 알리지 않는다
+  - `application/v1/party/PartyWithdrawalListener`: `MemberWithdrawnEvent`를 AFTER_COMMIT + `REQUIRES_NEW`로 받는다. 실패하면 로그만 남긴다
+  - `scheduler/PartyWithdrawalCleaner`: 매일 탈퇴 상태인데 멤버 행·PENDING 신청이 남은 회원을 네이티브 쿼리로 찾아 다시 부른다 (`MemberPurgeCleaner`와 같은 모양)
 - [ ] T031 [US6] 파티 화면에 "나가기"를 붙인다. 확인 창(`confirm`)에서 방장이면 "가장 먼저 들어온 멤버가 방장이 된다", 마지막이면 "파티가 해산된다"를 알린다. 나가면 `/recruit`로 보낸다
 
 ---
@@ -455,6 +459,10 @@ description: "파티 (party) 작업 목록"
   - 방장이 직접 마감한 파티에서도 자리가 있으면 승인이 된다 (FR-008)
   - OPEN 파티에 신청하면 B112다
 - [ ] T049 [P] [US6] `BT/api/party/PartyLeaveAcceptanceTest.java`에 US6-AC1~AC5를 쓴다
+- [ ] T062 [P] [US6] `BT/api/party/PartyWithdrawalAcceptanceTest.java`에 US6-AC7·AC8을 쓴다 (T061)
+  - AC7: 방장이 `MemberWithdrawalApplication`으로 탈퇴하면 이벤트 처리 뒤 가장 이른 멤버가 HOST이고 새 방장에게 `PARTY_HOST_CHANGED`가 하나다. LEFT 안내의 subject 이름이 "탈퇴한 회원"이다. 복구한 뒤에도 멤버 행이 없다
+  - AC8: 신청 두 개가 CANCELLED이고 방장들에게 알림이 없다
+  - 정리기: 리스너를 건너뛰고 멤버 행을 남긴 채 `PartyWithdrawalCleaner`를 부르면 정리된다
   - AC1: `DELETE /parties/{id}/members/me`가 204이고 인원이 -1이다
   - AC2: 자동 마감 파티가 RECRUITING으로 돌아온다
   - AC3: 방장이 나가면 `joined_at`이 가장 이른 멤버가 HOST가 되고 `host_user_id`도 바뀐다. 같은 시각이면 id가 작은 쪽이다

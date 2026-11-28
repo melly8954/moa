@@ -139,3 +139,15 @@ Technical Context의 미결은 실시간 통신 하나였다. 처음(2026-11-15)
   - 목록·상세·초대 미리보기는 "누구나"라 막지 않는다. 관리자 계정은 사용자 셸 화면을 열 수 없어 화면으로는 오지 않는다 (`001-admin-menus` FR-005)
 - **Rationale**: 2026-11-22에 관리자 계정이 사용자 셸에 들어오지 못하게 되었다. 화면만 막으면 API를 직접 부를 수 있으므로 서버에서도 막는다 (009 R2와 같은 이유). 오류 코드는 파티 권한 오류 대역(`A1xx`, R9)의 다음 번호다
 - **이전 결정**: 2026-11-14에는 관리자·운영자도 회원과 똑같이 쓰기로 했다 (FR-012 옛 문구)
+
+## R15. 회원 탈퇴 (FR-031)
+
+- **Decision** (2026-11-28)
+  - `application/v1/party/PartyWithdrawalListener`가 `MemberWithdrawnEvent`를 `@TransactionalEventListener(phase = AFTER_COMMIT)`로 받아 `PartyApplication.leaveByWithdrawal(userId)`를 부른다. 새 트랜잭션(`REQUIRES_NEW`)에서 돈다
+  - `leaveByWithdrawal`은 속한 파티가 있으면 `leave`와 같은 처리(파티 락 → 멤버 행 삭제 → 방장 잇기 → 해산)를 하고, 그 회원의 PENDING 신청을 모두 CANCELLED로 바꾼다. 나가기와 같은 공통 메서드를 쓰고, 처리자(`actorId`)는 그 회원이다
+  - 이벤트가 커밋 뒤에 오므로 그 회원은 이미 기본 조회(`User` `@SQLRestriction`)에서 빠져 있다. 채팅 나감 안내와 목록의 이름은 `MemberDisplay.nameOf`가 "탈퇴한 회원"으로 보인다. 018이 실시간 연결을 이미 끊으므로 구독을 따로 끊지 않는다
+  - 실패하면 로그를 남기고 넘어간다. `scheduler/PartyWithdrawalCleaner`가 매일 탈퇴 상태(`withdrawn_at IS NOT NULL`)인데 멤버 행이나 PENDING 신청이 남은 회원을 찾아 `leaveByWithdrawal`을 다시 부른다. 기본 조회 조건을 건너야 하므로 이 조회는 네이티브 쿼리다
+  - 복구(`MemberRestoredEvent`)에는 붙이지 않는다. 돌아오지 않기 때문이다
+  - 파기(`MemberPurgedEvent`)에도 붙이지 않는다. 파티·메시지는 다른 회원과 엮인 행이라 남기고(`docs/privacy.md`), 탈퇴 때 이미 나갔다
+- **Rationale**: `018` FR-017은 처리를 붙이는 기능이 실패 기록과 다시 시도를 정하게 한다. 탈퇴는 혼자 완료되므로 리스너가 실패해도 탈퇴는 남고, 남은 멤버 행은 정리기가 치운다. 나가기와 같은 메서드를 써서 방장 잇기·해산·알림 규칙이 한 곳에 있다
+- **Alternatives considered**: 유예 중에는 자리를 두고 파기 때 나가기 — 탈퇴한 방장의 파티가 30일 동안 멈춰 버려 고르지 않았다 (spec Session 2026-11-28)

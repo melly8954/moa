@@ -61,11 +61,11 @@ public class SocialAccountService {
 	private final NicknameTags nicknameTags;
 	private final TermsProperties termsProperties;
 
-	/** 이 소셜 계정이 연결된 회원 (FR-003) */
+	/** 이 소셜 계정이 연결된 회원 (FR-003). moa 018: 탈퇴(유예 중·파기 대기)한 회원도 나온다 (관리자가 지운 회원은 아니다) */
 	public Optional<SocialLoginUserDto> findLinkedUser(OAuthIdentity identity) {
 		return userSocialAccountReader.findByProviderAndSubject(identity.provider(), identity.subject())
-			.flatMap(account -> userReader.find(account.getUserId()))
-			.map(user -> new SocialLoginUserDto(UserDto.from(user), user.isLocked()));
+			.flatMap(account -> userReader.findIncludingWithdrawn(account.getUserId()))
+			.map(user -> new SocialLoginUserDto(UserDto.from(user), user.isLocked(), user.getWithdrawnAt()));
 	}
 
 	/** 소셜 계정이 하나라도 연결된 회원인지 (FR-007) */

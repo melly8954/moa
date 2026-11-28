@@ -19,7 +19,7 @@ description: "마이페이지 (mypage) 작업 목록"
 - **(010 순서)**: `010-social-login`과 같은 파일·같은 판단을 고치는 작업. **2026-11-22: 010이 dev에 먼저 들어갔다(PR #67)**. 그래서 "009 먼저" 경우를 지우고 dev에 있는 010 코드에 맞춰 적었다 (research R11·R14)
   - 010이 dev에 만든 것: 010 마이그레이션(`*__social_login.sql`)의 `tb_user_profile`(최소형)과 기존 회원 채우기, 엔터티 `UserProfile`·`UserProfileReader`·`UserProfileWriter`, `NicknamePolicy`·`NicknameTags`·B201, 가입 때 프로필 행, 관리자 이름 바꾸기의 태그 맞추기, `/users/me`의 `hasPassword`, 계정 바(`account-bar.tsx`)의 아이디 줄·비밀번호 변경 숨김. 009는 이것들을 새로 만들지 않는다
   - 010이 만들지 않은 것: 관리자·운영자 판단(`MemberActivityPolicy`). 009가 만든다 (T011)
-- **(잠정)**: 스펙 [NEEDS CLARIFICATION](닉네임 규칙, 변경 제한, 만 14세 미만, 나이·성별 공개 개별 여부, 친구·팔로워, 보기 범위)에 기댄 부분. 확정되면 research "열린 질문의 처리"의 자리만 고친다
+- **(잠정)**: 스펙 [NEEDS CLARIFICATION](닉네임 규칙, 변경 제한, 만 14세 미만, 나이·성별 공개 개별 여부, 친구 기능 전의 "친구만", 보기 범위)에 기댄 부분. 확정되면 research "열린 질문의 처리"의 자리만 고친다
 - 경로는 저장소 루트 기준이다. 백엔드 패키지 `backend/src/main/java/com/moa/`는 `B/`로 줄여 쓴다
 
 ---
@@ -58,7 +58,7 @@ description: "마이페이지 (mypage) 작업 목록"
 - [ ] T012 [P] `NicknamePolicy`·`NicknameTags`는 010이 B/api/service/user/에 만들었다 (research R4). 009는 새로 만들지 않고 그대로 쓴다. 규칙이 이 기능에 모자라면 그 클래스를 고치고 010 테스트가 그대로 통과하는지 본다
 - [ ] T013 [P] B/api/service/user/ProfileVisibility.java (잠정, FR-013): `view(profile, viewer)` — 로그인하지 않으면 없음, 나이·성별은 `age_gender_public`일 때만, 디스코드 태그는 `MEMBERS`일 때만(`FRIENDS`는 친구 기능 전까지 아무에게도 안 보임), 나머지는 모두. 이 규칙을 쓰는 API·화면은 만들지 않는다 (research R9)
 - [ ] T014 [P] B/api/service/user/GameStatsLinks.java: 게임 코드별 주소 틀(잠정, 구현 때 주소를 다시 확인): `LOL` `https://www.op.gg/summoners/kr/{id}`(`#` → `-`), `VALORANT` `https://tracker.gg/valorant/profile/riot/{id}/overview`(`#` 인코딩), `OVERWATCH` `https://www.overbuff.com/players/{id}`(`#` → `-`), `PUBG` `https://pubg.op.gg/user/{id}`. 게임 아이디는 URL 인코딩. 틀이 없거나 아이디가 비면 `null` (research R8)
-- [ ] T015 B/api/service/user/ProfileService.java 틀: `getMyProfile(userId)` — `nickname`·`nicknameTag`를 함께 준다. 행이 없으면 기본값(`nicknameTag` null, 아바타 `default`, 빈 값, `ageGenderPublic` 거짓, `discordVisibility` `PRIVATE`), `age` = 올해 − `birthYear`(값이 있을 때만), 목록에서 빠진 아바타 키는 `default`, `nicknameChangeAvailableAt` = `nickname_changed_at` + 쿨다운이 지금보다 뒤일 때만. `requireProfileForUpdate(userId)` — `findForUpdate`, 없으면 `nickname_key` = `NicknamePolicy.key(tb_user.name)`, `nickname_tag` = `NicknameTags.assign(key)`로 만든 뒤 잠근다(research R8·R14 "없으면 만든 뒤"). 처음 진입(GET)에서는 행을 만들지 않는다
+- [ ] T015 B/api/service/user/ProfileService.java 틀: `getMyProfile(userId)` — `nickname`·`nicknameTag`를 함께 준다. 행이 없으면 기본값(`nicknameTag` null, 아바타 `default`, 빈 값, `ageGenderPublic` 거짓, `discordVisibility` `PRIVATE`), `age` = 올해 − `birthYear`(값이 있을 때만), 목록에서 빠진 아바타 키는 `default`, `nicknameChangeableAt` = `nickname_changed_at` + 쿨다운(지금보다 뒤일 때만, 아니면 null). `requireProfileForUpdate(userId)` — `findForUpdate`, 없으면 `nickname_key` = `NicknamePolicy.key(tb_user.name)`, `nickname_tag` = `NicknameTags.assign(key)`로 만든 뒤 잠근다(research R8·R14 "없으면 만든 뒤"). 처음 진입(GET)에서는 행을 만들지 않는다
 - [ ] T016 B/api/application/v1/user/ProfileApplication.java와 B/api/controller/v1/user/ApiMyProfileController.java 틀: 모든 마이페이지 API(프로필·닉네임·게임 정보) 앞에서 `MemberActivityPolicy.isManagerAccount`가 참이면 403 `MYPAGE_NOT_ALLOWED`(A201) (FR-016, research R2). `GET /api/v1/profile/avatars`는 막지 않는다. `SecurityConfig`는 고치지 않는다(로그인 필요는 기본 규칙)
 - [ ] T017 [P] frontend/src/types/profile.ts(새: `MyProfile`, `GameProfiles`, 요청 타입 — contracts/profile-api.md 모양), frontend/src/api/index.ts에 `api.v1.profile.get()`, `save(body)`, `changeNickname(nickname)`, `addGame`, `updateGame`, `deleteGame`, `avatars()`를 더한다 (타입은 T044의 `npm run gen:api` 뒤 정리)
 - [ ] T018 [P] frontend/src/lib/avatars.ts(새: 키 → `/avatars/<키>.svg`, 모르는 키는 `default`)와 frontend/public/avatars/<키>.svg 8개(T003 그림)
@@ -75,7 +75,7 @@ description: "마이페이지 (mypage) 작업 목록"
 
 **Independent Test**: quickstart 1~3·22 — 계정 바에 닉네임·기본 아바타, 톱니 메뉴에 "마이페이지"가 보이고, 마이페이지의 모든 항목이 비어 있음으로 보이며, `admin`은 항목이 없고 권한 없음 화면이다
 
-- [ ] T021 [US1] ApiMyProfileController에 `GET /api/v1/users/me/profile` → `ProfileService.getMyProfile` (contracts/profile-api.md GET 모양: `nickname`, `avatar`, `bio`, `birthYear`, `age`, `gender`, `ageGenderPublic`, `discordTag`, `discordVisibility`, `playTimes[{code,name}]`, `nicknameChangeAvailableAt`, `games{count,max,items}`) (US1-AC1·AC4). 꺼진 공통코드 값도 이름과 함께 보인다(`includeDisabled`로 이름 찾기)
+- [ ] T021 [US1] ApiMyProfileController에 `GET /api/v1/users/me/profile` → `ProfileService.getMyProfile` (contracts/profile-api.md GET 모양: `nickname`, `avatar`, `bio`, `birthYear`, `age`, `gender`, `ageGenderPublic`, `discordTag`, `discordVisibility`, `playTimes[{code,name}]`, `nicknameChangeableAt`, `games{count,max,items}`) (US1-AC1·AC4). 꺼진 공통코드 값도 이름과 함께 보인다(`includeDisabled`로 이름 찾기)
 - [ ] T022 [US1] [공용] B/api/controller/v1/user/response/UserGetResponse.java(과 그 값을 만드는 서비스·`UserDto`)에 `avatar`(string, 행이 없거나 목록에서 빠진 키면 `default`)와 `mypageAllowed`(boolean, `!MemberActivityPolicy.isManagerAccount`)를 더한다 (contracts/users-me-and-screens.md, FR-014·FR-016). 010이 더한 `hasPassword`는 그대로 둔다. 키트 골격 파일이다. 구현 전에 바꿀 내용을 보고하고 확인받는다
 - [ ] T023 [P] [US1] [공용] frontend/src/types/user.ts `Me`에 `avatar`, `mypageAllowed`를 더한다. 010이 더한 `hasPassword`는 그대로 둔다. 테스트·e2e의 `Me` 모의 값(`e2e/support/api.ts`의 `E2E_ME` 등)도 함께 채운다. 키트 web-next 파일이다. 구현 전에 바꿀 내용을 보고하고 확인받는다
 - [ ] T024 [US1] [공용] frontend/src/components/shell/account-bar.tsx(사이드바 바닥 계정 바, `001-admin-menus` FR-005. dev가 키트 `account-menu.tsx`를 바꾼 파일): 사람 아이콘 자리에 아바타(`lib/avatars.ts`), 이름 자리에 닉네임(`name`). 회원(`mypageAllowed`)에게는 아이디 줄(툴팁 포함)을 숨긴다. 톱니 메뉴의 설정 앞에 `mypageAllowed`일 때만 "마이페이지"(`PROFILE_PATH`)를 둔다: 화면 모드, (언어), 마이페이지, 설정, 비밀번호 변경. 로그아웃은 따로 단추다. 010의 "`hasPassword`가 참이 아니면 아이디 줄·비밀번호 변경 숨김"은 그대로 둔다 (FR-014, US1-AC3·AC6, research R11, contracts/users-me-and-screens.md). 구현 전에 바꿀 내용을 보고하고 확인받는다
@@ -92,11 +92,11 @@ description: "마이페이지 (mypage) 작업 목록"
 
 **Independent Test**: quickstart 4~8 — 닉네임을 바꾸면 계정 바가 바로 바뀌고, 바로 다시 바꾸면 "언제부터"가 보이며, 규칙이 막히고, 다른 회원과 같은 닉네임은 다른 태그로 저장된다
 
-- [ ] T027 [US2] B/api/service/user/NicknameService.java `change(userId, raw)`: 한 트랜잭션에서 `NicknamePolicy.normalize` → 지금 이름과 같으면 아무것도 바꾸지 않고 돌려준다(시각 그대로, Edge Cases) → `validate`(V001) → `ProfileService.requireProfileForUpdate` → `nickname_changed_at`이 있고 + 쿨다운 전이면 B202와 `availableAt`(첫 변경은 바로, US2-AC6) → `NicknameTags.keepOrAssign(newKey, currentTag)`(다 차면 B201, US2-AC7·AC8) → `User.rename(nickname)`, `UserProfile.changeNickname(key, tag, now)` → flush. `uk_user_profile_nickname_key_nickname_tag` 위반은 010 `NicknameTags`의 다시 하기 규칙(새 트랜잭션, 최대 3번, 그래도면 B201)을 따른다 (research R4·R5, FR-003·FR-004)
-- [ ] T028 [US2] ApiMyProfileController에 `PUT /api/v1/users/me/nickname` 요청 `{ nickname }` → 200 `{ nickname, nicknameChangeAvailableAt }`. B202 응답의 `data.availableAt`을 오류 응답에 싣는다 (contracts "닉네임 바꾸기", US2-AC1·AC3~AC6)
+- [ ] T027 [US2] B/api/service/user/NicknameService.java `change(userId, raw)`: 한 트랜잭션에서 `NicknamePolicy.normalize` → 지금 이름과 같으면 아무것도 바꾸지 않고 돌려준다(시각 그대로, Edge Cases) → `validate`(V001) → `ProfileService.requireProfileForUpdate` → `nickname_changed_at`이 있고 + 쿨다운 전이면 B202(오류에 `data` 없음, 첫 변경은 바로, US2-AC6) → `NicknameTags.keepOrAssign(newKey, currentTag)`(다 차면 B201, US2-AC7·AC8) → `User.rename(nickname)`, `UserProfile.changeNickname(key, tag, now)` → flush. `uk_user_profile_nickname_key_nickname_tag` 위반은 010 `NicknameTags`의 다시 하기 규칙(새 트랜잭션, 최대 3번, 그래도면 B201)을 따른다 (research R4·R5, FR-003·FR-004)
+- [ ] T028 [US2] ApiMyProfileController에 `PUT /api/v1/users/me/nickname` 요청 `{ nickname }` → 200 `{ nickname, nicknameTag, nicknameChangeableAt }`. B202 오류에는 `data`를 싣지 않는다(키트 `BusinessException`·`ErrorResponse`를 고치지 않음) (contracts "닉네임 바꾸기", US2-AC1·AC3~AC6)
 - [ ] ~~T029~~ (2026-11-19 없앰) 가입 때 프로필 행(`nickname_key`·`nickname_tag`) 만들기는 010 가입이 한다 (research R14)
 - [ ] ~~T030~~ (2026-11-19 010으로 옮김) `UserAdminService.rename`의 `nickname_key`·태그 맞추기는 010이 한다 (research R14, `010-social-login` tasks)
-- [ ] T031 [US2] frontend/src/components/profile/nickname-field.tsx(새): zod로 길이 2~12자·한글·영문·숫자·`_`만 먼저 막고(잠정), 예약어·태그 다 참(B201)·변경 제한(B202)은 서버 응답을 칸 아래에 보인다. 마이페이지 머리에 `닉네임#태그`를 보인다(US1-AC1, 태그가 `null`이면 닉네임만). B202·`nicknameChangeAvailableAt`이면 "{date}부터 바꿀 수 있어요"와 단추 꺼짐. 따로 "닉네임 바꾸기" 단추로 저장하고, 성공하면 저장 안내 뒤 `me`·`profile` 쿼리를 무효화해 계정 바를 새로고침 없이 바꾼다 (FR-005, SC-002, US2-AC1·AC3~AC5)
+- [ ] T031 [US2] frontend/src/components/profile/nickname-field.tsx(새): zod로 길이 2~12자·한글·영문·숫자·`_`만 먼저 막고(잠정), 예약어·태그 다 참(B201)·변경 제한(B202)은 서버 응답을 칸 아래에 보인다. 마이페이지 머리에 `닉네임#태그`를 보인다(US1-AC1, 태그가 `null`이면 닉네임만). `nicknameChangeableAt`이 있으면 "{date}부터 바꿀 수 있어요"를 미리 보이고 입력·단추를 막는다. B202를 받으면(동시 저장·우회) `profile`을 다시 읽어 같은 안내를 보인다. 따로 "닉네임 바꾸기" 단추로 저장하고, 성공하면 저장 안내 뒤 `me`·`profile` 쿼리를 무효화해 계정 바를 새로고침 없이 바꾼다 (FR-005, SC-002, US2-AC1·AC3~AC5)
 
 **Checkpoint**: 닉네임을 바꾸면 모든 화면에 새 닉네임이 보인다 (MVP)
 
@@ -110,7 +110,7 @@ description: "마이페이지 (mypage) 작업 목록"
 
 - [ ] T032 [US3] ProfileService `save(userId, request)`(닉네임·게임 정보 제외): `requireProfileForUpdate` 뒤 모든 칸을 보낸 값으로 바꾼다(`null`·빈 배열은 "비움", US3-AC5). 검증(V001 칸 오류): `bio` 500자 이내, `birthYear` 1900~올해(미래 연도 불가, (잠정) 만 14세 미만은 막지 않음), `gender`는 `Gender` 값, `discordTag`는 앞뒤 공백만 지우고 `^(?!.*\.\.)[a-z0-9_.]{2,32}$`(대문자는 형식 오류, 소문자로 바꾸지 않음), `discordVisibility`는 `DiscordVisibility` 값이고 보내지 않으면 `PRIVATE` (FR-006~FR-008, research R6·R7, US3-AC1~AC5). 응답은 GET과 같은 모양
 - [ ] T033 [US3] ApiMyProfileController에 `PUT /api/v1/users/me/profile`과 요청 DTO(B/api/controller/v1/user/request/ProfileSaveRequest.java: `avatar`, `bio`, `birthYear`, `gender`, `ageGenderPublic`, `discordTag`, `discordVisibility`, `playTimes`)를 더한다. 길이·형식은 Bean Validation, 목록·연도 범위는 서비스 (contracts "프로필 저장")
-- [ ] T034 [US3] frontend profile-form.tsx에 자기소개(500자 카운터), 출생 연도(옆에 나이), 성별(남성·여성·밝히지 않음), "나이·성별 공개" 토글 하나(잠정), 디스코드 태그와 공개 범위(비공개·친구·팔로워만·전체 회원, 기본 비공개)를 넣고 "저장" 단추로 `api.v1.profile.save`. 서버 V001 `errors[].field`를 그 칸에 보인다. 성공하면 `profile`·`me` 쿼리 무효화 (US3-AC1~AC5)
+- [ ] T034 [US3] frontend profile-form.tsx에 자기소개(500자 카운터), 출생 연도(옆에 나이), 성별(남성·여성·밝히지 않음), "나이·성별 공개" 토글 하나(잠정), 디스코드 태그와 공개 범위(비공개·친구만·전체 회원, 기본 비공개)를 넣고 "저장" 단추로 `api.v1.profile.save`. 서버 V001 `errors[].field`를 그 칸에 보인다. 성공하면 `profile`·`me` 쿼리 무효화 (US3-AC1~AC5)
 
 **Checkpoint**: 소개·나이·성별·디스코드를 적고 지운다
 
@@ -162,7 +162,7 @@ description: "마이페이지 (mypage) 작업 목록"
 - [ ] T043 backend/에서 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build` (DB 테스트 제외)
 - [ ] T044 frontend/에서 `npm run gen:api`(local 백엔드 실행 중)로 `src/types/schema.d.ts`를 다시 만들고, T017·T023의 손으로 쓴 타입을 생성 타입으로 바꾼 뒤 `npm run format`, `npm run check`
 - [ ] T045 specs/009-mypage/quickstart.md "수동 확인" 1~22를 사람이 직접 수행한다. 8번(파티 멤버 목록)은 008 구현 뒤에 한다
-- [ ] T046 spec "나중에 고칠 곳" 목록(001 FR-005, 002 FR-004·FR-007 — 이름 바꾸기의 태그 맞추기와 `닉네임#태그` 표시 포함, 004 FR-001 표에 `PLAY_TIME`, 008 FR-027·가정, 친구·팔로우 기능, README 경계 줄)을 PR 설명에 적어 각 담당에게 알린다 (사람이 한다. 이 기능에서 그 스펙들을 고치지 않는다)
+- [ ] T046 spec "나중에 고칠 곳" 목록(001 FR-005, 002 FR-004·FR-007 — 이름 바꾸기의 태그 맞추기와 `닉네임#태그` 표시 포함, 004 FR-001 표에 `PLAY_TIME`, 008 FR-027·가정, `014-friends-follow`, README 경계 줄)을 PR 설명에 적어 각 담당에게 알린다 (사람이 한다. 이 기능에서 그 스펙들을 고치지 않는다)
 - [ ] T047 PR 설명에 010과 겹친 작업(T011·T022·T023·T024)을 dev의 010 코드 위에 어떻게 더했는지 적는다(`MemberActivityPolicy`는 009가 새로 만들었고 010 US5가 쓴다). 키트로 옮길 것도 적는다: 계정 바의 아바타·마이페이지 항목(T024), `UserGetResponse`·`Me` 칸(T022·T023) (원칙 III)
 
 ---
@@ -186,7 +186,7 @@ description: "마이페이지 (mypage) 작업 목록"
 | US2-AC1 닉네임 바꾸기 | 인수 + e2e(계정 바 즉시 반영) | T049, T053 |
 | US2-AC2 파티 멤버 목록의 새 닉네임 | 인수 (008 구현 뒤, 아니면 `/users/me`의 `name`으로 확인하고 PR에 적음) | T049 |
 | US2-AC3 규칙 위반(빈 값·공백·1자·13자·글자·예약어) | 인수 + 프론트 단위(zod) | T049, T052 |
-| US2-AC4 30일 안 다시 바꾸기 → `availableAt` | 인수 + 프론트 단위("{date}부터") | T049, T052 |
+| US2-AC4 30일 안 다시 바꾸기 → B202, GET의 `nicknameChangeableAt` | 인수 + 프론트 단위("{date}부터") | T049, T052 |
 | US2-AC5 같은 닉네임(대소문자만 다른 것 포함) 저장, 다른 태그 | 인수 | T049 |
 | US2-AC6 첫 변경은 바로 | 인수 | T049 |
 | US2-AC7 바꿀 때 태그 그대로 / 쓰이면 새 태그 | 인수 | T049 |
@@ -213,7 +213,7 @@ description: "마이페이지 (mypage) 작업 목록"
 ### 작업
 
 - [ ] T048 backend/src/test/java/com/moa/support/ 테스트 지원: `DatabaseCleaner`가 모든 테이블을 비워(`TRUNCATE`) 마이그레이션의 공통코드 시드가 남지 않으므로, `tb_code_group`·`tb_code`에 `PLAY_TIME` 그룹과 항목 4개를 넣는 지원 코드(US5를 할 때는 `GAME`·`<게임>_TIER`·`<게임>_POSITION`도. 008이 같은 지원 코드를 먼저 두면 거기에 더한다. 004가 지운 `TestCodeGroups`에 기대지 않는다)와 관리자 계정(`ADMIN`, 최고 관리자는 `AcceptanceTest.superAdmin()`) 회원을 만드는 도우미 (research R13)
-- [ ] T049 backend/src/test/java/com/moa/api/MyPageAcceptanceTest.java(`AcceptanceTest` 상속, `@Tag("db")`): 위 표의 "인수" AC 29개를 `@DisplayName("US1-AC1 …")`으로 하나씩 둔다. Edge Case도 하나씩 둔다: 같은 닉네임으로 저장하면 `nickname_changed_at`이 그대로, 대소문자만 바꾸면 태그 그대로, 프로필 행이 없는 회원이 처음 저장하면 행과 태그가 생김, 프로필 행이 없는 회원의 GET은 기본값이고 행을 만들지 않음, 꺼진 공통코드 값이 이름과 함께 보임, 목록에서 빠진 아바타 키는 `default`, 로그인 없이 401 A001
+- [ ] T049 backend/src/test/java/com/moa/api/MyPageAcceptanceTest.java(`AcceptanceTest` 상속, `@Tag("db")`): 위 표의 "인수" AC 29개를 `@DisplayName("US1-AC1 …")`으로 하나씩 둔다. Edge Case도 하나씩 둔다: 같은 닉네임으로 저장하면 `nickname_changed_at`이 그대로, 대소문자만 바꾸면 태그 그대로, 프로필 행이 없는 회원이 처음 저장하면 행과 태그가 생김, 프로필 행이 없는 회원이 동시에 두 번 처음 저장해도 둘 다 성공하고 행은 하나(PK 충돌 다시 하기, research R14. 3번 다 실패하면 R002), 프로필 행이 없는 회원의 GET은 기본값이고 행을 만들지 않음, 꺼진 공통코드 값이 이름과 함께 보임, 목록에서 빠진 아바타 키는 `default`, 로그인 없이 401 A001
 - [ ] T050 [P] backend 단위 테스트(DB 없음): `NicknamePolicyTest`는 010이 둔다(009가 규칙을 고쳤을 때만 더한다), `ProfileVisibilityTest`(로그인 없음·나이·성별 공개·디스코드 `PRIVATE`/`FRIENDS`/`MEMBERS`), `GameStatsLinksTest`(게임별 틀, `#` 처리, 공백 인코딩, 틀 없는 게임 null)
 - [ ] T051 [P] 기존 인수 테스트가 깨지지 않는지 보고 필요한 것만 더한다: `UserAccountAcceptanceTest`(`/users/me`에 `avatar`·`mypageAllowed` 칸, 010의 `hasPassword`와 함께), `AdminUsersAcceptanceTest`(이름 바꾸기의 태그 맞추기는 010 테스트가 본다). 깨지면 원칙 V대로 스펙부터 확인한다
 - [ ] T052 [P] frontend 단위 테스트: 위 표의 "프론트 단위" AC 10개 — account-bar(`tests/unit/account-bar.dom.test.tsx`에 더한다. US1-AC3 닉네임·아바타 보임·회원은 `loginId` 없음, US1-AC6 `mypageAllowed` 거짓이면 톱니 메뉴에 마이페이지 없음, 010의 `hasPassword` 숨김 테스트도 그대로 통과), profile page(US1-AC5 소셜 영역 없음, US1-AC7 권한 없음 화면, US1-AC8 필수·선택 표시), nickname-field(US2-AC3 zod 1자·13자·허용되지 않는 글자, US2-AC4 "{date}부터"·단추 꺼짐), game-profile-dialog(US5-AC4 `PUBG` 포지션 칸 없음, US5-AC8 안내 문구), game-profile-list(US5-AC9 "1/3"·"3/3" 단추 꺼짐)
@@ -246,4 +246,4 @@ Phase 10 안: T050, T051, T052, T053
 
 1. **MVP**: Phase 1 → 2 → 3(US1) → 4(US2). 내 프로필 보기와 닉네임 바꾸기, 계정 바의 닉네임 표시만으로 배포 검토 가능
 2. US3(소개·나이·성별·디스코드) → US4(아바타) → US5(게임 정보) → US6(시간대)
-3. Polish → 테스트(맨 끝) → PR. 잠정 작업(닉네임 규칙·예약어, 변경 제한 30일, 만 14세 미만, 나이·성별 공개 개별, 친구·팔로워, 보기 범위, 전적 사이트 틀, 아바타 그림)은 확정되는 대로 research "열린 질문의 처리"의 자리를 고친다
+3. Polish → 테스트(맨 끝) → PR. 잠정 작업(닉네임 규칙·예약어, 변경 제한 30일, 만 14세 미만, 나이·성별 공개 개별, 친구 기능 전의 "친구만", 보기 범위, 전적 사이트 틀, 아바타 그림)은 확정되는 대로 research "열린 질문의 처리"의 자리를 고친다

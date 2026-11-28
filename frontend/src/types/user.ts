@@ -12,6 +12,10 @@ export type Me = {
   passwordChangeRequired: boolean
   // moa: false면 비밀번호 없는 계정(소셜). 계정 메뉴에 비밀번호 변경을 보이지 않는다 (specs/010-social-login US2-AC3)
   hasPassword: boolean
+  // moa: 계정 바 아바타 키. 프로필이 없거나 목록에서 빠진 키면 default (specs/009-mypage FR-014)
+  avatar: string
+  // moa: false면 관리자 계정(ADMIN). 마이페이지 메뉴를 숨기고 /account/profile에서 권한 없음 (specs/009-mypage FR-016)
+  mypageAllowed: boolean
 }
 
 export type MyPermissions = { permissions: string[] }

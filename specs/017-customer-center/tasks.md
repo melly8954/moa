@@ -23,7 +23,7 @@ description: "고객센터 (customer-center) 작업 목록"
 
 **Purpose**: 구현 직전에 겹칠 수 있는 번호와 먼저 생겼을 수 있는 공용 코드를 다시 확인한다
 
-- [X] T001 구현 브랜치 `feat/017-customer-center`를 최신 `dev`에서 딴 뒤 확인한다: backend/src/main/resources/db/migration의 마지막 버전(계획 때 dev `V10`, 016이 `V11` 예정 → 이 기능 `V12`), B/api/screen의 `@Order` 값(계획 때 공지 60, 016 70 → 이 기능 65가 비었는지), B/api/permission에 `FAQ_MANAGE`·`INQUIRY_MANAGE`가 없는지, B/common/exception/ErrorCode.java에 `B301`이 없는지, B/api/service/user/MemberActivityPolicy.java와 backend/src/test/java/com/moa/support/CodeSeed.java가 이미 있는지(008·009가 먼저 만들었으면 그것을 쓴다). 다르면 data-model.md, plan.md, contracts/api.md, 이 tasks.md의 번호를 먼저 고친다. 마이그레이션 번호는 PR 직전에 다시 본다(T045)
+- [X] T001 구현 브랜치 `feat/017-customer-center`를 최신 `dev`에서 딴 뒤 확인한다: backend/src/main/resources/db/migration의 마지막 버전(계획 때 dev `V10`, 016이 `V11` 예정 → 이 기능 `V12`. 2026-11-28 병합 때 009 `V12`·018 `V13`이 먼저 들어와 `V14`로 바꿨다), B/api/screen의 `@Order` 값(계획 때 공지 60, 016 70 → 이 기능 65가 비었는지), B/api/permission에 `FAQ_MANAGE`·`INQUIRY_MANAGE`가 없는지, B/common/exception/ErrorCode.java에 `B301`이 없는지, B/api/service/user/MemberActivityPolicy.java와 backend/src/test/java/com/moa/support/CodeSeed.java가 이미 있는지(008·009가 먼저 만들었으면 그것을 쓴다). 다르면 data-model.md, plan.md, contracts/api.md, 이 tasks.md의 번호를 먼저 고친다. 마이그레이션 번호는 PR 직전에 다시 본다(T045)
 
 **Checkpoint**: 번호와 공용 코드 사정이 정해졌다
 
@@ -33,7 +33,7 @@ description: "고객센터 (customer-center) 작업 목록"
 
 **Purpose**: 네 스토리가 함께 쓰는 것. 이것이 끝나야 스토리를 시작한다
 
-- [X] T002 backend/src/main/resources/db/migration/V12__customer_center.sql: 머리 주석 `-- moa: 고객센터(FAQ·1:1 문의) 테이블, 분류 코드, 메뉴. 스펙 specs/017-customer-center (FR-001~FR-004, FR-007, FR-008, FR-014)`. `docs/db.md`를 따른다(모든 열 COMMENT, `DEFAULT` 없음, 이름 있는 인덱스)
+- [X] T002 backend/src/main/resources/db/migration/V14__customer_center.sql: 머리 주석 `-- moa: 고객센터(FAQ·1:1 문의) 테이블, 분류 코드, 메뉴. 스펙 specs/017-customer-center (FR-001~FR-004, FR-007, FR-008, FR-014)`. `docs/db.md`를 따른다(모든 열 COMMENT, `DEFAULT` 없음, 이름 있는 인덱스)
   - `tb_faq`: `id BIGINT NOT NULL AUTO_INCREMENT`, `category_code VARCHAR(50) NOT NULL`('분류 (SUPPORT_CATEGORY 항목 코드)'), `question VARCHAR(200) NOT NULL`('질문'), `answer MEDIUMTEXT NOT NULL`('답 (걸러진 HTML)'), `sort_order INT NOT NULL`('순서 (작을수록 먼저)'), `enabled BOOLEAN NOT NULL`('켜짐 (사용자에게 보임)'), 감사 열 6개(`created_at`·`updated_at`·`created_by`·`updated_by`·`deleted_at`·`deleted_by`), 인덱스 `idx_faq_deleted_at_sort_order_created_at`, `idx_faq_category_code`
   - `tb_inquiry`: `id`, `user_id BIGINT NOT NULL`('쓴 회원'), `category_code VARCHAR(50) NOT NULL`, `title VARCHAR(100) NOT NULL`('제목'), `content VARCHAR(2000) NOT NULL`('내용 (서식 없는 글)'), `answer MEDIUMTEXT NULL`('답변 (걸러진 HTML)'), `answered_at DATETIME(6) NULL`('처음 답변한 시각 (NULL: 답변 대기)'), `answered_by BIGINT NULL`('처음 답변한 관리자'), 감사 열 4개(`created_at`·`updated_at`·`created_by`·`updated_by`, 하드 삭제). 테이블 COMMENT `'1:1 문의 (개인정보: 탈퇴한 날부터 1년 보관, docs/privacy.md)'`. 인덱스 `idx_inquiry_user_id_created_at`, `idx_inquiry_answered_at_created_at`, `idx_inquiry_category_code`
   - `tb_inquiry_image`: `inquiry_id BIGINT NOT NULL`('주인 문의'), `sort_order INT NOT NULL`('붙인 순서 (0~4)'), `image_url VARCHAR(100) NOT NULL`('이미지 주소'), PK (`inquiry_id`, `sort_order`). 테이블 COMMENT `'문의 첨부 이미지 (PK: 문의별 순서; 감사 열 없음: 컬렉션 테이블)'`
@@ -163,9 +163,9 @@ description: "고객센터 (customer-center) 작업 목록"
 
 ## Phase 8: Polish & Cross-Cutting
 
-- [ ] T045 PR 직전에 `git fetch` 뒤 `origin/dev`의 마지막 마이그레이션 번호와 `ErrorCode`의 `B3xx`를 다시 본다. 다른 기능이 `V12`나 `B301`을 썼으면 파일 이름·코드와 data-model.md·plan.md·contracts/api.md·research.md·이 tasks.md를 다음 번호로 바꾼다 (`docs/db.md`, CI `migration-numbers`). 같은 때 specs/README.md의 017 줄 상태를 "구현됨. 탈퇴 회원 문의 1년 보관(US5)은 회원 탈퇴 스펙 뒤"로 바꾼다
+- [ ] T045 PR 직전에 `git fetch` 뒤 `origin/dev`의 마지막 마이그레이션 번호와 `ErrorCode`의 `B3xx`를 다시 본다. 다른 기능이 `V14`나 `B301`을 썼으면 파일 이름·코드와 data-model.md·plan.md·contracts/api.md·research.md·이 tasks.md를 다음 번호로 바꾼다 (`docs/db.md`, CI `migration-numbers`). 같은 때 specs/README.md의 017 줄 상태를 "구현됨. 탈퇴 회원 문의 1년 보관(US5)은 회원 탈퇴 스펙 뒤"로 바꾼다
 - [ ] T046 frontend/에서 local 백엔드를 띄운 채 `npm run gen:api`로 F/types/schema.d.ts를 다시 만들고, T016·T031의 손으로 쓴 타입 중 생성 타입으로 바꿀 수 있는 것을 바꾼다
-- [ ] T047 backend/에서 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build`(`ArchitectureTest` 포함), 한 번 `bootRun`으로 V12 적용과 `validate`를 확인한다(공유 local DB 주의: 이 브랜치를 쓰는 작업 사본에서만). frontend/에서 `npm run format`, `npm run check`
+- [ ] T047 backend/에서 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build`(`ArchitectureTest` 포함), 한 번 `bootRun`으로 V14 적용과 `validate`를 확인한다(공유 local DB 주의: 이 브랜치를 쓰는 작업 사본에서만). frontend/에서 `npm run format`, `npm run check`
 - [ ] T048 quickstart.md "화면 확인" 1~8을 사람이 직접 한다. 시험 계정 비밀번호가 필요하므로 에이전트는 하지 않는다 (원칙 VI)
 
 ---
