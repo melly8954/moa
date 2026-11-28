@@ -45,13 +45,16 @@ import { useOpenMenus } from "./use-open-menus"
 // moa: 메뉴와 로고 주소를 받아 관리 셸·사용자 셸이 함께 쓴다 (specs/001-admin-menus FR-005, research R5. 키트로 옮길 것)
 //   로그인하지 않았으면 계정 줄에 벨·계정 메뉴 대신 로그인 단추를 둔다 (사용자 셸의 공지 화면)
 //   본문 머리 줄은 좁은 폭(서랍)에서만 둔다. 넓은 폭의 접기 단추는 로고 줄에 있다 (001 FR-005, research R12. 키트로 옮길 것)
+//   footer: 본문 맨 아래 줄. 본문이 짧으면 화면 맨 아래에 붙는다. 사용자 셸만 약관·방침 푸터 줄을 넘긴다 (001 FR-005, 012 research R7. 키트로 옮길 것)
 export function SidebarShell({
   menu,
   homeHref,
+  footer,
   children,
 }: {
   menu: MenuItem[]
   homeHref: string
+  footer?: React.ReactNode
   children: React.ReactNode
 }) {
   const pathname = usePathname()
@@ -124,6 +127,7 @@ export function SidebarShell({
           )}
         </header>
         <div className="flex min-w-0 flex-1 flex-col gap-(--page-gap) p-(--page-padding)">{children}</div>
+        {footer && <div className="mt-auto px-(--page-padding)">{footer}</div>}
       </SidebarInset>
     </SidebarProvider>
   )

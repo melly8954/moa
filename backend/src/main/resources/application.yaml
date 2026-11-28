@@ -125,6 +125,12 @@ app:
       client-secret: ${GOOGLE_CLIENT_SECRET:}
       redirect-uri: ${GOOGLE_REDIRECT_URI:}
   terms:
-    # 가입 때 동의받는 약관 버전. 비밀 값이 아니다. 문안은 frontend/src/content/terms/에 버전마다 둔다 (잠정 draft, 배포 전 실제 버전으로)
+    # 가입 때 동의받는 약관 버전. 비밀 값이 아니다 (잠정 draft, 배포 전 실제 버전으로)
+    # 문안: 이용약관은 legal/terms/(아래 app.legal), 개인정보 수집·이용 동의는 frontend/src/content/terms/에 버전마다 둔다
     service-version: draft
     privacy-version: draft
+  # moa: 공개 문서 문안 위치·오늘을 정하는 시간대 (specs/012-terms-privacy research R1·R5)
+  # 위치 아래 terms/, privacy/에 버전마다 <버전>.json + <버전>.html. 문안이 잘못되면 시작하지 않는다
+  legal:
+    location: ${LEGAL_LOCATION:classpath:legal/}
+    zone: ${LEGAL_ZONE:Asia/Seoul}

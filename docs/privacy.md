@@ -61,6 +61,10 @@ moa가 정한 개인정보 보관 기간과 파기 규칙이다. 개인정보를
 | 글에 쓰이지 않은 업로드 이미지 | `tb_rich_text_image` | 24시간 | 파일과 행 삭제 | 구현됨 (`RichTextImageCleaner`) |
 | 푸시 구독 | `tb_push_subscription` | 해지할 때, 푸시 서버가 404·410을 줄 때, 탈퇴할 때, 탈퇴가 끝날 때 | 행 삭제 | 해지·404·410은 구현됨. 탈퇴는 `018-member-withdrawal` |
 | 회원 정보 (아이디, 비밀번호 해시, 이름) | `tb_user` | 탈퇴 뒤 30일 | 개인정보 열 삭제 | `018-member-withdrawal` |
+| 회원 이메일 (가입 인증·비밀번호 재설정에만 씀) | `tb_user_email` (`019-basic-signup`) | 탈퇴 뒤 30일, 관리자가 지운 회원은 지운 뒤 30일 | 행 삭제 | `019` FR-021·FR-022. 파기는 `018-member-withdrawal`에 더한다 |
+| 이메일 점유 (이메일 해시, 회원 ID) | `tb_email_claim` (`019-basic-signup`) | 회원 이메일·소셜 계정 연결이 그 이메일을 쓰는 동안. 탈퇴 뒤 30일 | 행 삭제 | `019` FR-021. 파기는 `018`, 연결 해제는 `010` US5 |
+| 이메일 인증 코드 (이메일 해시, 코드 해시, 쓰임, 틀린 횟수, 시각) | `tb_email_verification` (`019-basic-signup`) | 쓰거나 만료된 뒤 1일. 회원 파기 때 함께 | 행 삭제 | `019` FR-021, 정리기 |
+| 로그인 실패 기록 (입력한 아이디, 연속 실패 횟수, 시각) | `tb_login_failure` (`019-basic-signup`) | 로그인에 성공할 때, 마지막 실패 뒤 1일 | 행 삭제 | `019` FR-021, 정리기 |
 | 프로필, 소셜 계정 연결, 약관 동의 기록 | `009`·`010`이 만든다 | 탈퇴 뒤 30일 | 행 삭제 | `018-member-withdrawal` |
 | 게임 정보 (게임·랭크·포지션 코드, 게임 아이디) | `tb_user_game_profile` (`009-mypage`) | 회원이 지울 때, 탈퇴 뒤 30일 | 행 삭제 | 지우기는 `009-mypage` FR-010. 탈퇴는 `018-member-withdrawal` |
 | 플레이 가능 시간대 | `tb_user_profile_play_time` (`009-mypage`) | 회원이 바꿀 때(보낸 목록으로 바꿈), 탈퇴 뒤 30일 | 행 삭제 | 바꾸기는 `009-mypage` FR-012. 탈퇴는 `018-member-withdrawal` |

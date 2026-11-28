@@ -406,6 +406,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/inquiries/{id}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 답변 쓰기·고치기
+         * @description 처음 답변이면 답변 완료가 되고 회원에게 알림(INQUIRY_ANSWERED)이 간다. 고치면 알림은 다시 가지 않는다. 없으면 R001
+         */
+        put: operations["answer"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/faqs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * FAQ 하나
+         * @description 없으면 R001
+         */
+        get: operations["get_3"];
+        /**
+         * FAQ 고치기
+         * @description 모든 칸을 바꾼다. 없으면 R001, 분류를 바꿀 때 고를 수 없는 분류면 V001
+         */
+        put: operations["modify_4"];
+        post?: never;
+        /**
+         * FAQ 지우기
+         * @description 소프트 삭제. 답 이미지는 임시로 돌아가 정리된다. 없으면 R001
+         */
+        delete: operations["delete_5"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/faqs/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 여러 FAQ 켜기·끄기
+         * @description 하나라도 없으면 R001이고 아무것도 바꾸지 않는다
+         */
+        put: operations["setEnabled_2"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/code-groups/{groupCode}": {
         parameters: {
             query?: never;
@@ -482,7 +550,7 @@ export interface paths {
          * moa: 그룹 안 여러 항목 사용 여부
          * @description 하나라도 없으면 R001, 아무것도 바꾸지 않는다
          */
-        put: operations["setEnabled_2"];
+        put: operations["setEnabled_3"];
         post?: never;
         delete?: never;
         options?: never;
@@ -521,18 +589,18 @@ export interface paths {
          * 배너 하나
          * @description 없으면 R001
          */
-        get: operations["get_3"];
+        get: operations["get_4"];
         /**
          * 배너 고치기
          * @description 모든 칸을 바꾼다. 빠진 이미지는 정리된다. 없으면 R001
          */
-        put: operations["modify_4"];
+        put: operations["modify_5"];
         post?: never;
         /**
          * 배너 지우기
          * @description 소프트 삭제. 이미지는 임시로 돌아가 정리된다. 없으면 R001
          */
-        delete: operations["delete_5"];
+        delete: operations["delete_6"];
         options?: never;
         head?: never;
         patch?: never;
@@ -550,7 +618,7 @@ export interface paths {
          * 여러 배너 켜기·끄기
          * @description 하나라도 없으면 R001이고 아무것도 바꾸지 않는다
          */
-        put: operations["setEnabled_3"];
+        put: operations["setEnabled_4"];
         post?: never;
         delete?: never;
         options?: never;
@@ -617,6 +685,26 @@ export interface paths {
          * @description 끄기와 로그아웃 전에 부른다. 없으면 그대로
          */
         delete: operations["unsubscribe"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inquiries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 문의 쓰기
+         * @description 첨부는 본문 이미지 올리기로 받은 주소, 다섯 장까지. 고를 수 없는 분류나 올리지 않은 이미지면 V001
+         */
+        post: operations["create"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -743,7 +831,7 @@ export interface paths {
          * 사용자 만들기
          * @description 임시 비밀번호로 만들고 응답에 한 번만 보인다. 아이디 형식 V001, 중복 R002. moa: 계정 종류 ADMIN(관리자 계정)도 사용자 관리 권한으로 만든다
          */
-        post: operations["create"];
+        post: operations["create_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -807,7 +895,7 @@ export interface paths {
          * 역할 만들기
          * @description 코드 형식·등록되지 않은 권한 V001, 내가 가지지 않은 권한 A005, 코드 중복 R002
          */
-        post: operations["create_1"];
+        post: operations["create_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -895,7 +983,7 @@ export interface paths {
          * 팝업 등록
          * @description 내용은 걸러 저장한다. 끝 일시가 시작보다 앞이면 V001
          */
-        post: operations["create_2"];
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -939,7 +1027,7 @@ export interface paths {
          * 공지 만들기
          * @description publish=true면 바로 게시, 아니면 임시 저장. 본문은 걸러 저장한다
          */
-        post: operations["create_3"];
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1000,7 +1088,7 @@ export interface paths {
          * 메뉴 만들기
          * @description 등록되지 않았거나 대상이 다른 연결 화면·공개 범위 V001, 없는 부모 R001, 3단계가 되는 부모 B001
          */
-        post: operations["create_4"];
+        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1021,6 +1109,50 @@ export interface paths {
          * @description moa (FR-010): 소프트 삭제, 한 트랜잭션. 고른 것끼리 부모·자식이면 함께 지운다. 없는 메뉴 R001, 고르지 않은 하위 메뉴가 남는 묶음 B001 (아무것도 지우지 않는다)
          */
         post: operations["deleteAll_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/faqs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * FAQ 목록
+         * @description 전체(쪽 없음). 순서, 나중에 등록한 것 순
+         */
+        get: operations["search_3"];
+        put?: never;
+        /**
+         * FAQ 등록
+         * @description 답은 걸러 저장한다. 200개면 B301, 고를 수 없는 분류면 V001 (칸 categoryCode)
+         */
+        post: operations["create_6"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/faqs/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 여러 FAQ 지우기
+         * @description 하나라도 없으면 R001이고 아무것도 지우지 않는다
+         */
+        post: operations["deleteAll_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1080,13 +1212,13 @@ export interface paths {
          * 배너 목록
          * @description 순서, 노출 시작이 늦은 것 순 페이징. 상태를 보내지 않으면 끝난 배너는 뺀다
          */
-        get: operations["search_3"];
+        get: operations["search_4"];
         put?: never;
         /**
          * 배너 등록
          * @description 이미지는 rich-text 이미지 올리기로 받은 주소. GIF, 없는 이미지, 끝 일시가 시작보다 앞이면 V001
          */
-        post: operations["create_5"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1106,7 +1238,7 @@ export interface paths {
          * 여러 배너 지우기
          * @description 하나라도 없으면 R001이고 아무것도 지우지 않는다
          */
-        post: operations["deleteAll_5"];
+        post: operations["deleteAll_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1301,7 +1433,7 @@ export interface paths {
          * 공지 하나
          * @description 게시한 공지만. 임시 저장·지운 공지·없는 공지는 R001
          */
-        get: operations["get_4"];
+        get: operations["get_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1362,6 +1494,130 @@ export interface paths {
          * @description 사용 중인 관리 메뉴 트리 (2단계, moa: 대상 ADMIN만). moa: 관리자 계정은 권한과 상관없이 모두 받고 메뉴마다 accessible(연결 화면의 권한이 있는가)을 받는다. 회원은 빈 목록이다. 하위 메뉴가 없는 묶음 메뉴는 빠진다 (specs/001-admin-menus FR-002, 2026-11-22)
          */
         get: operations["me_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/legal/{document}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 지금 시행 중인 문서
+         * @description 지금 버전 전문, 시행일이 가장 이른 예정 버전, 버전 목록. 지금 버전은 요청 때의 한국 날짜로 고른다
+         */
+        get: operations["document"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/legal/{document}/versions/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 문서 버전 하나
+         * @description 예전·지금·예정 버전 전문과 상태, 지금 시행 중인 버전 이름
+         */
+        get: operations["version"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inquiries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 문의 하나
+         * @description 없거나 남의 문의면 R001
+         */
+        get: operations["get_6"];
+        put?: never;
+        post?: never;
+        /**
+         * 내 문의 지우기
+         * @description 답변 대기만 지운다(답변 완료면 B001). 없거나 남의 문의면 R001
+         */
+        delete: operations["delete_7"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inquiries/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 문의 목록
+         * @description 쓴 최신순 페이징
+         */
+        get: operations["getMyPage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faqs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * FAQ 목록
+         * @description 켜져 있고 분류가 사용 중인 FAQ만, 순서대로 답까지 준다. keyword는 질문이나 답에 들어 있는 글자
+         */
+        get: operations["list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faqs/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 고객센터 분류
+         * @description 지금 고를 수 있는 분류만 코드 관리의 순서대로 준다. FAQ의 분류 단추와 문의·FAQ 쓰기의 분류 고르기에 쓴다. 공통코드 화면용 목록은 로그인이 필요해 로그인하지 않은 FAQ 화면을 위해 따로 둔다
+         */
+        get: operations["categories"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1542,6 +1798,46 @@ export interface paths {
          * @description 최신순. 조건(userId, loginId, success, from, to)은 모두 선택이고 함께 주면 AND. from이 to보다 늦으면 V001
          */
         get: operations["getPage_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/inquiries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 문의 목록
+         * @description 쓴 최신순 페이징. 상태를 보내지 않으면 답변 대기만
+         */
+        get: operations["search_5"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/inquiries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 문의 하나
+         * @description 없으면 R001
+         */
+        get: operations["get_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2163,6 +2459,80 @@ export interface components {
             /** @description 사용 여부 */
             enabled: boolean;
         };
+        /** @description 문의 답변 쓰기·고치기 (specs/017-customer-center FR-008) */
+        InquiryAnswerRequest: {
+            /** @description 답변 HTML. 허용한 서식만 남기고 걸러 저장한다 (rich-text) */
+            content: string;
+        };
+        /** @description FAQ 등록·고치기 (specs/017-customer-center FR-004) */
+        FaqSaveRequest: {
+            /**
+             * @description 분류 (SUPPORT_CATEGORY 항목 코드)
+             * @example ACCOUNT
+             */
+            categoryCode: string;
+            /**
+             * @description 질문
+             * @example 비밀번호를 잊었어요
+             */
+            question: string;
+            /** @description 답 HTML. 허용한 서식만 남기고 걸러 저장한다 (rich-text) */
+            answer: string;
+            /**
+             * Format: int32
+             * @description 순서 (작을수록 먼저)
+             * @example 0
+             */
+            sortOrder: number;
+            /** @description 켜짐 (사용자에게 보임) */
+            enabled: boolean;
+        };
+        /** @description FAQ (관리) */
+        FaqAdminResponse: {
+            /**
+             * Format: int64
+             * @description FAQ ID
+             */
+            id: number;
+            /** @description 분류 코드 */
+            categoryCode: string;
+            /** @description 분류 이름 */
+            categoryName: string;
+            /** @description 질문 */
+            question: string;
+            /** @description 답 HTML (저장 때 걸렀다) */
+            answer: string;
+            /**
+             * Format: int32
+             * @description 순서
+             */
+            sortOrder: number;
+            /** @description 켜짐 */
+            enabled: boolean;
+            /**
+             * Format: date-time
+             * @description 등록한 시각
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description 고친 시각
+             */
+            updatedAt: string;
+        };
+        /** @description 여러 FAQ 켜기·끄기 */
+        FaqEnabledRequest: {
+            /**
+             * @description FAQ ID들
+             * @example [
+             *       1,
+             *       2
+             *     ]
+             */
+            ids: number[];
+            /** @description 켜짐 */
+            enabled: boolean;
+        };
         /** @description moa: 코드 그룹 바꾸기 요청. 그룹 코드는 바꾸지 않는다 */
         CodeGroupModifyRequest: {
             /**
@@ -2415,6 +2785,68 @@ export interface components {
             endpoint: string;
             /** @description 구독 키 */
             keys: components["schemas"]["Keys"];
+        };
+        /** @description 1:1 문의 쓰기 (specs/017-customer-center FR-007) */
+        InquiryCreateRequest: {
+            /**
+             * @description 분류 (SUPPORT_CATEGORY 항목 코드)
+             * @example ACCOUNT
+             */
+            categoryCode: string;
+            /**
+             * @description 제목
+             * @example 로그인이 안 돼요
+             */
+            title: string;
+            /**
+             * @description 내용 (서식 없는 글, 줄바꿈 유지)
+             * @example 어제부터 구글 로그인이 실패해요.
+             */
+            content: string;
+            /**
+             * @description 첨부 이미지 주소 (본문 이미지 올리기로 받은 url), 다섯 장까지
+             * @example [
+             *       "/api/v1/rich-text/images/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"
+             *     ]
+             */
+            imageUrls: string[];
+        };
+        /** @description 내 문의 (회원). 답변한 관리자는 보이지 않는다 (FR-008) */
+        MyInquiryResponse: {
+            /**
+             * Format: int64
+             * @description 문의 ID
+             */
+            id: number;
+            /** @description 분류 코드 */
+            categoryCode: string;
+            /** @description 분류 이름 */
+            categoryName: string;
+            /** @description 제목 */
+            title: string;
+            /** @description 내용 (서식 없는 글) */
+            content: string;
+            /** @description 첨부 이미지 주소 */
+            imageUrls: string[];
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status: "WAITING" | "ANSWERED";
+            /**
+             * Format: date-time
+             * @description 쓴 시각
+             */
+            createdAt: string;
+            /** @description 답변 HTML (저장 때 걸렀다). 답변 대기면 없다 */
+            answer?: string;
+            /**
+             * Format: date-time
+             * @description 답변 시각
+             */
+            answeredAt?: string;
+            /** @description 지울 수 있는지 (답변 대기) */
+            deletable: boolean;
         };
         /** @description 오류 응답 */
         ErrorResponse: {
@@ -2695,6 +3127,17 @@ export interface components {
              */
             ids: number[];
         };
+        /** @description FAQ ID 목록 (한꺼번에 지우기) */
+        FaqIdsRequest: {
+            /**
+             * @description FAQ ID들
+             * @example [
+             *       1,
+             *       2
+             *     ]
+             */
+            ids: number[];
+        };
         /** @description 코드 그룹 만들기 요청. moa: 사용 중으로 만든다 */
         CodeGroupCreateRequest: {
             /**
@@ -2814,7 +3257,7 @@ export interface components {
              * @description 종류
              * @enum {string}
              */
-            type: "SYSTEM";
+            type: "SYSTEM" | "INQUIRY_ANSWERED";
             /** @description 제목 */
             title: string;
             /**
@@ -2965,6 +3408,184 @@ export interface components {
             accessible: boolean;
             /** @description 하위 메뉴 */
             children: components["schemas"]["MyMenuResponse"][];
+        };
+        /** @description 지금 시행 중인 버전 */
+        Current: {
+            /**
+             * @description 버전 이름
+             * @example draft
+             */
+            version: string;
+            /**
+             * Format: date
+             * @description 시행일 (한국 날짜)
+             * @example 2026-11-01
+             */
+            effectiveDate: string;
+            /**
+             * @description 제목
+             * @example moa 개인정보처리방침
+             */
+            title: string;
+            /** @description 장 목록 */
+            sections: components["schemas"]["LegalSectionResponse"][];
+        };
+        /** @description 문서의 지금 버전 전문, 시행 예정 버전, 버전 목록 */
+        LegalDocumentResponse: {
+            /**
+             * @description 문서 키
+             * @example privacy
+             */
+            document: string;
+            /** @description 지금 시행 중인 버전 전문 */
+            current: components["schemas"]["Current"];
+            /** @description 시행일이 가장 이른 시행 예정 버전. 없으면 null */
+            upcoming?: components["schemas"]["Upcoming"];
+            /** @description 버전 목록. 시행일 최근순이고 예정 버전도 든다 */
+            versions: components["schemas"]["Item"][];
+        };
+        /** @description 문서의 장 하나 */
+        LegalSectionResponse: {
+            /**
+             * @description 장 바로 가기 주소(#id)
+             * @example retention
+             */
+            id: string;
+            /**
+             * @description 장 제목. 목차에 쓴다
+             * @example 개인정보의 보유 기간
+             */
+            heading: string;
+            /** @description 장 안의 HTML (제목 h2를 뺀 것). 문단, h3, 목록, 표, 링크 */
+            html: string;
+        };
+        /** @description 시행 예정 버전 */
+        Upcoming: {
+            /**
+             * @description 버전 이름
+             * @example 2027-01-01
+             */
+            version: string;
+            /**
+             * Format: date
+             * @description 시행일 (한국 날짜)
+             * @example 2027-01-01
+             */
+            effectiveDate: string;
+        };
+        /** @description 문서 버전 하나 (예전·지금·예정) */
+        LegalVersionResponse: {
+            /**
+             * @description 문서 키
+             * @example privacy
+             */
+            document: string;
+            /**
+             * @description 버전 이름
+             * @example draft
+             */
+            version: string;
+            /**
+             * Format: date
+             * @description 시행일 (한국 날짜)
+             * @example 2026-11-01
+             */
+            effectiveDate: string;
+            /**
+             * @description 제목
+             * @example moa 개인정보처리방침
+             */
+            title: string;
+            /** @description 장 목록 */
+            sections: components["schemas"]["LegalSectionResponse"][];
+            /**
+             * @description 오늘 기준 상태
+             * @enum {string}
+             */
+            state: "CURRENT" | "PAST" | "UPCOMING";
+            /**
+             * @description 지금 시행 중인 버전 이름
+             * @example draft
+             */
+            currentVersion: string;
+        };
+        /** @description 내 문의 목록 항목 */
+        MyInquiryListResponse: {
+            /**
+             * Format: int64
+             * @description 문의 ID
+             */
+            id: number;
+            /** @description 분류 코드 */
+            categoryCode: string;
+            /** @description 분류 이름 (꺼진 분류도 이름이 있다) */
+            categoryName: string;
+            /** @description 제목 */
+            title: string;
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status: "WAITING" | "ANSWERED";
+            /**
+             * Format: date-time
+             * @description 쓴 시각
+             */
+            createdAt: string;
+        };
+        /** @description 페이징 응답 */
+        PageResponseMyInquiryListResponse: {
+            /** @description 항목 */
+            content: components["schemas"]["MyInquiryListResponse"][];
+            /**
+             * Format: int32
+             * @description 페이지 번호 (0부터)
+             */
+            page: number;
+            /**
+             * Format: int32
+             * @description 페이지 크기
+             */
+            size: number;
+            /**
+             * Format: int64
+             * @description 전체 항목 수
+             */
+            totalElements: number;
+            /**
+             * Format: int32
+             * @description 전체 페이지 수
+             */
+            totalPages: number;
+        };
+        /** @description 사용자 FAQ 항목. 펼칠 때 따로 부르지 않도록 답까지 담는다 */
+        FaqPublicResponse: {
+            /**
+             * Format: int64
+             * @description FAQ ID
+             */
+            id: number;
+            /** @description 분류 코드 */
+            categoryCode: string;
+            /** @description 분류 이름 */
+            categoryName: string;
+            /** @description 질문 */
+            question: string;
+            /** @description 답 HTML (저장 때 걸렀다) */
+            answer: string;
+        };
+        /** @description 고객센터 분류 (지금 고를 수 있는 항목) */
+        SupportCategoryResponse: {
+            /**
+             * @description 항목 코드
+             * @example ACCOUNT
+             */
+            code: string;
+            /**
+             * @description 이름
+             * @example 계정
+             */
+            name: string;
         };
         /** @description 탈퇴한 계정의 복구 안내 */
         RecoveryResponse: {
@@ -3173,7 +3794,7 @@ export interface components {
              * @description 대상 종류. 없으면 전체
              * @enum {string}
              */
-            target?: "LOGIN_HISTORY" | "NOTIFICATION" | "REFRESH_TOKEN" | "RICH_TEXT_IMAGE";
+            target?: "LOGIN_HISTORY" | "NOTIFICATION" | "REFRESH_TOKEN" | "RICH_TEXT_IMAGE" | "MEMBER" | "INQUIRY";
             /**
              * Format: date
              * @description 시작일 (포함)
@@ -3228,7 +3849,7 @@ export interface components {
              * @description 대상 종류
              * @enum {string}
              */
-            target: "LOGIN_HISTORY" | "NOTIFICATION" | "REFRESH_TOKEN" | "RICH_TEXT_IMAGE";
+            target: "LOGIN_HISTORY" | "NOTIFICATION" | "REFRESH_TOKEN" | "RICH_TEXT_IMAGE" | "MEMBER" | "INQUIRY";
             /**
              * @description 방법
              * @enum {string}
@@ -3494,6 +4115,186 @@ export interface components {
              * @description 전체 페이지 수
              */
             totalPages: number;
+        };
+        /** @description 문의 관리 검색 조건. 모두 선택이고 함께 주면 AND */
+        InquirySearchRequest: {
+            /**
+             * @description 상태. 비면 답변 대기, ALL이면 모두
+             * @enum {string}
+             */
+            status?: "WAITING" | "ANSWERED" | "ALL";
+            /**
+             * @description 분류 코드
+             * @example ACCOUNT
+             */
+            categoryCode?: string;
+            /**
+             * Format: date
+             * @description 쓴 날짜 시작 (포함)
+             * @example 2026-11-01
+             */
+            from?: string;
+            /**
+             * Format: date
+             * @description 쓴 날짜 끝 (포함, 그날 끝까지). from보다 이르면 V001
+             * @example 2026-11-30
+             */
+            to?: string;
+            /**
+             * @description 제목, 작성자 아이디·이름에 들어 있는 글자
+             * @example 로그인
+             */
+            keyword?: string;
+        };
+        /** @description 문의 관리 목록 항목 */
+        InquiryAdminListResponse: {
+            /**
+             * Format: int64
+             * @description 문의 ID
+             */
+            id: number;
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status: "WAITING" | "ANSWERED";
+            /** @description 분류 코드 */
+            categoryCode: string;
+            /** @description 분류 이름 */
+            categoryName: string;
+            /** @description 제목 */
+            title: string;
+            /** @description 쓴 회원 */
+            author?: components["schemas"]["InquiryAuthorResponse"];
+            /**
+             * Format: date-time
+             * @description 쓴 시각
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description 답변 시각
+             */
+            answeredAt?: string;
+        };
+        /** @description 문의를 쓴 회원 */
+        InquiryAuthorResponse: {
+            /**
+             * Format: int64
+             * @description 회원 ID
+             */
+            userId: number;
+            /** @description 아이디. 회원 행이 없으면 없다 */
+            loginId?: string;
+            /** @description 이름. 회원 행이 없으면 없다 */
+            name?: string;
+        };
+        /** @description 페이징 응답 */
+        PageResponseInquiryAdminListResponse: {
+            /** @description 항목 */
+            content: components["schemas"]["InquiryAdminListResponse"][];
+            /**
+             * Format: int32
+             * @description 페이지 번호 (0부터)
+             */
+            page: number;
+            /**
+             * Format: int32
+             * @description 페이지 크기
+             */
+            size: number;
+            /**
+             * Format: int64
+             * @description 전체 항목 수
+             */
+            totalElements: number;
+            /**
+             * Format: int32
+             * @description 전체 페이지 수
+             */
+            totalPages: number;
+        };
+        /** @description 문의 (관리) */
+        InquiryAdminResponse: {
+            /**
+             * Format: int64
+             * @description 문의 ID
+             */
+            id: number;
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status: "WAITING" | "ANSWERED";
+            /** @description 분류 코드 */
+            categoryCode: string;
+            /** @description 분류 이름 */
+            categoryName: string;
+            /** @description 제목 */
+            title: string;
+            /** @description 내용 (서식 없는 글) */
+            content: string;
+            /** @description 첨부 이미지 주소 */
+            imageUrls: string[];
+            /** @description 쓴 회원 */
+            author?: components["schemas"]["InquiryAuthorResponse"];
+            /**
+             * Format: date-time
+             * @description 쓴 시각
+             */
+            createdAt: string;
+            /** @description 답변 HTML. 답변 대기면 없다 */
+            answer?: string;
+            /**
+             * Format: date-time
+             * @description 처음 답변한 시각
+             */
+            answeredAt?: string;
+            /** @description 처음 답변한 관리자 이름 */
+            answeredByName?: string;
+            /** @description 답변할 수 있는지 (탈퇴한 회원의 문의는 아니다, US5) */
+            answerable: boolean;
+        };
+        /** @description FAQ 관리 검색 조건. 모두 선택 */
+        FaqSearchRequest: {
+            /**
+             * @description 분류 코드
+             * @example ACCOUNT
+             */
+            categoryCode?: string;
+            /** @description 켜짐. 비면 모두 */
+            enabled?: boolean;
+            /**
+             * @description 질문에 들어 있는 글자
+             * @example 비밀번호
+             */
+            keyword?: string;
+        };
+        /** @description FAQ 관리 목록 항목 */
+        FaqAdminListResponse: {
+            /**
+             * Format: int64
+             * @description FAQ ID
+             */
+            id: number;
+            /** @description 분류 코드 */
+            categoryCode: string;
+            /** @description 분류 이름 (꺼진 분류도 이름이 있다) */
+            categoryName: string;
+            /** @description 질문 */
+            question: string;
+            /**
+             * Format: int32
+             * @description 순서
+             */
+            sortOrder: number;
+            /** @description 켜짐 */
+            enabled: boolean;
+            /**
+             * Format: date-time
+             * @description 고친 시각
+             */
+            updatedAt: string;
         };
         /** @description moa: 공통코드 트리 표의 그룹 하나 (specs/004-admin-codes FR-005) */
         CodeGroupTreeResponse: {
@@ -4263,6 +5064,120 @@ export interface operations {
             };
         };
     };
+    answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InquiryAnswerRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FaqAdminResponse"];
+                };
+            };
+        };
+    };
+    modify_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaqSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FaqAdminResponse"];
+                };
+            };
+        };
+    };
+    delete_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    setEnabled_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaqEnabledRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     modifyGroup: {
         parameters: {
             query?: never;
@@ -4361,7 +5276,7 @@ export interface operations {
             };
         };
     };
-    setEnabled_2: {
+    setEnabled_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -4407,7 +5322,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4429,7 +5344,7 @@ export interface operations {
             };
         };
     };
-    modify_4: {
+    modify_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -4455,7 +5370,7 @@ export interface operations {
             };
         };
     };
-    delete_5: {
+    delete_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -4475,7 +5390,7 @@ export interface operations {
             };
         };
     };
-    setEnabled_3: {
+    setEnabled_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4587,6 +5502,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InquiryCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MyInquiryResponse"];
+                };
             };
         };
     };
@@ -4790,7 +5729,7 @@ export interface operations {
             };
         };
     };
-    create: {
+    create_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -4878,7 +5817,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -5022,7 +5961,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -5092,7 +6031,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -5180,7 +6119,7 @@ export interface operations {
             };
         };
     };
-    create_4: {
+    create_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -5214,6 +6153,74 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MenuIdsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    search_3: {
+        parameters: {
+            query: {
+                request: components["schemas"]["FaqSearchRequest"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FaqAdminListResponse"][];
+                };
+            };
+        };
+    };
+    create_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaqSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FaqAdminResponse"];
+                };
+            };
+        };
+    };
+    deleteAll_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaqIdsRequest"];
             };
         };
         responses: {
@@ -5318,7 +6325,7 @@ export interface operations {
             };
         };
     };
-    search_3: {
+    search_4: {
         parameters: {
             query: {
                 request: components["schemas"]["BannerSearchRequest"];
@@ -5342,7 +6349,7 @@ export interface operations {
             };
         };
     };
-    create_5: {
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -5366,7 +6373,7 @@ export interface operations {
             };
         };
     };
-    deleteAll_5: {
+    deleteAll_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -5576,7 +6583,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -5654,6 +6661,189 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MyMenuResponse"][];
+                };
+            };
+        };
+    };
+    document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description 문서 키 (terms, privacy)
+                 * @example privacy
+                 */
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 문서 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LegalDocumentResponse"];
+                };
+            };
+            /** @description 없는 문서 (R001) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LegalDocumentResponse"];
+                };
+            };
+        };
+    };
+    version: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description 문서 키 (terms, privacy)
+                 * @example privacy
+                 */
+                document: string;
+                /**
+                 * @description 버전 이름
+                 * @example draft
+                 */
+                version: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 버전 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LegalVersionResponse"];
+                };
+            };
+            /** @description 없는 문서나 버전 (R001) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LegalVersionResponse"];
+                };
+            };
+        };
+    };
+    get_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MyInquiryResponse"];
+                };
+            };
+        };
+    };
+    delete_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getMyPage: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseMyInquiryListResponse"];
+                };
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query?: {
+                categoryCode?: string | null;
+                keyword?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FaqPublicResponse"][];
+                };
+            };
+        };
+    };
+    categories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SupportCategoryResponse"][];
                 };
             };
         };
@@ -5863,6 +7053,52 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PageResponseLoginHistoryListResponse"];
+                };
+            };
+        };
+    };
+    search_5: {
+        parameters: {
+            query: {
+                request: components["schemas"]["InquirySearchRequest"];
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseInquiryAdminListResponse"];
+                };
+            };
+        };
+    };
+    get_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InquiryAdminResponse"];
                 };
             };
         };

@@ -19,6 +19,7 @@ import { popupAdminApi } from "./popup"
 import { withdrawalApi } from "./withdrawal"
 import { faqAdminApi, faqApi } from "./faq"
 import { inquiryAdminApi, inquiryApi } from "./inquiry"
+import { legalApi } from "./legal"
 import { partyApi } from "./party"
 // @helpers:imports
 
@@ -60,6 +61,7 @@ export const api = {
     faqAdmin: faqAdminApi,
     inquiry: inquiryApi,
     inquiryAdmin: inquiryAdminApi,
+    legal: legalApi,
     // @helpers:api
   },
 }
