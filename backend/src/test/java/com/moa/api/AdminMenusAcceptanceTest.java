@@ -121,7 +121,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	}
 
 	@Test
-	@DisplayName("US3-AC1 메뉴 관리에서 관리 메뉴와 사용자 메뉴(홈, 공지, 고객센터)가 대상으로 나뉘어 보인다")
+	@DisplayName("US3-AC1 메뉴 관리에서 관리 메뉴와 사용자 메뉴(홈, 공지, 모집, 내 파티, 고객센터)가 대상으로 나뉘어 보인다")
 	void adminSeesMenusByAudience() {
 		MvcTestResult result = asAdmin(mvc.get().uri(ADMIN_MENUS));
 
@@ -132,7 +132,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 			.containsExactlyInAnyOrder("사용자 관리", "메뉴 관리", "코드 관리", "접속 이력", "권한 관리", "공지 관리",
 				"파기 이력", "배너 관리", "팝업 관리", "FAQ 관리", "문의 관리");
 		assertThat(result).bodyJson().extractingPath("$[?(@.audience == 'USER')].name").asArray()
-			.containsExactlyInAnyOrder("홈", "공지", "고객센터");
+			.containsExactlyInAnyOrder("홈", "공지", "모집", "내 파티", "고객센터");
 	}
 
 	@Test
@@ -140,13 +140,13 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	void publicUserMenuIsVisibleToEveryone() {
 		createMenu(null, "이벤트", "NOTICES", "USER", "PUBLIC");
 
-		for (MvcTestResult result : List.of(mvc.get().uri(USER_MENUS).exchange(), asUser(mvc.get().uri(USER_MENUS)))) {
-			assertThat(result).hasStatus(200);
-			assertThat(result).bodyJson().extractingPath("$[*].name").asArray()
-				.containsExactly("홈", "공지", "이벤트", "고객센터");
-		}
+		// 더한 메뉴의 순서는 30이라, 순서가 같은 "모집"(30, 먼저 넣음) 뒤이고 "내 파티"(40) 앞이다
+		assertThat(mvc.get().uri(USER_MENUS).exchange()).hasStatus(200).bodyJson().extractingPath("$[*].name")
+			.asArray().containsExactly("홈", "공지", "모집", "이벤트", "고객센터");
+		assertThat(asUser(mvc.get().uri(USER_MENUS))).hasStatus(200).bodyJson().extractingPath("$[*].name")
+			.asArray().containsExactly("홈", "공지", "모집", "이벤트", "내 파티", "고객센터");
 		assertThat(asAdmin(mvc.get().uri(MY_MENUS))).bodyJson().extractingPath("$[*].name").asArray()
-			.doesNotContain("이벤트", "홈", "공지", "고객센터");
+			.doesNotContain("이벤트", "홈", "공지", "모집", "내 파티", "고객센터");
 	}
 
 	@Test
@@ -160,7 +160,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 			.hasStatus(200);
 
 		assertThat(mvc.get().uri(USER_MENUS).exchange()).bodyJson().extractingPath("$[*].name").asArray()
-			.containsExactly("홈", "공지", "고객센터");
+			.containsExactly("홈", "공지", "모집", "고객센터");
 	}
 
 	@Test
@@ -180,10 +180,11 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 	void memberUserMenuIsHiddenFromAnonymous() {
 		createMenu(null, "내 활동", TestScreens.MEMBER_ONLY, "USER", "MEMBER");
 
+		// 로그인하지 않은 사람에게는 회원만인 "내 파티"(008-party)도 없다
 		assertThat(mvc.get().uri(USER_MENUS).exchange()).bodyJson().extractingPath("$[*].name").asArray()
-			.containsExactly("홈", "공지", "고객센터");
+			.containsExactly("홈", "공지", "모집", "고객센터");
 		assertThat(asUser(mvc.get().uri(USER_MENUS))).bodyJson().extractingPath("$[*].name").asArray()
-			.containsExactly("홈", "공지", "내 활동", "고객센터");
+			.containsExactly("홈", "공지", "모집", "내 활동", "내 파티", "고객센터");
 	}
 
 	@Test
@@ -196,7 +197,7 @@ class AdminMenusAcceptanceTest extends AcceptanceTest {
 			.containsExactly("ADMIN_USERS", "ADMIN_MENUS", "ADMIN_CODES", "ADMIN_LOGIN_HISTORIES", "ADMIN_PURGE_LOGS",
 				"ADMIN_ROLES",
 				"ADMIN_NOTICES", "ADMIN_FAQS", "ADMIN_INQUIRIES", "ADMIN_BANNERS", "ADMIN_POPUPS", "HOME", "NOTICES",
-				"SUPPORT");
+				"SUPPORT", "RECRUIT", "MY_PARTY");
 		assertThat(result).bodyJson().extractingPath("$[?(@.key == 'ADMIN_CODES')].permission.name").asArray()
 			.containsExactly("코드 관리");
 		assertThat(result).bodyJson().extractingPath("$[?(@.key == 'NOTICES')].path").asArray()
