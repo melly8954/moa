@@ -2,6 +2,7 @@ package com.moa.api.repository.reader.party;
 
 import static com.moa.api.entity.party.QParty.party;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,6 +53,10 @@ public class PartyReader {
 	/** 비관적 락 (research.md R6) */
 	public Optional<Party> findForUpdate(Long id) {
 		return partyRepository.findForUpdateById(id);
+	}
+
+	public List<Party> findAll(Collection<Long> ids) {
+		return ids.isEmpty() ? List.of() : partyRepository.findByIdIn(ids);
 	}
 
 	public Optional<Party> findByInviteCode(String inviteCode) {
@@ -159,5 +164,10 @@ public class PartyReader {
 	/** after 뒤의 메시지들. 오래된 것부터다 (다시 연결된 뒤, FR-018) */
 	public List<PartyMessage> findMessagesAfter(Long partyId, Long after, int limit) {
 		return messageRepository.findByPartyIdAndIdGreaterThanOrderByIdAsc(partyId, after, PageRequest.of(0, limit));
+	}
+
+	/** 탈퇴했는데 멤버 행이나 대기 신청이 남은 회원 (FR-031, research R15) */
+	public List<Long> findWithdrawnUserIdsWithLeftovers() {
+		return memberRepository.findWithdrawnUserIdsWithLeftovers();
 	}
 }

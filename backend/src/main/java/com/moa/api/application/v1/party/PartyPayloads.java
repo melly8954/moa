@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.moa.api.dto.party.PartyDto;
 import com.moa.api.dto.party.PartyMessageDto;
 import com.moa.api.dto.party.PartyPositionDto;
 import com.moa.api.dto.party.PartyView;
@@ -51,6 +52,42 @@ final class PartyPayloads {
 		payload.put("capacity", view.party().capacity());
 		payload.put("status", view.party().status().name());
 		payload.put("hostUserId", view.party().hostUserId());
+		return payload;
+	}
+
+	/**
+	 * PartyDetail의 파티 정보 부분 (PARTY_UPDATED). 파티 주소는 멤버만 구독하므로 초대 코드도 싣는다 (US4-AC1)
+	 */
+	static Map<String, Object> partyUpdated(PartyView view) {
+		PartyDto party = view.party();
+		Map<String, Object> payload = new LinkedHashMap<>();
+		payload.put("id", party.id());
+		payload.put("gameCode", party.gameCode());
+		payload.put("modeCode", party.modeCode());
+		payload.put("title", party.title());
+		payload.put("description", party.description());
+		payload.put("joinPolicy", party.joinPolicy().name());
+		payload.put("status", party.status().name());
+		payload.put("closedByHost", party.closedByHost());
+		payload.put("capacity", party.capacity());
+		payload.put("memberCount", view.memberCount());
+		payload.put("positionEnabled", party.positionEnabled());
+		payload.put("tierMinCode", party.tierMinCode());
+		payload.put("tierMaxCode", party.tierMaxCode());
+		payload.put("positions", view.positions().stream().map(PartyPayloads::position).toList());
+		payload.put("openPositions", view.positions().stream()
+			.filter(position -> position.remaining() > 0)
+			.map(position -> {
+				Map<String, Object> open = new LinkedHashMap<>();
+				open.put("positionCode", position.positionCode());
+				open.put("remaining", position.remaining());
+				return open;
+			})
+			.toList());
+		Map<String, Object> invite = new LinkedHashMap<>();
+		invite.put("code", party.inviteCode());
+		invite.put("url", party.inviteUrl());
+		payload.put("invite", invite);
 		return payload;
 	}
 

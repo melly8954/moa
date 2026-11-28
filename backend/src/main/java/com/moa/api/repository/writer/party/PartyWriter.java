@@ -73,4 +73,14 @@ public class PartyWriter {
 		positionRepository.deleteByPartyId(partyId);
 		joinRequestRepository.deleteByPartyId(partyId);
 	}
+
+	/**
+	 * 파티를 해산한다. 멤버·포지션 자리·신청을 지우고 파티를 소프트 삭제한다 (research.md R12)
+	 *
+	 * @param actorId 해산한 회원 (방장이나 마지막으로 나간 멤버)
+	 */
+	public void dissolve(Party party, Long actorId) {
+		deleteDissolved(party.getId());
+		party.delete(actorId);
+	}
 }

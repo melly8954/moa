@@ -69,4 +69,9 @@ public class PartyMember extends BaseEntity {
 	public void promoteToHost() {
 		this.role = PartyRole.HOST;
 	}
+
+	/** 방장이 포지션 조건을 고치면서 자기 포지션을 바꾼다 (US7-AC1, US10-AC10) */
+	public void changePosition(String positionCode) {
+		this.positionCode = positionCode;
+	}
 }

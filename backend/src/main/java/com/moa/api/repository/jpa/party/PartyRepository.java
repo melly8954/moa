@@ -1,5 +1,7 @@
 package com.moa.api.repository.jpa.party;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Lock;
@@ -21,4 +23,6 @@ public interface PartyRepository extends SoftDeleteRepository<Party, Long> {
 	Optional<Party> findByInviteCode(String inviteCode);
 
 	boolean existsByInviteCode(String inviteCode);
+
+	List<Party> findByIdIn(Collection<Long> ids);
 }
