@@ -30,6 +30,6 @@ public record InquiryAdminResponse(
 	public static InquiryAdminResponse from(InquiryDto dto) {
 		return new InquiryAdminResponse(dto.id(), dto.status(), dto.categoryCode(), dto.categoryName(), dto.title(),
 			dto.content(), dto.imageUrls(), InquiryAuthorResponse.from(dto.author()), ApiTimes.of(dto.createdAt()),
-			dto.answer(), ApiTimes.of(dto.answeredAt()), dto.answeredByName(), true);
+			dto.answer(), ApiTimes.of(dto.answeredAt()), dto.answeredByName(), dto.answerable());
 	}
 }

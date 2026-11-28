@@ -57,7 +57,7 @@ Technical Context에 미결은 없다. 아래는 moa 코드(2026-11-25 dev `b90b
   - `GET /api/v1/admin/inquiries/{id}`: 문의, 첨부 주소, 작성자, 답변(있으면 답변한 관리자 이름)
   - `PUT /api/v1/admin/inquiries/{id}/answer` `{content}` (R3)
   - 문의 지우기, 일괄 처리는 두지 않는다 (spec FR-010, Assumptions)
-  - 작성자: 회원 아이디와 이름(`tb_user`). 탈퇴 회원 파기 뒤에는 "탈퇴한 회원"(US5, 회원 탈퇴 스펙이 정하는 표시를 따른다)
+  - 작성자: 회원 아이디와 이름(`tb_user`, 왼쪽 조인). 탈퇴한 회원은 `User`의 기본 조건에서 빠져 값이 비고, 화면이 "탈퇴한 회원"으로 보인다 (US5, `018-member-withdrawal` research R8)
 - **Rationale**: `useListSearch`의 빈 값을 기본 거르기 "답변 대기"로 두고 "전체"를 `ALL`로 둔다 (`016-banner-popup` R4와 같은 방식)
 
 ## R7. 권한, 연결 화면, 메뉴 (FR-001, FR-002, FR-014)
@@ -91,11 +91,11 @@ Technical Context에 미결은 없다. 아래는 moa 코드(2026-11-25 dev `b90b
 
 ## R10. 탈퇴 회원 문의 보관과 정리 (FR-017, US5)
 
-- **Decision** (회원 탈퇴 스펙 뒤에 붙인다):
-  - 답변 막기: 작성자가 탈퇴 상태면 답변 저장을 409 `B001`로 막고, 상세 응답의 `answerable`을 `false`로 준다 (US5-AC1)
-  - 정리기 `InquiryCleaner`: 매일 새벽 `@Scheduled`. 작성자의 탈퇴 일시가 `app.inquiry.withdrawn-retention-days`(기본 365)보다 오래된 문의를 찾아, 문의마다 `detach("INQUIRY")`·`detach("INQUIRY_ANSWER")` 뒤 행과 첨부 행을 지운다. 지운 건수로 `PersonalDataPurgedEvent.byScheduler(PurgeTarget.INQUIRY, count)`를 낸다 (`013-purge-log`). 여러 서버에서 같이 돌아도 결과가 같다(이미 지운 행은 다시 찾지 않는다)
-  - `PurgeTarget`에 `INQUIRY`("1:1 문의")를 더한다
-  - 탈퇴 상태·일시의 칸 이름과 복구 때의 동작은 회원 탈퇴 스펙의 data-model을 따른다. 그 스펙이 생기면 이 R10의 칸 이름을 맞춘다
+- **Decision** (2026-11-28, `018-member-withdrawal` 병합 뒤 구현):
+  - 답변 막기: Application이 `MemberStatusService.isWithdrawn(작성자)`를 읽어 서비스에 넘기고, 탈퇴했으면 답변 저장을 409 `B001`로 막는다. 상세 응답의 `answerable`도 같은 값이다 (US5-AC1). 복구한 회원은 `withdrawn_at`이 비어 답변할 수 있다
+  - 정리기 `InquiryCleaner`: 매일 05:30(`app.inquiry.cleanup-zone`, 기본 Asia/Seoul. 회원 파기 05:20 뒤). `MemberStatusService.findIdsWithdrawnBefore(지금 − app.inquiry.withdrawn-retention-days(기본 365))`로 회원을 찾고(탈퇴 회원은 기본 조회에 없어 native로 `tb_user.withdrawn_at`을 읽는다), 그 회원들의 문의를 문의마다 `detach("INQUIRY")`·`detach("INQUIRY_ANSWER")` 뒤 행과 첨부 행을 지운다. 지운 건수로 `PersonalDataPurgedEvent.byScheduler(PurgeTarget.INQUIRY, count)`를 낸다 (`013-purge-log`). 여러 서버에서 같이 돌아도 결과가 같다(이미 지운 행은 다시 찾지 않는다)
+  - `PurgeTarget`에 `INQUIRY`("1:1 문의")를 더하고, V14가 `tb_purge_log.target`의 COMMENT 값 목록에 더한다 (V13이 `MEMBER`를 더한 것과 같다)
+  - 관리자가 지운 회원(`DELETED`)은 스스로 탈퇴한 것이 아니라 `withdrawn_at`이 없다. 그 회원의 문의는 이 정리 대상이 아니고 답변도 막지 않는다
 - **Rationale**: `docs/privacy.md` "실행"(설정값 기간, 매일 새벽 정리기, 지운 건수만 로그)
 - **Alternatives considered**: 탈퇴 회원 파기(유예 30일 끝) 처리 안에서 1년 뒤 예약을 거는 방식. 탈퇴 처리와 문의가 얽혀 둘 중 하나를 고칠 때 함께 고쳐야 한다
 
@@ -119,8 +119,8 @@ Technical Context에 미결은 없다. 아래는 moa 코드(2026-11-25 dev `b90b
 
 ## R13. 테스트
 
-- **Decision**: `CustomerCenterAcceptanceTest` 한 클래스에 US1~US4 AC를 `@DisplayName("US1-AC1 …")`로 둔다. US5는 회원 탈퇴 스펙 뒤에 같은 클래스에 더한다
-  - API로 보는 AC: US1-AC1~AC8, US2-AC1·AC2·AC4·AC5, US3-AC1·AC3(API는 `imageUrls` 여섯 개면 400)·AC4~AC8, US4-AC1·AC3~AC7
+- **Decision**: `CustomerCenterAcceptanceTest` 한 클래스에 US1~US5 AC를 `@DisplayName("US1-AC1 …")`로 둔다. US5도 같은 클래스에 더한다
+  - API로 보는 AC: US1-AC1~AC8, US2-AC1·AC2·AC4·AC5, US3-AC1·AC3(API는 `imageUrls` 여섯 개면 400)·AC4~AC8, US4-AC1·AC3~AC7, US5-AC1~AC3(탈퇴 상태는 `tb_user.withdrawn_at`을 넣어 만들고 정리기를 바로 부른다)
   - e2e로 보는 AC: US2-AC3(펼치고 접기), US3-AC2(로그인 뒤 돌아오기), US3-AC3(여섯 장째 막는 안내), US4-AC2(드로어와 이미지 크게 보기)
   - e2e 흐름 둘: 회원이 이미지를 붙여 문의 → 관리자가 답변 → 회원이 알림을 눌러 상세에서 답변을 본다. 관리자가 FAQ를 등록하고 사용자 FAQ에서 분류·검색으로 찾는다
   - US4-AC4의 알림은 `NotificationsAcceptanceTest`처럼 알림 목록 API로 본다(실시간 전달은 007이 확인한다)

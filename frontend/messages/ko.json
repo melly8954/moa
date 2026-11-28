@@ -367,7 +367,8 @@
       "NOTIFICATION": "알림",
       "REFRESH_TOKEN": "리프레시 토큰",
       "RICH_TEXT_IMAGE": "본문 이미지",
-      "MEMBER": "회원"
+      "MEMBER": "회원",
+      "INQUIRY": "1:1 문의"
     },
     "methods": {
       "ROW_DELETE": "행 삭제",

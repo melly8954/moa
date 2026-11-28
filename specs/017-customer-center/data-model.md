@@ -99,7 +99,7 @@ answered_at IS NOT NULL  → ANSWERED (답변 완료)
 |---|---|
 | `NotificationType.INQUIRY_ANSWERED` | 답변 대기 문의에 처음 답변했을 때. 받는 사람 문의를 쓴 회원, 제목 "1:1 문의에 답변이 등록되었습니다", 연결 `/support/inquiries/{id}` |
 
-## 파기 (FR-017, research R10, 회원 탈퇴 스펙 뒤)
+## 파기 (FR-017, research R10)
 
 | 값 | 내용 |
 |---|---|

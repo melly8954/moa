@@ -1,5 +1,7 @@
 package com.moa.api.repository.jpa.inquiry;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,4 +19,6 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select i from Inquiry i where i.id = :id")
 	Optional<Inquiry> findByIdForUpdate(@Param("id") Long id);
+
+	List<Inquiry> findAllByUserIdIn(Collection<Long> userIds);
 }

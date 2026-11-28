@@ -4,6 +4,7 @@ import static com.moa.api.entity.inquiry.QInquiry.inquiry;
 import static com.moa.api.entity.user.QUser.user;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,6 +41,11 @@ public class InquiryReader {
 	/** 답변 저장용 잠금 읽기 (research R3) */
 	public Optional<Inquiry> findByIdForUpdate(Long id) {
 		return inquiryRepository.findByIdForUpdate(id);
+	}
+
+	/** 이 회원들이 쓴 문의 (탈퇴 회원 문의 정리, FR-017) */
+	public List<Inquiry> findAllByUserIdIn(Collection<Long> userIds) {
+		return inquiryRepository.findAllByUserIdIn(userIds);
 	}
 
 	/** 내 문의. 쓴 최신순 (FR-013) */

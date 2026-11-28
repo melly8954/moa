@@ -149,21 +149,26 @@ description: "고객센터 (customer-center) 작업 목록"
 
 ---
 
-## Phase 7: User Story 5 - 탈퇴한 회원의 문의를 1년 뒤 지운다 (Priority: P3) ⏸ 회원 탈퇴 스펙 뒤
+## Phase 7: User Story 5 - 탈퇴한 회원의 문의를 1년 뒤 지운다 (Priority: P3)
 
 **Goal**: 탈퇴 회원의 문의를 1년 보관하는 동안 답변을 막고, 1년이 지나면 지우고 파기 이력에 남긴다
 
 **Independent Test**: 문의를 남긴 회원을 탈퇴시킨 뒤 관리 화면을 보고, 탈퇴 일시를 1년 넘게 앞당겨 정리기를 돌린다 (spec US5)
 
-이 단계는 회원 탈퇴 스펙(`009-mypage`·`010-social-login`)이 탈퇴 상태·탈퇴 일시를 만든 뒤 한다. 그 전에는 건너뛰고 Phase 8로 간다. 시작할 때 research R10의 칸 이름을 그 스펙에 맞춘다.
+이 단계는 회원 탈퇴(`018-member-withdrawal`)가 탈퇴 상태·탈퇴 시각을 만든 뒤 한다. 2026-11-28 dev 병합으로 018이 들어와 같은 브랜치에서 했다 (research R10).
 
-- [ ] T044 [US5] 탈퇴 회원 문의 (시작할 때 답변 막기·정리기·파기 대상과 설정·화면 문구로 3~4개 작업으로 나누고, T049의 클래스에 US5-AC1~AC3 테스트를 함께 더한다): B/api/service/inquiry/InquiryService.java `answer`에서 작성자가 탈퇴 상태면 `INVALID_STATE` B001, `getForAdmin`의 `answerable`을 거짓으로. B/common/purgelog/PurgeTarget.java에 `INQUIRY`("1:1 문의"), B/api/scheduler/InquiryCleaner.java(`NotificationCleaner` 모양, 매일 새벽 `@Scheduled`, `app.inquiry.withdrawn-retention-days` 기본 365, 지난 문의마다 `detach` 두 번 뒤 행 삭제, `PersonalDataPurgedEvent.byScheduler(PurgeTarget.INQUIRY, count)`), backend/src/main/resources/application.yml 설정값, 파기 이력 화면의 대상 이름 문구, F/app/(admin)/admin/inquiries/inquiry-drawer.tsx의 "탈퇴한 회원의 문의라 답변할 수 없어요." 안내. `docs/privacy.md` 보관 기간 표의 상태 칸을 "구현됨 (`InquiryCleaner`)"로 바꾼다
+- [X] T044 [US5] 탈퇴 회원 문의 (research R10). 아래로 나눠 했다
+  - 답변 막기: B/api/service/inquiry/InquiryService.java `authorOf`, `answer(…, authorWithdrawn)`(탈퇴면 `INVALID_STATE` B001), `getForAdmin(…, answerable)`. B/api/application/v1/inquiry/InquiryApplication.java가 `MemberStatusService.isWithdrawn`을 읽어 넘긴다. `InquiryDto.answerable`, `InquiryAdminResponse.answerable`
+  - 정리: B/api/repository/jpa/user/UserRepository.java `findIdsWithdrawnBefore`(native), `UserReader`·`MemberStatusService`에 같은 이름. `InquiryService.deleteAllOfUsers`, `InquiryApplication.deleteOfWithdrawnMembers`(첨부·답변 `detach`, `PersonalDataPurgedEvent.byScheduler(PurgeTarget.INQUIRY, n)`), B/api/scheduler/InquiryCleaner.java(05:30, Asia/Seoul)
+  - 파기 대상과 설정: B/common/purgelog/PurgeTarget.java `INQUIRY`, V14의 `tb_purge_log.target` COMMENT, backend/src/main/resources/application.yaml `app.inquiry.*`, `specs/013-purge-log` 값 목록, F/app/(admin)/admin/purge-logs/page.tsx·F/types/purge-log.ts·ko.json `purgeLog.targets.INQUIRY`
+  - 문서: `docs/privacy.md` 보관 기간 표 상태 "구현됨 (`InquiryCleaner`)", spec US5·FR-017의 "탈퇴한 회원" 표시 시점(018은 탈퇴한 때부터 조회에서 뺀다)
+  - 테스트: T049의 클래스에 US5-AC1~AC3
 
 ---
 
 ## Phase 8: Polish & Cross-Cutting
 
-- [ ] T045 PR 직전에 `git fetch` 뒤 `origin/dev`의 마지막 마이그레이션 번호와 `ErrorCode`의 `B3xx`를 다시 본다. 다른 기능이 `V14`나 `B301`을 썼으면 파일 이름·코드와 data-model.md·plan.md·contracts/api.md·research.md·이 tasks.md를 다음 번호로 바꾼다 (`docs/db.md`, CI `migration-numbers`). 같은 때 specs/README.md의 017 줄 상태를 "구현됨. 탈퇴 회원 문의 1년 보관(US5)은 회원 탈퇴 스펙 뒤"로 바꾼다
+- [X] T045 PR 직전에 `git fetch` 뒤 `origin/dev`의 마지막 마이그레이션 번호와 `ErrorCode`의 `B3xx`를 다시 본다. 다른 기능이 `V14`나 `B301`을 썼으면 파일 이름·코드와 data-model.md·plan.md·contracts/api.md·research.md·이 tasks.md를 다음 번호로 바꾼다 (`docs/db.md`, CI `migration-numbers`). 같은 때 specs/README.md의 017 줄 상태를 "구현됨. 탈퇴 회원 문의 1년 보관(US5)은 회원 탈퇴 스펙 뒤"로 바꾼다
 - [ ] T046 frontend/에서 local 백엔드를 띄운 채 `npm run gen:api`로 F/types/schema.d.ts를 다시 만들고, T016·T031의 손으로 쓴 타입 중 생성 타입으로 바꿀 수 있는 것을 바꾼다
 - [ ] T047 backend/에서 `.\gradlew.bat spotlessApply`, `.\gradlew.bat build`(`ArchitectureTest` 포함), 한 번 `bootRun`으로 V14 적용과 `validate`를 확인한다(공유 local DB 주의: 이 브랜치를 쓰는 작업 사본에서만). frontend/에서 `npm run format`, `npm run check`
 - [ ] T048 quickstart.md "화면 확인" 1~8을 사람이 직접 한다. 시험 계정 비밀번호가 필요하므로 에이전트는 하지 않는다 (원칙 VI)
@@ -181,7 +186,7 @@ description: "고객센터 (customer-center) 작업 목록"
 - [X] T053 [P] frontend/e2e/support/api.ts의 가짜 메뉴에 운영의 FAQ 관리·문의 관리와 사용자 메뉴 고객센터를 더하고, 메뉴 목록을 보는 e2e(`menu.spec.ts`, `role.spec.ts` 등)가 001·003 스펙과 맞는지 본다
 - [X] T054 [P] frontend/e2e/support.spec.ts: (1) 로그아웃한 채 `/support`에서 "1:1 문의하기" → 로그인 → 쓰기 화면으로 돌아온다(US3-AC2). 이미지 다섯 장을 붙이면 붙이기 단추가 꺼지고 안내(US3-AC3), 두 장으로 보낸다. 관리자가 문의 관리 드로어에서 이미지를 크게 보고(US4-AC2) 답변한다. 회원이 벨의 알림을 눌러 상세에서 "moa 운영팀" 답변을 본다. (2) 관리자가 FAQ를 등록하고 사용자 FAQ에서 분류·검색으로 찾고 펼치고 접는다(US2-AC3). 3폭, 가로 넘침·접근성, 밝은·어두운 화면은 다른 e2e와 같이
 - [X] T055 로컬에서는 `.\gradlew.bat build`, `npm run check`만 돌린다. `dbTest`와 e2e는 PR CI로 확인하고, 사용자가 요청할 때만 로컬에서 `.\gradlew.bat dbTest --tests "*CustomerCenterAcceptanceTest"`를 돌린다
-- US5의 AC 세 개(US5-AC1~AC3)는 Phase 7을 할 때 T049의 클래스에 더한다
+- US5의 AC 세 개(US5-AC1~AC3)도 T049의 클래스에 있다
 
 ---
 
@@ -193,7 +198,7 @@ description: "고객센터 (customer-center) 작업 목록"
 - US2(Phase 4)는 US1의 엔터티·reader(T011·T012)에 기댄다. T020 → T021, T022 → T023
 - US3(Phase 5)는 Phase 2만 끝나면 US1·US2와 따로 할 수 있다. T025 → T027 → T028 → T029 → T030, T026은 T028 앞. 프론트 T031 → T032·T033·T034
 - US4(Phase 6)는 US3의 엔터티·서비스(T025~T028)에 기댄다. T036 → T037 → T038 → T039, T040 → T041 → T042
-- US5(Phase 7)는 회원 탈퇴 스펙 뒤. 그 전에는 건너뛴다
+- US5(Phase 7)는 `018-member-withdrawal` 뒤 (2026-11-28 병합해 했다)
 - Phase 8(T046은 API가 다 생긴 뒤) → Phase 9(테스트) → PR. T045는 PR 바로 전
 
 ## Parallel Example
@@ -210,4 +215,4 @@ Phase 9 안: T053, T054
 
 1. **MVP**: Phase 1 → 2 → 3(US1) → 4(US2). FAQ만으로 고객센터를 열 수 있다
 2. US3(회원 문의) → US4(관리자 답변). 둘이 함께 있어야 문의가 쓸모 있으므로 함께 배포한다
-3. Polish → 테스트(맨 끝) → PR. US5는 회원 탈퇴 스펙이 생기면 이 tasks의 Phase 7과 T049에 이어 붙인다
+3. US5(018 병합 뒤) → Polish → 테스트(맨 끝) → PR

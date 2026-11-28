@@ -3,6 +3,7 @@ package com.moa.api.service.inquiry;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -81,31 +82,61 @@ public class InquiryService {
 			throw new ServiceException(ErrorCode.INVALID_INPUT, "시작일(from)이 종료일(to)보다 늦습니다.");
 		}
 		return inquiryReader.findAdminPage(status, categoryCode, from, to, keyword, pageable)
-			.map(row -> InquiryDto.of(row.inquiry(), categories, row.author(), null));
+			.map(row -> InquiryDto.of(row.inquiry(), categories, row.author(), null, true));
 	}
 
 	/**
+	 * 문의를 쓴 회원 ID. 답변 전에 작성자가 탈퇴했는지 볼 때 쓴다 (US5).
+	 *
 	 * @throws ServiceException 없으면 R001
 	 */
-	public InquiryDto getForAdmin(Long id, SupportCategories categories) {
+	public Long authorOf(Long id) {
+		return require(id).getUserId();
+	}
+
+	/**
+	 * @param answerable 답변할 수 있는지 (작성자가 탈퇴하지 않았다)
+	 * @throws ServiceException 없으면 R001
+	 */
+	public InquiryDto getForAdmin(Long id, SupportCategories categories, boolean answerable) {
 		Inquiry inquiry = require(id);
 		String answeredByName = inquiry.getAnsweredBy() == null
 			? null
 			: inquiryReader.findUserName(inquiry.getAnsweredBy()).orElse(null);
-		return InquiryDto.of(inquiry, categories, inquiryReader.findAuthor(inquiry.getUserId()), answeredByName);
+		return InquiryDto.of(inquiry, categories, inquiryReader.findAuthor(inquiry.getUserId()), answeredByName,
+			answerable);
 	}
 
 	/**
 	 * 답변을 저장한다. 행을 잠가 읽으므로 두 관리자가 함께 처음 답변해도 "처음"은 하나다 (research R3).
 	 *
+	 * @param authorWithdrawn 작성자가 탈퇴했는지. 탈퇴했으면 답변하지 않는다 (US5, FR-017)
 	 * @return 처음 답변이면 알림을 보낼 회원과 함께 준다
-	 * @throws ServiceException 없으면 R001
+	 * @throws ServiceException 없으면 R001, 작성자가 탈퇴했으면 B001
 	 */
-	public AnswerResult answer(Long id, String content, Long adminUserId, LocalDateTime now) {
+	public AnswerResult answer(Long id, String content, Long adminUserId, LocalDateTime now,
+		boolean authorWithdrawn) {
 		Inquiry inquiry = inquiryReader.findByIdForUpdate(id)
 			.orElseThrow(() -> new ServiceException(ErrorCode.NOT_FOUND));
+		if (authorWithdrawn) {
+			throw new ServiceException(ErrorCode.INVALID_STATE, "탈퇴한 회원의 문의라 답변할 수 없습니다.");
+		}
 		boolean first = inquiry.answer(content, adminUserId, now);
 		return new AnswerResult(inquiry.getId(), inquiry.getUserId(), first);
+	}
+
+	/**
+	 * 이 회원들이 쓴 문의를 모두 지운다 (탈퇴한 날부터 1년이 지난 회원, FR-017). 하드 삭제이고 첨부 행도 함께 지워진다.
+	 *
+	 * @return 지운 문의 ID (첨부·답변 이미지를 풀 때 쓴다)
+	 */
+	public List<Long> deleteAllOfUsers(Collection<Long> userIds) {
+		if (userIds.isEmpty()) {
+			return List.of();
+		}
+		List<Inquiry> targets = inquiryReader.findAllByUserIdIn(userIds);
+		targets.forEach(inquiryWriter::delete);
+		return targets.stream().map(Inquiry::getId).toList();
 	}
 
 	/**

@@ -71,3 +71,8 @@ INSERT INTO tb_menu (parent_id, name, screen_key, icon, sort_order, enabled, aud
 VALUES (10, 'FAQ 관리', 'ADMIN_FAQS', 'list', 23, TRUE, 'ADMIN', NULL, NOW(6), NOW(6), 1, 1),
        (10, '문의 관리', 'ADMIN_INQUIRIES', 'mail', 26, TRUE, 'ADMIN', NULL, NOW(6), NOW(6), 1, 1),
        (NULL, '고객센터', 'SUPPORT', 'mail', 90, TRUE, 'USER', 'PUBLIC', NOW(6), NOW(6), 1, 1);
+
+-- 파기 이력의 대상 종류에 1:1 문의(INQUIRY)를 더한다. 타입은 그대로다 (docs/db.md "COMMENT", specs/013-purge-log FR-002)
+-- 탈퇴한 날부터 1년이 지난 회원의 문의를 정리기가 지운다 (specs/017-customer-center FR-017)
+ALTER TABLE tb_purge_log
+    MODIFY COLUMN target VARCHAR(30) NOT NULL COMMENT '파기 대상 종류 (LOGIN_HISTORY, NOTIFICATION, REFRESH_TOKEN, RICH_TEXT_IMAGE, MEMBER, INQUIRY)';

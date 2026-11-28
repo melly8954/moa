@@ -5,8 +5,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +23,7 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester.MockMvcRequest
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import com.jayway.jsonpath.JsonPath;
+import com.moa.api.scheduler.InquiryCleaner;
 import com.moa.common.security.Role;
 import com.moa.support.AcceptanceTest;
 import com.moa.support.CodeSeed;
@@ -29,7 +32,7 @@ import com.moa.support.TestUsers;
 /**
  * 고객센터(FAQ·1:1 문의). 스펙 specs/017-customer-center의 수용 시나리오다.
  * 화면에서만 보이는 동작(US2-AC3 펼치기, US3-AC2 로그인 뒤 돌아오기, US3-AC3 안내, US4-AC2 드로어)은 e2e(support)가 본다 (research R13).
- * US5(탈퇴 회원 문의)는 회원 탈퇴 스펙 뒤에 더한다.
+ * US5(탈퇴 회원 문의)는 tb_user.withdrawn_at을 직접 넣어 탈퇴 상태를 만들고(specs/018-member-withdrawal), 정리기를 바로 부른다.
  */
 @TestPropertySource(properties = {"app.rich-text.image-dir=build/tmp/rich-text-images"})
 class CustomerCenterAcceptanceTest extends AcceptanceTest {
@@ -52,6 +55,9 @@ class CustomerCenterAcceptanceTest extends AcceptanceTest {
 
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
+
+	@Autowired
+	private InquiryCleaner inquiryCleaner;
 
 	/** DatabaseCleaner가 분류 코드(SUPPORT_CATEGORY)까지 지우므로 처음 구성으로 되돌린다 */
 	@BeforeEach
@@ -457,7 +463,67 @@ class CustomerCenterAcceptanceTest extends AcceptanceTest {
 			.isEmpty();
 	}
 
+	// ---- US5 탈퇴 회원 문의 ----
+
+	@Test
+	@DisplayName("US5-AC1 답변 대기 문의를 남긴 회원이 탈퇴하면 관리자는 내용을 보지만 답변할 수 없다(B001)")
+	void withdrawnMembersInquiryIsNotAnswerable() {
+		long id = createInquiry(MEMBER_A, "탈퇴 전 문의", List.of());
+		withdraw(MEMBER_A, LocalDateTime.now());
+
+		MvcTestResult detail = asAdmin(mvc.get().uri(ADMIN_INQUIRIES + "/" + id));
+		assertThat(detail).hasStatus(200);
+		assertThat(detail).bodyJson().extractingPath("$.content").isEqualTo("내용");
+		assertThat(detail).bodyJson().extractingPath("$.answerable").isEqualTo(false);
+		assertThat(asAdmin(put(ADMIN_INQUIRIES + "/" + id + "/answer", "{\"content\":\"<p>답</p>\"}"))).hasStatus(409)
+			.bodyJson().extractingPath("$.code").isEqualTo("B001");
+		assertThat(jdbcTemplate.queryForObject("select answered_at from tb_inquiry where id = ?", LocalDateTime.class,
+			id)).isNull();
+	}
+
+	@Test
+	@DisplayName("US5-AC2 탈퇴한 회원의 문의는 문의 관리 목록에 남고 작성자는 비어 탈퇴한 회원으로 보인다")
+	void withdrawnMembersInquiryStaysWithoutAuthor() {
+		createInquiry(MEMBER_A, "남을 문의", List.of());
+		withdraw(MEMBER_A, LocalDateTime.now().minusDays(40));
+
+		MvcTestResult list = asAdmin(mvc.get().uri(ADMIN_INQUIRIES).param("status", "ALL"));
+
+		assertThat(list).bodyJson().extractingPath("$.content[*].title").asArray().containsExactly("남을 문의");
+		assertThat(list).bodyJson().extractingPath("$.content[0].author.loginId").isNull();
+		assertThat(list).bodyJson().extractingPath("$.content[0].author.name").isNull();
+	}
+
+	@Test
+	@DisplayName("US5-AC3 탈퇴한 날부터 1년이 지난 회원의 문의와 이미지만 정리기가 지우고, 지운 수가 파기 이력에 남는다")
+	void cleanerDeletesInquiriesOfLongWithdrawnMembers() {
+		String image = upload(MEMBER_A);
+		long old = createInquiry(MEMBER_A, "1년 지난 문의", List.of(image));
+		asAdmin(put(ADMIN_INQUIRIES + "/" + old + "/answer", "{\"content\":\"<p>답</p>\"}"));
+		createInquiry(MEMBER_B, "아직 보관 중", List.of());
+		withdraw(MEMBER_A, LocalDateTime.now().minusDays(400));
+		withdraw(MEMBER_B, LocalDateTime.now().minusDays(100));
+
+		inquiryCleaner.deleteOfWithdrawnMembers();
+
+		assertThat(titles(asAdmin(mvc.get().uri(ADMIN_INQUIRIES).param("status", "ALL"))))
+			.containsExactly("아직 보관 중");
+		assertThat(jdbcTemplate.queryForObject("select count(*) from tb_inquiry_image", Integer.class)).isZero();
+		assertThat(imageStatus(image)).isEqualTo("TEMP");
+		List<Map<String, Object>> logs = jdbcTemplate.queryForList(
+			"select * from tb_purge_log where target = 'INQUIRY'");
+		assertThat(logs).hasSize(1);
+		assertThat(logs.getFirst().get("purge_method")).isEqualTo("ROW_DELETE");
+		assertThat(logs.getFirst().get("purged_count")).isEqualTo(1);
+		assertThat(logs.getFirst().get("actor_type")).isEqualTo("SCHEDULER");
+	}
+
 	// ---- 도우미 ----
+
+	/** 회원을 스스로 탈퇴한 상태로 만든다 (specs/018-member-withdrawal). 기본 조회에서 빠진다 */
+	private void withdraw(long memberId, LocalDateTime at) {
+		jdbcTemplate.update("update tb_user set withdrawn_at = ? where id = ?", at, memberId);
+	}
 
 	private long createFaq(String categoryCode, String question, int sortOrder, boolean enabled) {
 		return id(asAdmin(post(ADMIN_FAQS, faq(categoryCode, question, "<p>답</p>", sortOrder, enabled))));
